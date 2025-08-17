@@ -16,8 +16,6 @@ struct ContentView: View {
     @Query private var entries: [DayEntry]
     
     @State private var selectedDateItem: DateItem?
-    @State private var isEditMode = false
-    @State private var editedText = ""
     @State private var dragLocation: CGPoint = .zero
     @State private var isDragging = false
     @State private var highlightedId: String?
@@ -25,6 +23,7 @@ struct ContentView: View {
     @State private var viewMode: ViewMode = UserPreferences.shared.defaultViewMode
     @State private var yearGridViewSize: CGSize = .zero
     @State private var scrollProxy: ScrollViewProxy?
+    @State private var showDrawingCanvas: Bool = false
     
     // Touch delay detection states
     @State private var touchStartTime: Date?
@@ -59,12 +58,7 @@ struct ContentView: View {
             )
         }
     }
-    
-    private var selectedEntry: DayEntry? {
-        guard let selectedDateItem else { return nil }
-        return entries.first(where: { $0.createdAt == selectedDateItem.date})
-    }
-    
+
     var body: some View {
         GeometryReader { geometry in
             
@@ -128,12 +122,16 @@ struct ContentView: View {
                 }, bottom: {
                     EntryEditingView(
                         date: selectedDateItem?.date,
-                        isEditMode: $isEditMode,
-                        editedText: $editedText
+                        onOpenDrawingCanvas: { showDrawingCanvas = true },
+                        onFocusChange: { isFocused in
+                            guard isFocused, let selectedDateItem, let scrollProxy else { return }
+                            scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
+                        }
                     )
                 }, hasBottomView: selectedDateItem != nil, onBottomDismissed: {
                     selectedDateItem = nil
                 }, onTopViewHeightChange: { newHeight in
+                    debugPrint("Heigth changed: \(newHeight)")
                     yearGridViewSize.height = newHeight
                     guard let selectedDateItem, let scrollProxy else { return }
                     scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
@@ -153,6 +151,20 @@ struct ContentView: View {
                         navigateToSettings = true
                     }
                 )
+                
+                // Dynamic island drawing canvas view
+                if UIDevice.hasDynamicIsland && selectedDateItem != nil {
+                    DynamicIslandExpandedView(isExpanded: $showDrawingCanvas) {
+                        DrawingCanvasView(
+                            date: selectedDateItem!.date,
+                            onDismiss: {
+                                showDrawingCanvas = false
+                            }
+                        )
+                    } onDismiss: {
+                        showDrawingCanvas = false
+                    }.id("DynamicIslandExpandedView-\(selectedDateItem?.id ?? "none")")
+                }
             }
             .background(.backgroundColor)
             .onShake {
@@ -164,6 +176,23 @@ struct ContentView: View {
                 .environment(userPreferences)
         }
         .ignoresSafeArea(.all, edges: .bottom)
+        // Present drawing canvas
+        .sheet(isPresented: Binding<Bool>(
+            // Only present the sheet when device has no dynamic island
+            get: { showDrawingCanvas && !UIDevice.hasDynamicIsland },
+            set: { showDrawingCanvas = $0 }
+        )) {
+            DrawingCanvasView(
+                date: selectedDateItem!.date,
+                onDismiss: {
+                    showDrawingCanvas = false
+                }
+            )
+            .disabled(selectedDateItem == nil)
+            .presentationDetents([.height(420)])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(UIDevice.screenCornerRadius)
+        }
     }
     
     /// Number of days in the selected year
@@ -358,11 +387,17 @@ struct ContentView: View {
     }
     
     private func selectDateItem(item: DateItem, scrollProxy: ScrollViewProxy) {
-        isEditMode = false
         // Initialize editedText with the entry content for the selected date
-        editedText = (entries.first { entry in
+        var entry = entries.first { entry in
             Calendar.current.isDate(entry.createdAt, inSameDayAs: item.date)
-        })?.body ?? ""
+        }
+        
+        // Create new entry if there's text content
+        if entry == nil {
+            entry = DayEntry(body: "", createdAt: item.date)
+            modelContext.insert(entry!)
+            try? modelContext.save()
+        }
         
         selectedDateItem = item
         scrollToRelevantDate(date: item.date, scrollProxy: scrollProxy)
@@ -394,7 +429,7 @@ struct ContentView: View {
         Haptic.play(with: .medium)
         
         // Set to current year and scroll to today
-        withAnimation(.springR8D7B1) {
+        withAnimation(.springFkingSatifying) {
             selectedYear = currentYear
             viewMode = .now // Switch to "now" mode for better visibility
         }
@@ -437,7 +472,7 @@ struct ContentView: View {
         // Only auto-scroll if the preference is enabled
         guard userPreferences.autoScrollRelevantDate else { return }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             let currentYear = Calendar.current.component(.year, from: Date())
             
             withAnimation(.easeInOut) {
@@ -507,7 +542,7 @@ struct ContentView: View {
         
         // Calculate dot position within the content
         let row = itemIndex / viewMode.dotsPerRow
-        let dotYPosition = CGFloat(row) * (viewMode.dotSize + spacing) + 20 // Add top padding
+        let dotYPosition = CGFloat(row) * (viewMode.dotSize + spacing) // Add top padding
         
         // Calculate total content height
         let numberOfRows = (itemsInYear.count + viewMode.dotsPerRow - 1) / viewMode.dotsPerRow

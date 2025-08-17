@@ -14,19 +14,16 @@ struct EntryEditingView: View {
     @Query private var entries: [DayEntry]
     
     let date: Date?
+    let onOpenDrawingCanvas: (() -> Void)?
+    let onFocusChange: ((Bool) -> Void)?
     
-    @Binding var isEditMode: Bool
-    @Binding var editedText: String
-    @FocusState private var isTextEditorFocused: Bool
     @State private var showDeleteConfirmation = false
     @State private var currentTime = Date()
     @State private var isTimerActive = false
     @State private var showDrawingCanvas = false
-    
-    private var entry: DayEntry? {
-        guard let date else { return nil }
-        return entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
-    }
+    @State private var textContent: String = ""
+    @FocusState private var isTextFieldFocused
+    @State private var entry: DayEntry?
     
     private var isToday: Bool {
         guard let date else { return false }
@@ -194,7 +191,7 @@ struct EntryEditingView: View {
                 
                 HStack(spacing: 8) {
                     // Delete entry button
-                    if let entry = entry, (!entry.body.isEmpty || entry.drawingData != nil) && !isEditMode {
+                    if let entry = entry, (!entry.body.isEmpty || entry.drawingData != nil) {
                         Image(systemName: "trash")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.red)
@@ -208,78 +205,111 @@ struct EntryEditingView: View {
                     }
                     
                     // Drawing canvas button
-                    if !isEditMode {
-                        Image(systemName: "scribble")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.textColor)
-                            .frame(width: 36, height: 36)
-                            .background(.controlBackgroundColor)
-                            .clipShape(Circle())
-                            .onTapGesture {
-                                showDrawingCanvas = true
-                            }
-                        .transition(.scale.combined(with: .opacity))
-                    }
-                    
-                    // Toggle edit button
-                    Image(systemName: isEditMode ? "checkmark" : "pencil")
+                    Image(systemName: "scribble")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.textColor)
                         .frame(width: 36, height: 36)
                         .background(.controlBackgroundColor)
                         .clipShape(Circle())
                         .onTapGesture {
-                            toggleEditMode()
+                            self.onOpenDrawingCanvas?()
                         }
+                    .transition(.scale.combined(with: .opacity))
+                    
+                    // Confirm button
+                    if isTextFieldFocused {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.textColor)
+                            .frame(width: 36, height: 36)
+                            .background(.controlBackgroundColor)
+                            .clipShape(Circle())
+                            .onTapGesture {
+                                isTextFieldFocused = false
+                                guard let date else { return }
+                                saveNote(text: textContent, for: date)
+                            }
+                        .transition(.scale.combined(with: .opacity))
+                    }
                 }
-                .animation(.springR8D7B1, value: isEditMode)
-                .animation(.springR8D7B1, value: entry?.body.isEmpty ?? true)
+                .animation(.interactiveSpring, value: entry?.body.isEmpty ?? true)
+                .animation(.interactiveSpring, value: entry?.drawingData != nil)
+                .animation(.interactiveSpring, value: isTextFieldFocused)
             }
             
             // Note content
-            if isEditMode {
-                TextEditor(text: $editedText)
-                    .font(.body)
-                    .foregroundColor(.textColor)
-                    .background(.backgroundColor)
-                    .frame(minHeight: 120)
-                    .disableAutocorrection(false)
-                    .autocapitalization(.sentences)
-                    .focused($isTextEditorFocused)
-                    // Alignment nudges to match the text view
-                    .padding(.top, -8)
-                    .padding(.horizontal, -5)
-            } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        // Text content
-                        Text(editedText.isEmpty ? "No note for this day" : editedText)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Text content
+                    ZStack (alignment: .topLeading) {
+                        TextEditor(text: $textContent)
                             .font(.body)
-                            .foregroundColor(editedText.isEmpty ? .textColor.opacity(0.5) : .textColor)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        // Drawing content
-                        if let drawingData = entry?.drawingData, !drawingData.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                DrawingDisplayView(entry: entry, displaySize: 200)
-                                    .frame(width: 200, height: 200)
-                                    .background(.controlBackgroundColor.opacity(0.3))
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .foregroundColor(.textColor)
+                            .background(.backgroundColor)
+                            .frame(minHeight: 40, maxHeight: isTextFieldFocused ? 160 : .infinity)
+                            .disableAutocorrection(false)
+                            .autocapitalization(.sentences)
+                            .focused($isTextFieldFocused)
+                            // Alignment nudges to match the text view
+                            .padding(.top, -8)
+                            .padding(.horizontal, -5)
+                            .onAppear {
+                                guard let date else { return }
+                                
+                                entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
+                                guard let entry else { return }
+                                
+                                textContent = entry.body
                             }
+                            .onChange(of: date ?? nil ) { oldValue, newValue in
+                                // Save old content first if any
+                                if !textContent.isEmpty, let oldDate = oldValue {
+                                    saveNote(text: textContent, for: oldDate)
+                                }
+                                
+                                // Unfocus
+                                isTextFieldFocused = false
+                                
+                                // Update entry if got new date
+                                if let newDate = newValue {
+                                    entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: newDate) }
+                                    guard let entry else { return }
+                                    textContent = entry.body
+                                }
+                            }
+                            .onChange(of: isTextFieldFocused) { _, newValue in
+                                onFocusChange?(newValue)
+                            }
+                            .scrollDismissesKeyboard(.never)
+                        if textContent.isEmpty {
+                            Text("Tap to edit note for today...")
+                                .font(.body)
+                                .foregroundColor(.textColor.opacity(0.5))
+                                .allowsHitTesting(false) // Important: prevents blocking TextEditor
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(minHeight: 120, alignment: .topLeading)
+                    
+                    // Drawing content
+                    if let drawingData = entry?.drawingData, !drawingData.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            DrawingDisplayView(entry: entry, displaySize: 200)
+                                .frame(width: 200, height: 200)
+                                .background(.controlBackgroundColor.opacity(0.3))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minHeight: 120, alignment: .topLeading)
             }
+            .scrollDismissesKeyboard(.never)
             
             Spacer()
         }
         .padding(20)
         .background(.backgroundColor)
         .onAppear {
-            // Ensure editedText is properly initialized when sheet appears
-            editedText = entry?.body ?? ""
             startTimerIfNeeded()
         }
         .onDisappear {
@@ -297,16 +327,6 @@ struct EntryEditingView: View {
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("Delete this note?")
-        }
-        .sheet(isPresented: $showDrawingCanvas) {
-            DrawingCanvasView(
-                date: date!,
-                entry: entry,
-                editedText: $editedText
-            )
-            .disabled(date == nil)
-            .presentationDetents([.height(420)])
-            .presentationDragIndicator(.visible)
         }
     }
     
@@ -368,57 +388,36 @@ struct EntryEditingView: View {
         return 1.0
     }
     
-    private func toggleEditMode() {
-        if isEditMode {
-            // Save the note
-            saveNote()
-            isTextEditorFocused = false
-        } else {
-            // Auto-focus the text editor when entering edit mode
-            isTextEditorFocused = true
-        }
-        isEditMode.toggle()
-    }
-    
     private func deleteEntry() {
         guard let entry else { return }
 
         // Clear the entry's body and drawing data
         entry.body = ""
         entry.drawingData = nil
-        editedText = ""
         
         // Save the context to persist changes
         try? modelContext.save()
     }
     
-    private func saveNote() {
-        guard let date else { return }
-        withAnimation {
-            if let entry {
-                // Update existing entry
-                entry.body = editedText
-            } else if !editedText.isEmpty {
-                // Create new entry if there's text content
-                let newEntry = DayEntry(body: editedText, createdAt: date)
-                modelContext.insert(newEntry)
-            }
-            
-            // Save the context to persist changes
-            try? modelContext.save()
+    private func saveNote(text: String, for date: Date) {
+        if let entry {
+            // Update existing entry
+            entry.body = text
+        } else {
+            // Create new entry if there's text content
+            let newEntry = DayEntry(body: text, createdAt: date)
+            modelContext.insert(newEntry)
         }
+        
+        // Save the context to persist changes
+        try? modelContext.save()
     }
 }
 
 #Preview {
-    @Previewable @State var isEditMode = false
-    @Previewable @State var editedText: String = ""
-    
-    VStack {
-        EntryEditingView(
-            date: Date(),
-            isEditMode: $isEditMode,
-            editedText: $editedText
-        )
-    }
+    EntryEditingView(
+        date: Date(),
+        onOpenDrawingCanvas: nil,
+        onFocusChange: nil
+    )
 }

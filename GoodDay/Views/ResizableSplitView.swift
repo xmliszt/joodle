@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 struct ResizableSplitView<Top: View, Bottom: View>: View {
     @State private var isDragging = false
@@ -14,7 +15,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     @State private var splitPosition: CGFloat = 1.0
     @State private var isSnapping: Bool = false
     @State private var hasShownBottomView: Bool = false
-    
+    @State private var isKeyboardVisible: Bool = false
     
     let topView: Top
     let bottomView: Bottom
@@ -27,7 +28,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         @ViewBuilder bottom: () -> Bottom,
         hasBottomView: Bool,
         onBottomDismissed: (() -> Void)? = nil,
-        onTopViewHeightChange: ((CGFloat) -> Void)? = nil
+        onTopViewHeightChange: ((CGFloat) -> Void)? = nil,
     ) {
         self.topView = top()
         self.bottomView = bottom()
@@ -35,19 +36,17 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         self.onBottomDismissed = onBottomDismissed
         self.onTopViewHeightChange = onTopViewHeightChange
     }
-    
-    /// The corner radius for clipping both top and bottom view
-    private let CORNER_RADIUS: CGFloat = 50
+
     /// The height of the drag detection zone for the drag handle
     private let DRAG_HANDLE_HEIGHT: CGFloat = 20
     /// The highest position that user can drag
-    private let MIN_SPLIT_POSITION: CGFloat = 0.0
+    @State private var MIN_SPLIT_POSITION: CGFloat = 0.0
     /// The lowest position that user can drag
-    private let MAX_SPLIT_POSITION: CGFloat = 1.0
+    @State private var MAX_SPLIT_POSITION: CGFloat = 1.0
     /// Any value beyond this will be considered dismissed
     private let DISMISS_POSITION: CGFloat = 0.8
     /// Snap position includes 1.0, which means topView will be occupying the fullscreen
-    private let SNAP_POSITIONS: [CGFloat] = [0.25, 0.5, 0.75, 1.0]
+    @State private var SNAP_POSITIONS: [CGFloat] = [0.25, 0.5, 0.75, 1.0]
     
     var body: some View {
         GeometryReader { _geometry in
@@ -63,8 +62,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                     // Top View - YearGridView
                     topView
                         .frame(width: _geometry.size.width, height: topHeight, alignment: .top)
-                        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: CORNER_RADIUS, bottomTrailingRadius: CORNER_RADIUS))
-                        .animation(isSnapping || !hasShownBottomView ? .bouncy : nil, value: splitPosition)
+                        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: UIDevice.screenCornerRadius, bottomTrailingRadius: UIDevice.screenCornerRadius))
+                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .bouncy : nil, value: splitPosition)
                     
                     // Resize Handle
                     Rectangle()
@@ -120,12 +119,12 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                                     }
                                 }
                         )
-                        .animation(isSnapping || !hasShownBottomView ? .bouncy : nil, value: splitPosition)
+                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .bouncy : nil, value: splitPosition)
                     
                     // Bottom container - clips bottomView from top
                     bottomView
                         .frame(width: _geometry.size.width, height: bottomHeight, alignment: .top)
-                        .clipShape(UnevenRoundedRectangle(topLeadingRadius: CORNER_RADIUS, topTrailingRadius: CORNER_RADIUS))
+                        .clipShape(UnevenRoundedRectangle(topLeadingRadius: UIDevice.screenCornerRadius, topTrailingRadius: UIDevice.screenCornerRadius))
                         // Drag gesture handling for bottom container as well
                         .gesture(
                             DragGesture()
@@ -169,7 +168,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                                     }
                                 }
                         )
-                        .animation(isSnapping || !hasShownBottomView ? .bouncy : nil, value: splitPosition)
+                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .bouncy : nil, value: splitPosition)
                 }
             }
             .onAppear {
@@ -195,6 +194,27 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                     splitPosition = newValue ? 0.5 : 1.0
                 } completion: {
                     hasShownBottomView = newValue
+                    let newHeight = _geometry.size.height * splitPosition
+                    self.onTopViewHeightChange?(newHeight)
+                }
+            }
+            .onReceive(Publishers.keyboardInfo) { info in
+                let keyboardHeight = info.height
+                withAnimation {
+                    if keyboardHeight == 0.0 {
+                        isKeyboardVisible = false
+                        MIN_SPLIT_POSITION = 0.0
+                        MAX_SPLIT_POSITION = 1.0
+                        splitPosition = 0.5
+                        SNAP_POSITIONS = [0.25, 0.5, 0.75, 1.0]
+                    } else {
+                        // Keyboard is shown
+                        isKeyboardVisible = true
+                        MIN_SPLIT_POSITION = 0
+                        MAX_SPLIT_POSITION = 0.5
+                        splitPosition = 0.25
+                        SNAP_POSITIONS = [0.25]
+                    }
                     let newHeight = _geometry.size.height * splitPosition
                     self.onTopViewHeightChange?(newHeight)
                 }
