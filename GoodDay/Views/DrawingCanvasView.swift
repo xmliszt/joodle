@@ -15,24 +15,18 @@ struct DrawingCanvasView: View {
     let date: Date
     let onDismiss: () -> Void
     
+    private var entry: DayEntry? {
+        return entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
+    }
+    
     @State private var currentPath = Path()
-    @State private var paths: [DrawingPath] = [] // Changed to custom struct
+    @State private var paths: [Path] = []
     @State private var showClearConfirmation = false
     @State private var isDrawing = false
     
     // Undo/Redo state management
-    @State private var undoStack: [[DrawingPath]] = []
-    @State private var redoStack: [[DrawingPath]] = []
-    
-    // Custom struct to track path type
-    private struct DrawingPath {
-        let path: Path
-        let isDot: Bool
-    }
-    
-    private var entry: DayEntry? {
-        return entries.first(where: { $0.createdAt == date})
-    }
+    @State private var undoStack: [[Path]] = []
+    @State private var redoStack: [[Path]] = []
     
     var body: some View {
         VStack(spacing: 16) {
@@ -98,35 +92,23 @@ struct DrawingCanvasView: View {
             VStack(spacing: 12) {
                 ZStack {
                     // Canvas background
-                    RoundedRectangle(cornerRadius: 30)
+                    RoundedRectangle(cornerRadius: 12)
                         .fill(.backgroundColor)
                         .stroke(.borderColor, lineWidth: 1.0)
                         .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
                     
                     // Drawing area
                     Canvas { context, size in
-                        // Ensure we're working with the correct coordinate space
-                        let scaleX = size.width / CANVAS_SIZE
-                        let scaleY = size.height / CANVAS_SIZE
-                        
-                        // Apply scaling transformation if needed
-                        if scaleX != 1.0 || scaleY != 1.0 {
-                            context.scaleBy(x: scaleX, y: scaleY)
-                        }
-                        
                         // Draw all completed paths
-                        for drawingPath in paths {
-                            if drawingPath.isDot {
-                                // Fill ellipse paths (dots) with explicit fill rule
-                                context.fill(
-                                    drawingPath.path,
-                                    with: .color(.accent),
-                                    style: FillStyle(eoFill: false)
-                                )
+                        for path in paths {
+                            // Check if this path contains an ellipse (dot)
+                            if isEllipsePath(path) {
+                                // Fill ellipse paths (dots)
+                                context.fill(path, with: .color(.accent))
                             } else {
-                                // Stroke line paths with consistent style
+                                // Stroke line paths
                                 context.stroke(
-                                    drawingPath.path,
+                                    path,
                                     with: .color(.accent),
                                     style: StrokeStyle(
                                         lineWidth: DRAWING_LINE_WIDTH,
@@ -139,14 +121,9 @@ struct DrawingCanvasView: View {
                         
                         // Draw current path being drawn
                         if !currentPath.isEmpty {
-                            let currentIsDot = isCurrentPathDot()
-                            if currentIsDot {
+                            if isEllipsePath(currentPath) {
                                 // Fill ellipse paths (dots)
-                                context.fill(
-                                    currentPath,
-                                    with: .color(.accent),
-                                    style: FillStyle(eoFill: false)
-                                )
+                                context.fill(currentPath, with: .color(.accent))
                             } else {
                                 // Stroke line paths
                                 context.stroke(
@@ -162,9 +139,9 @@ struct DrawingCanvasView: View {
                         }
                     }
                     .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-                    .clipShape(RoundedRectangle(cornerRadius: 30))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .gesture(
-                        DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                        DragGesture(minimumDistance: 0)
                             .onChanged { value in
                                 let point = value.location
                                 let isInBounds = point.x >= 0 && point.x <= CANVAS_SIZE &&
@@ -175,7 +152,6 @@ struct DrawingCanvasView: View {
                                     if !isDrawing {
                                         // Starting a new stroke
                                         isDrawing = true
-                                        currentPath = Path()
                                         currentPath.move(to: point)
                                     } else {
                                         // Continue current stroke
@@ -231,16 +207,6 @@ struct DrawingCanvasView: View {
         .onAppear {
             loadExistingDrawing()
         }
-        // Monitor changes to the entry's drawing data
-        .onChange(of: entry?.drawingData) { oldValue, newValue in
-            // Reload drawing when the underlying data changes
-            loadExistingDrawing()
-        }
-        // Monitor changes to the entry itself (in case entry becomes nil)
-        .onChange(of: entry) { oldEntry, newEntry in
-            // Reload drawing when the entry changes
-            loadExistingDrawing()
-        }
         .confirmationDialog("Clear Drawing", isPresented: $showClearConfirmation) {
             Button("Clear", role: .destructive, action: clearDrawing)
             Button("Cancel", role: .cancel) { }
@@ -251,27 +217,15 @@ struct DrawingCanvasView: View {
     
     // MARK: - Private Methods
     
-    @State private var currentPathIsDot = false
-    
-    private func isCurrentPathDot() -> Bool {
-        return currentPathIsDot
-    }
-    
     private func commitCurrentStroke() {
         guard !currentPath.isEmpty else { return }
         
         // Save current state to undo stack before making changes
         saveStateToUndoStack()
         
-        // Determine if current path is a dot based on its creation context
-        let isDot = currentPathIsDot
-        
-        // Add the current path to completed paths with type information
-        paths.append(DrawingPath(path: currentPath, isDot: isDot))
-        
-        // Reset current path state
+        // Add the current path to completed paths
+        paths.append(currentPath)
         currentPath = Path()
-        currentPathIsDot = false
         
         // Clear redo stack when new action is performed
         redoStack.removeAll()
@@ -281,6 +235,43 @@ struct DrawingCanvasView: View {
         
         // Reset drawing state
         isDrawing = false
+    }
+    
+    private func isEllipsePath(_ path: Path) -> Bool {
+        // Check if the path contains an ellipse element
+        var hasEllipse = false
+        path.forEach { element in
+            switch element {
+            case .move, .line, .quadCurve, .curve, .closeSubpath:
+                break
+            }
+        }
+        
+        // Since SwiftUI Path doesn't expose ellipse elements directly,
+        // we'll use a heuristic: if the path has very few elements and was created
+        // from addEllipse, it's likely an ellipse. For our use case, we can track
+        // this differently by checking the path's bounding box and element count.
+        let boundingRect = path.boundingRect
+        let pathElements = extractElementsFromPath(path)
+        
+        // An ellipse created with addEllipse typically has multiple curve elements
+        // and a relatively small, square-ish bounding box (for dots)
+        if pathElements.count > 4 &&
+           boundingRect.width < DRAWING_LINE_WIDTH * 2 &&
+           boundingRect.height < DRAWING_LINE_WIDTH * 2 &&
+           abs(boundingRect.width - boundingRect.height) < 1.0 {
+            hasEllipse = true
+        }
+        
+        return hasEllipse
+    }
+    
+    private func extractElementsFromPath(_ path: Path) -> [Path.Element] {
+        var elements: [Path.Element] = []
+        path.forEach { element in
+            elements.append(element)
+        }
+        return elements
     }
     
     private func saveStateToUndoStack() {
@@ -304,7 +295,6 @@ struct DrawingCanvasView: View {
         
         // Clear current path if user is in middle of drawing
         currentPath = Path()
-        currentPathIsDot = false
         isDrawing = false
         
         // Save to store
@@ -327,7 +317,6 @@ struct DrawingCanvasView: View {
         
         // Clear current path if user is in middle of drawing
         currentPath = Path()
-        currentPathIsDot = false
         isDrawing = false
         
         // Save to store
@@ -366,7 +355,7 @@ struct DrawingCanvasView: View {
                         }
                     }
                 }
-                return DrawingPath(path: path, isDot: pathData.isDot)
+                return path
             }
             
             // Initialize undo/redo stacks for existing drawings
@@ -385,52 +374,44 @@ struct DrawingCanvasView: View {
     
     private func saveDrawingToStore() {
         if let existingEntry = entry {
-            // Update existing entry
-            if paths.isEmpty {
-                // No paths means no drawing data
-                existingEntry.drawingData = nil
-            } else {
-                // Convert paths to serializable data
-                let pathsData = paths.map { drawingPath in
-                    PathData(
-                        points: extractPointsFromPath(drawingPath.path, isDot: drawingPath.isDot),
-                        isDot: drawingPath.isDot
-                    )
-                }
-                
-                do {
-                    let data = try JSONEncoder().encode(pathsData)
-                    existingEntry.drawingData = data
-                } catch {
-                    print("Failed to save drawing data: \(error)")
+                // Update existing entry
+                if paths.isEmpty {
+                    // No paths means no drawing data
                     existingEntry.drawingData = nil
+                } else {
+                    // Convert paths to serializable data
+                    let pathsData = paths.map { path in
+                        PathData(points: extractPointsFromPath(path), isDot: isEllipsePath(path))
+                    }
+                    
+                    do {
+                        let data = try JSONEncoder().encode(pathsData)
+                        existingEntry.drawingData = data
+                    } catch {
+                        print("Failed to save drawing data: \(error)")
+                        existingEntry.drawingData = nil
+                    }
+                }
+            } else {
+                // Create new entry
+                if !paths.isEmpty {
+                    // Has drawing content
+                    let pathsData = paths.map { path in
+                        PathData(points: extractPointsFromPath(path), isDot: isEllipsePath(path))
+                    }
+                    
+                    do {
+                        let data = try JSONEncoder().encode(pathsData)
+                        let newEntry = DayEntry(body: "", createdAt: date, drawingData: data)
+                        modelContext.insert(newEntry)
+                    } catch {
+                        print("Failed to save drawing data: \(error)")
+                    }
                 }
             }
-        }
-        // Create a new entry
-        else {
-            // If no drawing path, skip as nothing to create
-            guard paths.isEmpty == false else { return }
             
-            // Has drawing content
-            let pathsData = paths.map { drawingPath in
-                PathData(
-                    points: extractPointsFromPath(drawingPath.path, isDot: drawingPath.isDot),
-                    isDot: drawingPath.isDot
-                )
-            }
-            
-            do {
-                let data = try JSONEncoder().encode(pathsData)
-                let newEntry = DayEntry(body: "", createdAt: date, drawingData: data)
-                modelContext.insert(newEntry)
-            } catch {
-                print("Failed to save drawing data: \(error)")
-            }
-        }
-        
-        // Save the context to persist changes
-        try? modelContext.save()
+            // Save the context to persist changes
+            try? modelContext.save()
     }
     
     private func clearDrawing() {
@@ -441,7 +422,6 @@ struct DrawingCanvasView: View {
         
         paths.removeAll()
         currentPath = Path()
-        currentPathIsDot = false
         isDrawing = false
         
         // Clear redo stack when new action is performed
@@ -454,9 +434,10 @@ struct DrawingCanvasView: View {
         }
     }
     
-    private func extractPointsFromPath(_ path: Path, isDot: Bool) -> [CGPoint] {
-        // For dots, store the center point
-        if isDot {
+    private func extractPointsFromPath(_ path: Path) -> [CGPoint] {
+        // Check if this is a dot (ellipse) path
+        if isEllipsePath(path) {
+            // For dots, store the center point
             let boundingRect = path.boundingRect
             let center = CGPoint(
                 x: boundingRect.midX,
@@ -486,6 +467,9 @@ struct DrawingCanvasView: View {
         return points
     }
 }
+
+
+
 
 #Preview {
     DrawingCanvasView(

@@ -394,6 +394,7 @@ struct EntryEditingView: View {
         // Clear the entry's body and drawing data
         entry.body = ""
         entry.drawingData = nil
+        textContent = ""
         
         // Save the context to persist changes
         try? modelContext.save()
