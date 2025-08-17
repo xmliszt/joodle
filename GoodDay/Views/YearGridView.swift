@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Constants
 let GRID_HORIZONTAL_PADDING: CGFloat = 40
 
-struct YearGridViewItem: Identifiable {
+struct DateItem: Identifiable {
     var id: String
     var date: Date
 }
@@ -25,7 +25,7 @@ struct YearGridView: View {
     /// The spacing between dots
     let dotsSpacing: CGFloat
     /// The items to display in the grid
-    let items: [YearGridViewItem]
+    let items: [DateItem]
     /// The entries to display in the grid
     let entries: [DayEntry]
     /// The id of the highlighted item
@@ -67,7 +67,7 @@ struct YearGridView: View {
                                 DrawingDisplayView(entry: entry, displaySize: viewMode.drawingSize)
                                     .frame(width: viewMode.drawingSize, height: viewMode.drawingSize)
                                     .scaleEffect(isHighlighted ? 2.0 : 1.0)
-                                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isHighlighted)
+                                    .animation(.interactiveSpring, value: isHighlighted)
                             } else {
                                 // Show regular dot
                                 DotView(
@@ -86,21 +86,6 @@ struct YearGridView: View {
                         .if(isToday) { $0.id("todayDot") }
                         // Center the dot
                         .position(x: xPos, y: yPos + viewMode.dotSize/2)
-                        .animation(
-                            .spring(response: 0.6, dampingFraction: 0.8),
-                            value: viewMode
-                        )
-                        .animation(
-                            .spring(response: 0.6, dampingFraction: 0.8),
-                            value: dotsSpacing
-                        )
-                        .animation(
-                            .spring(response: 0.6, dampingFraction: 0.8),
-                            value: viewMode.dotsPerRow
-                        )
-                        .animation(
-                            .spring(response: 0.6, dampingFraction: 0.8),
-                            value: viewMode.dotSize)
                     }
                 }
             }
@@ -151,7 +136,7 @@ struct YearGridView: View {
     let daysInYear = calendar.dateInterval(of: .year, for: Date())!.duration / (24 * 60 * 60)
     let sampleItems = (0..<Int(daysInYear)).map { dayOffset in
         let date = calendar.date(byAdding: .day, value: dayOffset, to: startOfYear)!
-        return YearGridViewItem(
+        return DateItem(
             id: "\(Int(date.timeIntervalSince1970))",
             date: date
         )

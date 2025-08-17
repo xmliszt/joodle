@@ -40,9 +40,9 @@ struct SettingsView: View {
             
             // MARK: - Interaction Preferences
             Section("Interactions") {
-                Toggle("Auto-scroll to Today", isOn: Binding(
-                    get: { userPreferences.autoScrollToToday },
-                    set: { userPreferences.autoScrollToToday = $0 }
+                Toggle("Auto-scroll", isOn: Binding(
+                    get: { userPreferences.autoScrollRelevantDate },
+                    set: { userPreferences.autoScrollRelevantDate = $0 }
                 ))
                 Toggle("Enable haptic feedback", isOn: Binding(
                     get: { userPreferences.enableHaptic },

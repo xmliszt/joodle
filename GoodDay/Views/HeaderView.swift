@@ -10,7 +10,7 @@ import SwiftUI
 struct HeaderView: View {
     let highlightedEntry: DayEntry?
     let geometry: GeometryProxy
-    let highlightedItem: YearGridViewItem?
+    let highlightedItem: DateItem?
     @Binding var selectedYear: Int
     let viewMode: ViewMode
     let onToggleViewMode: () -> Void
@@ -55,7 +55,7 @@ struct HeaderView: View {
                                 .overlay(
                                     DrawingDisplayView(entry: entry, displaySize: drawingSize)
                                         .frame(width: drawingSize, height: drawingSize)
-                                        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: highlightedEntry)
+                                        .animation(.interactiveSpring, value: highlightedEntry)
                                 )
                         } else if !entry.body.isEmpty {
                             ZStack {
@@ -70,7 +70,7 @@ struct HeaderView: View {
                                     .frame(width: 18, height: 18)
                             }
                             .frame(width: 36, height: 36) // Match the layout footprint
-                            .animation(.spring(response: 0.4, dampingFraction: 0.6), value: highlightedEntry)
+                            .animation(.interactiveSpring, value: highlightedEntry)
                         }
                     }
                 }
@@ -118,7 +118,7 @@ struct HeaderView: View {
         HeaderView(
             highlightedEntry: nil,
             geometry: geometry,
-            highlightedItem: YearGridViewItem(id: "test", date: Date()),
+            highlightedItem: DateItem(id: "test", date: Date()),
             selectedYear: $selectedYear,
             viewMode: viewMode,
             onToggleViewMode: { viewMode = viewMode == .now ? .year : .now },

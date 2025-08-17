@@ -50,9 +50,7 @@ struct DotView: View {
                 .frame(width: size, height: size)
                 .scaleEffect(scale)
                 .animation(
-                    highlighted 
-                        ? .spring(response: 0.4, dampingFraction: 0.6)
-                        : .spring(response: 0.4, dampingFraction: 0.6).delay(0.002),
+                    .interactiveSpring,
                     value: highlighted
                 )
             
@@ -63,9 +61,7 @@ struct DotView: View {
                     .frame(width: size * 1.5, height: size * 1.5)
                     .scaleEffect(scale)
                     .animation(
-                        highlighted 
-                            ? .spring(response: 0.4, dampingFraction: 0.6)
-                            : .spring(response: 0.4, dampingFraction: 0.6).delay(0.002),
+                        .interactiveSpring,
                         value: highlighted
                     )
             }

@@ -88,7 +88,7 @@ struct DrawingDisplayView: View {
         }
         .scaleEffect(isVisible ? 1.0 : 0.9)
         .blur(radius: isVisible ? 0 : 5)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isVisible)
+        .animation(.interactiveSpring, value: isVisible)
         .onAppear {
             // Reset animation state
             isVisible = false

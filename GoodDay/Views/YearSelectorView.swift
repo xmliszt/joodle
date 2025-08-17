@@ -12,7 +12,7 @@ struct YearSelectorView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var entries: [DayEntry]
     
-    let highlightedItem: YearGridViewItem?
+    let highlightedItem: DateItem?
     @Binding var selectedYear: Int
     
     private var availableYears: [Int] {

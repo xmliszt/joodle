@@ -1,5 +1,5 @@
 //
-//  EntryEditingSheet.swift
+//  EntryEditingView.swift
 //  GoodDay
 //
 //  Created by Li Yuxuan on 10/8/25.
@@ -8,13 +8,13 @@
 import SwiftUI
 import SwiftData
 
-struct EntryEditingSheetView: View {
+struct EntryEditingView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.dismiss) private var dismiss
+    @Query private var entries: [DayEntry]
     
-    let date: Date
-    let entry: DayEntry?
+    let date: Date?
+    
     @Binding var isEditMode: Bool
     @Binding var editedText: String
     @FocusState private var isTextEditorFocused: Bool
@@ -23,15 +23,23 @@ struct EntryEditingSheetView: View {
     @State private var isTimerActive = false
     @State private var showDrawingCanvas = false
     
+    private var entry: DayEntry? {
+        guard let date else { return nil }
+        return entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
+    }
+    
     private var isToday: Bool {
-        Calendar.current.isDateInToday(date)
+        guard let date else { return false }
+        return Calendar.current.isDateInToday(date)
     }
     
     private var isFuture: Bool {
-        date > Date()
+        guard let date else { return false }
+        return date > Date()
     }
     
     private var weekdayLabel: String {
+        guard let date else { return "" }
         if isToday { return "Today" }
         // Format to weekday (e.g. Monday, Tuesday)
         let formatter = DateFormatter()
@@ -41,6 +49,7 @@ struct EntryEditingSheetView: View {
     
     /// Show count down text for future entry with body
     private var countdownText: String? {
+        guard let date else { return nil }
         guard isFuture else { return nil }
         guard entry != nil && !entry!.body.isEmpty else { return nil }
         
@@ -163,9 +172,11 @@ struct EntryEditingSheetView: View {
             // Header with date and edit button
             HStack {
                 VStack(alignment: .leading) {
-                    Text(date, style: .date)
-                        .font(.headline)
-                        .foregroundColor(.textColor)
+                    if let date {
+                        Text(date, style: .date)
+                            .font(.headline)
+                            .foregroundColor(.textColor)
+                    }
                     HStack(spacing: 8) {
                         Text(weekdayLabel)
                             .font(.subheadline)
@@ -184,42 +195,45 @@ struct EntryEditingSheetView: View {
                 HStack(spacing: 8) {
                     // Delete entry button
                     if let entry = entry, (!entry.body.isEmpty || entry.drawingData != nil) && !isEditMode {
-                        Button(action: { showDeleteConfirmation = true }) {
-                            Image(systemName: "trash")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.red)
-                                .frame(width: 36, height: 36)
-                                .background(.controlBackgroundColor)
-                                .clipShape(Circle())
-                        }
+                        Image(systemName: "trash")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.red)
+                            .frame(width: 36, height: 36)
+                            .background(.controlBackgroundColor)
+                            .clipShape(Circle())
+                            .onTapGesture {
+                                showDeleteConfirmation = true
+                            }
                         .transition(.scale.combined(with: .opacity))
                     }
                     
                     // Drawing canvas button
                     if !isEditMode {
-                        Button(action: { showDrawingCanvas = true }) {
-                            Image(systemName: "scribble")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.textColor)
-                                .frame(width: 36, height: 36)
-                                .background(.controlBackgroundColor)
-                                .clipShape(Circle())
-                        }
-                        .transition(.scale.combined(with: .opacity))
-                    }
-                    
-                    // Toggle edit button
-                    Button(action: toggleEditMode) {
-                        Image(systemName: isEditMode ? "checkmark" : "pencil")
+                        Image(systemName: "scribble")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.textColor)
                             .frame(width: 36, height: 36)
                             .background(.controlBackgroundColor)
                             .clipShape(Circle())
+                            .onTapGesture {
+                                showDrawingCanvas = true
+                            }
+                        .transition(.scale.combined(with: .opacity))
                     }
+                    
+                    // Toggle edit button
+                    Image(systemName: isEditMode ? "checkmark" : "pencil")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.textColor)
+                        .frame(width: 36, height: 36)
+                        .background(.controlBackgroundColor)
+                        .clipShape(Circle())
+                        .onTapGesture {
+                            toggleEditMode()
+                        }
                 }
-                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isEditMode)
-                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: entry?.body.isEmpty ?? true)
+                .animation(.springR8D7B1, value: isEditMode)
+                .animation(.springR8D7B1, value: entry?.body.isEmpty ?? true)
             }
             
             // Note content
@@ -286,10 +300,11 @@ struct EntryEditingSheetView: View {
         }
         .sheet(isPresented: $showDrawingCanvas) {
             DrawingCanvasView(
-                date: date,
+                date: date!,
                 entry: entry,
                 editedText: $editedText
             )
+            .disabled(date == nil)
             .presentationDetents([.height(420)])
             .presentationDragIndicator(.visible)
         }
@@ -316,6 +331,7 @@ struct EntryEditingSheetView: View {
     /// If it's within 24 hours, we need real-time updates
     /// If it's more than 24 hours, we don't need real-time updates
     private var needsRealTimeUpdates: Bool {
+        guard let date else { return false }
         let calendar = Calendar.current
         let now = Date()
         let components = calendar.dateComponents([.day, .hour], from: now, to: date)
@@ -330,6 +346,7 @@ struct EntryEditingSheetView: View {
     /// If it's more than 1 minute, we update every second
     /// If it's less than 1 minute, we update every second for precise countdown
     private var timerInterval: TimeInterval {
+        guard let date else { return 60.0 }
         let calendar = Calendar.current
         let now = Date()
         let components = calendar.dateComponents([.day, .hour, .minute], from: now, to: date)
@@ -356,11 +373,6 @@ struct EntryEditingSheetView: View {
             // Save the note
             saveNote()
             isTextEditorFocused = false
-
-            // Dismiss the sheet
-            DispatchQueue.main.async {
-                
-            }
         } else {
             // Auto-focus the text editor when entering edit mode
             isTextEditorFocused = true
@@ -378,12 +390,10 @@ struct EntryEditingSheetView: View {
         
         // Save the context to persist changes
         try? modelContext.save()
-        
-        // Dismiss the sheet
-        dismiss()
     }
     
     private func saveNote() {
+        guard let date else { return }
         withAnimation {
             if let entry {
                 // Update existing entry
@@ -405,9 +415,8 @@ struct EntryEditingSheetView: View {
     @Previewable @State var editedText: String = ""
     
     VStack {
-        EntryEditingSheetView(
+        EntryEditingView(
             date: Date(),
-            entry: DayEntry(body: "", createdAt: Date(), drawingData: nil),
             isEditMode: $isEditMode,
             editedText: $editedText
         )
