@@ -165,168 +165,198 @@ struct EntryEditingView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header with date and edit button
-            HStack {
-                VStack(alignment: .leading) {
-                    if let date {
-                        Text(date, style: .date)
-                            .font(.headline)
-                            .foregroundColor(.textColor)
-                    }
-                    HStack(spacing: 8) {
-                        Text(weekdayLabel)
-                            .font(.subheadline)
-                            .foregroundColor(isToday ? .accent : .secondaryTextColor)
-                        
-                        if let countdown = countdownText {
-                            Text(countdown)
-                                .font(.subheadline)
-                                .foregroundColor(.accent.opacity(0.7))
-                        }
-                    }
-                }
+        ZStack {
+            VStack(alignment: .leading, spacing: 0) {
+                Rectangle()
+                    .fill(.clear)
+                    .frame(maxWidth: .infinity, maxHeight: 16)
                 
-                Spacer()
-                
-                HStack(spacing: 8) {
-                    // Delete entry button
-                    if let entry = entry, (!entry.body.isEmpty || entry.drawingData != nil) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.red)
-                            .frame(width: 36, height: 36)
-                            .background(.controlBackgroundColor)
-                            .clipShape(Circle())
-                            .onTapGesture {
-                                showDeleteConfirmation = true
-                            }
-                        .transition(.scale.combined(with: .opacity))
-                    }
-                    
-                    // Drawing canvas button
-                    Image(systemName: "scribble")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.textColor)
-                        .frame(width: 36, height: 36)
-                        .background(.controlBackgroundColor)
-                        .clipShape(Circle())
-                        .onTapGesture {
-                            self.onOpenDrawingCanvas?()
-                        }
-                    .transition(.scale.combined(with: .opacity))
-                    
-                    // Confirm button
-                    if isTextFieldFocused {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.textColor)
-                            .frame(width: 36, height: 36)
-                            .background(.controlBackgroundColor)
-                            .clipShape(Circle())
-                            .onTapGesture {
-                                isTextFieldFocused = false
-                                guard let date else { return }
-                                saveNote(text: textContent, for: date)
-                            }
-                        .transition(.scale.combined(with: .opacity))
-                    }
-                }
-                .animation(.interactiveSpring, value: entry?.body.isEmpty ?? true)
-                .animation(.interactiveSpring, value: entry?.drawingData != nil)
-                .animation(.interactiveSpring, value: isTextFieldFocused)
-            }
-            
-            // Note content
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    // Text content
-                    ZStack (alignment: .topLeading) {
-                        TextEditor(text: $textContent)
-                            .font(.body)
-                            .foregroundColor(.textColor)
-                            .background(.backgroundColor)
-                            .frame(minHeight: 40, maxHeight: isTextFieldFocused ? 160 : .infinity)
-                            .disableAutocorrection(false)
-                            .autocapitalization(.sentences)
-                            .focused($isTextFieldFocused)
+                // Note content
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Text content
+                        ZStack (alignment: .topLeading) {
+                            TextEditor(text: $textContent)
+                                .font(.body)
+                                .foregroundColor(.textColor)
+                                .background(.backgroundColor)
+                                .frame(minHeight: 40, maxHeight: isTextFieldFocused ? 160 : .infinity)
+                                .disableAutocorrection(false)
+                                .autocapitalization(.sentences)
+                                .focused($isTextFieldFocused)
                             // Alignment nudges to match the text view
-                            .padding(.top, -8)
-                            .padding(.horizontal, -5)
-                            .onAppear {
-                                guard let date else { return }
-                                
-                                entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
-                                guard let entry else { return }
-                                
-                                textContent = entry.body
-                            }
-                            .onChange(of: date ?? nil ) { oldValue, newValue in
-                                // Save old content first if any
-                                if !textContent.isEmpty, let oldDate = oldValue {
-                                    saveNote(text: textContent, for: oldDate)
-                                }
-                                
-                                // Unfocus
-                                isTextFieldFocused = false
-                                
-                                // Update entry if got new date
-                                if let newDate = newValue {
-                                    entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: newDate) }
+                                .padding(.top, -8)
+                                .padding(.horizontal, -5)
+                                .onAppear {
+                                    guard let date else { return }
+                                    
+                                    entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
                                     guard let entry else { return }
+                                    
                                     textContent = entry.body
                                 }
+                                .onChange(of: date ?? nil ) { oldValue, newValue in
+                                    // Save old content first if any
+                                    if !textContent.isEmpty, let oldDate = oldValue {
+                                        saveNote(text: textContent, for: oldDate)
+                                    }
+                                    
+                                    // Unfocus
+                                    isTextFieldFocused = false
+                                    
+                                    // Update entry if got new date
+                                    if let newDate = newValue {
+                                        entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: newDate) }
+                                        guard let entry else { return }
+                                        textContent = entry.body
+                                    }
+                                }
+                                .onChange(of: isTextFieldFocused) { _, newValue in
+                                    onFocusChange?(newValue)
+                                }
+                                .scrollDismissesKeyboard(.never)
+                            if textContent.isEmpty {
+                                Text("Tap to edit note for today...")
+                                    .font(.body)
+                                    .foregroundColor(.textColor.opacity(0.5))
+                                    .allowsHitTesting(false) // Important: prevents blocking TextEditor
                             }
-                            .onChange(of: isTextFieldFocused) { _, newValue in
-                                onFocusChange?(newValue)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Drawing content
+                        if let drawingData = entry?.drawingData, !drawingData.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                DrawingDisplayView(entry: entry, displaySize: 200)
+                                    .frame(width: 200, height: 200)
+                                    .background(.controlBackgroundColor.opacity(0.3))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
-                            .scrollDismissesKeyboard(.never)
-                        if textContent.isEmpty {
-                            Text("Tap to edit note for today...")
-                                .font(.body)
-                                .foregroundColor(.textColor.opacity(0.5))
-                                .allowsHitTesting(false) // Important: prevents blocking TextEditor
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    
-                    // Drawing content
-                    if let drawingData = entry?.drawingData, !drawingData.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            DrawingDisplayView(entry: entry, displaySize: 200)
-                                .frame(width: 200, height: 200)
-                                .background(.controlBackgroundColor.opacity(0.3))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .frame(minHeight: 120, alignment: .topLeading)
+                    .padding(.vertical, 60)
+                }
+                .scrollDismissesKeyboard(.never)
+                
+                Spacer()
+            }
+            .padding(20)
+            .background(.backgroundColor)
+            .onAppear {
+                startTimerIfNeeded()
+            }
+            .onDisappear {
+                stopTimer()
+            }
+            /// On receive timer interval, update the current time if we still need updates
+            .onReceive(Timer.publish(every: timerInterval, on: .main, in: .common).autoconnect()) { _ in
+                // Only update if timer is active and we still need updates
+                if isTimerActive && needsRealTimeUpdates {
+                    currentTime = Date()
+                }
+            }
+            .confirmationDialog("Delete Note", isPresented: $showDeleteConfirmation) {
+                Button("Delete", role: .destructive, action: deleteEntry)
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Delete this note?")
+            }
+            
+            // Header with date and edit button
+            VStack {
+                HStack {
+                    VStack(alignment: .leading) {
+                        if let date {
+                            Text(date, style: .date)
+                                .font(.headline)
+                                .foregroundColor(.textColor)
+                        }
+                        HStack(spacing: 8) {
+                            Text(weekdayLabel)
+                                .font(.subheadline)
+                                .foregroundColor(isToday ? .accent : .secondaryTextColor)
+                            
+                            if let countdown = countdownText {
+                                Text(countdown)
+                                    .font(.subheadline)
+                                    .foregroundColor(.accent.opacity(0.7))
+                            }
                         }
                     }
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 8) {
+                        // Delete entry button
+                        if let entry = entry, (!entry.body.isEmpty || entry.drawingData != nil) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.red)
+                                .frame(width: 36, height: 36)
+                                .background(.controlBackgroundColor)
+                                .clipShape(Circle())
+                                .onTapGesture {
+                                    showDeleteConfirmation = true
+                                }
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                        
+                        // Drawing canvas button
+                        Image(systemName: "scribble")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.textColor)
+                            .frame(width: 36, height: 36)
+                            .background(.controlBackgroundColor)
+                            .clipShape(Circle())
+                            .onTapGesture {
+                                self.onOpenDrawingCanvas?()
+                            }
+                            .transition(.scale.combined(with: .opacity))
+                        
+                        // Confirm button
+                        if isTextFieldFocused {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.textColor)
+                                .frame(width: 36, height: 36)
+                                .background(.controlBackgroundColor)
+                                .clipShape(Circle())
+                                .onTapGesture {
+                                    isTextFieldFocused = false
+                                    guard let date else { return }
+                                    saveNote(text: textContent, for: date)
+                                }
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                    }
+                    .animation(.interactiveSpring, value: entry?.body.isEmpty ?? true)
+                    .animation(.interactiveSpring, value: entry?.drawingData != nil)
+                    .animation(.interactiveSpring, value: isTextFieldFocused)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(minHeight: 120, alignment: .topLeading)
+                .frame(height: 100, alignment: .top)
+                .background(
+                    ZStack {
+                        Rectangle().fill(.backgroundColor) // blur layer
+                        
+                        LinearGradient(
+                            gradient: Gradient(stops: [
+                                .init(color: Color.black.opacity(1.0), location: 0.0),
+                                .init(color: Color.black.opacity(0.0), location: 0.4),
+                                .init(color: Color.black.opacity(0.0), location: 1.0)
+                            ]),
+                            startPoint: .bottom,
+                            endPoint: .top
+                        )
+                        .blendMode(.destinationOut) // punch transparency into the blur
+                    }
+                        .compositingGroup() // required for destinationOut to work
+                )
+                
+                Spacer()
             }
-            .scrollDismissesKeyboard(.never)
-            
-            Spacer()
-        }
-        .padding(20)
-        .background(.backgroundColor)
-        .onAppear {
-            startTimerIfNeeded()
-        }
-        .onDisappear {
-            stopTimer()
-        }
-        /// On receive timer interval, update the current time if we still need updates
-        .onReceive(Timer.publish(every: timerInterval, on: .main, in: .common).autoconnect()) { _ in
-            // Only update if timer is active and we still need updates
-            if isTimerActive && needsRealTimeUpdates {
-                currentTime = Date()
-            }
-        }
-        .confirmationDialog("Delete Note", isPresented: $showDeleteConfirmation) {
-            Button("Delete", role: .destructive, action: deleteEntry)
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Delete this note?")
+            .padding(20)
         }
     }
     

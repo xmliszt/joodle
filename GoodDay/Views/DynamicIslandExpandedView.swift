@@ -14,7 +14,6 @@ struct DynamicIslandExpandedView<Content: View>: View {
     let onDismiss: (() -> Void)?
     
     private let CONTAINER_MIN_HEIGHT: CGFloat = 200
-    private let EDGE_PADDING: CGFloat = 10
     private let SHADOW_RADIUS: CGFloat = 16
     
     init(isExpanded: Binding<Bool>, @ViewBuilder content: () -> Content, onDismiss: (() -> Void)? = nil) {
@@ -44,7 +43,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
                     
                     // The content
                     content
-                        .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius - EDGE_PADDING - 20))
+                        .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius - UIDevice.dynamicIslandFrame.origin.y - 20))
                         .opacity(isExpanded ? 1 : 0)
                         .blur(radius: isExpanded ? 0 : 50)
                         .scaleEffect(isExpanded ? 1 : 0)
@@ -60,7 +59,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
                 // Black to blend into dynamic island cutout
                 .background(.black)
                 // Corner radius matches border of the device
-                .cornerRadius(UIDevice.screenCornerRadius - EDGE_PADDING)
+                .cornerRadius(UIDevice.screenCornerRadius - UIDevice.dynamicIslandFrame.origin.y)
                 // Subtle shadow to make it hovered
                 .shadow(color: isExpanded ? .black.opacity(0.1) : .clear, radius: SHADOW_RADIUS, y: 10)
                 // Animation: when collapse, no spring as that will not fully conceal it in the dynamic island area as it is bouncy
@@ -72,20 +71,20 @@ struct DynamicIslandExpandedView<Content: View>: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(EDGE_PADDING)
-            
-            
+            .padding(UIDevice.dynamicIslandFrame.origin.y)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea(.all, edges: .top)
+        .ignoresSafeArea(.all, edges: .vertical)
         // Define hit zone
-        .contentShape(Rectangle())
+        .contentShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
         // Only receive hit test when expanded
         .allowsHitTesting(isExpanded)
-        .animation(.easeInOut, value: isExpanded)
+        .animation(.springFkingSatifying, value: isExpanded)
         .onTapGesture {
             onDismiss?()
         }
+        // Hide when not expanded
+        .opacity(isExpanded ? 1 : 0)
+        .animation(.springFkingSatifying, value: isExpanded)
         // Hide status bar when expanded
         .statusBarHidden(isExpanded)
     }

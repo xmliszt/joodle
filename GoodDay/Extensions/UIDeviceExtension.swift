@@ -45,7 +45,7 @@ extension UIDevice {
         
         let screenWidth = UIScreen.main.bounds.width
         let islandWidth: CGFloat = 126
-        let islandHeight: CGFloat = 37.33
+        let islandHeight: CGFloat = 36
         let x = (screenWidth - islandWidth) / 2
         let y: CGFloat = 11
         
@@ -54,7 +54,7 @@ extension UIDevice {
     
     static var dynamicIslandSize: CGSize {
         guard UIDevice.hasDynamicIsland else { return .zero }
-        return CGSize(width: 126, height: 37.33)
+        return CGSize(width: 126, height: 36)
     }
 }
 

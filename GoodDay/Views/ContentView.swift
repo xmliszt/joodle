@@ -60,138 +60,141 @@ struct ContentView: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            
-            // Calculate spacing for the grid based on geometry values
-            let itemsSpacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: viewMode)
-            
-            ZStack(alignment: .top) {
-                ResizableSplitView(top: {
-                    // Full-screen scrollable year grid
-                    ScrollViewReader { scrollProxy in
-                        ScrollView(showsIndicators: false) {
-                            // Add spacer at top to account for header overlay
-                            Spacer()
-                                .frame(height: headerHeight)
-                                .id("topSpacer")
-                            
-                            YearGridView(
-                                year: selectedYear,
-                                viewMode: viewMode,
-                                dotsSpacing: itemsSpacing,
-                                items: itemsInYear,
-                                entries: entries,
-                                highlightedItemId: highlightedId
-                            )
-                            .simultaneousGesture(
-                                DragGesture(minimumDistance: 0)
-                                    .onChanged { handleDragChanged(value: $0, geometry: geometry) }
-                                    .onEnded { handleDragEnded(value: $0, geometry: geometry, scrollProxy: scrollProxy) }
-                            )
-                            .simultaneousGesture(
-                                MagnificationGesture()
-                                    .onChanged { handlePinchChanged(value: $0) }
-                                    .onEnded { handlePinchEnded(value: $0) }
-                            )
-                        }
-                        .scrollDisabled(isScrollingDisabled || isPinching)
-                        .background(.backgroundColor)
-                        // When view mode change, scroll to today's dot
-                        .onChange(of: viewMode) {
-                            scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
-                        }
-                        // When year changes, scroll to relevant date
-                        .onChange(of: selectedYear) {
-                            scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
-                        }
-                        // Initial scroll to today's dot for both modes
-                        .onAppear {
-                            yearGridViewSize = geometry.size
-                            self.scrollProxy = scrollProxy
-                            scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
-                        }
-                        // When device orientation changes, scroll to today's dot
-                        .onRotate {_ in
-                            yearGridViewSize = geometry.size
-                            scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
-                        }
-                        .onDisappear {
-                            self.scrollProxy = nil
-                        }
-                    }
-                }, bottom: {
-                    EntryEditingView(
-                        date: selectedDateItem?.date,
-                        onOpenDrawingCanvas: { showDrawingCanvas = true },
-                        onFocusChange: { isFocused in
-                            guard isFocused, let selectedDateItem, let scrollProxy else { return }
-                            scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
-                        }
-                    )
-                }, hasBottomView: selectedDateItem != nil, onBottomDismissed: {
-                    selectedDateItem = nil
-                }, onTopViewHeightChange: { newHeight in
-                    debugPrint("Heigth changed: \(newHeight)")
-                    yearGridViewSize.height = newHeight
-                    guard let selectedDateItem, let scrollProxy else { return }
-                    scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
-                })
-                .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
-                .ignoresSafeArea(.all, edges: .bottom)
-
-                // Floating header with blur backdrop
-                HeaderView(
-                    highlightedEntry: highlightedId != nil ? (entries.first(where: { $0.createdAt == getItem(from: highlightedId!)?.date})) : nil,
-                    geometry: geometry,
-                    highlightedItem: highlightedId != nil ? getItem(from: highlightedId!) : nil,
-                    selectedYear: $selectedYear,
-                    viewMode: viewMode,
-                    onToggleViewMode: toggleViewMode,
-                    onSettingsAction: {
-                        navigateToSettings = true
-                    }
-                )
+        ZStack {
+            GeometryReader { geometry in
+                // Calculate spacing for the grid based on geometry values
+                let itemsSpacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: viewMode)
                 
-                // Dynamic island drawing canvas view
-                if UIDevice.hasDynamicIsland && selectedDateItem != nil {
-                    DynamicIslandExpandedView(isExpanded: $showDrawingCanvas) {
-                        DrawingCanvasView(
-                            date: selectedDateItem!.date,
-                            onDismiss: {
-                                showDrawingCanvas = false
+                ZStack(alignment: .top) {
+                    ResizableSplitView(top: {
+                        // Full-screen scrollable year grid
+                        ScrollViewReader { scrollProxy in
+                            ScrollView(showsIndicators: false) {
+                                // Add spacer at top to account for header overlay
+                                Spacer()
+                                    .frame(height: headerHeight)
+                                    .id("topSpacer")
+                                
+                                YearGridView(
+                                    year: selectedYear,
+                                    viewMode: viewMode,
+                                    dotsSpacing: itemsSpacing,
+                                    items: itemsInYear,
+                                    entries: entries,
+                                    highlightedItemId: highlightedId
+                                )
+                                .simultaneousGesture(
+                                    DragGesture(minimumDistance: 0)
+                                        .onChanged { handleDragChanged(value: $0, geometry: geometry) }
+                                        .onEnded { handleDragEnded(value: $0, geometry: geometry, scrollProxy: scrollProxy) }
+                                )
+                                .simultaneousGesture(
+                                    MagnificationGesture()
+                                        .onChanged { handlePinchChanged(value: $0) }
+                                        .onEnded { handlePinchEnded(value: $0) }
+                                )
+                            }
+                            .scrollDisabled(isScrollingDisabled || isPinching)
+                            .background(.backgroundColor)
+                            // When view mode change, scroll to today's dot
+                            .onChange(of: viewMode) {
+                                scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
+                            }
+                            // When year changes, scroll to relevant date
+                            .onChange(of: selectedYear) {
+                                scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
+                            }
+                            // Initial scroll to today's dot for both modes
+                            .onAppear {
+                                yearGridViewSize = geometry.size
+                                self.scrollProxy = scrollProxy
+                                scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
+                            }
+                            // When device orientation changes, scroll to today's dot
+                            .onRotate {_ in
+                                yearGridViewSize = geometry.size
+                                scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
+                            }
+                            .onDisappear {
+                                self.scrollProxy = nil
+                            }
+                        }
+                    }, bottom: {
+                        EntryEditingView(
+                            date: selectedDateItem?.date,
+                            onOpenDrawingCanvas: { showDrawingCanvas = true },
+                            onFocusChange: { isFocused in
+                                guard isFocused, let selectedDateItem, let scrollProxy else { return }
+                                scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
                             }
                         )
-                    } onDismiss: {
-                        showDrawingCanvas = false
-                    }.id("DynamicIslandExpandedView-\(selectedDateItem?.id ?? "none")")
+                    }, hasBottomView: selectedDateItem != nil, onBottomDismissed: {
+                        selectedDateItem = nil
+                    }, onTopViewHeightChange: { newHeight in
+                        debugPrint("Heigth changed: \(newHeight)")
+                        yearGridViewSize.height = newHeight
+                        guard let selectedDateItem, let scrollProxy else { return }
+                        scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
+                    })
+                    .frame(alignment: .top)
+                    .ignoresSafeArea(.all, edges: .bottom)
+
+                    // Floating header with blur backdrop
+                    HeaderView(
+                        highlightedEntry: highlightedId != nil ? (entries.first(where: { $0.createdAt == getItem(from: highlightedId!)?.date})) : nil,
+                        geometry: geometry,
+                        highlightedItem: highlightedId != nil ? getItem(from: highlightedId!) : nil,
+                        selectedYear: $selectedYear,
+                        viewMode: viewMode,
+                        onToggleViewMode: toggleViewMode,
+                        onSettingsAction: {
+                            navigateToSettings = true
+                        }
+                    )
+                }
+                .background(.backgroundColor)
+                .onShake {
+                    handleShakeGesture()
                 }
             }
-            .background(.backgroundColor)
-            .onShake {
-                handleShakeGesture()
+            .navigationDestination(isPresented: $navigateToSettings) {
+                SettingsView()
+                    .environment(userPreferences)
             }
-        }
-        .navigationDestination(isPresented: $navigateToSettings) {
-            SettingsView()
-                .environment(userPreferences)
-        }
-        .ignoresSafeArea(.all, edges: .bottom)
-        // Present drawing canvas
-        .sheet(isPresented: Binding<Bool>(
-            // Only present the sheet when device has no dynamic island
-            get: { showDrawingCanvas && !UIDevice.hasDynamicIsland },
-            set: { showDrawingCanvas = $0 }
-        )) {
-            DrawingCanvasView(
-                date: selectedDateItem!.date,
-                onDismiss: {
+            .ignoresSafeArea(.all, edges: .bottom)
+            // Present drawing canvas
+            .sheet(isPresented: Binding<Bool>(
+                // Only present the sheet when device has no dynamic island
+                get: { showDrawingCanvas && !UIDevice.hasDynamicIsland },
+                set: { showDrawingCanvas = $0 }
+            )) {
+                DrawingCanvasView(
+                    date: selectedDateItem!.date,
+                    onDismiss: {
+                        showDrawingCanvas = false
+                    }
+                )
+                .disabled(selectedDateItem == nil)
+                .presentationDetents([.height(420)])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(UIDevice.screenCornerRadius)
+            }
+            
+            
+            // Dynamic island drawing canvas view
+            if UIDevice.hasDynamicIsland && selectedDateItem != nil {
+                DynamicIslandExpandedView(isExpanded: $showDrawingCanvas) {
+                    DrawingCanvasView(
+                        date: selectedDateItem!.date,
+                        onDismiss: {
+                            showDrawingCanvas = false
+                        }
+                    )
+                } onDismiss: {
                     showDrawingCanvas = false
                 }
-            )
-            .disabled(selectedDateItem == nil)
-            .presentationDetents([.height(420)])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(UIDevice.screenCornerRadius)
+                .id("DynamicIslandExpandedView-\(selectedDateItem?.id ?? "none")")
+            }
         }
     }
     
