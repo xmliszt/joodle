@@ -16,6 +16,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     @State private var isSnapping: Bool = false
     @State private var hasShownBottomView: Bool = false
     @State private var isKeyboardVisible: Bool = false
+    @State private var isDraggable: Bool = true
     
     let topView: Top
     let bottomView: Bottom
@@ -68,7 +69,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                         .frame(width: _geometry.size.width, height: topHeight, alignment: .top)
                         .clipShape(UnevenRoundedRectangle(
                             bottomLeadingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, bottomTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, style: .continuous))
-                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .bouncy : nil, value: splitPosition)
+                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .springFkingSatifying : nil, value: splitPosition)
                     
                     // Resize Handle
                     Rectangle()
@@ -83,6 +84,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                         )
                         // Drag gesture handling for resize handle area
                         .gesture(
+                            !isDraggable ? nil :
                             DragGesture()
                                 .onChanged { value in
                                     isDragging = true
@@ -124,7 +126,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                                     }
                                 }
                         )
-                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .bouncy : nil, value: splitPosition)
+                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .springFkingSatifying : nil, value: splitPosition)
                     
                     // Bottom container - clips bottomView from top
                     bottomView
@@ -132,6 +134,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                         .clipShape(UnevenRoundedRectangle(topLeadingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, topTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, style: .continuous))
                         // Drag gesture handling for bottom container as well
                         .gesture(
+                            !isDraggable ? nil :
                             DragGesture()
                                 .onChanged { value in
                                     isDragging = true
@@ -173,7 +176,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                                     }
                                 }
                         )
-                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .bouncy : nil, value: splitPosition)
+                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .springFkingSatifying : nil, value: splitPosition)
                 }
             }
             .onAppear {
@@ -206,19 +209,24 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             .onReceive(Publishers.keyboardInfo) { info in
                 let keyboardHeight = info.height
                 withAnimation {
+                    // Keyboard dismissed
                     if keyboardHeight == 0.0 {
                         isKeyboardVisible = false
                         MIN_SPLIT_POSITION = 0.0
                         MAX_SPLIT_POSITION = 1.0
                         splitPosition = 0.5
                         SNAP_POSITIONS = [0.25, 0.5, 0.75, 1.0]
-                    } else {
-                        // Keyboard is shown
+                        isDraggable = true
+                    }
+                    // Keyboard is shown
+                    else {
                         isKeyboardVisible = true
                         MIN_SPLIT_POSITION = 0
                         MAX_SPLIT_POSITION = 0.5
                         splitPosition = 0.25
                         SNAP_POSITIONS = [0.25]
+                        // Prevent drag
+                        isDraggable = false
                     }
                     let newHeight = _geometry.size.height * splitPosition
                     self.onTopViewHeightChange?(newHeight)

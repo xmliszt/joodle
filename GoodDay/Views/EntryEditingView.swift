@@ -123,7 +123,7 @@ struct EntryEditingView: View {
         // Same day or next day with less than 24 hours: show hours, minutes, seconds
         if days == 0 && (hours > 0 || minutes > 0 || seconds > 0) {
             var parts: [String] = []
-
+            
             if hours > 0 {
                 if hours == 1 {
                     parts.append("1h")
@@ -184,16 +184,23 @@ struct EntryEditingView: View {
                                 .disableAutocorrection(false)
                                 .autocapitalization(.sentences)
                                 .focused($isTextFieldFocused)
-                            // Alignment nudges to match the text view
+                                // Alignment nudges to match the text view
                                 .padding(.top, -8)
                                 .padding(.horizontal, -5)
+                                .animation(.springFkingSatifying, value: isTextFieldFocused)
                                 .onAppear {
                                     guard let date else { return }
-                                    
                                     entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
                                     guard let entry else { return }
-                                    
                                     textContent = entry.body
+                                }
+                                .onDisappear() {
+                                    withAnimation {
+                                        isTextFieldFocused = false
+                                    } completion: {
+                                        guard let date, textContent.isEmpty == false else { return }
+                                        saveNote(text: textContent, for: date)
+                                    }
                                 }
                                 .onChange(of: date ?? nil ) { oldValue, newValue in
                                     // Save old content first if any
@@ -202,7 +209,9 @@ struct EntryEditingView: View {
                                     }
                                     
                                     // Unfocus
-                                    isTextFieldFocused = false
+                                    withAnimation {
+                                        isTextFieldFocused = false
+                                    }
                                     
                                     // Update entry if got new date
                                     if let newDate = newValue {
@@ -289,32 +298,6 @@ struct EntryEditingView: View {
                     Spacer()
                     
                     HStack(spacing: 8) {
-                        // Delete entry button
-                        if let entry = entry, (!entry.body.isEmpty || entry.drawingData != nil) {
-                            Image(systemName: "trash")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.red)
-                                .frame(width: 36, height: 36)
-                                .background(.controlBackgroundColor)
-                                .clipShape(Circle())
-                                .onTapGesture {
-                                    showDeleteConfirmation = true
-                                }
-                                .transition(.scale.combined(with: .opacity))
-                        }
-                        
-                        // Drawing canvas button
-                        Image(systemName: "scribble")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.textColor)
-                            .frame(width: 36, height: 36)
-                            .background(.controlBackgroundColor)
-                            .clipShape(Circle())
-                            .onTapGesture {
-                                self.onOpenDrawingCanvas?()
-                            }
-                            .transition(.scale.combined(with: .opacity))
-                        
                         // Confirm button
                         if isTextFieldFocused {
                             Image(systemName: "checkmark")
@@ -323,19 +306,43 @@ struct EntryEditingView: View {
                                 .frame(width: 36, height: 36)
                                 .background(.controlBackgroundColor)
                                 .clipShape(Circle())
+                                .transition(.opacity.animation(.springFkingSatifying))
                                 .onTapGesture {
-                                    isTextFieldFocused = false
-                                    guard let date else { return }
-                                    saveNote(text: textContent, for: date)
+                                    withAnimation(.spring()) {
+                                        isTextFieldFocused = false
+                                        guard let date else { return }
+                                        saveNote(text: textContent, for: date)
+                                    }
                                 }
-                                .transition(.scale.combined(with: .opacity))
+                        }
+
+                        // Delete entry button
+                        if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil) && !isTextFieldFocused {
+                            Image(systemName: "trash")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.red)
+                                .frame(width: 36, height: 36)
+                                .background(.controlBackgroundColor)
+                                .clipShape(Circle())
+                                .transition(.opacity.animation(.springFkingSatifying))
+                                .onTapGesture { showDeleteConfirmation = true }
+                        }
+
+                        // Drawing canvas button
+                        if !isTextFieldFocused {
+                            Image(systemName: "scribble")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.textColor)
+                                .frame(width: 36, height: 36)
+                                .background(.controlBackgroundColor)
+                                .clipShape(Circle())
+                                .transition(.opacity.animation(.springFkingSatifying))
+                                .onTapGesture { self.onOpenDrawingCanvas?() }
                         }
                     }
-                    .animation(.interactiveSpring, value: entry?.body.isEmpty ?? true)
-                    .animation(.interactiveSpring, value: entry?.drawingData != nil)
-                    .animation(.interactiveSpring, value: isTextFieldFocused)
+                    .animation(.springFkingSatifying, value: isTextFieldFocused)
                 }
-                .frame(height: 100, alignment: .top)
+                .frame(height: 80, alignment: .top)
                 .background(
                     ZStack {
                         Rectangle().fill(.backgroundColor) // blur layer
@@ -364,10 +371,10 @@ struct EntryEditingView: View {
     /// Start the timer if needed
     private func startTimerIfNeeded() {
         // Only activate timer if we have a future entry with content and it's within 24 hours
-        isTimerActive = isFuture && 
-                       entry != nil && 
-                       !entry!.body.isEmpty && 
-                       needsRealTimeUpdates
+        isTimerActive = isFuture &&
+        entry != nil &&
+        !entry!.body.isEmpty &&
+        needsRealTimeUpdates
         
         if isTimerActive { currentTime = Date() }
     }
@@ -420,7 +427,7 @@ struct EntryEditingView: View {
     
     private func deleteEntry() {
         guard let entry else { return }
-
+        
         // Clear the entry's body and drawing data
         entry.body = ""
         entry.drawingData = nil

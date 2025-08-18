@@ -123,7 +123,10 @@ struct ContentView: View {
                     }, bottom: {
                         EntryEditingView(
                             date: selectedDateItem?.date,
-                            onOpenDrawingCanvas: { showDrawingCanvas = true },
+                            onOpenDrawingCanvas: {
+                                Haptic.play()
+                                showDrawingCanvas = true
+                            },
                             onFocusChange: { isFocused in
                                 guard isFocused, let selectedDateItem, let scrollProxy else { return }
                                 scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
@@ -132,7 +135,6 @@ struct ContentView: View {
                     }, hasBottomView: selectedDateItem != nil, onBottomDismissed: {
                         selectedDateItem = nil
                     }, onTopViewHeightChange: { newHeight in
-                        debugPrint("Heigth changed: \(newHeight)")
                         yearGridViewSize.height = newHeight
                         guard let selectedDateItem, let scrollProxy else { return }
                         scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
@@ -429,7 +431,7 @@ struct ContentView: View {
     /// Toggle the view mode between current modes
     private func toggleViewMode() {
         // Use a spring animation for morphing effect
-        withAnimation(.bouncy) {
+        withAnimation(.springFkingSatifying) {
             viewMode = viewMode == .now ? .year : .now
         }
     }
@@ -437,7 +439,7 @@ struct ContentView: View {
     /// Toggle the view mode to a specific mode
     private func toggleViewMode(to newViewMode: ViewMode) {
         // Use a spring animation for morphing effect
-        withAnimation(.bouncy) {
+        withAnimation(.springFkingSatifying) {
             viewMode = newViewMode
             // Save the new view mode as the user's preference
             userPreferences.defaultViewMode = newViewMode
@@ -498,7 +500,7 @@ struct ContentView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             let currentYear = Calendar.current.component(.year, from: Date())
             
-            withAnimation(.easeInOut) {
+            withAnimation(.springFkingSatifying) {
                 if selectedYear != currentYear {
                     // For non-current years, scroll to the top spacer to show first row properly
                     scrollProxy.scrollTo("topSpacer", anchor: .top)
