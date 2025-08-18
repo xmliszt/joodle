@@ -47,6 +47,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     private let DISMISS_POSITION: CGFloat = 0.8
     /// Snap position includes 1.0, which means topView will be occupying the fullscreen
     @State private var SNAP_POSITIONS: [CGFloat] = [0.25, 0.5, 0.75, 1.0]
+    /// Compensate corner radius so it is just a bit smaller than device actual radius
+    private let CORNER_RADIUS_COMPENSATION: CGFloat = 5
     
     var body: some View {
         GeometryReader { _geometry in
@@ -57,18 +59,21 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                 // Background color
                 Color.accentColor
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .opacity(splitPosition == 1.0 ? 0.0 : 1.0)
+                    .animation(.easeInOut, value: splitPosition)
                 
                 VStack(spacing: 0) {
                     // Top View - YearGridView
                     topView
                         .frame(width: _geometry.size.width, height: topHeight, alignment: .top)
-                        .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: UIDevice.screenCornerRadius, bottomTrailingRadius: UIDevice.screenCornerRadius))
+                        .clipShape(UnevenRoundedRectangle(
+                            bottomLeadingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, bottomTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, style: .continuous))
                         .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .bouncy : nil, value: splitPosition)
                     
                     // Resize Handle
                     Rectangle()
                         .fill(.clear)
-                    // Still make the rectangle interactive while keeping background clear
+                        // Still make the rectangle interactive while keeping background clear
                         .contentShape(Rectangle())
                         .frame(height: DRAG_HANDLE_HEIGHT)
                         .overlay(
@@ -124,7 +129,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                     // Bottom container - clips bottomView from top
                     bottomView
                         .frame(width: _geometry.size.width, height: bottomHeight, alignment: .top)
-                        .clipShape(UnevenRoundedRectangle(topLeadingRadius: UIDevice.screenCornerRadius, topTrailingRadius: UIDevice.screenCornerRadius))
+                        .clipShape(UnevenRoundedRectangle(topLeadingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, topTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, style: .continuous))
                         // Drag gesture handling for bottom container as well
                         .gesture(
                             DragGesture()
@@ -236,5 +241,5 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         top: { Color.white },
         bottom: { Color.white },
         hasBottomView: true
-    ).ignoresSafeArea(.container, edges: .bottom)
+    ).ignoresSafeArea(.container)
 }

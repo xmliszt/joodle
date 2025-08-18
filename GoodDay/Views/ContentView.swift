@@ -35,6 +35,7 @@ struct ContentView: View {
     
     @State private var selectedYear = Calendar.current.component(.year, from: Date())
     @State private var navigateToSettings = false
+    @State private var hideDynamicIslandView = false
     private let headerHeight: CGFloat = 100.0
     
     // Pinch gesture states
@@ -137,7 +138,7 @@ struct ContentView: View {
                         scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
                     })
                     .frame(alignment: .top)
-                    .ignoresSafeArea(.all, edges: .bottom)
+                    .ignoresSafeArea(.container, edges: .bottom)
 
                     // Floating header with blur backdrop
                     HeaderView(
@@ -157,10 +158,6 @@ struct ContentView: View {
                     handleShakeGesture()
                 }
             }
-            .navigationDestination(isPresented: $navigateToSettings) {
-                SettingsView()
-                    .environment(userPreferences)
-            }
             .ignoresSafeArea(.all, edges: .bottom)
             // Present drawing canvas
             .sheet(isPresented: Binding<Bool>(
@@ -179,20 +176,43 @@ struct ContentView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(UIDevice.screenCornerRadius)
             }
+            // Navigate to setting view
+            .navigationDestination(isPresented: $navigateToSettings) {
+                SettingsView()
+                    .environment(userPreferences)
+            }
+            .onChange(of: navigateToSettings) { _, newValue in
+                // If setting presented, hide dynamic island view
+                if newValue == true {
+                    hideDynamicIslandView = true
+                }
+                // If setting dismissed, show dynamic island view after a short delay
+                else {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        hideDynamicIslandView = false
+                    }
+                }
+            }
+            
             
             
             // Dynamic island drawing canvas view
             if UIDevice.hasDynamicIsland && selectedDateItem != nil {
-                DynamicIslandExpandedView(isExpanded: $showDrawingCanvas) {
-                    DrawingCanvasView(
-                        date: selectedDateItem!.date,
-                        onDismiss: {
-                            showDrawingCanvas = false
-                        }
-                    )
-                } onDismiss: {
-                    showDrawingCanvas = false
-                }
+                DynamicIslandExpandedView(
+                    isExpanded: $showDrawingCanvas,
+                    content: {
+                        DrawingCanvasView(
+                            date: selectedDateItem!.date,
+                            onDismiss: {
+                                showDrawingCanvas = false
+                            }
+                        )
+                    },
+                    // Hide dynamic island view when navigate to setting
+                    hidden: hideDynamicIslandView,
+                    onDismiss: {
+                        showDrawingCanvas = false
+                    })
                 .id("DynamicIslandExpandedView-\(selectedDateItem?.id ?? "none")")
             }
         }
