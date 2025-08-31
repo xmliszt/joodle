@@ -88,3 +88,5 @@ iOSInjectionProject/
 .DS_Store
 
 .cursor
+
+buildServer.json
