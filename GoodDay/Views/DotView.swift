@@ -16,12 +16,9 @@ struct DotView: View {
     let withEntry: Bool
     let dotStyle: DotStyle
     
-    private var scale: CGFloat {
-        highlighted ? 2.0 : 1
-    }
-    
     // MARK: Computed dot color
     private var dotColor: Color {
+        if highlighted { return .accent }
         // Override base color if it is a present dot.
         if dotStyle == .present { return .accent }
         if dotStyle == .future { return .textColor.opacity(0.15) }
@@ -29,6 +26,7 @@ struct DotView: View {
     }
     
     private var ringColor: Color {
+        if highlighted { return .accent }
         // Override base color if it is a present dot.
         if dotStyle == .present { return .accent }
         if dotStyle == .future { return .textColor.opacity(0.15) }
@@ -47,7 +45,6 @@ struct DotView: View {
             Circle()
                 .fill(dotColor)
                 .frame(width: size, height: size)
-                .scaleEffect(scale)
                 .animation(
                     .springFkingSatifying,
                     value: highlighted
@@ -58,7 +55,6 @@ struct DotView: View {
                 Circle()
                     .stroke(ringColor, lineWidth: size * 0.15)
                     .frame(width: size * 1.5, height: size * 1.5)
-                    .scaleEffect(scale)
                     .animation(
                         .springFkingSatifying,
                         value: highlighted

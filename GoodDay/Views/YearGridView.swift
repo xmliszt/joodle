@@ -16,7 +16,7 @@ struct DateItem: Identifiable {
 }
 
 struct YearGridView: View {
-
+    
     // MARK: Params
     /// The year to display
     let year: Int
@@ -30,7 +30,7 @@ struct YearGridView: View {
     let entries: [DayEntry]
     /// The id of the highlighted item
     let highlightedItemId: String?
-
+    
     // MARK: Cached Computed Properties
     /// Pre-computed layout metrics to avoid repeated calculations
     private var layoutMetrics: LayoutMetrics {
@@ -41,26 +41,26 @@ struct YearGridView: View {
             totalContentHeight: totalContentHeight
         )
     }
-
+    
     private struct LayoutMetrics {
         let numberOfRows: Int
         let totalContentHeight: CGFloat
     }
-
+    
     /// Pre-computed today's date for comparison
     private var todayStart: Date {
         Calendar.current.startOfDay(for: Date())
     }
-
+    
     // MARK: View
     var body: some View {
         // Use a completely flat structure with manual positioning
         // This ensures every dot maintains stable identity regardless of layout changes
         let metrics = layoutMetrics
-
+        
         // Pre-build entry lookup dictionary for O(1) lookups instead of O(n) per dot
         let entriesByDateKey = buildEntriesLookup()
-
+        
         VStack(spacing: 0) {
             GeometryReader { geometry in
                 let containerWidth = geometry.size.width
@@ -68,7 +68,7 @@ struct YearGridView: View {
                 let totalDotWidth = containerWidth - totalSpacingWidth
                 let itemSpacing = totalDotWidth / CGFloat(viewMode.dotsPerRow)
                 let startX = itemSpacing / 2
-
+                
                 ZStack(alignment: .topLeading) {
                     ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                         let dotStyle = getDotStyle(for: item.date)
@@ -77,19 +77,25 @@ struct YearGridView: View {
                         let hasDrawing = entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true)
                         let isHighlighted = highlightedItemId == item.id
                         let isToday = Calendar.current.isDate(item.date, inSameDayAs: todayStart)
-
+                        
                         let row = index / viewMode.dotsPerRow
                         let col = index % viewMode.dotsPerRow
                         let xPos = startX + CGFloat(col) * (itemSpacing + dotsSpacing)
                         let yPos = CGFloat(row) * (viewMode.dotSize + dotsSpacing)
-
+                        
                         Group {
                             if hasDrawing {
                                 // Show drawing instead of dot with specific frame sizes
-                                DrawingDisplayView(entry: entry, displaySize: viewMode.drawingSize, dotStyle: dotStyle)
-                                    .frame(width: viewMode.drawingSize, height: viewMode.drawingSize)
-                                    .scaleEffect(isHighlighted ? 2.0 : 1.0)
-                                    .animation(.springFkingSatifying, value: isHighlighted)
+                                DrawingDisplayView(
+                                    entry: entry,
+                                    displaySize: viewMode.drawingSize,
+                                    dotStyle: dotStyle,
+                                    isHighlighted: isHighlighted
+                                )
+                                .frame(width: viewMode.drawingSize, height: viewMode.drawingSize)
+                                .animation(
+                                    .springFkingSatifying,
+                                    value: isHighlighted)
                             } else {
                                 // Show regular dot
                                 DotView(
@@ -116,7 +122,7 @@ struct YearGridView: View {
         }
         .frame(maxWidth: .infinity, alignment: .top)
     }
-
+    
     // MARK: Functions
     /// Get the style of the dot for a given date (optimized)
     private func getDotStyle(for date: Date) -> DotStyle {
@@ -127,13 +133,13 @@ struct YearGridView: View {
         }
         return .future
     }
-
+    
     /// Build a dictionary for O(1) entry lookups by date
     private func buildEntriesLookup() -> [String: DayEntry] {
         let calendar = Calendar.current
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-
+        
         var lookup: [String: DayEntry] = [:]
         for entry in entries {
             let dayStart = calendar.startOfDay(for: entry.createdAt)
@@ -142,7 +148,7 @@ struct YearGridView: View {
         }
         return lookup
     }
-
+    
     /// Find the entry for a given date using pre-built lookup
     private func getEntryForDate(_ date: Date, from lookup: [String: DayEntry]) -> DayEntry? {
         let calendar = Calendar.current
@@ -152,7 +158,7 @@ struct YearGridView: View {
         let key = formatter.string(from: dayStart)
         return lookup[key]
     }
-
+    
     /// Find the entry for a given date (legacy method for backward compatibility)
     private func entryForDate(_ date: Date) -> DayEntry? {
         let calendar = Calendar.current
@@ -160,12 +166,12 @@ struct YearGridView: View {
             calendar.isDate(entry.createdAt, inSameDayAs: date)
         }
     }
-
+    
     /// Check if a given date is today's date (optimized)
     private func isToday(for date: Date) -> Bool {
         return Calendar.current.isDate(date, inSameDayAs: todayStart)
     }
-
+    
     /// Check if a given date is in the past (before today) (optimized)
     private func isPastDay(for date: Date) -> Bool {
         return date < todayStart
@@ -175,7 +181,7 @@ struct YearGridView: View {
 #Preview {
     let calendar = Calendar.current
     let currentYear = calendar.component(.year, from: Date())
-
+    
     // Generate sample items for the year
     let startOfYear = calendar.date(from: DateComponents(year: currentYear, month: 1, day: 1))!
     let daysInYear = calendar.dateInterval(of: .year, for: Date())!.duration / (24 * 60 * 60)
@@ -186,7 +192,7 @@ struct YearGridView: View {
             date: date
         )
     }
-
+    
     ScrollView {
         VStack {
             YearGridView(

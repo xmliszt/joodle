@@ -11,6 +11,7 @@ struct DrawingDisplayView: View {
     let entry: DayEntry?
     let displaySize: CGFloat
     let dotStyle: DotStyle
+    let isHighlighted: Bool
     
     @State private var pathsWithMetadata: [PathWithMetadata] = []
     @State private var isVisible = false
@@ -19,6 +20,7 @@ struct DrawingDisplayView: View {
     private let pathCache = DrawingPathCache.shared
     
     private var foregroundColor: Color {
+        if isHighlighted { return .accent }
         // Override base color if it is a present dot.
         if dotStyle == .present { return .accent }
         if dotStyle == .future { return .textColor.opacity(0.15) }
@@ -82,7 +84,7 @@ struct DrawingDisplayView: View {
 }
 
 #Preview {
-    DrawingDisplayView(entry: nil, displaySize: 200, dotStyle: .present)
+    DrawingDisplayView(entry: nil, displaySize: 200, dotStyle: .present, isHighlighted: true)
         .frame(width: 200, height: 200)
         .background(.gray.opacity(0.1))
 }

@@ -184,7 +184,7 @@ struct EntryEditingView: View {
                                 .disableAutocorrection(false)
                                 .autocapitalization(.sentences)
                                 .focused($isTextFieldFocused)
-                                // Alignment nudges to match the text view
+                            // Alignment nudges to match the text view
                                 .padding(.top, -8)
                                 .padding(.horizontal, -5)
                                 .animation(.springFkingSatifying, value: isTextFieldFocused)
@@ -236,7 +236,7 @@ struct EntryEditingView: View {
                         // Drawing content
                         if let drawingData = entry?.drawingData, !drawingData.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
-                                DrawingDisplayView(entry: entry, displaySize: 200, dotStyle: .present)
+                                DrawingDisplayView(entry: entry, displaySize: 200, dotStyle: .present, isHighlighted: true)
                                     .frame(width: 200, height: 200)
                                     .background(.controlBackgroundColor.opacity(0.3))
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -315,7 +315,7 @@ struct EntryEditingView: View {
                                     }
                                 }
                         }
-
+                        
                         // Delete entry button
                         if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil) && !isTextFieldFocused {
                             Image(systemName: "trash")
@@ -327,7 +327,7 @@ struct EntryEditingView: View {
                                 .transition(.opacity.animation(.springFkingSatifying))
                                 .onTapGesture { showDeleteConfirmation = true }
                         }
-
+                        
                         // Drawing canvas button
                         if !isTextFieldFocused {
                             Image(systemName: "scribble")

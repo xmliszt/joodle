@@ -53,7 +53,7 @@ struct HeaderView: View {
                                 .fill(Color.clear)
                                 .frame(width: 36, height: 36) // Small layout footprint
                                 .overlay(
-                                    DrawingDisplayView(entry: entry, displaySize: drawingSize, dotStyle: .present)
+                                    DrawingDisplayView(entry: entry, displaySize: drawingSize, dotStyle: .present, isHighlighted: true)
                                         .frame(width: drawingSize, height: drawingSize)
                                         .animation(.interactiveSpring, value: highlightedEntry)
                                 )
@@ -76,7 +76,7 @@ struct HeaderView: View {
                 }
                 
                 Spacer()
-  
+                
                 // Metaball morphing buttons
                 MetaballButtonView(
                     viewMode: viewMode,
@@ -107,7 +107,7 @@ struct HeaderView: View {
         )
         .ignoresSafeArea(edges: .top)
     }
-
+    
 }
 
 #Preview {
