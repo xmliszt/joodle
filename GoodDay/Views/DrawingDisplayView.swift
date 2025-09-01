@@ -10,11 +10,20 @@ import SwiftUI
 struct DrawingDisplayView: View {
     let entry: DayEntry?
     let displaySize: CGFloat
+    let dotStyle: DotStyle
+    
     @State private var pathsWithMetadata: [PathWithMetadata] = []
     @State private var isVisible = false
     
     // Use shared cache for drawing paths
     private let pathCache = DrawingPathCache.shared
+    
+    private var foregroundColor: Color {
+        // Override base color if it is a present dot.
+        if dotStyle == .present { return .accent }
+        if dotStyle == .future { return .textColor.opacity(0.15) }
+        return .textColor
+    }
     
     var body: some View {
         Canvas { context, size in
@@ -24,11 +33,11 @@ struct DrawingDisplayView: View {
                 
                 // Render based on original intent stored in metadata
                 if pathWithMetadata.metadata.isDot {
-                    context.fill(path, with: .color(.accent))
+                    context.fill(path, with: .color(foregroundColor))
                 } else {
                     context.stroke(
                         path,
-                        with: .color(.accent),
+                        with: .color(foregroundColor),
                         style: StrokeStyle(
                             lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1),
                             lineCap: .round,
@@ -73,7 +82,7 @@ struct DrawingDisplayView: View {
 }
 
 #Preview {
-    DrawingDisplayView(entry: nil, displaySize: 200)
+    DrawingDisplayView(entry: nil, displaySize: 200, dotStyle: .present)
         .frame(width: 200, height: 200)
         .background(.gray.opacity(0.1))
 }

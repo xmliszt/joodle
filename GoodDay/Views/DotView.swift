@@ -31,8 +31,7 @@ struct DotView: View {
     private var ringColor: Color {
         // Override base color if it is a present dot.
         if dotStyle == .present { return .accent }
-        if dotStyle == .future && !withEntry { return .textColor.opacity(0.15) }
-        if dotStyle == .future && withEntry { return .accent }
+        if dotStyle == .future { return .textColor.opacity(0.15) }
         return .textColor
     }
     

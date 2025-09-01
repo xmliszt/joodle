@@ -236,7 +236,7 @@ struct EntryEditingView: View {
                         // Drawing content
                         if let drawingData = entry?.drawingData, !drawingData.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
-                                DrawingDisplayView(entry: entry, displaySize: 200)
+                                DrawingDisplayView(entry: entry, displaySize: 200, dotStyle: .present)
                                     .frame(width: 200, height: 200)
                                     .background(.controlBackgroundColor.opacity(0.3))
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -245,7 +245,7 @@ struct EntryEditingView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .frame(minHeight: 120, alignment: .topLeading)
-                    .padding(.vertical, 60)
+                    .padding(.top, 40)
                 }
                 .scrollDismissesKeyboard(.never)
                 
@@ -342,7 +342,7 @@ struct EntryEditingView: View {
                     }
                     .animation(.springFkingSatifying, value: isTextFieldFocused)
                 }
-                .frame(height: 80, alignment: .top)
+                .frame(height: 60, alignment: .top)
                 .background(
                     ZStack {
                         Rectangle().fill(.backgroundColor) // blur layer

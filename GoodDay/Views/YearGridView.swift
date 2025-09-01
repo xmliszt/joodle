@@ -86,7 +86,7 @@ struct YearGridView: View {
                         Group {
                             if hasDrawing {
                                 // Show drawing instead of dot with specific frame sizes
-                                DrawingDisplayView(entry: entry, displaySize: viewMode.drawingSize)
+                                DrawingDisplayView(entry: entry, displaySize: viewMode.drawingSize, dotStyle: dotStyle)
                                     .frame(width: viewMode.drawingSize, height: viewMode.drawingSize)
                                     .scaleEffect(isHighlighted ? 2.0 : 1.0)
                                     .animation(.springFkingSatifying, value: isHighlighted)
