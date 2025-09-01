@@ -89,7 +89,7 @@ struct YearGridView: View {
                                 DrawingDisplayView(entry: entry, displaySize: viewMode.drawingSize)
                                     .frame(width: viewMode.drawingSize, height: viewMode.drawingSize)
                                     .scaleEffect(isHighlighted ? 2.0 : 1.0)
-                                    .animation(.interactiveSpring, value: isHighlighted)
+                                    .animation(.springFkingSatifying, value: isHighlighted)
                             } else {
                                 // Show regular dot
                                 DotView(

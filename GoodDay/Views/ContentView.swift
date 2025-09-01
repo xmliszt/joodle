@@ -197,6 +197,7 @@ struct ContentView: View {
       ) {
         DrawingCanvasView(
           date: selectedDateItem!.date,
+          entry: entries.first(where: { $0.createdAt == selectedDateItem!.date }),
           onDismiss: {
             showDrawingCanvas = false
           }
@@ -231,6 +232,7 @@ struct ContentView: View {
           content: {
             DrawingCanvasView(
               date: selectedDateItem!.date,
+              entry: entries.first(where: { $0.createdAt == selectedDateItem!.date }),
               onDismiss: {
                 showDrawingCanvas = false
               }

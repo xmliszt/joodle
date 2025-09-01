@@ -50,7 +50,7 @@ struct DotView: View {
                 .frame(width: size, height: size)
                 .scaleEffect(scale)
                 .animation(
-                    .interactiveSpring,
+                    .springFkingSatifying,
                     value: highlighted
                 )
             
@@ -61,7 +61,7 @@ struct DotView: View {
                     .frame(width: size * 1.5, height: size * 1.5)
                     .scaleEffect(scale)
                     .animation(
-                        .interactiveSpring,
+                        .springFkingSatifying,
                         value: highlighted
                     )
             }
