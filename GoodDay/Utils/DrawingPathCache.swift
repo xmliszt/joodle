@@ -73,9 +73,6 @@ class DrawingPathCache: ObservableObject {
         }
       }
 
-      // Constants defined inline to avoid import issues
-      let DRAWING_LINE_WIDTH: CGFloat = 5.0
-
       let decodedPaths = try JSONDecoder().decode([PathData].self, from: data)
       return decodedPaths.map { pathData in
         var path = Path()

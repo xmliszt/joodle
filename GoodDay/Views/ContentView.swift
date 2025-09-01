@@ -200,7 +200,8 @@ struct ContentView: View {
           entry: entries.first(where: { $0.createdAt == selectedDateItem!.date }),
           onDismiss: {
             showDrawingCanvas = false
-          }
+          },
+          isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland
         )
         .disabled(selectedDateItem == nil)
         .presentationDetents([.height(420)])
@@ -235,7 +236,8 @@ struct ContentView: View {
               entry: entries.first(where: { $0.createdAt == selectedDateItem!.date }),
               onDismiss: {
                 showDrawingCanvas = false
-              }
+              },
+              isShowing: showDrawingCanvas
             )
           },
           // Hide dynamic island view when navigate to setting

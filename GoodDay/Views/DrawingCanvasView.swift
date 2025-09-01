@@ -14,6 +14,9 @@ struct DrawingCanvasView: View {
     let date: Date
     let entry: DayEntry?
     let onDismiss: () -> Void
+    /// We need this external state as DrawingCanvasView is rendered when an entry is selected
+    /// But that doesn't make it visible yet as controlled by DynamicIslandExpandedView
+    let isShowing: Bool
     
     @State private var currentPath = Path()
     @State private var paths: [Path] = []
@@ -204,6 +207,9 @@ struct DrawingCanvasView: View {
         .onAppear {
             loadExistingDrawing()
         }
+        .onChange(of: isShowing, { oldValue, newValue in
+            loadExistingDrawing()
+        })
         .confirmationDialog("Clear Drawing", isPresented: $showClearConfirmation) {
             Button("Clear", role: .destructive, action: clearDrawing)
             Button("Cancel", role: .cancel) {}
@@ -296,6 +302,15 @@ struct DrawingCanvasView: View {
             // Initialize with empty state for new drawings
             undoStack.removeAll()
             redoStack.removeAll()
+            // Clear drawing
+            paths.removeAll()
+            pathMetadata.removeAll()
+            currentPath = Path()
+            isDrawing = false
+            currentPathIsDot = false
+            
+            // Clear redo stack when new action is performed
+            redoStack.removeAll()
             return
         }
         
@@ -345,42 +360,31 @@ struct DrawingCanvasView: View {
     }
     
     private func saveDrawingToStore() {
-        if let existingEntry = entry {
-            // Update existing entry
-            if paths.isEmpty {
-                // No paths means no drawing data
-                existingEntry.drawingData = nil
-            } else {
-                // Convert paths to serializable data
-                let pathsData = paths.enumerated().map { (index, path) in
-                    let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
-                    return PathData(points: extractPointsFromPath(path), isDot: isDot)
-                }
-                
-                do {
-                    let data = try JSONEncoder().encode(pathsData)
-                    existingEntry.drawingData = data
-                } catch {
-                    print("Failed to save drawing data: \(error)")
-                    existingEntry.drawingData = nil
-                }
-            }
-        } else {
+        // Derive entry to save, if not exists, create a new entry.
+        let entryToSave: DayEntry = {
+            if let entry { return entry }
             // Create new entry
-            if !paths.isEmpty {
-                // Has drawing content
-                let pathsData = paths.enumerated().map { (index, path) in
-                    let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
-                    return PathData(points: extractPointsFromPath(path), isDot: isDot)
-                }
-                
-                do {
-                    let data = try JSONEncoder().encode(pathsData)
-                    let newEntry = DayEntry(body: "", createdAt: date, drawingData: data)
-                    modelContext.insert(newEntry)
-                } catch {
-                    print("Failed to save drawing data: \(error)")
-                }
+            let newEntry = DayEntry(body: "", createdAt: date, drawingData: nil)
+            modelContext.insert(newEntry)
+            return newEntry
+        }()
+        
+        // Update existing entry
+        if paths.isEmpty {
+            // No paths means no drawing data
+            entryToSave.drawingData = nil
+        } else {
+            // Convert paths to serializable data
+            let pathsData = paths.enumerated().map { (index, path) in
+                let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
+                return PathData(points: extractPointsFromPath(path), isDot: isDot)
+            }
+            
+            do {
+                let data = try JSONEncoder().encode(pathsData)
+                entryToSave.drawingData = data
+            } catch {
+                print("Failed to save drawing data: \(error)")
             }
         }
         
@@ -447,6 +451,7 @@ struct DrawingCanvasView: View {
     DrawingCanvasView(
         date: Date(),
         entry: DayEntry(body: "HELLO", createdAt: Date(), drawingData: nil),
-        onDismiss: {}
+        onDismiss: {},
+        isShowing: true
     )
 }

@@ -30,7 +30,7 @@ struct DrawingDisplayView: View {
                         path,
                         with: .color(.accent),
                         style: StrokeStyle(
-                            lineWidth: DRAWING_LINE_WIDTH,
+                            lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1),
                             lineCap: .round,
                             lineJoin: .round
                         )
