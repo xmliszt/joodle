@@ -11,30 +11,63 @@ struct SettingsView: View {
             
             // MARK: - View Mode Preferences
             Section("Default View Mode") {
-                Picker("View Mode", selection: Binding(
-                    get: { userPreferences.defaultViewMode },
-                    set: { userPreferences.defaultViewMode = $0 }
-                )) {
-                    ForEach(ViewMode.allCases, id: \.self) { mode in
-                        Text(mode.displayName).tag(mode)
+                if #available(iOS 26.0, *) {
+                    Picker("View Mode", selection: Binding(
+                        get: { userPreferences.defaultViewMode },
+                        set: { userPreferences.defaultViewMode = $0 }
+                    )) {
+                        ForEach(ViewMode.allCases, id: \.self) { mode in
+                            Text(mode.displayName).tag(mode)
+                        }
                     }
+                    .pickerStyle(.palette)
+                    .glassEffect(.regular.interactive())
+                } else {
+                    // Fallback on earlier versions
+                    Picker("View Mode", selection: Binding(
+                        get: { userPreferences.defaultViewMode },
+                        set: { userPreferences.defaultViewMode = $0 }
+                    )) {
+                        ForEach(ViewMode.allCases, id: \.self) { mode in
+                            Text(mode.displayName).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.palette)
                 }
-                .pickerStyle(.segmented)
             }
             
             // MARK: - Appearance Preferences
             Section("Appearance") {
-                Picker("Color Scheme", selection: Binding(
-                    get: { userPreferences.preferredColorScheme },
-                    set: { 
-                        userPreferences.preferredColorScheme = $0
-                        // Force UI update immediately
-                        NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
+                if #available(iOS 26.0, *) {
+                    Picker("Color Scheme", selection: Binding(
+                        get: { userPreferences.preferredColorScheme },
+                        set: {
+                            userPreferences.preferredColorScheme = $0
+                            // Force UI update immediately
+                            NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
+                        }
+                    )) {
+                        Text("System").tag(nil as ColorScheme?)
+                        Text("Light").tag(ColorScheme.light as ColorScheme?)
+                        Text("Dark").tag(ColorScheme.dark as ColorScheme?)
                     }
-                )) {
-                    Text("System").tag(nil as ColorScheme?)
-                    Text("Light").tag(ColorScheme.light as ColorScheme?)
-                    Text("Dark").tag(ColorScheme.dark as ColorScheme?)
+                    .pickerStyle(.palette)
+                    .glassEffect(.regular.interactive())
+                } else {
+                    // Fallback on earlier versions
+                    Picker("Color Scheme", selection: Binding(
+                        get: { userPreferences.preferredColorScheme },
+                        set: {
+                            userPreferences.preferredColorScheme = $0
+                            // Force UI update immediately
+                            NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
+                        }
+                    )) {
+                        Text("System").tag(nil as ColorScheme?)
+                        Text("Light").tag(ColorScheme.light as ColorScheme?)
+                        Text("Dark").tag(ColorScheme.dark as ColorScheme?)
+                    }
+                    .pickerStyle(.palette)
                 }
             }
             
@@ -68,11 +101,9 @@ struct SettingsView: View {
         .navigationBarBackButtonHidden()
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button {
+                Button("dismiss", systemImage: "smallcircle.filled.circle.fill") {
                     dismiss()
-                } label: {
-                    Image(systemName: "smallcircle.filled.circle.fill")
-                }
+                }.tint(Color.accentColor)
             }
         }
         .preferredColorScheme(userPreferences.preferredColorScheme)

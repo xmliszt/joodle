@@ -77,8 +77,8 @@ struct HeaderView: View {
                 
                 Spacer()
                 
-                // Metaball morphing buttons
-                MetaballButtonView(
+                // buttons
+                HeaderButtonsView(
                     viewMode: viewMode,
                     onToggleViewMode: onToggleViewMode,
                     onSettingsAction: onSettingsAction

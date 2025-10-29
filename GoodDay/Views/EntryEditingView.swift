@@ -5,8 +5,8 @@
 //  Created by Li Yuxuan on 10/8/25.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct EntryEditingView: View {
     @Environment(\.colorScheme) private var colorScheme
@@ -52,14 +52,16 @@ struct EntryEditingView: View {
         
         let calendar = Calendar.current
         let now = currentTime
-        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: now, to: date)
+        let components = calendar.dateComponents(
+            [.year, .month, .day, .hour, .minute, .second], from: now, to: date)
         
         guard let years = components.year,
               let months = components.month,
               let days = components.day,
               let hours = components.hour,
               let minutes = components.minute,
-              let seconds = components.second else { return nil }
+              let seconds = components.second
+        else { return nil }
         
         // More than a year: show year + month + day
         if years > 0 {
@@ -175,7 +177,7 @@ struct EntryEditingView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         // Text content
-                        ZStack (alignment: .topLeading) {
+                        ZStack(alignment: .topLeading) {
                             TextEditor(text: $textContent)
                                 .font(.body)
                                 .foregroundColor(.textColor)
@@ -194,7 +196,7 @@ struct EntryEditingView: View {
                                     guard let entry else { return }
                                     textContent = entry.body
                                 }
-                                .onDisappear() {
+                                .onDisappear {
                                     withAnimation {
                                         isTextFieldFocused = false
                                     } completion: {
@@ -202,7 +204,7 @@ struct EntryEditingView: View {
                                         saveNote(text: textContent, for: date)
                                     }
                                 }
-                                .onChange(of: date ?? nil ) { oldValue, newValue in
+                                .onChange(of: date ?? nil) { oldValue, newValue in
                                     // Save old content first if any
                                     if !textContent.isEmpty, let oldDate = oldValue {
                                         saveNote(text: textContent, for: oldDate)
@@ -215,7 +217,9 @@ struct EntryEditingView: View {
                                     
                                     // Update entry if got new date
                                     if let newDate = newValue {
-                                        entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: newDate) }
+                                        entry = entries.first {
+                                            Calendar.current.isDate($0.createdAt, inSameDayAs: newDate)
+                                        }
                                         guard let entry else { return }
                                         textContent = entry.body
                                     }
@@ -228,7 +232,7 @@ struct EntryEditingView: View {
                                 Text("Tap to edit note for today...")
                                     .font(.body)
                                     .foregroundColor(.textColor.opacity(0.5))
-                                    .allowsHitTesting(false) // Important: prevents blocking TextEditor
+                                    .allowsHitTesting(false)  // Important: prevents blocking TextEditor
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -236,10 +240,12 @@ struct EntryEditingView: View {
                         // Drawing content
                         if let drawingData = entry?.drawingData, !drawingData.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
-                                DrawingDisplayView(entry: entry, displaySize: 200, dotStyle: .present, isHighlighted: true)
-                                    .frame(width: 200, height: 200)
-                                    .background(.controlBackgroundColor.opacity(0.3))
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                DrawingDisplayView(
+                                    entry: entry, displaySize: 200, dotStyle: .present, isHighlighted: true
+                                )
+                                .frame(width: 200, height: 200)
+                                .background(.controlBackgroundColor.opacity(0.3))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         }
                     }
@@ -268,7 +274,7 @@ struct EntryEditingView: View {
             }
             .confirmationDialog("Delete Note", isPresented: $showDeleteConfirmation) {
                 Button("Delete", role: .destructive, action: deleteEntry)
-                Button("Cancel", role: .cancel) { }
+                Button("Cancel", role: .cancel) {}
             } message: {
                 Text("Delete this note?")
             }
@@ -297,68 +303,113 @@ struct EntryEditingView: View {
                     
                     Spacer()
                     
-                    HStack(spacing: 8) {
-                        // Confirm button
-                        if isTextFieldFocused {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.textColor)
-                                .frame(width: 36, height: 36)
-                                .background(.controlBackgroundColor)
-                                .clipShape(Circle())
-                                .transition(.opacity.animation(.springFkingSatifying))
-                                .onTapGesture {
+                    if #available(iOS 26.0, *) {
+                        GlassEffectContainer(spacing: 8) {
+                            HStack(spacing: 8) {
+                                // Confirm button
+                                if isTextFieldFocused {
+                                    Button {
+                                        withAnimation(.spring()) {
+                                            isTextFieldFocused = false
+                                            guard let date else { return }
+                                            saveNote(text: textContent, for: date)
+                                        }
+                                    } label: {
+                                        Image(systemName: "checkmark")
+                                    }
+                                    .circularGlassButton()
+                                    .transition(.opacity.animation(.springFkingSatifying))
+                                }
+                                
+                                // Delete entry button
+                                if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
+                                    && !isTextFieldFocused
+                                {
+                                    Button {
+                                        showDeleteConfirmation = true
+                                    } label: {
+                                        Image(systemName: "trash")
+                                    }
+                                    .circularGlassButton(tintColor: .red)
+                                    .transition(.opacity.animation(.springFkingSatifying))
+                                }
+                                
+                                // Drawing canvas button
+                                if !isTextFieldFocused {
+                                    Button {
+                                        self.onOpenDrawingCanvas?()
+                                    } label: {
+                                        Image(systemName: "scribble")
+                                    }
+                                    .circularGlassButton()
+                                    .transition(.opacity.animation(.springFkingSatifying))
+                                }
+                            }
+                        }
+                        .animation(.springFkingSatifying, value: isTextFieldFocused)
+                        .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
+                    } else {
+                        // Fallback on earlier versions
+                        HStack(spacing: 8) {
+                            // Confirm button
+                            if isTextFieldFocused {
+                                Button {
                                     withAnimation(.spring()) {
                                         isTextFieldFocused = false
                                         guard let date else { return }
                                         saveNote(text: textContent, for: date)
                                     }
+                                } label: {
+                                    Image(systemName: "checkmark")
                                 }
-                        }
-                        
-                        // Delete entry button
-                        if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil) && !isTextFieldFocused {
-                            Image(systemName: "trash")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.red)
-                                .frame(width: 36, height: 36)
-                                .background(.controlBackgroundColor)
-                                .clipShape(Circle())
+                                .circularGlassButton()
                                 .transition(.opacity.animation(.springFkingSatifying))
-                                .onTapGesture { showDeleteConfirmation = true }
-                        }
-                        
-                        // Drawing canvas button
-                        if !isTextFieldFocused {
-                            Image(systemName: "scribble")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.textColor)
-                                .frame(width: 36, height: 36)
-                                .background(.controlBackgroundColor)
-                                .clipShape(Circle())
+                            }
+                            
+                            // Delete entry button
+                            if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
+                                && !isTextFieldFocused
+                            {
+                                Button {
+                                    showDeleteConfirmation = true
+                                } label: {
+                                    Image(systemName: "trash")
+                                }
+                                .circularGlassButton(tintColor: .red)
                                 .transition(.opacity.animation(.springFkingSatifying))
-                                .onTapGesture { self.onOpenDrawingCanvas?() }
+                            }
+                            
+                            // Drawing canvas button
+                            if !isTextFieldFocused {
+                                Button {
+                                    self.onOpenDrawingCanvas?()
+                                } label: {
+                                    Image(systemName: "scribble")
+                                }
+                                .circularGlassButton()
+                                .transition(.opacity.animation(.springFkingSatifying))
+                            }
                         }
+                        .animation(.springFkingSatifying, value: isTextFieldFocused)
                     }
-                    .animation(.springFkingSatifying, value: isTextFieldFocused)
                 }
                 .frame(height: 60, alignment: .top)
                 .background(
                     ZStack {
-                        Rectangle().fill(.backgroundColor) // blur layer
+                        Rectangle().fill(.backgroundColor)  // blur layer
                         
                         LinearGradient(
                             gradient: Gradient(stops: [
                                 .init(color: Color.black.opacity(1.0), location: 0.0),
                                 .init(color: Color.black.opacity(0.0), location: 0.4),
-                                .init(color: Color.black.opacity(0.0), location: 1.0)
+                                .init(color: Color.black.opacity(0.0), location: 1.0),
                             ]),
                             startPoint: .bottom,
                             endPoint: .top
                         )
-                        .blendMode(.destinationOut) // punch transparency into the blur
+                        .blendMode(.destinationOut)  // punch transparency into the blur
                     }
-                        .compositingGroup() // required for destinationOut to work
+                        .compositingGroup()  // required for destinationOut to work
                 )
                 
                 Spacer()
@@ -371,10 +422,7 @@ struct EntryEditingView: View {
     /// Start the timer if needed
     private func startTimerIfNeeded() {
         // Only activate timer if we have a future entry with content and it's within 24 hours
-        isTimerActive = isFuture &&
-        entry != nil &&
-        !entry!.body.isEmpty &&
-        needsRealTimeUpdates
+        isTimerActive = isFuture && entry != nil && !entry!.body.isEmpty && needsRealTimeUpdates
         
         if isTimerActive { currentTime = Date() }
     }
