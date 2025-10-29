@@ -94,7 +94,8 @@ struct ContentView: View {
                                         dotsSpacing: itemsSpacing,
                                         items: itemsInYear,
                                         entries: entries,
-                                        highlightedItemId: highlightedId
+                                        highlightedItemId: highlightedId,
+                                        selectedItemId: selectedDateItem?.id
                                     )
                                     .simultaneousGesture(
                                         DragGesture(minimumDistance: 0)

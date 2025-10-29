@@ -30,6 +30,8 @@ struct YearGridView: View {
     let entries: [DayEntry]
     /// The id of the highlighted item
     let highlightedItemId: String?
+    /// The id of the selected item
+    let selectedItemId: String?
     
     // MARK: Cached Computed Properties
     /// Pre-computed layout metrics to avoid repeated calculations
@@ -90,7 +92,7 @@ struct YearGridView: View {
                                     entry: entry,
                                     displaySize: viewMode.drawingSize,
                                     dotStyle: dotStyle,
-                                    isHighlighted: isHighlighted
+                                    accent: isHighlighted || selectedItemId == item.id
                                 )
                                 .frame(width: viewMode.drawingSize, height: viewMode.drawingSize)
                                 .animation(
@@ -100,9 +102,9 @@ struct YearGridView: View {
                                 // Show regular dot
                                 DotView(
                                     size: viewMode.dotSize,
-                                    highlighted: isHighlighted,
+                                    highlighted: isHighlighted || selectedItemId == item.id,
                                     withEntry: hasEntry,
-                                    dotStyle: dotStyle
+                                    dotStyle: dotStyle,
                                 )
                             }
                         }
@@ -201,7 +203,8 @@ struct YearGridView: View {
                 dotsSpacing: 25,
                 items: sampleItems,
                 entries: [],
-                highlightedItemId: nil
+                highlightedItemId: nil,
+                selectedItemId: nil
             )
             YearGridView(
                 year: currentYear,
@@ -209,7 +212,8 @@ struct YearGridView: View {
                 dotsSpacing: 8,
                 items: sampleItems,
                 entries: [],
-                highlightedItemId: nil
+                highlightedItemId: nil,
+                selectedItemId: nil
             )
         }
     }

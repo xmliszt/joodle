@@ -19,6 +19,7 @@ struct DotView: View {
     // MARK: Computed dot color
     private var dotColor: Color {
         if highlighted { return .accent }
+        
         // Override base color if it is a present dot.
         if dotStyle == .present { return .accent }
         if dotStyle == .future { return .textColor.opacity(0.15) }
@@ -27,6 +28,7 @@ struct DotView: View {
     
     private var ringColor: Color {
         if highlighted { return .accent }
+
         // Override base color if it is a present dot.
         if dotStyle == .present { return .accent }
         if dotStyle == .future { return .textColor.opacity(0.15) }
@@ -77,18 +79,18 @@ struct DotView: View {
         size: 12,
         highlighted: false,
         withEntry: true,
-        dotStyle: .past,
+        dotStyle: .past
     )
     DotView(
         size: 12,
         highlighted: false,
         withEntry: false,
-        dotStyle: .present,
+        dotStyle: .present
     )
     DotView(
         size: 12,
         highlighted: false,
         withEntry: true,
-        dotStyle: .present,
+        dotStyle: .present
     )
 }

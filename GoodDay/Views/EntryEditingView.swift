@@ -241,7 +241,10 @@ struct EntryEditingView: View {
                         if let drawingData = entry?.drawingData, !drawingData.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
                                 DrawingDisplayView(
-                                    entry: entry, displaySize: 200, dotStyle: .present, isHighlighted: true
+                                    entry: entry,
+                                    displaySize: 200,
+                                    dotStyle: .present,
+                                    accent: true
                                 )
                                 .frame(width: 200, height: 200)
                                 .background(.controlBackgroundColor.opacity(0.3))
