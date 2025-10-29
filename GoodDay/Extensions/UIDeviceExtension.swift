@@ -34,27 +34,79 @@ extension UIDevice {
             "iPhone17,4", // iPhone 16 Plus
             "iPhone17,5", // iPhone 16 Pro
             "iPhone17,6", // iPhone 16 Pro Max
+            
+            // Update for 2025 iPhone 17 lineup
+            "iPhone18,1", // iPhone 17
+            "iPhone18,2", // iPhone 17 Plus
+            "iPhone18,3", // iPhone 17 Pro
+            "iPhone18,4", // iPhone 17 Pro Max
+            "iPhone18,5", // iPhone 17 Ultra (if applicable)
+            
             "arm64" // For this mac os preview
         ]
         
         return dynamicIslandModels.contains(deviceModel)
     }
     
-    static var dynamicIslandFrame: CGRect {
-        guard UIDevice.hasDynamicIsland else { return .zero }
-        
-        let screenWidth = UIScreen.main.bounds.width
-        let islandWidth: CGFloat = 126
-        let islandHeight: CGFloat = 36
-        let x = (screenWidth - islandWidth) / 2
-        let y: CGFloat = 11
-        
-        return CGRect(x: x, y: y, width: islandWidth, height: islandHeight)
-    }
-    
     static var dynamicIslandSize: CGSize {
         guard UIDevice.hasDynamicIsland else { return .zero }
-        return CGSize(width: 126, height: 36)
+
+        // Sizes in points from Apple UI guidelines and device screenshots.
+        let deviceModel = {
+            var info = utsname()
+            uname(&info)
+            return withUnsafePointer(to: &info.machine) {
+                $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+                    String(validatingUTF8: $0) ?? ""
+                }
+            }
+        }()
+
+        switch deviceModel {
+        case "iPhone15,2", "iPhone15,3": // 14 Pro, 14 Pro Max
+            return CGSize(width: 118, height: 37)
+        case "iPhone16,1", "iPhone16,2": // 15 Pro, 15 Pro Max
+            return CGSize(width: 118, height: 37)
+        case "iPhone17,1", "iPhone17,2": // 15, 15 Plus
+            return CGSize(width: 119, height: 37)
+        case "iPhone17,3", "iPhone17,4": // 16, 16 Plus
+            return CGSize(width: 119, height: 37)
+        case "iPhone17,5", "iPhone17,6": // 16 Pro, 16 Pro Max
+            return CGSize(width: 119, height: 37)
+        case "iPhone18,1", "iPhone18,2": // 17, 17 Plus
+            return CGSize(width: 118, height: 37)
+        case "iPhone18,3", "iPhone18,4", "iPhone18,5": // 17 Pro, 17 Pro Max, Ultra
+            return CGSize(width: 121, height: 37)
+        case "arm64": // macOS preview
+            return CGSize(width: 119, height: 37)
+        default:
+            // Fallback to latest known size
+            return CGSize(width: 119, height: 37)
+        }
+    }
+
+    static var dynamicIslandFrame: CGRect {
+        guard UIDevice.hasDynamicIsland else { return .zero }
+        let size = UIDevice.dynamicIslandSize
+        let screenWidth = UIScreen.main.bounds.width
+        let deviceModel = {
+            var info = utsname()
+            uname(&info)
+            return withUnsafePointer(to: &info.machine) {
+                $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+                    String(validatingUTF8: $0) ?? ""
+                }
+            }
+        }()
+        let y: CGFloat
+        switch deviceModel {
+        case "iPhone18,1", "iPhone18,2", "iPhone18,3", "iPhone18,4", "iPhone18,5":
+            y = 12
+        default:
+            y = 9
+        }
+        let x = (screenWidth - size.width) / 2
+        return CGRect(x: x, y: y, width: size.width, height: size.height)
     }
 }
 
@@ -118,6 +170,14 @@ extension UIDevice {
         case "iPhone17,5", "iPhone17,6": // iPhone 16 Pro, 16 Pro Max
             return 62.0
         
+            // iPhone 17, 17 Plus - 55.0
+        case "iPhone18,1", "iPhone18,2": // iPhone 17, 17 Plus
+            return 55.0
+
+            // iPhone 17 Pro, 17 Pro Max, Ultra - 62.0
+        case "iPhone18,3", "iPhone18,4", "iPhone18,5": // 17 Pro, 17 Pro Max, Ultra
+            return 62.0
+
             // For preview runs on iPhone 16 Pro
         case "arm64":
             return 62.0
@@ -146,3 +206,4 @@ extension UIDevice {
         }
     }
 }
+

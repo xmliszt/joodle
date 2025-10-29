@@ -58,8 +58,8 @@ struct DynamicIslandExpandedView<Content: View>: View {
                 }
                 .padding(20)
                 .frame(
-                    width: isExpanded ? UIScreen.main.bounds.width - (UIDevice.dynamicIslandFrame.origin.y * 2) : UIDevice.dynamicIslandSize.width,
-                    height: isExpanded ? nil : UIDevice.dynamicIslandSize.height,
+                    width: isExpanded ? UIScreen.main.bounds.width - (UIDevice.dynamicIslandFrame.origin.y * 2) : 0,
+                    height: isExpanded ? nil : 0,
                     alignment: .top)
                 // Black to blend into dynamic island cutout
                 .background(.black)
@@ -76,7 +76,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            // Move it down so that it is at the position of dynamic island
+            // Move it so that it is at the position of dynamic island
             .offset(y: UIDevice.dynamicIslandFrame.origin.y)
         }
         .ignoresSafeArea(.all, edges: .vertical)
