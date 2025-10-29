@@ -58,8 +58,8 @@ struct DynamicIslandExpandedView<Content: View>: View {
                 }
                 .padding(20)
                 .frame(
-                    width: isExpanded ? UIScreen.main.bounds.width - (UIDevice.dynamicIslandFrame.origin.y * 2) : 0,
-                    height: isExpanded ? nil : 0,
+                    width: isExpanded ? UIScreen.main.bounds.width - (UIDevice.dynamicIslandFrame.origin.y * 2) : UIDevice.dynamicIslandSize.width,
+                    height: isExpanded ? nil : UIDevice.dynamicIslandSize.height,
                     alignment: .top)
                 // Black to blend into dynamic island cutout
                 .background(.black)
@@ -68,7 +68,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
                 // Subtle shadow to make it hovered
                 .shadow(color: isExpanded ? .black.opacity(0.1) : .clear, radius: SHADOW_RADIUS, y: 10)
                 // Animation: when collapse, no spring as that will not fully conceal it in the dynamic island area as it is bouncy
-                .animation(isExpanded ? .springFkingSatifying : .easeOut, value: isExpanded)
+                .animation(.springFkingSatifying, value: isExpanded)
                 // Tap gesture to absorb tap in the visible container to prevent dismiss
                 .onTapGesture {}
                 
