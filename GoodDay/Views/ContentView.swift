@@ -16,22 +16,19 @@ struct ContentView: View {
     @Query private var entries: [DayEntry]
     
     @State private var selectedDateItem: DateItem?
-    @State private var dragLocation: CGPoint = .zero
-    @State private var isDragging = false
+    
+    // --- GESTURE STATE ---
+    // Tracks what the user is currently doing
+    @State private var isScrubbing = false
+    @State private var isPinching = false
     @State private var highlightedId: String?
-    @State private var isScrollingDisabled = false
+    // --- END GESTURE STATE ---
+    
+    @State private var isScrollingDisabled = false // Kept for pinching
     @State private var viewMode: ViewMode = UserPreferences.shared.defaultViewMode
     @State private var yearGridViewSize: CGSize = .zero
     @State private var scrollProxy: ScrollViewProxy?
     @State private var showDrawingCanvas: Bool = false
-    
-    // Touch delay detection states
-    @State private var touchStartTime: Date?
-    @State private var initialTouchLocation: CGPoint = .zero
-    @State private var hasMovedBeforeDelay = false
-    @State private var isInDelayPeriod = false
-    @State private var delayTimer: Timer?
-    @State private var initialTouchItemId: String?
     
     @State private var selectedYear = Calendar.current.component(.year, from: Date())
     @State private var navigateToSettings = false
@@ -50,10 +47,10 @@ struct ContentView: View {
         let offsetY: CGFloat
     }
     
-    // Pinch gesture states
+
+    // Gesture states
     private let scaleThreshold: CGFloat = 0.9  // Threshold for detecting significant pinch
-    private let expandThreshold: CGFloat = 1.2  // Threshold for detecting significant expand
-    @State private var isPinching = false
+    private let expandThreshold: CGFloat = 1.2 // Threshold for detecting significant expand
     
     // MARK: Computed
     /// Flattened array of items to be displayed in the year grid.
@@ -69,6 +66,17 @@ struct ContentView: View {
                 date: date
             )
         }
+    }
+    
+    private var currentHighlightedItem: DateItem? {
+        highlightedId.flatMap { getItem(from: $0) }
+    }
+    
+    private var currentHighlightedEntry: DayEntry? {
+        if let itemDate = currentHighlightedItem?.date {
+            return entries.first(where: { Calendar.current.isDate($0.createdAt, inSameDayAs: itemDate) })
+        }
+        return nil
     }
     
     var body: some View {
@@ -94,23 +102,58 @@ struct ContentView: View {
                                         dotsSpacing: itemsSpacing,
                                         items: itemsInYear,
                                         entries: entries,
-                                        highlightedItemId: highlightedId,
+                                        // Use isScrubbing to show highlight, fallback to old highlightedId
+                                        highlightedItemId: isScrubbing ? highlightedId : nil,
                                         selectedItemId: selectedDateItem?.id
                                     )
-                                    .simultaneousGesture(
-                                        DragGesture(minimumDistance: 0)
-                                            .onChanged { handleDragChanged(value: $0, geometry: geometry) }
-                                            .onEnded {
-                                                handleDragEnded(value: $0, geometry: geometry, scrollProxy: scrollProxy)
+                                    .overlay(
+                                        LongPressScrubRecognizer(
+                                            isScrubbing: $isScrubbing,
+                                            minimumPressDuration: 0.1,
+                                            allowableMovement: 20,
+                                            onBegan: { location in
+                                                // Called when long press threshold is reached
+                                                // convert location to SwiftUI geometry coords if needed
+                                                highlightedId = nil
+                                                isScrubbing = true // if you want to keep using GestureState, you may need to change to @State
+                                                // play haptic and compute the initial highlightedId
+                                                let newId = getItemId(at: location, for: geometry)
+                                                if highlightedId == nil { Haptic.play(with: .medium) }
+                                                highlightedId = newId
+                                            },
+                                            onChanged: { location in
+                                                // Finger moved while long-press is active
+                                                let newId = getItemId(at: location, for: geometry)
+                                                if newId != highlightedId { Haptic.play() }
+                                                highlightedId = newId
+                                            },
+                                            onEnded: { location in
+                                                // Long-press ended -> finalize selection
+                                                if let highlightedId, let item = getItem(from: highlightedId) {
+                                                    selectDateItem(item: item, scrollProxy: scrollProxy)
+                                                }
+                                                highlightedId = nil
+                                                isScrubbing = false
                                             }
+                                        )
+                                        .allowsHitTesting(true)
                                     )
+                                    .onTapGesture { location in
+                                        // If scrubbing was active, ignore this (scrub handles selection on end)
+                                        if isScrubbing { return }
+                                        guard let itemId = getItemId(at: location, for: geometry),
+                                              let item = getItem(from: itemId)
+                                        else { return }
+                                        selectDateItem(item: item, scrollProxy: scrollProxy)
+                                        Haptic.play()
+                                    }
                                     .simultaneousGesture(
                                         MagnificationGesture()
                                             .onChanged { handlePinchChanged(value: $0) }
                                             .onEnded { handlePinchEnded(value: $0) }
                                     )
                                 }
-                                .scrollDisabled(isScrollingDisabled || isPinching)
+                                // Scrolling is now disabled if we are *actively* scrubbing OR pinching
                                 .background(.backgroundColor)
                                 // When view mode change, scroll to today's dot and rebuild hit testing grid
                                 .onChange(of: viewMode) {
@@ -140,6 +183,7 @@ struct ContentView: View {
                                 .onDisappear {
                                     self.scrollProxy = nil
                                 }
+                                .scrollDisabled(isScrubbing || isPinching)
                             }
                         },
                         bottom: {
@@ -169,11 +213,9 @@ struct ContentView: View {
                     
                     // Floating header with blur backdrop
                     HeaderView(
-                        highlightedEntry: highlightedId != nil
-                        ? (entries.first(where: { $0.createdAt == getItem(from: highlightedId!)?.date }))
-                        : nil,
+                        highlightedEntry: currentHighlightedEntry,
                         geometry: geometry,
-                        highlightedItem: highlightedId != nil ? getItem(from: highlightedId!) : nil,
+                        highlightedItem: currentHighlightedItem,
                         selectedYear: $selectedYear,
                         viewMode: viewMode,
                         onToggleViewMode: toggleViewMode,
@@ -274,95 +316,6 @@ struct ContentView: View {
     }
     
     // MARK: User interactions
-    private func handleDragChanged(value: DragGesture.Value, geometry: GeometryProxy) {
-        // Don't process drag gestures while pinching
-        if isPinching { return }
-        
-        dragLocation = value.location
-        
-        // Check if this is the start of a drag gesture
-        if !isDragging {
-            isDragging = true
-            touchStartTime = Date()
-            initialTouchLocation = value.location
-            hasMovedBeforeDelay = false
-            isInDelayPeriod = true
-            // Store the initial item ID for later use in timer
-            initialTouchItemId = getItemId(at: value.location, for: geometry)
-            // Ensure scrolling is enabled at the start
-            isScrollingDisabled = false
-            
-            // Start the delay timer
-            startDelayTimer()
-        } else {
-            // Check if user has moved significantly during the delay period
-            if isInDelayPeriod {
-                let movementThreshold: CGFloat = 5  // pixels - very small threshold for quick response
-                let distanceMoved = sqrt(
-                    pow(value.location.x - initialTouchLocation.x, 2)
-                    + pow(value.location.y - initialTouchLocation.y, 2)
-                )
-                
-                if distanceMoved > movementThreshold {
-                    hasMovedBeforeDelay = true
-                    cancelDelayTimer()
-                    isInDelayPeriod = false
-                    // Allow normal scrolling by ensuring scroll is enabled
-                    isScrollingDisabled = false
-                    highlightedId = nil
-                }
-            }
-        }
-        
-        // Only highlight dots if scrolling is disabled (after delay without movement)
-        if isScrollingDisabled && !isInDelayPeriod {
-            let newHighlightedId = getItemId(at: value.location, for: geometry)
-            
-            // Haptic feedback when selection changes between dots
-            // Only feedback when the highlighted id changes
-            if newHighlightedId != highlightedId { Haptic.play() }
-            
-            // Update highlightedId
-            highlightedId = newHighlightedId
-        }
-    }
-    
-    private func handleDragEnded(
-        value: DragGesture.Value, geometry: GeometryProxy, scrollProxy: ScrollViewProxy
-    ) {
-        // Don't process drag gestures while pinching
-        if isPinching { return }
-        
-        // Check if this was a tap (no movement and very short duration)
-        let wasTap =
-        !hasMovedBeforeDelay && !isScrollingDisabled
-        && (touchStartTime.map { Date().timeIntervalSince($0) < 0.2 } ?? false)
-        
-        // Select date
-        if let highlightedId, let item = getItem(from: highlightedId) {
-            selectDateItem(item: item, scrollProxy: scrollProxy)
-        }
-        
-        // Clean up all touch-related state
-        cancelDelayTimer()
-        isDragging = false
-        isScrollingDisabled = false
-        highlightedId = nil
-        isInDelayPeriod = false
-        hasMovedBeforeDelay = false
-        touchStartTime = nil
-        initialTouchItemId = nil
-        
-        // If it was a tap, handle date selection
-        if !wasTap { return }
-        guard let itemId = getItemId(at: value.location, for: geometry) else { return }
-        guard let item = getItem(from: itemId) else { return }
-        selectDateItem(item: item, scrollProxy: scrollProxy)
-        
-        // Haptic feedback
-        Haptic.play()
-    }
-    
     private func handlePinchChanged(value: MagnificationGesture.Value) {
         if isPinching { return }
         
@@ -370,17 +323,11 @@ struct ContentView: View {
         
         // Clean up any ongoing drag gesture state when pinch begins
         highlightedId = nil
-        isScrollingDisabled = false
-        cancelDelayTimer()
-        isInDelayPeriod = false
-        hasMovedBeforeDelay = false
-        isDragging = false
     }
     
     private func handlePinchEnded(value: MagnificationGesture.Value) {
         isPinching = false
         highlightedId = nil
-        isScrollingDisabled = false
         
         // Pinch in: switch from "now" to "year" mode
         if value < scaleThreshold && viewMode == .now {
@@ -551,38 +498,8 @@ struct ContentView: View {
         withAnimation(.springFkingSatifying) {
             selectedYear = currentYear
             viewMode = .now  // Switch to "now" mode for better visibility
+            scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy!)
         }
-        
-        // Scroll to current day if turned on that feature
-    }
-    
-    // MARK: - Touch Delay Timer Methods
-    private func startDelayTimer() {
-        // Cancel any existing timer
-        cancelDelayTimer()
-        
-        // Start a new timer for 0.1 second delay
-        delayTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [self] _ in
-            // Timer fired - user hasn't moved significantly within 0.1 second
-            if !hasMovedBeforeDelay && isInDelayPeriod {
-                // Enable dot highlighting mode
-                isScrollingDisabled = true
-                isInDelayPeriod = false
-                
-                // Set initial highlighted dot to stored initial touch item
-                if let initialId = initialTouchItemId {
-                    highlightedId = initialId
-                }
-                
-                // Provide haptic feedback to indicate mode switch
-                Haptic.play(with: .medium)
-            }
-        }
-    }
-    
-    private func cancelDelayTimer() {
-        delayTimer?.invalidate()
-        delayTimer = nil
     }
     
     // MARK: Layout Calculations
