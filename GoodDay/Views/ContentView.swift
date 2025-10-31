@@ -666,7 +666,7 @@ struct ContentView: View {
         
         // Calculate total content height
         let numberOfRows = (itemsInYear.count + viewMode.dotsPerRow - 1) / viewMode.dotsPerRow
-        let totalContentHeight = CGFloat(numberOfRows) * (viewMode.dotSize + spacing)
+        let totalContentHeight = CGFloat(numberOfRows) * (viewMode.dotSize + spacing) - headerHeight
         
         // Calculate what percentage down the content the dot should be to appear in screen center
         let scrollPercentage = max(0, min(1, dotYPosition / totalContentHeight))

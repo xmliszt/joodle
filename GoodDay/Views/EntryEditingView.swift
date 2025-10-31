@@ -229,7 +229,7 @@ struct EntryEditingView: View {
                                 }
                                 .scrollDismissesKeyboard(.never)
                             if textContent.isEmpty {
-                                Text("Tap to edit note for today...")
+                                Text("What's up...")
                                     .font(.body)
                                     .foregroundColor(.textColor.opacity(0.5))
                                     .allowsHitTesting(false)  // Important: prevents blocking TextEditor
