@@ -89,12 +89,12 @@ struct DrawingCanvasView: View {
 
               if isDot {
                 // Fill ellipse paths (dots)
-                context.fill(path, with: .color(.accent))
+                context.fill(path, with: .color(.appPrimary))
               } else {
                 // Stroke line paths
                 context.stroke(
                   path,
-                  with: .color(.accent),
+                  with: .color(.appPrimary),
                   style: StrokeStyle(
                     lineWidth: DRAWING_LINE_WIDTH,
                     lineCap: .round,
@@ -108,12 +108,12 @@ struct DrawingCanvasView: View {
             if !currentPath.isEmpty {
               if currentPathIsDot {
                 // Fill ellipse paths (dots)
-                context.fill(currentPath, with: .color(.accent))
+                context.fill(currentPath, with: .color(.appPrimary))
               } else {
                 // Stroke line paths
                 context.stroke(
                   currentPath,
-                  with: .color(.accent),
+                  with: .color(.appPrimary),
                   style: StrokeStyle(
                     lineWidth: DRAWING_LINE_WIDTH,
                     lineCap: .round,

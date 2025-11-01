@@ -93,7 +93,7 @@ struct SettingsView: View {
             } footer: {
                 Text("This will reset all preferences to their default values.")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.appTextSecondary)
             }
         }
         .navigationTitle("Settings")
@@ -103,7 +103,7 @@ struct SettingsView: View {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("dismiss", systemImage: "smallcircle.filled.circle.fill") {
                     dismiss()
-                }.tint(Color.accentColor)
+                }.tint(Color.appPrimary)
             }
         }
         .preferredColorScheme(userPreferences.preferredColorScheme)

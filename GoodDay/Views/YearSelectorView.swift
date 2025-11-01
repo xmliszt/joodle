@@ -41,7 +41,7 @@ struct YearSelectorView: View {
     private var headerColor: Color {
         guard let highlightedItem else { return .textColor }
         let isHighlightedToday = Calendar.current.isDate(highlightedItem.date, inSameDayAs: Date())
-        return isHighlightedToday ? .accent: .textColor
+        return isHighlightedToday ? .appPrimary: .textColor
     }
     
     var body: some View {

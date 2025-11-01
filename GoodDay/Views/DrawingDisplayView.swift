@@ -20,10 +20,10 @@ struct DrawingDisplayView: View {
     private let pathCache = DrawingPathCache.shared
     
     private var foregroundColor: Color {
-        if accent { return .accent }
+        if accent { return .appPrimary }
         
         // Override base color if it is a present dot.
-        if dotStyle == .present { return .accent }
+        if dotStyle == .present { return .appPrimary }
         if dotStyle == .future { return .textColor.opacity(0.15) }
         return .textColor
     }

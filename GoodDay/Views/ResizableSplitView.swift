@@ -58,7 +58,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             
             ZStack {
                 // Background color
-                Color.accentColor
+                Color.appPrimary
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .opacity(splitPosition == 1.0 ? 0.0 : 1.0)
                     .animation(.easeInOut, value: splitPosition)
@@ -79,7 +79,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                         .frame(height: DRAG_HANDLE_HEIGHT)
                         .overlay(
                             RoundedRectangle(cornerRadius: 2)
-                                .fill(.white.opacity(0.5))
+                                .fill(.appSurface.opacity(0.7))
                                 .frame(width: 60, height: 4)
                         )
                         // Drag gesture handling for resize handle area
