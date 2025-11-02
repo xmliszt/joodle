@@ -223,7 +223,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                         MIN_SPLIT_POSITION = 0.0
                         MAX_SPLIT_POSITION = 1.0
                         splitPosition = 0.5
-                        SNAP_POSITIONS = [0.25, 0.5, 0.75, 1.0]
+                        SNAP_POSITIONS = [0.5, 0.75, 1.0]
                         isDraggable = true
                     }
                     // Keyboard is shown
