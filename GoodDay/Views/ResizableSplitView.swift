@@ -5,8 +5,8 @@
 //  Created by Li Yuxuan on 16/8/25.
 //
 
-import SwiftUI
 import Combine
+import SwiftUI
 
 struct ResizableSplitView<Top: View, Bottom: View>: View {
     @State private var isDragging = false
@@ -37,7 +37,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         self.onBottomDismissed = onBottomDismissed
         self.onTopViewHeightChange = onTopViewHeightChange
     }
-
+    
     /// The height of the drag detection zone for the drag handle
     private let DRAG_HANDLE_HEIGHT: CGFloat = 20
     /// The highest position that user can drag
@@ -47,7 +47,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     /// Any value beyond this will be considered dismissed
     private let DISMISS_POSITION: CGFloat = 0.8
     /// Snap position includes 1.0, which means topView will be occupying the fullscreen
-    @State private var SNAP_POSITIONS: [CGFloat] = [0.25, 0.5, 0.75, 1.0]
+    @State private var SNAP_POSITIONS: [CGFloat] = [0.5, 0.75, 1.0]
     /// Compensate corner radius so it is just a bit smaller than device actual radius
     private let CORNER_RADIUS_COMPENSATION: CGFloat = 5
     
@@ -61,20 +61,22 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                 Color.appPrimary
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .opacity(splitPosition == 1.0 ? 0.0 : 1.0)
-                    .animation(.easeInOut, value: splitPosition)
                 
                 VStack(spacing: 0) {
                     // Top View - YearGridView
                     topView
                         .frame(width: _geometry.size.width, height: topHeight, alignment: .top)
-                        .clipShape(UnevenRoundedRectangle(
-                            bottomLeadingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, bottomTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, style: .continuous))
-                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .springFkingSatifying : nil, value: splitPosition)
+                        .clipShape(
+                            UnevenRoundedRectangle(
+                                bottomLeadingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
+                                bottomTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
+                                style: .continuous)
+                        )
                     
                     // Resize Handle
                     Rectangle()
                         .fill(.clear)
-                        // Still make the rectangle interactive while keeping background clear
+                    // Still make the rectangle interactive while keeping background clear
                         .contentShape(Rectangle())
                         .frame(height: DRAG_HANDLE_HEIGHT)
                         .overlay(
@@ -82,16 +84,17 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                                 .fill(.appSurface.opacity(0.7))
                                 .frame(width: 60, height: 4)
                         )
-                        // Drag gesture handling for resize handle area
+                    // Drag gesture handling for resize handle area
                         .gesture(
-                            !isDraggable ? nil :
-                            DragGesture()
+                            !isDraggable
+                            ? nil
+                            : DragGesture()
                                 .onChanged { value in
                                     isDragging = true
-                                    withAnimation {
-                                        let newHeight = topHeight + value.translation.height
-                                        splitPosition = clamp(value: newHeight  / _geometry.size.height, min: MIN_SPLIT_POSITION, max: MAX_SPLIT_POSITION)
-                                    }
+                                    let newPosition = (topHeight + value.translation.height) / _geometry.size.height
+                                    splitPosition = clamp(
+                                        value: newPosition, min: MIN_SPLIT_POSITION,
+                                        max: MAX_SPLIT_POSITION)
                                 }
                                 .onEnded { _ in
                                     isDragging = false
@@ -108,7 +111,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                                     // If we managed to find a closest position to snap, we snap
                                     guard let closestPosition = result.closestValue else { return }
                                     isSnapping = true
-                                    withAnimation {
+                                    withAnimation(.springFkingSatifying) {
                                         if splitPosition >= DISMISS_POSITION {
                                             splitPosition = 1.0
                                         } else {
@@ -119,29 +122,34 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                                         self.onTopViewHeightChange?(newHeight)
                                         DispatchQueue.main.async {
                                             isSnapping = false
-                                            if (splitPosition == 1.0) {
+                                            if splitPosition == 1.0 {
                                                 self.onBottomDismissed?()
                                             }
                                         }
                                     }
                                 }
                         )
-                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .springFkingSatifying : nil, value: splitPosition)
                     
                     // Bottom container - clips bottomView from top
                     bottomView
                         .frame(width: _geometry.size.width, height: bottomHeight, alignment: .top)
-                        .clipShape(UnevenRoundedRectangle(topLeadingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, topTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION, style: .continuous))
-                        // Drag gesture handling for bottom container as well
+                        .clipShape(
+                            UnevenRoundedRectangle(
+                                topLeadingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
+                                topTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
+                                style: .continuous)
+                        )
+                    // Drag gesture handling for bottom container as well
                         .gesture(
-                            !isDraggable ? nil :
-                            DragGesture()
+                            !isDraggable
+                            ? nil
+                            : DragGesture()
                                 .onChanged { value in
                                     isDragging = true
-                                    withAnimation {
-                                        let newHeight = topHeight + value.translation.height
-                                        splitPosition = clamp(value: newHeight  / _geometry.size.height, min: MIN_SPLIT_POSITION, max: MAX_SPLIT_POSITION)
-                                    }
+                                    let newPosition = (topHeight + value.translation.height) / _geometry.size.height
+                                    splitPosition = clamp(
+                                        value: newPosition, min: MIN_SPLIT_POSITION,
+                                        max: MAX_SPLIT_POSITION)
                                 }
                                 .onEnded { _ in
                                     isDragging = false
@@ -158,7 +166,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                                     // If we managed to find a closest position to snap, we snap
                                     guard let closestPosition = result.closestValue else { return }
                                     isSnapping = true
-                                    withAnimation {
+                                    withAnimation(.springFkingSatifying) {
                                         if splitPosition >= DISMISS_POSITION {
                                             splitPosition = 1.0
                                         } else {
@@ -169,22 +177,23 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                                         self.onTopViewHeightChange?(newHeight)
                                         DispatchQueue.main.async {
                                             isSnapping = false
-                                            if (splitPosition == 1.0) {
+                                            if splitPosition == 1.0 {
                                                 self.onBottomDismissed?()
                                             }
                                         }
                                     }
                                 }
                         )
-                        .animation(isKeyboardVisible || isSnapping || !hasShownBottomView ? .springFkingSatifying : nil, value: splitPosition)
                 }
             }
+            .transaction { transaction in
+                transaction.animation = isDragging ? nil : transaction.animation
+            }
             .onAppear {
-                updateIsLandscape(size: _geometry.size)
                 // When appeared, update splitPosition:
                 // If we don't have bottomView, then show full topView
                 // Otherwise, default at halfway position
-                withAnimation {
+                withAnimation(.springFkingSatifying) {
                     splitPosition = hasBottomView ? 0.5 : 1.0
                 } completion: {
                     hasShownBottomView = hasBottomView
@@ -193,12 +202,11 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                 }
             }
             .onChange(of: _geometry.size) { _, newValue in
-                updateIsLandscape(size: newValue)
                 let newHeight = newValue.height * splitPosition
                 self.onTopViewHeightChange?(newHeight)
             }
             .onChange(of: hasBottomView) { _, newValue in
-                withAnimation {
+                withAnimation(.springFkingSatifying) {
                     splitPosition = newValue ? 0.5 : 1.0
                 } completion: {
                     hasShownBottomView = newValue
@@ -233,14 +241,6 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                 }
             }
         }
-    }
-    
-    /// Update if device is landscape by checking width > height for given size
-    private func updateIsLandscape(size: CGSize) {
-        viewSize = size
-        let _isLandscape = size.width > size.height
-        guard _isLandscape != isLandscape else { return }
-        isLandscape = _isLandscape
     }
 }
 
