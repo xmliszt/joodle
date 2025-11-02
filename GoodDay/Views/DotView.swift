@@ -15,6 +15,7 @@ struct DotView: View {
     let highlighted: Bool
     let withEntry: Bool
     let dotStyle: DotStyle
+    let scale: CGFloat
     
     // MARK: Computed dot color
     private var dotColor: Color {
@@ -28,7 +29,7 @@ struct DotView: View {
     
     private var ringColor: Color {
         if highlighted { return .appSecondary }
-
+        
         // Override base color if it is a present dot.
         if dotStyle == .present { return .appPrimary }
         if dotStyle == .future { return .textColor.opacity(0.15) }
@@ -46,7 +47,11 @@ struct DotView: View {
             // Visual dot that can scale without affecting layout
             Circle()
                 .fill(dotColor)
-                .frame(width: size, height: size)
+                .frame(width: size * scale, height: size * scale)
+                .animation(
+                    .springFkingSatifying,
+                    value: scale
+                )
                 .animation(
                     .springFkingSatifying,
                     value: highlighted
@@ -55,8 +60,12 @@ struct DotView: View {
             // Ring for entries - positioned absolutely
             if withEntry {
                 Circle()
-                    .stroke(ringColor, lineWidth: size * 0.15)
-                    .frame(width: size * 1.5, height: size * 1.5)
+                    .stroke(ringColor, lineWidth: size * 0.15 * scale)
+                    .frame(width: size * 1.5 * scale, height: size * 1.5 * scale)
+                    .animation(
+                        .springFkingSatifying,
+                        value: scale
+                    )
                     .animation(
                         .springFkingSatifying,
                         value: highlighted
@@ -69,40 +78,48 @@ struct DotView: View {
 }
 
 #Preview {
-    DotView(
-        size: 12,
-        highlighted: false,
-        withEntry: false,
-        dotStyle: .past
-    )
-    DotView(
-        size: 12,
-        highlighted: false,
-        withEntry: true,
-        dotStyle: .past
-    )
-    DotView(
-        size: 12,
-        highlighted: false,
-        withEntry: false,
-        dotStyle: .present
-    )
-    DotView(
-        size: 12,
-        highlighted: false,
-        withEntry: true,
-        dotStyle: .present
-    )
-    DotView(
-        size: 12,
-        highlighted: true,
-        withEntry: false,
-        dotStyle: .present
-    )
-    DotView(
-        size: 12,
-        highlighted: true,
-        withEntry: true,
-        dotStyle: .present
-    )
+    VStack (spacing: 40) {
+        DotView(
+            size: 12,
+            highlighted: false,
+            withEntry: false,
+            dotStyle: .past,
+            scale: 1.0
+        )
+        DotView(
+            size: 12,
+            highlighted: false,
+            withEntry: true,
+            dotStyle: .past,
+            scale: 1.0
+        )
+        DotView(
+            size: 12,
+            highlighted: false,
+            withEntry: false,
+            dotStyle: .present,
+            scale: 1.0
+        )
+        DotView(
+            size: 12,
+            highlighted: false,
+            withEntry: true,
+            dotStyle: .present,
+            scale: 1.0
+        )
+        DotView(
+            size: 12,
+            highlighted: true,
+            withEntry: false,
+            dotStyle: .present,
+            scale: 2.0
+        )
+        DotView(
+            size: 12,
+            highlighted: true,
+            withEntry: true,
+            dotStyle: .present,
+            scale: 2.0
+        )
+    }
 }
