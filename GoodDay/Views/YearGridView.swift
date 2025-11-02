@@ -92,7 +92,8 @@ struct YearGridView: View {
                                     entry: entry,
                                     displaySize: viewMode.drawingSize,
                                     dotStyle: dotStyle,
-                                    accent: isHighlighted || selectedItemId == item.id
+                                    accent: false,
+                                    highlighted: isHighlighted || selectedItemId == item.id
                                 )
                                 .frame(width: viewMode.drawingSize, height: viewMode.drawingSize)
                                 .animation(

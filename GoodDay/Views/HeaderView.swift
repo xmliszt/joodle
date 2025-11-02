@@ -53,7 +53,7 @@ struct HeaderView: View {
                                 .fill(Color.clear)
                                 .frame(width: 36, height: 36) // Small layout footprint
                                 .overlay(
-                                    DrawingDisplayView(entry: entry, displaySize: drawingSize, dotStyle: .present, accent: true)
+                                    DrawingDisplayView(entry: entry, displaySize: drawingSize, dotStyle: .present, accent: true, highlighted: false)
                                         .frame(width: drawingSize, height: drawingSize)
                                         .animation(.interactiveSpring, value: highlightedEntry)
                                 )

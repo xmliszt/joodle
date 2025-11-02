@@ -244,7 +244,8 @@ struct EntryEditingView: View {
                                     entry: entry,
                                     displaySize: 200,
                                     dotStyle: .present,
-                                    accent: true
+                                    accent: true,
+                                    highlighted: false
                                 )
                                 .frame(width: 200, height: 200)
                                 .background(.controlBackgroundColor.opacity(0.3))
