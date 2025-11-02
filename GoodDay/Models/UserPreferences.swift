@@ -5,15 +5,14 @@
 //  Created by Li Yuxuan on 11/8/25.
 //
 
-import SwiftUI
 import Foundation
 import Observation
+import SwiftUI
 
 enum Pref {
     // MARK: - Step 1: Register Pref key here.
     static let defaultViewMode = Key(key: "default_view_mode", default: ViewMode.now)
     static let preferredColorScheme = Key<ColorScheme?>(key: "preferred_color_scheme", default: nil)
-    static let autoScrollRelevantDate = Key(key: "auto_scroll_relevant_date", default: true)
     static let enableHaptic = Key(key: "enable_haptic", default: true)
     
     // Add new preferences here - just specify the default!
@@ -34,7 +33,6 @@ enum Pref {
     static let allKeys = [
         defaultViewMode.key,
         preferredColorScheme.key,
-        autoScrollRelevantDate.key,
         enableHaptic.key,
     ]
 }
@@ -67,11 +65,6 @@ final class UserPreferences {
     var preferredColorScheme: ColorScheme? = Pref.preferredColorScheme.defaultValue {
         didSet { _preferredColorSchemeWatcher = preferredColorScheme }
     }
-    /// Auto-scroll to relevant date to keep it in view.
-    /// Relevant is either the current date user selected, or if nothing selected, today
-    var autoScrollRelevantDate: Bool = Pref.autoScrollRelevantDate.defaultValue {
-        didSet { _autoScrollRelevantDateWatcher = autoScrollRelevantDate }
-    }
     var enableHaptic: Bool = Pref.enableHaptic.defaultValue {
         didSet { _enableHapticWatcher = enableHaptic }
     }
@@ -80,7 +73,8 @@ final class UserPreferences {
     private var _defaultViewModeWatcher: ViewMode {
         get {
             if let rawValue = defaults.string(forKey: Pref.defaultViewMode.key),
-               let mode = ViewMode(rawValue: rawValue) {
+               let mode = ViewMode(rawValue: rawValue)
+            {
                 return mode
             }
             return Pref.defaultViewMode.defaultValue
@@ -106,11 +100,6 @@ final class UserPreferences {
         }
     }
     
-    private var _autoScrollRelevantDateWatcher: Bool {
-        get { get(Pref.autoScrollRelevantDate) }
-        set { set(Pref.autoScrollRelevantDate, newValue) }
-    }
-    
     private var _enableHapticWatcher: Bool {
         get { get(Pref.enableHaptic) }
         set { set(Pref.enableHaptic, newValue) }
@@ -121,7 +110,6 @@ final class UserPreferences {
         // Load initial values from UserDefaults
         defaultViewMode = _defaultViewModeWatcher
         preferredColorScheme = _preferredColorSchemeWatcher
-        autoScrollRelevantDate = _autoScrollRelevantDateWatcher
         enableHaptic = _enableHapticWatcher
     }
     
@@ -134,7 +122,6 @@ final class UserPreferences {
         // MARK: - Step 6: Add your property here to reset
         defaultViewMode = Pref.defaultViewMode.defaultValue
         preferredColorScheme = Pref.preferredColorScheme.defaultValue
-        autoScrollRelevantDate = Pref.autoScrollRelevantDate.defaultValue
         enableHaptic = Pref.enableHaptic.defaultValue
     }
 }

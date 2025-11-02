@@ -56,34 +56,22 @@ struct YearGridView: View {
     
     // MARK: View
     var body: some View {
-        // Use a completely flat structure with manual positioning
-        // This ensures every dot maintains stable identity regardless of layout changes
-        let metrics = layoutMetrics
-        
-        // Pre-build entry lookup dictionary for O(1) lookups instead of O(n) per dot
         let entriesByDateKey = buildEntriesLookup()
         
-        VStack(spacing: 0) {
-            GeometryReader { geometry in
-                let containerWidth = geometry.size.width
-                let totalSpacingWidth = CGFloat(viewMode.dotsPerRow - 1) * dotsSpacing
-                let totalDotWidth = containerWidth - totalSpacingWidth
-                let itemSpacing = totalDotWidth / CGFloat(viewMode.dotsPerRow)
-                let startX = itemSpacing / 2
-                
-                ZStack(alignment: .topLeading) {
-                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+        // Split items into rows for proper grid layout
+        let rows = stride(from: 0, to: items.count, by: viewMode.dotsPerRow).map { rowStart in
+            Array(items[rowStart..<min(rowStart + viewMode.dotsPerRow, items.count)])
+        }
+        
+        VStack(spacing: dotsSpacing) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, rowItems in
+                HStack(alignment: .top, spacing: dotsSpacing) {
+                    ForEach(rowItems) { item in
                         let dotStyle = getDotStyle(for: item.date)
                         let entry = getEntryForDate(item.date, from: entriesByDateKey)
                         let hasEntry = entry != nil && entry!.body.isEmpty == false
                         let hasDrawing = entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true)
                         let isHighlighted = highlightedItemId == item.id
-                        let isToday = Calendar.current.isDate(item.date, inSameDayAs: todayStart)
-                        
-                        let row = index / viewMode.dotsPerRow
-                        let col = index % viewMode.dotsPerRow
-                        let xPos = startX + CGFloat(col) * (itemSpacing + dotsSpacing)
-                        let yPos = CGFloat(row) * (viewMode.dotSize + dotsSpacing)
                         
                         Group {
                             if hasDrawing {
@@ -95,34 +83,31 @@ struct YearGridView: View {
                                     accent: false,
                                     highlighted: isHighlighted || selectedItemId == item.id
                                 )
-                                .frame(width: viewMode.drawingSize, height: viewMode.drawingSize)
-                                .animation(
-                                    .springFkingSatifying,
-                                    value: isHighlighted)
+                                .frame(width: viewMode.dotSize, height: viewMode.dotSize)
+                                .animation(.springFkingSatifying, value: isHighlighted)
                             } else {
                                 // Show regular dot
                                 DotView(
                                     size: viewMode.dotSize,
                                     highlighted: isHighlighted || selectedItemId == item.id,
                                     withEntry: hasEntry,
-                                    dotStyle: dotStyle,
+                                    dotStyle: dotStyle
                                 )
+                                .frame(width: viewMode.dotSize, height: viewMode.dotSize)
                             }
                         }
-                        // Stable identity based on date, this is important
-                        // so that every single dot is morphed between mode switch
-                        // as it is considered as one
+                        // Stable identity based on date
                         .id(item.id)
-                        // Add special ID for today's dot for auto-scroll
-                        .if(isToday) { $0.id("todayDot") }
-                        // Center the dot
-                        .position(x: xPos, y: yPos + viewMode.dotSize/2)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(height: metrics.totalContentHeight) // Define explicit height for scrolling
-            .padding(.horizontal, GRID_HORIZONTAL_PADDING)
         }
+        .padding(
+            .init(
+                top: 0, leading: GRID_HORIZONTAL_PADDING, bottom: GRID_HORIZONTAL_PADDING,
+                trailing: GRID_HORIZONTAL_PADDING)
+        )
         .frame(maxWidth: .infinity, alignment: .top)
     }
     

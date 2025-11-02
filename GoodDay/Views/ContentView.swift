@@ -24,7 +24,7 @@ struct ContentView: View {
     @State private var highlightedId: String?
     // --- END GESTURE STATE ---
     
-    @State private var isScrollingDisabled = false // Kept for pinching
+    @State private var isScrollingDisabled = false  // Kept for pinching
     @State private var viewMode: ViewMode = UserPreferences.shared.defaultViewMode
     @State private var yearGridViewSize: CGSize = .zero
     @State private var scrollProxy: ScrollViewProxy?
@@ -47,10 +47,9 @@ struct ContentView: View {
         let offsetY: CGFloat
     }
     
-
     // Gesture states
     private let scaleThreshold: CGFloat = 0.9  // Threshold for detecting significant pinch
-    private let expandThreshold: CGFloat = 1.2 // Threshold for detecting significant expand
+    private let expandThreshold: CGFloat = 1.2  // Threshold for detecting significant expand
     
     // MARK: Computed
     /// Flattened array of items to be displayed in the year grid.
@@ -115,7 +114,9 @@ struct ContentView: View {
                                                 // Called when long press threshold is reached
                                                 // convert location to SwiftUI geometry coords if needed
                                                 highlightedId = nil
-                                                isScrubbing = true // if you want to keep using GestureState, you may need to change to @State
+                                                isScrubbing = true  // if you want to keep using GestureState, you may need to change to @State
+                                                // Deselect any currently selected item
+                                                selectedDateItem = nil
                                                 // play haptic and compute the initial highlightedId
                                                 let newId = getItemId(at: location, for: geometry)
                                                 if highlightedId == nil { Haptic.play(with: .medium) }
@@ -155,30 +156,37 @@ struct ContentView: View {
                                 }
                                 // Scrolling is now disabled if we are *actively* scrubbing OR pinching
                                 .background(.backgroundColor)
-                                // When view mode change, scroll to today's dot and rebuild hit testing grid
+                                // When view mode change, rebuild hit testing grid
                                 .onChange(of: viewMode) {
                                     hitTestingGrid = []  // Clear grid to trigger rebuild
                                     gridMetrics = nil
-                                    scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
+                                    // Deselect any selected date item
+                                    selectedDateItem = nil
+                                    
+                                    // Delay scroll to allow grid animation to complete
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                        scrollToTodayOrTop(scrollProxy: scrollProxy)
+                                    }
                                 }
                                 // When year changes, scroll to relevant date and rebuild hit testing grid
                                 .onChange(of: selectedYear) {
                                     hitTestingGrid = []  // Clear grid to trigger rebuild
                                     gridMetrics = nil
-                                    scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
+                                    // Deselect any selected date item
+                                    selectedDateItem = nil
+                                    
+                                    DispatchQueue.main.async {
+                                        scrollToTodayOrTop(scrollProxy: scrollProxy)
+                                    }
                                 }
                                 // Initial scroll to today's dot for both modes
                                 .onAppear {
                                     yearGridViewSize = geometry.size
                                     self.scrollProxy = scrollProxy
-                                    scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
-                                }
-                                // When device orientation changes, scroll to today's dot and rebuild hit testing grid
-                                .onRotate { _ in
-                                    yearGridViewSize = geometry.size
-                                    hitTestingGrid = []  // Clear grid to trigger rebuild
-                                    gridMetrics = nil
-                                    scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy)
+                                    
+                                    DispatchQueue.main.async {
+                                        scrollToTodayOrTop(scrollProxy: scrollProxy)
+                                    }
                                 }
                                 .onDisappear {
                                     self.scrollProxy = nil
@@ -195,7 +203,11 @@ struct ContentView: View {
                                 },
                                 onFocusChange: { isFocused in
                                     guard isFocused, let selectedDateItem, let scrollProxy else { return }
-                                    scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
+                                    
+                                    DispatchQueue.main.async {
+                                        scrollToRelevantDate(
+                                            itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
+                                    }
                                 }
                             )
                         }, hasBottomView: selectedDateItem != nil,
@@ -204,8 +216,12 @@ struct ContentView: View {
                         },
                         onTopViewHeightChange: { newHeight in
                             yearGridViewSize.height = newHeight
+                            // Scroll after height change is complete, only do so if there is item selected.
                             guard let selectedDateItem, let scrollProxy else { return }
-                            scrollToRelevantDate(date: selectedDateItem.date, scrollProxy: scrollProxy)
+                            DispatchQueue.main.async {
+                                scrollToRelevantDate(
+                                    itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
+                            }
                         }
                     )
                     .frame(alignment: .top)
@@ -218,16 +234,13 @@ struct ContentView: View {
                         highlightedItem: currentHighlightedItem,
                         selectedYear: $selectedYear,
                         viewMode: viewMode,
-                        onToggleViewMode: toggleViewMode,
+                        onToggleViewMode: { toggleViewMode(to: viewMode == .now ? .year : .now) },
                         onSettingsAction: {
                             navigateToSettings = true
                         }
                     )
                 }
                 .background(.backgroundColor)
-                .onShake {
-                    handleShakeGesture()
-                }
             }
             .ignoresSafeArea(.all, edges: .bottom)
             // Present drawing canvas
@@ -466,15 +479,7 @@ struct ContentView: View {
         }
         
         selectedDateItem = item
-        scrollToRelevantDate(date: item.date, scrollProxy: scrollProxy)
-    }
-    
-    /// Toggle the view mode between current modes
-    private func toggleViewMode() {
-        // Use a spring animation for morphing effect
-        withAnimation(.springFkingSatifying) {
-            viewMode = viewMode == .now ? .year : .now
-        }
+        scrollToRelevantDate(itemId: item.id, scrollProxy: scrollProxy)
     }
     
     /// Toggle the view mode to a specific mode
@@ -487,40 +492,27 @@ struct ContentView: View {
         }
     }
     
-    // MARK: - Shake Gesture Handler
-    private func handleShakeGesture() {
-        let currentYear = Calendar.current.component(.year, from: Date())
-        
-        // Haptic feedback for shake action
-        Haptic.play(with: .medium)
-        
-        // Set to current year and scroll to today
+    // MARK: Layout Calculations
+    /// Scrolls to center the selected item by its ID
+    private func scrollToRelevantDate(
+        itemId: String, scrollProxy: ScrollViewProxy, anchor: UnitPoint? = nil
+    ) {
         withAnimation(.springFkingSatifying) {
-            selectedYear = currentYear
-            viewMode = .now  // Switch to "now" mode for better visibility
-            scrollToRelevantDate(date: Date(), scrollProxy: scrollProxy!)
+            scrollProxy.scrollTo(itemId, anchor: anchor)
         }
     }
     
-    // MARK: Layout Calculations
-    /// Scrolls to center the most relevant date (today if in selected year, otherwise first day of year)
-    private func scrollToRelevantDate(date: Date, scrollProxy: ScrollViewProxy) {
-        // Only auto-scroll if the preference is enabled
-        guard userPreferences.autoScrollRelevantDate else { return }
+    /// Scrolls to today's date or first day of year
+    private func scrollToTodayOrTop(scrollProxy: ScrollViewProxy) {
+        let currentYear = Calendar.current.component(.year, from: Date())
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            let currentYear = Calendar.current.component(.year, from: Date())
-            
-            withAnimation(.springFkingSatifying) {
-                if selectedYear != currentYear {
-                    // For non-current years, scroll to the top spacer to show first row properly
-                    scrollProxy.scrollTo("topSpacer", anchor: .top)
-                } else {
-                    // For current year, scroll to today with proper centering
-                    let targetId = getRelevantDateId(date: date)
-                    let anchor = calculateScrollAnchor(for: targetId, containerSize: yearGridViewSize)
-                    scrollProxy.scrollTo(targetId, anchor: anchor)
-                }
+        withAnimation(.springFkingSatifying) {
+            if selectedYear != currentYear {
+                // For non-current years, scroll to the top spacer to show first row properly
+                scrollProxy.scrollTo("topSpacer", anchor: .top)
+            } else {
+                let targetId = getRelevantDateId(date: Date())
+                scrollProxy.scrollTo(targetId, anchor: .center)
             }
         }
     }
@@ -552,11 +544,6 @@ struct ContentView: View {
         return itemsInYear.first?.id ?? ""
     }
     
-    /// Calculate the proper scroll anchor to center a dot on the visible screen
-    /// This is because our grid view does not have virtualization, because we want to
-    /// morph every single dot between view modes. Therefore, the grid view has height
-    /// that is the sum of all dots' height, which could be longer than the screen height.
-    /// Therefore, we need to calculate the scroll anchor to center the dot on the visible screen.
     /// Adjusts the touch location from the parent coordinate system to the grid's coordinate system
     private func adjustTouchLocationForGrid(_ location: CGPoint) -> CGPoint {
         // Adjust for the header height and horizontal padding
@@ -564,32 +551,6 @@ struct ContentView: View {
             x: location.x - GRID_HORIZONTAL_PADDING,
             y: location.y
         )
-    }
-    
-    private func calculateScrollAnchor(for itemId: String, containerSize: CGSize) -> UnitPoint {
-        // Find the item index
-        guard let item = itemsInYear.first(where: { $0.id == itemId }),
-              let itemIndex = itemsInYear.firstIndex(where: { $0.id == item.id })
-        else {
-            return .top
-        }
-        
-        // Calculate proper anchor to center the dot on screen (only used for current year)
-        let spacing = calculateSpacing(containerWidth: containerSize.width, viewMode: viewMode)
-        
-        // Calculate dot position within the content
-        let row = itemIndex / viewMode.dotsPerRow
-        let dotYPosition = CGFloat(row) * (viewMode.dotSize + spacing)  // Add top padding
-        
-        // Calculate total content height
-        let numberOfRows = (itemsInYear.count + viewMode.dotsPerRow - 1) / viewMode.dotsPerRow
-        let totalContentHeight = CGFloat(numberOfRows) * (viewMode.dotSize + spacing) - headerHeight
-        
-        // Calculate what percentage down the content the dot should be to appear in screen center
-        let scrollPercentage = max(0, min(1, dotYPosition / totalContentHeight))
-        
-        // Return anchor point that will center the dot on visible screen
-        return UnitPoint(x: 0.5, y: scrollPercentage)
     }
 }
 
