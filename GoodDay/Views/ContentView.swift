@@ -11,6 +11,7 @@ import SwiftUI
 struct ContentView: View {
   @Environment(\.modelContext) private var modelContext
   @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.scenePhase) private var scenePhase
   @Environment(UserPreferences.self) private var userPreferences
 
   @Query private var entries: [DayEntry]
@@ -316,6 +317,22 @@ struct ContentView: View {
     .onChange(of: entries) { _, newEntries in
       // Sync widget data when entries are modified
       WidgetHelper.shared.updateWidgetData(with: newEntries)
+    }
+    .onChange(of: scenePhase) { _, newPhase in
+      // Reload widget when app goes to background or comes to foreground
+      switch newPhase {
+      case .active:
+        // App became active (foreground)
+        WidgetHelper.shared.updateWidgetData(with: entries)
+      case .background:
+        // App went to background
+        WidgetHelper.shared.updateWidgetData(with: entries)
+      case .inactive:
+        // App is inactive (transitioning)
+        break
+      @unknown default:
+        break
+      }
     }
   }
 

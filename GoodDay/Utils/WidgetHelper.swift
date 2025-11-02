@@ -23,6 +23,12 @@ struct WidgetEntryData: Codable {
 }
 
 /// Helper class for updating widget data from the main app
+///
+/// This class is responsible for syncing data between the main app and the widget.
+/// It stores simplified entry data in shared UserDefaults and triggers widget reloads.
+///
+/// Usage: Call `updateWidgetData(with:)` whenever entries change in the main app.
+/// The widget will automatically update via `@Query` observers in ContentView.
 class WidgetHelper {
   static let shared = WidgetHelper()
 
@@ -31,7 +37,14 @@ class WidgetHelper {
 
   private init() {}
 
-  /// Update widget data with current entries from SwiftData
+  /// Update widget data with current entries from SwiftData and reload widget timelines
+  ///
+  /// This method:
+  /// 1. Converts DayEntry objects to WidgetEntryData (excluding drawing data for memory efficiency)
+  /// 2. Saves the data to shared UserDefaults accessible by the widget
+  /// 3. Triggers widget timeline reload to display updated data
+  ///
+  /// - Parameter entries: Array of DayEntry objects from SwiftData
   func updateWidgetData(with entries: [DayEntry]) {
     guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
       print("Failed to access shared UserDefaults for widget")
@@ -59,10 +72,5 @@ class WidgetHelper {
     } catch {
       print("Failed to encode widget entries: \(error)")
     }
-  }
-
-  /// Update widget immediately (call after saving/deleting entries)
-  func reloadWidget() {
-    WidgetCenter.shared.reloadAllTimelines()
   }
 }
