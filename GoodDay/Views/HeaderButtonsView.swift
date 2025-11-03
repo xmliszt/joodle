@@ -31,7 +31,7 @@ struct HeaderButtonsView: View {
                   
                   // Main Toggle Button (Right) - changes icon based on viewMode
                   Button(action: onToggleViewMode) {
-                      Image(systemName: viewMode == .now ? "calendar" : "dot.circle")
+                      Image(systemName: viewMode == .now ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
                   }
                   .circularGlassButton()
                   .glassEffectID("view-mode", in: namespace)

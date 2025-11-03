@@ -45,17 +45,48 @@ struct DotView: View {
                 .frame(width: size, height: size)
             
             // Visual dot that can scale without affecting layout
-            Circle()
-                .fill(dotColor)
-                .frame(width: size * scale, height: size * scale)
-                .animation(
-                    .springFkingSatifying,
-                    value: scale
-                )
-                .animation(
-                    .springFkingSatifying,
-                    value: highlighted
-                )
+            if highlighted {
+                if #available(iOS 26.0, *) {
+                    Circle()
+                        .fill(dotColor)
+                        .frame(width: size * scale, height: size * scale)
+                        .glassEffect(.regular.tint(.appSecondary).interactive())
+                        .animation(
+                            .springFkingSatifying,
+                            value: scale
+                        )
+                        .animation(
+                            .springFkingSatifying,
+                            value: highlighted
+                        )
+                } else {
+                    // Fallback on earlier versions
+                    Circle()
+                        .fill(dotColor)
+                        .frame(width: size * scale, height: size * scale)
+                        .animation(
+                            .springFkingSatifying,
+                            value: scale
+                        )
+                        .animation(
+                            .springFkingSatifying,
+                            value: highlighted
+                        )
+                }
+            } else {
+                // Non-highlighted dot (no glass effect)
+                Circle()
+                    .fill(dotColor)
+                    .frame(width: size * scale, height: size * scale)
+                    .animation(
+                        .springFkingSatifying,
+                        value: scale
+                    )
+                    .animation(
+                        .springFkingSatifying,
+                        value: highlighted
+                    )
+            }
             
             // Ring for entries - positioned absolutely
             if withEntry {
@@ -123,3 +154,4 @@ struct DotView: View {
         )
     }
 }
+
