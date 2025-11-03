@@ -195,8 +195,8 @@ struct DrawingCanvasView: View {
       }
     )
     .confirmationDialog("Clear Drawing", isPresented: $showClearConfirmation) {
-      Button("Clear", role: .destructive, action: clearDrawing)
-      Button("Cancel", role: .cancel) {}
+        Button("Clear", role: .destructive, action: clearDrawing).circularGlassButton()
+        Button("Cancel", role: .cancel, action: {})
     } message: {
       Text("Clear all drawing?")
     }

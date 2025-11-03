@@ -98,62 +98,67 @@ struct DynamicIslandExpandedView<Content: View>: View {
 
 #Preview("Shrinked View") {
     @Previewable @State var isExpanded = false
-    DynamicIslandExpandedView(
-        isExpanded: $isExpanded,
-        content: {
-            Button("Tap me") {
-                debugPrint("HELLO")
+    ZStack {
+        DynamicIslandExpandedView(
+            isExpanded: $isExpanded,
+            content: {
+                Button("Tap me") {
+                    debugPrint("HELLO")
+                }
+            },
+            hidden: false,
+            onDismiss: {
+                isExpanded = false
             }
-        },
-        hidden: false,
-        onDismiss: {
-            isExpanded = false
+        )
+        Button("Toggle") {
+            isExpanded.toggle()
         }
-    )
-    Spacer()
-    Button("Toggle") {
-        isExpanded.toggle()
     }
 }
 
 #Preview("Expanded View") {
     @Previewable @State var isExpanded = true
-    DynamicIslandExpandedView(
-        isExpanded: $isExpanded,
-        content: {
-            ZStack {
-                Color.blue
-                Text("HELLO WORLD")
-            }
-            .frame(height: 300)
-        },
-        hidden: false,
-        onDismiss: {
-            isExpanded = false
-        })
-    Spacer()
-    Button("Toggle") {
-        isExpanded.toggle()
+    
+    ZStack {
+        DynamicIslandExpandedView(
+            isExpanded: $isExpanded,
+            content: {
+                ZStack {
+                    Color.blue
+                    Text("HELLO WORLD")
+                }
+                .frame(height: 300)
+            },
+            hidden: false,
+            onDismiss: {
+                isExpanded = false
+            })
+        Button("Toggle") {
+            isExpanded.toggle()
+        }
     }
 }
 
 #Preview("Hidden View") {
     @Previewable @State var isExpanded = true
-    DynamicIslandExpandedView(
-        isExpanded: $isExpanded,
-        content: {
-            ZStack {
-                Color.blue
-                Text("HELLO WORLD")
-            }
-            .frame(height: 300)
-        },
-        hidden: true,
-        onDismiss: {
-            isExpanded = false
-        })
-    Spacer()
-    Button("Toggle") {
-        isExpanded.toggle()
+    
+    ZStack {
+        DynamicIslandExpandedView(
+            isExpanded: $isExpanded,
+            content: {
+                ZStack {
+                    Color.blue
+                    Text("HELLO WORLD")
+                }
+                .frame(height: 300)
+            },
+            hidden: true,
+            onDismiss: {
+                isExpanded = false
+            })
+        Button("Toggle") {
+            isExpanded.toggle()
+        }
     }
 }

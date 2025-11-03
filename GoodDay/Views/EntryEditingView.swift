@@ -190,7 +190,7 @@ struct EntryEditingView: View {
                             // Alignment nudges to match the text view
                                 .padding(.top, -8)
                                 .padding(.horizontal, -5)
-                                .animation(.springFkingSatifying, value: isTextFieldFocused)
+                            //                                .animation(.springFkingSatifying, value: isTextFieldFocused)
                                 .onAppear {
                                     guard let date else { return }
                                     entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
@@ -328,7 +328,7 @@ struct EntryEditingView: View {
                                 // Confirm button
                                 if isTextFieldFocused {
                                     Button {
-                                        withAnimation(.spring()) {
+                                        withAnimation(.easeIn(duration: 0.25)) {
                                             isTextFieldFocused = false
                                             guard let date else { return }
                                             saveNote(text: textContent, for: date)
@@ -373,7 +373,7 @@ struct EntryEditingView: View {
                             // Confirm button
                             if isTextFieldFocused {
                                 Button {
-                                    withAnimation(.spring()) {
+                                    withAnimation(.easeIn(duration: 0.25)) {
                                         isTextFieldFocused = false
                                         guard let date else { return }
                                         saveNote(text: textContent, for: date)
@@ -410,6 +410,7 @@ struct EntryEditingView: View {
                             }
                         }
                         .animation(.springFkingSatifying, value: isTextFieldFocused)
+                        .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
                     }
                 }
                 .frame(height: 60, alignment: .top)

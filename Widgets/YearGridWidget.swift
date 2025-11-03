@@ -273,7 +273,7 @@ struct WidgetDotView: View {
     let dotStyle: WidgetDotStyle
     
     private var dotColor: Color {
-        if withEntry { return .accent.opacity(0.75) }
+        if withEntry { return .accent }
         if dotStyle == .present { return .primary }
         if dotStyle == .future { return .primary.opacity(0.15) }
         return .primary

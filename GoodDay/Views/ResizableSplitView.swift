@@ -216,13 +216,15 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             }
             .onReceive(Publishers.keyboardInfo) { info in
                 let keyboardHeight = info.height
-                withAnimation {
+                withAnimation(.springFkingSatifying) {
                     // Keyboard dismissed
                     if keyboardHeight == 0.0 {
                         isKeyboardVisible = false
                         MIN_SPLIT_POSITION = 0.0
                         MAX_SPLIT_POSITION = 1.0
-                        splitPosition = 0.5
+                        // Only restore split position if bottom view is still present
+                        // Otherwise keep it at 1.0 to properly dismiss the bottom view
+                        splitPosition = hasBottomView ? 0.5 : 1.0
                         SNAP_POSITIONS = [0.5, 0.75, 1.0]
                         isDraggable = true
                     }
