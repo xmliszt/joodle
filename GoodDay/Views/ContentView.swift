@@ -161,13 +161,20 @@ struct ContentView: View {
                                 .onChange(of: viewMode) {
                                     hitTestingGrid = []  // Clear grid to trigger rebuild
                                     gridMetrics = nil
-                                    // Deselect any selected date item
-                                    selectedDateItem = nil
                                     
-                                    // Delay scroll to allow grid animation to complete
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                                        scrollToTodayOrTop(scrollProxy: scrollProxy)
+                                    if let selectedDateItem {
+                                        // Delay scroll to allow grid animation to complete
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                            scrollToRelevantDate(
+                                                itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
+                                        }
+                                    } else {
+                                        // Delay scroll to allow grid animation to complete
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                            scrollToTodayOrTop(scrollProxy: scrollProxy)
+                                        }
                                     }
+                                    
                                 }
                                 // When year changes, scroll to relevant date and rebuild hit testing grid
                                 .onChange(of: selectedYear) {
