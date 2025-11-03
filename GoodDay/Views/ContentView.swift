@@ -516,8 +516,6 @@ struct ContentView: View {
     // Use a spring animation for morphing effect
     withAnimation(.springFkingSatifying) {
       viewMode = newViewMode
-      // Save the new view mode as the user's preference
-      userPreferences.defaultViewMode = newViewMode
     }
   }
 
