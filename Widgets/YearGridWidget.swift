@@ -109,16 +109,24 @@ struct YearGridWidgetView: View {
         widgetFamily == .systemMedium ? 4.5 : 6.0
     }
     
-    private var dotsSpacing: CGFloat {
-        widgetFamily == .systemMedium ? 4.2 : 8.0
-    }
-    
-    private var dotsPerRow: Int {
-        widgetFamily == .systemMedium ? 34 : 20
-    }
-    
     private var horizontalPadding: CGFloat {
         widgetFamily == .systemMedium ? 12.0 : 18.0
+    }
+    
+    private func calculateDotsPerRow(availableWidth: CGFloat) -> Int {
+        // Calculate how many dots can fit in the available width
+        // Formula: (availableWidth + spacing) / (dotSize + spacing)
+        let minSpacing: CGFloat = widgetFamily == .systemMedium ? 4.0 : 6.0
+        let dotsPerRow = Int((availableWidth + minSpacing) / (dotSize + minSpacing))
+        return max(1, dotsPerRow)
+    }
+    
+    private func calculateSpacing(availableWidth: CGFloat, dotsCount: Int) -> CGFloat {
+        // Calculate spacing to distribute dots evenly across the width
+        guard dotsCount > 1 else { return 0 }
+        let totalDotWidth = CGFloat(dotsCount) * dotSize
+        let totalSpacing = availableWidth - totalDotWidth
+        return totalSpacing / CGFloat(dotsCount - 1)
     }
     
     private var dateItems: [WidgetDateItem] {
@@ -159,50 +167,54 @@ struct YearGridWidgetView: View {
         return lookup
     }
     
-    private var numberOfRows: Int {
+    private func numberOfRows(dotsPerRow: Int) -> Int {
         dateItems.count / dotsPerRow + (dateItems.count.isMultiple(of: dotsPerRow) ? 0 : 1)
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: widgetFamily == .systemMedium ? 8 : 12) {
-            // Header
-            HStack {
-                Text(String(entry.year))
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                Text(String(format: "%.1f%%", entry.percentage))
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.accent)
-            }
-            .padding(.horizontal, horizontalPadding)
-            .padding(.top, widgetFamily == .systemMedium ? 4 : 16)
-            
-            // Grid
-            LazyVStack(alignment: .leading, spacing: dotsSpacing) {
-                ForEach(0..<min(numberOfRows, (dateItems.count + dotsPerRow - 1) / dotsPerRow), id: \.self)
-                {
-                    rowIndex in
-                    createRow(for: rowIndex)
+        GeometryReader { geometry in
+            VStack(alignment: .leading, spacing: widgetFamily == .systemMedium ? 8 : 12) {
+                // Header
+                HStack {
+                    Text(String(entry.year))
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    Text(String(format: "%.1f%%", entry.percentage))
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(.accent)
                 }
+                .padding(.horizontal, horizontalPadding)
+                .padding(.top, widgetFamily == .systemMedium ? 4 : 16)
+                
+                // Grid
+                let availableWidth = geometry.size.width - (horizontalPadding * 2)
+                let dotsPerRow = calculateDotsPerRow(availableWidth: availableWidth)
+                let spacing = calculateSpacing(availableWidth: availableWidth, dotsCount: dotsPerRow)
+                
+                LazyVStack(alignment: .leading, spacing: spacing) {
+                    ForEach(0..<numberOfRows(dotsPerRow: dotsPerRow), id: \.self) { rowIndex in
+                        createRow(for: rowIndex, dotsPerRow: dotsPerRow, spacing: spacing)
+                    }
+                }
+                .padding(.horizontal, horizontalPadding)
+                .padding(.bottom, widgetFamily == .systemMedium ? 4 : 8)
             }
-            .padding(.horizontal, horizontalPadding)
-            .padding(.bottom, widgetFamily == .systemMedium ? 4 : 8)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
     
     @ViewBuilder
-    private func createRow(for rowIndex: Int) -> some View {
+    private func createRow(for rowIndex: Int, dotsPerRow: Int, spacing: CGFloat) -> some View {
         let rowStart = rowIndex * dotsPerRow
         let rowEnd = min(rowStart + dotsPerRow, dateItems.count)
         
         if rowStart < dateItems.count {
-            HStack(alignment: .top, spacing: dotsSpacing) {
+            HStack(alignment: .top, spacing: spacing) {
                 ForEach(rowStart..<rowEnd, id: \.self) { index in
                     let item = dateItems[index]
                     let dotStyle = getDotStyle(for: item.date)
@@ -215,6 +227,11 @@ struct YearGridWidgetView: View {
                         dotStyle: dotStyle
                     )
                     .frame(width: dotSize, height: dotSize)
+                }
+                
+                // Add spacer for the last row if it's not full
+                if rowEnd < rowStart + dotsPerRow {
+                    Spacer(minLength: 0)
                 }
             }
         }
