@@ -84,23 +84,21 @@ struct RandomDoodleWidgetView: View {
     var entry: RandomDoodleProvider.Entry
     
     var body: some View {
-        ZStack {
-            // System background
-            Color.clear
+        if let doodle = entry.doodle {
+            // Show doodle centered with 36pt padding
+            DoodleView(drawingData: doodle.drawingData)
+                .padding(36)
+                .widgetURL(URL(string: "goodday://date/\(Int(doodle.date.timeIntervalSince1970))"))
                 .containerBackground(for: .widget) {
                     Color(UIColor.systemBackground)
                 }
-            
-            if let doodle = entry.doodle {
-                // Show doodle centered with 36pt padding
-                DoodleView(drawingData: doodle.drawingData)
-                    .padding(36)
-                    .widgetURL(URL(string: "goodday://date/\(Int(doodle.date.timeIntervalSince1970))"))
-            } else {
-                // Show not found status
-                NotFoundView()
-                    .padding(36)
-            }
+        } else {
+            // Show not found status
+            NotFoundView()
+                .padding(36)
+                .containerBackground(for: .widget) {
+                    Color(UIColor.systemBackground)
+                }
         }
     }
 }
