@@ -12,5 +12,6 @@ import WidgetKit
 struct WidgetsBundle: WidgetBundle {
     var body: some Widget {
         YearGridWidget()
+        RandomDoodleWidget()
     }
 }

@@ -22,6 +22,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct GoodDayApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var colorScheme: ColorScheme? = UserPreferences.shared.preferredColorScheme
+    @State private var selectedDateFromWidget: Date?
     
     var sharedModelContainer: ModelContainer = {
         
@@ -47,11 +48,14 @@ struct GoodDayApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationStack {
-                ContentView()
+                ContentView(selectedDateFromWidget: $selectedDateFromWidget)
                     .environment(UserPreferences.shared)
                     .preferredColorScheme(colorScheme)
                     .onAppear {
                         setupColorSchemeObserver()
+                    }
+                    .onOpenURL { url in
+                        handleWidgetURL(url)
                     }
             }
         }
@@ -66,5 +70,18 @@ struct GoodDayApp: App {
         ) { [self] _ in
             colorScheme = UserPreferences.shared.preferredColorScheme
         }
+    }
+    
+    private func handleWidgetURL(_ url: URL) {
+        // Handle URL scheme: goodday://date/{timestamp}
+        guard url.scheme == "goodday",
+              url.host == "date",
+              let timestamp = url.pathComponents.last,
+              let timeInterval = TimeInterval(timestamp) else {
+            return
+        }
+        
+        let date = Date(timeIntervalSince1970: timeInterval)
+        selectedDateFromWidget = date
     }
 }

@@ -9,16 +9,18 @@ import Foundation
 import WidgetKit
 
 /// Data model for encoding/decoding entries to share with widget
-/// Note: Drawing data is excluded to reduce memory usage in widget (30MB limit)
+/// Note: Drawing data is included optionally for widgets that need to display the actual drawing
 struct WidgetEntryData: Codable {
   let date: Date
   let hasText: Bool
   let hasDrawing: Bool
+  let drawingData: Data?
 
-  init(date: Date, hasText: Bool, hasDrawing: Bool) {
+  init(date: Date, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil) {
     self.date = date
     self.hasText = hasText
     self.hasDrawing = hasDrawing
+    self.drawingData = drawingData
   }
 }
 
@@ -52,12 +54,13 @@ class WidgetHelper {
     }
 
     // Convert DayEntry to WidgetEntryData
-    // Note: Drawing data is NOT included to keep widget memory usage under 30MB limit
+    // Note: Drawing data is included to support widgets that display actual drawings
     let widgetEntries = entries.map { entry in
       WidgetEntryData(
         date: entry.createdAt,
         hasText: !entry.body.isEmpty,
-        hasDrawing: entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true)
+        hasDrawing: entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true),
+        drawingData: entry.drawingData
       )
     }
 

@@ -8,16 +8,18 @@
 import Foundation
 
 /// Data model for encoding/decoding entries to share with widget
-/// Note: Drawing data is excluded to reduce memory usage in widget (30MB limit)
+/// Note: Drawing data is included optionally for widgets that need to display the actual drawing
 struct WidgetEntryData: Codable {
   let date: Date
   let hasText: Bool
   let hasDrawing: Bool
+  let drawingData: Data?
 
-  init(date: Date, hasText: Bool, hasDrawing: Bool) {
+  init(date: Date, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil) {
     self.date = date
     self.hasText = hasText
     self.hasDrawing = hasDrawing
+    self.drawingData = drawingData
   }
 }
 

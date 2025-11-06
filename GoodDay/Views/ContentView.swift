@@ -16,6 +16,8 @@ struct ContentView: View {
     
     @Query private var entries: [DayEntry]
     
+    @Binding var selectedDateFromWidget: Date?
+    
     @State private var selectedDateItem: DateItem?
     
     // --- GESTURE STATE ---
@@ -342,6 +344,29 @@ struct ContentView: View {
                 break
             }
         }
+        .onChange(of: selectedDateFromWidget) { _, newDate in
+            // Handle deep link from widget
+            guard let date = newDate, let scrollProxy = scrollProxy else { return }
+            
+            // Clear the binding after handling
+            DispatchQueue.main.async {
+                selectedDateFromWidget = nil
+            }
+            
+            // Update selected year if needed
+            let calendar = Calendar.current
+            let year = calendar.component(.year, from: date)
+            if year != selectedYear {
+                selectedYear = year
+            }
+            
+            // Find and select the date item
+            if let item = itemsInYear.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    selectDateItem(item: item, scrollProxy: scrollProxy)
+                }
+            }
+        }
     }
     
     /// Number of days in the selected year
@@ -590,7 +615,7 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(selectedDateFromWidget: .constant(nil))
         .modelContainer(for: DayEntry.self, inMemory: true)
         .environment(UserPreferences.shared)
         .preferredColorScheme(.light)
