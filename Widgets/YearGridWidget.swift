@@ -106,7 +106,7 @@ struct YearGridWidgetView: View {
   @Environment(\.widgetFamily) var widgetFamily
   
   private var dotSize: CGFloat {
-    widgetFamily == .systemMedium ? 4.5 : 6.0
+    widgetFamily == .systemMedium ? 4.5 : 7.5
   }
   
   private var horizontalPadding: CGFloat {
@@ -298,7 +298,7 @@ struct YearGridWidget: Widget {
         .containerBackground(.fill.tertiary, for: .widget)
     }
     .configurationDisplayName("Year Progress")
-    .description("View your year at a glance with daily progress.")
+    .description("View your year at a glance with progress.")
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }
