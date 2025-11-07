@@ -8,5 +8,5 @@
 import Foundation
 
 func clamp(value: CGFloat, min minValue: CGFloat, max maxValue: CGFloat) -> CGFloat {
-    return max(min(value, maxValue), minValue)
+  return max(min(value, maxValue), minValue)
 }
