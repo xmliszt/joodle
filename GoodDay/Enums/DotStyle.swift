@@ -8,7 +8,7 @@
 import Foundation
 
 enum DotStyle {
-    case past
-    case present
-    case future
+  case past
+  case present
+  case future
 }

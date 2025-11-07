@@ -8,17 +8,17 @@
 import UIKit
 
 struct Haptic {
+  
+  /**
+   Play a haptic with given intensity
+   
+   - Parameters: with intensity: feedback intensity, default light
+   */
+  static func play(with intensity: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
+    let isHapticEnabled = UserPreferences.shared.enableHaptic;
+    guard isHapticEnabled else { return }
     
-    /**
-     Play a haptic with given intensity
-     
-     - Parameters: with intensity: feedback intensity, default light
-     */
-    static func play(with intensity: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
-        let isHapticEnabled = UserPreferences.shared.enableHaptic;
-        guard isHapticEnabled else { return }
-        
-        let impactFeedback = UIImpactFeedbackGenerator(style: intensity)
-        impactFeedback.impactOccurred()
-    }
+    let impactFeedback = UIImpactFeedbackGenerator(style: intensity)
+    impactFeedback.impactOccurred()
+  }
 }

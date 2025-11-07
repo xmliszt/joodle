@@ -10,7 +10,8 @@ import WidgetKit
 
 @main
 struct WidgetsBundle: WidgetBundle {
-    var body: some Widget {
-        YearGridWidget()
-    }
+  var body: some Widget {
+    YearGridWidget()
+    RandomDoodleWidget()
+  }
 }

@@ -8,9 +8,9 @@
 import Foundation
 
 extension DateFormatter {
-    static let weekday: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE"
-        return formatter
-    }()
+  static let weekday: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "EEEE"
+    return formatter
+  }()
 }
