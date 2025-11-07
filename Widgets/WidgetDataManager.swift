@@ -14,7 +14,7 @@ struct WidgetEntryData: Codable {
   let hasText: Bool
   let hasDrawing: Bool
   let drawingData: Data?
-
+  
   init(date: Date, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil) {
     self.date = date
     self.hasText = hasText
@@ -26,50 +26,50 @@ struct WidgetEntryData: Codable {
 /// Helper class for managing widget data updates
 struct WidgetDataManager {
   static let shared = WidgetDataManager()
-
+  
   private let appGroupIdentifier = "group.dev.liyuxuan.GoodDay"
   private let entriesKey = "widgetEntries"
-
+  
   private init() {}
-
+  
   /// Save entries to shared container for widget access
   func saveEntries(_ entries: [WidgetEntryData]) {
     guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
       print("Failed to access shared UserDefaults")
       return
     }
-
-        do {
-            let data = try JSONEncoder().encode(entries)
-            sharedDefaults.set(data, forKey: entriesKey)
-            sharedDefaults.synchronize()
-        } catch {
-            print("Failed to encode widget entries: \(error)")
-        }
+    
+    do {
+      let data = try JSONEncoder().encode(entries)
+      sharedDefaults.set(data, forKey: entriesKey)
+      sharedDefaults.synchronize()
+    } catch {
+      print("Failed to encode widget entries: \(error)")
     }
-
+  }
+  
   /// Load entries from shared container
   func loadEntries() -> [WidgetEntryData] {
     guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
       print("Failed to access shared UserDefaults")
       return []
     }
-
+    
     guard let data = sharedDefaults.data(forKey: entriesKey) else {
       return []
     }
-
+    
     do {
       let allEntries = try JSONDecoder().decode([WidgetEntryData].self, from: data)
-
+      
       // Filter to current year only to reduce memory usage
       let calendar = Calendar.current
       let currentYear = calendar.component(.year, from: Date())
-
+      
       let filteredEntries = allEntries.filter { entry in
         calendar.component(.year, from: entry.date) == currentYear
       }
-
+      
       return filteredEntries
     } catch {
       print("Failed to decode widget entries: \(error)")

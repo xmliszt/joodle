@@ -24,12 +24,12 @@ class DrawingPathCache: ObservableObject {
   private var cache: [Data: [PathWithMetadata]] = [:]
   private let maxCacheSize = 100  // Limit cache size to prevent memory issues
   private var accessOrder: [Data] = []  // Track access order for LRU eviction
-
+  
   /// Get paths for the given drawing data, using cache if available
   func getPaths(for data: Data) -> [Path] {
     return getPathsWithMetadata(for: data).map { $0.path }
   }
-
+  
   /// Get paths with metadata for the given drawing data, using cache if available
   func getPathsWithMetadata(for data: Data) -> [PathWithMetadata] {
     // Check if already cached
@@ -38,16 +38,16 @@ class DrawingPathCache: ObservableObject {
       updateAccessOrder(for: data)
       return cached
     }
-
+    
     // Decode paths if not cached
     let pathsWithMetadata = decodePathsWithMetadata(from: data)
-
+    
     // Store in cache with LRU management
     storePathsWithMetadata(pathsWithMetadata, for: data)
-
+    
     return pathsWithMetadata
   }
-
+  
   /// Decode paths with metadata from raw drawing data
   private func decodePathsWithMetadata(from data: Data) -> [PathWithMetadata] {
     do {
@@ -55,24 +55,24 @@ class DrawingPathCache: ObservableObject {
       struct PathData: Codable {
         let points: [CGPoint]
         let isDot: Bool
-
+        
         init(points: [CGPoint], isDot: Bool = false) {
           self.points = points
           self.isDot = isDot
         }
-
+        
         init(from decoder: Decoder) throws {
           let container = try decoder.container(keyedBy: CodingKeys.self)
           points = try container.decode([CGPoint].self, forKey: .points)
           isDot = try container.decodeIfPresent(Bool.self, forKey: .isDot) ?? false
         }
-
+        
         private enum CodingKeys: String, CodingKey {
           case points
           case isDot
         }
       }
-
+      
       let decodedPaths = try JSONDecoder().decode([PathData].self, from: data)
       return decodedPaths.map { pathData in
         var path = Path()
@@ -107,21 +107,21 @@ class DrawingPathCache: ObservableObject {
       return []
     }
   }
-
+  
   /// Store paths with metadata in cache with LRU eviction
   private func storePathsWithMetadata(_ pathsWithMetadata: [PathWithMetadata], for data: Data) {
     // Add to cache
     cache[data] = pathsWithMetadata
-
+    
     // Update access order
     updateAccessOrder(for: data)
-
+    
     // Evict oldest entries if cache is too large
     if cache.count > maxCacheSize {
       evictOldestEntries()
     }
   }
-
+  
   /// Update access order for LRU tracking
   private func updateAccessOrder(for data: Data) {
     // Remove from current position if exists
@@ -129,12 +129,12 @@ class DrawingPathCache: ObservableObject {
     // Add to end (most recently used)
     accessOrder.append(data)
   }
-
+  
   /// Evict oldest cache entries to maintain size limit
   private func evictOldestEntries() {
     let excessCount = cache.count - maxCacheSize
     guard excessCount > 0 else { return }
-
+    
     // Remove oldest entries
     for _ in 0..<excessCount {
       if let oldestData = accessOrder.first {
@@ -143,13 +143,13 @@ class DrawingPathCache: ObservableObject {
       }
     }
   }
-
+  
   /// Clear the entire cache (useful for memory pressure)
   func clearCache() {
     cache.removeAll()
     accessOrder.removeAll()
   }
-
+  
   /// Get current cache statistics for debugging
   var cacheStats: (count: Int, memoryEstimate: String) {
     let count = cache.count

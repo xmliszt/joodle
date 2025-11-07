@@ -8,6 +8,6 @@
 import Foundation
 
 extension Notification.Name {
-    static let deviceDidShake = Notification.Name("deviceDidShake")
-    static let didChangeColorScheme = Notification.Name("didChangeColorScheme")
+  static let deviceDidShake = Notification.Name("deviceDidShake")
+  static let didChangeColorScheme = Notification.Name("didChangeColorScheme")
 }

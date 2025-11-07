@@ -10,25 +10,25 @@ import SwiftUI
 
 struct DrawingCanvasView: View {
   @Environment(\.modelContext) private var modelContext
-
+  
   let date: Date
   let entry: DayEntry?
   let onDismiss: () -> Void
   /// We need this external state as DrawingCanvasView is rendered when an entry is selected
   /// But that doesn't make it visible yet as controlled by DynamicIslandExpandedView
   let isShowing: Bool
-
+  
   @State private var currentPath = Path()
   @State private var paths: [Path] = []
   @State private var pathMetadata: [PathMetadata] = []
   @State private var currentPathIsDot = false
   @State private var showClearConfirmation = false
   @State private var isDrawing = false
-
+  
   // Undo/Redo state management
   @State private var undoStack: [([Path], [PathMetadata])] = []
   @State private var redoStack: [([Path], [PathMetadata])] = []
-
+  
   var body: some View {
     VStack(spacing: 16) {
       // Header with clear, undo/redo, and save buttons
@@ -40,9 +40,9 @@ struct DrawingCanvasView: View {
         .circularGlassButton(tintColor: .red)
         .disabled(paths.isEmpty && currentPath.isEmpty)
         .opacity(paths.isEmpty && currentPath.isEmpty ? 0.5 : 1.0)
-
+        
         Spacer()
-
+        
         // Undo/Redo buttons
         HStack(spacing: 8) {
           // Undo button
@@ -52,7 +52,7 @@ struct DrawingCanvasView: View {
           .circularGlassButton()
           .disabled(undoStack.isEmpty)
           .opacity(undoStack.isEmpty ? 0.3 : 1.0)
-
+          
           // Redo button
           Button(action: redoLastStroke) {
             Image(systemName: "arrow.uturn.forward")
@@ -61,16 +61,16 @@ struct DrawingCanvasView: View {
           .disabled(redoStack.isEmpty)
           .opacity(redoStack.isEmpty ? 0.3 : 1.0)
         }
-
+        
         Spacer()
-
+        
         // Save button
         Button(action: saveDrawing) {
           Image(systemName: "checkmark")
         }
         .circularGlassButton()
       }
-
+      
       // Drawing canvas
       VStack(spacing: 12) {
         ZStack {
@@ -79,14 +79,14 @@ struct DrawingCanvasView: View {
             .fill(.backgroundColor)
             .stroke(.borderColor, lineWidth: 1.0)
             .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-
+          
           // Drawing area
           Canvas { context, size in
             // Draw all completed paths
             for (index, path) in paths.enumerated() {
               // Use stored metadata to determine rendering
               let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
-
+              
               if isDot {
                 // Fill ellipse paths (dots)
                 context.fill(path, with: .color(.appPrimary))
@@ -103,7 +103,7 @@ struct DrawingCanvasView: View {
                 )
               }
             }
-
+            
             // Draw current path being drawn
             if !currentPath.isEmpty {
               if currentPathIsDot {
@@ -130,8 +130,8 @@ struct DrawingCanvasView: View {
               .onChanged { value in
                 let point = value.location
                 let isInBounds =
-                  point.x >= 0 && point.x <= CANVAS_SIZE && point.y >= 0 && point.y <= CANVAS_SIZE
-
+                point.x >= 0 && point.x <= CANVAS_SIZE && point.y >= 0 && point.y <= CANVAS_SIZE
+                
                 if isInBounds {
                   // Point is within bounds
                   if !isDrawing {
@@ -153,7 +153,7 @@ struct DrawingCanvasView: View {
               }
               .onEnded { value in
                 let isTap = value.velocity == .zero
-
+                
                 // Check if this was a single tap
                 if isTap {
                   // Create a small circle for the dot
@@ -169,12 +169,12 @@ struct DrawingCanvasView: View {
                       height: dotRadius * 2
                     ))
                 }
-
+                
                 // Commit the stroke
                 if isDrawing && !currentPath.isEmpty {
                   commitCurrentStroke()
                 }
-
+                
                 // Reset drawing state
                 isDrawing = false
                 currentPathIsDot = false
@@ -195,92 +195,92 @@ struct DrawingCanvasView: View {
       }
     )
     .confirmationDialog("Clear Drawing", isPresented: $showClearConfirmation) {
-        Button("Clear", role: .destructive, action: clearDrawing).circularGlassButton()
-        Button("Cancel", role: .cancel, action: {})
+      Button("Clear", role: .destructive, action: clearDrawing).circularGlassButton()
+      Button("Cancel", role: .cancel, action: {})
     } message: {
       Text("Clear all drawing?")
     }
   }
-
+  
   // MARK: - Private Methods
-
+  
   private func commitCurrentStroke() {
     guard !currentPath.isEmpty else { return }
-
+    
     // Save current state to undo stack before making changes
     saveStateToUndoStack()
-
+    
     // Add the current path and its metadata to completed paths
     paths.append(currentPath)
     pathMetadata.append(PathMetadata(isDot: currentPathIsDot))
     currentPath = Path()
-
+    
     // Clear redo stack when new action is performed
     redoStack.removeAll()
-
+    
     // Save immediately to store
     saveDrawingToStore()
-
+    
     // Reset drawing state
     isDrawing = false
     currentPathIsDot = false
   }
-
+  
   private func saveStateToUndoStack() {
     // Save current paths and metadata state to undo stack
     undoStack.append((paths, pathMetadata))
-
+    
     // Limit undo stack size to prevent memory issues
     if undoStack.count > 50 {
       undoStack.removeFirst()
     }
   }
-
+  
   private func undoLastStroke() {
     guard !undoStack.isEmpty else { return }
-
+    
     // Save current state to redo stack
     redoStack.append((paths, pathMetadata))
-
+    
     // Restore previous state from undo stack
     let (previousPaths, previousMetadata) = undoStack.removeLast()
     paths = previousPaths
     pathMetadata = previousMetadata
-
+    
     // Clear current path if user is in middle of drawing
     currentPath = Path()
     isDrawing = false
     currentPathIsDot = false
-
+    
     // Save to store
     saveDrawingToStore()
-
+    
     // Limit redo stack size
     if redoStack.count > 50 {
       redoStack.removeFirst()
     }
   }
-
+  
   private func redoLastStroke() {
     guard !redoStack.isEmpty else { return }
-
+    
     // Save current state to undo stack
     saveStateToUndoStack()
-
+    
     // Restore state from redo stack
     let (redoPaths, redoMetadata) = redoStack.removeLast()
     paths = redoPaths
     pathMetadata = redoMetadata
-
+    
     // Clear current path if user is in middle of drawing
     currentPath = Path()
     isDrawing = false
     currentPathIsDot = false
-
+    
     // Save to store
     saveDrawingToStore()
   }
-
+  
   private func loadExistingDrawing() {
     guard let data = entry?.drawingData else {
       // Initialize with empty state for new drawings
@@ -292,12 +292,12 @@ struct DrawingCanvasView: View {
       currentPath = Path()
       isDrawing = false
       currentPathIsDot = false
-
+      
       // Clear redo stack when new action is performed
       redoStack.removeAll()
       return
     }
-
+    
     do {
       let decodedPaths = try JSONDecoder().decode([PathData].self, from: data)
       paths = decodedPaths.map { pathData in
@@ -325,24 +325,24 @@ struct DrawingCanvasView: View {
         }
         return path
       }
-
+      
       // Load metadata as well
       pathMetadata = decodedPaths.map { PathMetadata(isDot: $0.isDot) }
-
+      
       // Initialize undo/redo stacks for existing drawings
       undoStack.removeAll()
       redoStack.removeAll()
-
+      
     } catch {
       print("Failed to load drawing data: \(error)")
     }
   }
-
+  
   private func saveDrawing() {
     saveDrawingToStore()
     onDismiss()
   }
-
+  
   private func saveDrawingToStore() {
     // Derive entry to save, if not exists, create a new entry.
     let entryToSave: DayEntry = {
@@ -352,7 +352,7 @@ struct DrawingCanvasView: View {
       modelContext.insert(newEntry)
       return newEntry
     }()
-
+    
     // Update existing entry
     if paths.isEmpty {
       // No paths means no drawing data
@@ -363,7 +363,7 @@ struct DrawingCanvasView: View {
         let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
         return PathData(points: extractPointsFromPath(path), isDot: isDot)
       }
-
+      
       do {
         let data = try JSONEncoder().encode(pathsData)
         entryToSave.drawingData = data
@@ -371,33 +371,33 @@ struct DrawingCanvasView: View {
         print("Failed to save drawing data: \(error)")
       }
     }
-
+    
     // Save the context to persist changes
     try? modelContext.save()
   }
-
+  
   private func clearDrawing() {
     // Save current state to undo stack before clearing
     if !paths.isEmpty {
       saveStateToUndoStack()
     }
-
+    
     paths.removeAll()
     pathMetadata.removeAll()
     currentPath = Path()
     isDrawing = false
     currentPathIsDot = false
-
+    
     // Clear redo stack when new action is performed
     redoStack.removeAll()
-
+    
     // Also clear from store
     if let existingEntry = entry {
       existingEntry.drawingData = nil
       try? modelContext.save()
     }
   }
-
+  
   private func extractPointsFromPath(_ path: Path) -> [CGPoint] {
     // For dots, store the center point
     let boundingRect = path.boundingRect
@@ -408,10 +408,10 @@ struct DrawingCanvasView: View {
       )
       return [center]
     }
-
+    
     // For regular paths, extract all points
     var points: [CGPoint] = []
-
+    
     path.forEach { element in
       switch element {
       case .move(to: let point):
@@ -426,7 +426,7 @@ struct DrawingCanvasView: View {
         break
       }
     }
-
+    
     return points
   }
 }

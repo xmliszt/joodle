@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Circular Glass Button Style
 struct CircularGlassButtonStyle: ViewModifier {
   let tintColor: Color?
-
+  
   func body(content: Content) -> some View {
     if #available(iOS 26, *) {
       // iOS 26+: Use native glass background effect with circular shape
@@ -41,7 +41,7 @@ struct CircularGlassButtonStyle: ViewModifier {
 /// Custom view modifier to track device rotation and call our action
 struct DeviceRotationViewModifier: ViewModifier {
   let action: (UIDeviceOrientation) -> Void
-
+  
   func body(content: Content) -> some View {
     content
       .onAppear()
@@ -57,7 +57,7 @@ struct DeviceRotationViewModifier: ViewModifier {
 /// Custom view modifier to detect shake gestures
 struct ShakeDetectionViewModifier: ViewModifier {
   let action: () -> Void
-
+  
   func body(content: Content) -> some View {
     content
       .onReceive(NotificationCenter.default.publisher(for: .deviceDidShake)) { _ in
@@ -70,11 +70,11 @@ extension View {
   func onRotate(perform action: @escaping (UIDeviceOrientation) -> Void) -> some View {
     self.modifier(DeviceRotationViewModifier(action: action))
   }
-
+  
   func onShake(perform action: @escaping () -> Void) -> some View {
     self.modifier(ShakeDetectionViewModifier(action: action))
   }
-
+  
   @ViewBuilder
   func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
     if condition {
@@ -83,7 +83,7 @@ extension View {
       self
     }
   }
-
+  
   func circularGlassButton(tintColor: Color? = nil) -> some View {
     self.modifier(CircularGlassButtonStyle(tintColor: tintColor))
   }
