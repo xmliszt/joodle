@@ -1,4 +1,16 @@
-# GoodDay Year Grid Widget
+# GoodDay Widgets
+
+This document covers all available widgets for the GoodDay app.
+
+## Available Widgets
+
+1. **Year Grid Widget** - Year-at-a-glance calendar grid
+2. **Random Doodle Widget** - Random doodle from the past year
+3. **Anniversary Widget** - Future anniversary countdown (NEW)
+
+---
+
+# Year Grid Widget
 
 This widget displays a year-at-a-glance grid showing all 365 days of the current year, with visual indicators for past days, present day, future days, and days with entries.
 
@@ -300,3 +312,332 @@ Possible improvements:
 - Configurable widget (choose year, color scheme)
 - Different grid layouts (weeks, months)
 - Statistics (total entries, streaks)
+
+---
+
+# Anniversary Widget
+
+This widget displays future anniversaries with countdown timers, helping you track upcoming special dates and events.
+
+## Features
+
+- **Future Anniversary Display**: Shows entries with dates in the future
+- **Countdown Timer**: Real-time countdown in human-readable format (years, months, days, hours, minutes, seconds)
+- **Configurable**: Choose a specific date or use stable random selection
+- **Doodle Support**: Displays doodles from anniversary entries
+- **Text Support**: Shows text notes from anniversary entries
+- **Three Sizes**: systemSmall, systemMedium, and systemLarge
+- **Deep Linking**: Tap widget to open the app to that specific date
+- **Smart Updates**: Updates frequency adjusts based on time remaining (minute-level for same-day, daily for longer countdowns)
+
+## Widget Sizes
+
+### Small Widget (systemSmall)
+
+**Square layout with:**
+
+- Center: Doodle (if available) OR text note (if no doodle)
+- Bottom: Countdown text (e.g., "in 7 days")
+- No date display (limited space)
+
+**Behavior:**
+
+- If entry has doodle → shows doodle + countdown
+- If entry has text only → shows text + countdown
+- Tap widget → opens app to anniversary date
+
+### Medium Widget (systemMedium)
+
+**Horizontal layout with:**
+
+- Top left: Anniversary date (e.g., "Dec 25, 2025")
+- Top right: Countdown text
+- Left half: Doodle or placeholder
+- Right half: Text note or placeholder
+
+**Behavior:**
+
+- Shows both doodle and text sections
+- Displays "No doodle" or "No notes" placeholders when missing
+- More informative than small widget
+
+### Large Widget (systemLarge)
+
+**Square layout with:**
+
+- Center: Doodle (if available) OR text note (if no doodle)
+- Bottom: Countdown text (larger font)
+- Similar to small widget but with more space for content
+
+**Behavior:**
+
+- Larger doodle rendering (24pt padding vs 12pt)
+- More text lines visible (10 vs 5)
+- Larger countdown font (.callout vs .caption)
+
+## Configuration
+
+The widget supports two modes:
+
+### 1. Random Selection (Default)
+
+When no specific date is configured:
+
+- Filters all future entries with text or doodles
+- Uses "stable randomness" based on current day
+- Same anniversary shown all day (changes at midnight)
+- Selection algorithm: `daysSince1970 % futureEntries.count`
+
+### 2. Specific Date Selection
+
+User can configure widget to show a specific anniversary:
+
+1. Long-press widget → **Edit Widget**
+2. Tap **Specific Date** parameter
+3. Choose a date from the calendar
+4. Widget will show that date's anniversary (if it exists)
+
+## Countdown Format
+
+The countdown adapts based on time remaining:
+
+**More than 1 year:**
+
+```
+in 2 years, 3 months, 15 days
+```
+
+**More than 1 month (less than 1 year):**
+
+```
+in 3 months, 15 days
+```
+
+**More than 1 day:**
+
+```
+in 15 days
+```
+
+**Less than 1 day (same day):**
+
+```
+in 5h 23m 45s
+```
+
+**Imminent:**
+
+```
+now
+```
+
+## Setup Instructions
+
+### Prerequisites
+
+Anniversary Widget shares the same App Group setup as Year Grid Widget. Ensure App Groups are configured (see Year Grid Widget setup above).
+
+### Integration
+
+The Anniversary Widget automatically works once:
+
+1. App Groups are configured correctly
+2. `WidgetHelper.shared.updateWidgetData()` is called (same as Year Grid Widget)
+3. You have future entries in your app
+
+**No additional integration needed** - it uses the same data pipeline as other widgets.
+
+## Deep Linking
+
+When user taps the widget, it opens the app to the specific anniversary date:
+
+```
+goodday://date/{timestamp}
+```
+
+**Important**: Since anniversaries are in the future, your app needs to:
+
+1. Parse the timestamp from the URL
+2. Navigate to that date
+3. **Switch to the correct year** if the anniversary is in a future year
+
+Example deep link handling:
+
+```swift
+.onOpenURL { url in
+    if url.scheme == "goodday", url.host == "date",
+       let timestamp = url.pathComponents.last,
+       let timestampInt = Int(timestamp) {
+        let targetDate = Date(timeIntervalSince1970: TimeInterval(timestampInt))
+
+        // Navigate to this date
+        // Remember to switch year if needed!
+        navigateToDate(targetDate)
+    }
+}
+```
+
+## Data Requirements
+
+For an entry to appear in the Anniversary Widget, it must:
+
+1. **Be in the future**: Entry date > current date (compared at day level)
+2. **Have content**: Either text body OR doodle drawing
+3. **Be synced**: Entry must be saved and synced via `WidgetHelper.updateWidgetData()`
+
+## Widget Update Frequency
+
+The widget intelligently updates based on countdown time:
+
+- **Same day (< 24 hours)**: Updates every minute for real-time countdown
+- **Future days**: Updates at midnight each day
+- **After configuration change**: Updates immediately
+
+## No Anniversary View
+
+When no future anniversaries exist:
+
+- Shows calendar icon with clock badge
+- Displays "No future anniversaries" message
+- Tap opens app to current date
+- Encourages user to create future entries
+
+## Customization
+
+You can customize the widget appearance in `AnniversaryWidget.swift`:
+
+### Adjust Padding
+
+```swift
+// Small widget
+.padding(12)  // Change doodle padding
+
+// Medium widget
+.padding(.horizontal, 16)  // Change horizontal padding
+
+// Large widget
+.padding(24)  // Change doodle padding
+```
+
+### Adjust Fonts
+
+```swift
+// Small widget countdown
+.font(.caption)  // Change to .caption2, .footnote, etc.
+
+// Medium widget date
+.font(.caption)  // Change date font size
+
+// Large widget countdown
+.font(.callout)  // Change to .body, .title3, etc.
+```
+
+### Adjust Text Line Limits
+
+```swift
+// Small widget
+.lineLimit(5)  // Show more/fewer lines
+
+// Medium widget
+.lineLimit(6)  // Adjust text area lines
+
+// Large widget
+.lineLimit(10)  // More space = more lines
+```
+
+### Adjust Medium Widget Layout
+
+```swift
+// Doodle size
+.frame(width: 120, height: 120)  // Make doodle bigger/smaller
+
+// Spacing between doodle and text
+HStack(spacing: 12)  // Increase/decrease spacing
+```
+
+## Troubleshooting
+
+### Widget Shows "No Future Anniversaries"
+
+**Problem**: You have future entries but widget doesn't show them
+
+**Solutions**:
+
+1. Verify entries have dates in the future (after today)
+2. Ensure entries have either text or doodle content
+3. Check that `WidgetHelper.updateWidgetData()` is being called
+4. Verify the body field is being saved (check `WidgetEntryData.body`)
+
+### Countdown Shows Wrong Time
+
+**Problem**: Countdown doesn't match expected time remaining
+
+**Solutions**:
+
+1. Check device date/time settings
+2. Verify entry date is set correctly in the app
+3. Widget uses device timezone - ensure it's correct
+4. Force refresh: Long-press widget → Edit Widget → Done
+
+### Widget Doesn't Update in Real-Time
+
+**Problem**: Same-day countdown not updating every minute
+
+**Solutions**:
+
+1. This is normal for iOS widgets - they update on a schedule
+2. iOS may throttle updates to save battery
+3. Widget will update more frequently as the time approaches
+4. Background refresh must be enabled for the app
+
+### Configuration Doesn't Show My Date
+
+**Problem**: Selected date in configuration but widget shows different date
+
+**Solutions**:
+
+1. Ensure the selected date has an entry with content
+2. Entry must be in the future (not past or today)
+3. Entry must have text body or doodle
+4. Try removing and re-adding the widget
+
+### Doodle Doesn't Display Correctly
+
+**Problem**: Doodle appears cut off or scaled wrong
+
+**Solutions**:
+
+1. Doodles are scaled from 300x300 canvas to widget size
+2. Very detailed doodles may lose clarity in small widget
+3. Try using medium or large widget for better doodle display
+4. Check that drawing data is being saved correctly
+
+### Deep Link Opens Wrong Date
+
+**Problem**: Tapping widget opens app but goes to wrong date or wrong year
+
+**Solutions**:
+
+1. Verify your app's deep link handler supports year switching
+2. Check timestamp parsing in `onOpenURL` handler
+3. Ensure calendar navigation can jump to future years
+4. Test with dates far in the future (e.g., 2 years ahead)
+
+## Performance Notes
+
+- Widget reuses doodle rendering code from `RandomDoodleWidget`
+- Text rendering is lightweight (native SwiftUI Text views)
+- Memory footprint is minimal - only loads selected anniversary data
+- Timeline updates optimized based on countdown duration
+- Drawing data decoded on-demand during rendering
+
+## Future Enhancements
+
+Possible improvements:
+
+- Multiple anniversaries in one widget (scrollable or multi-day view)
+- Category filtering (birthdays, holidays, events)
+- Custom countdown styles (progress bars, circular indicators)
+- Anniversary history (show past anniversaries)
+- Recurring anniversaries (birthdays that repeat yearly)
+- Notification integration (alert when anniversary approaches)

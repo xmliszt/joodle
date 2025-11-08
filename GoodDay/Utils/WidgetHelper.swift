@@ -15,12 +15,14 @@ struct WidgetEntryData: Codable {
   let hasText: Bool
   let hasDrawing: Bool
   let drawingData: Data?
-  
-  init(date: Date, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil) {
+  let body: String?
+
+  init(date: Date, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil, body: String? = nil) {
     self.date = date
     self.hasText = hasText
     self.hasDrawing = hasDrawing
     self.drawingData = drawingData
+    self.body = body
   }
 }
 
@@ -33,12 +35,12 @@ struct WidgetEntryData: Codable {
 /// The widget will automatically update via `@Query` observers in ContentView.
 class WidgetHelper {
   static let shared = WidgetHelper()
-  
+
   private let appGroupIdentifier = "group.dev.liyuxuan.GoodDay"
   private let entriesKey = "widgetEntries"
-  
+
   private init() {}
-  
+
   /// Update widget data with current entries from SwiftData and reload widget timelines
   ///
   /// This method:
@@ -52,7 +54,7 @@ class WidgetHelper {
       print("Failed to access shared UserDefaults for widget")
       return
     }
-    
+
     // Convert DayEntry to WidgetEntryData
     // Note: Drawing data is included to support widgets that display actual drawings
     let widgetEntries = entries.map { entry in
@@ -60,16 +62,17 @@ class WidgetHelper {
         date: entry.createdAt,
         hasText: !entry.body.isEmpty,
         hasDrawing: entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true),
-        drawingData: entry.drawingData
+        drawingData: entry.drawingData,
+        body: entry.body.isEmpty ? nil : entry.body
       )
     }
-    
+
     // Encode and save to shared UserDefaults
     do {
       let data = try JSONEncoder().encode(widgetEntries)
       sharedDefaults.set(data, forKey: entriesKey)
       sharedDefaults.synchronize()
-      
+
       // Reload widget timelines
       WidgetCenter.shared.reloadAllTimelines()
     } catch {

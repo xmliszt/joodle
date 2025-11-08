@@ -277,37 +277,3 @@ struct RandomDoodleWidget: Widget {
   // Preview without a doodle
   RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺")
 }
-
-// Mock drawing data for preview
-private func createMockDrawingData() -> Data {
-  struct PathData: Codable {
-    let points: [CGPoint]
-    let isDot: Bool
-  }
-  
-  // Draw a rectangle around the border of the 300x300 canvas
-  let paths = [
-    // Border rectangle
-    PathData(
-      points: [
-        CGPoint(x: 0, y: 0),
-        CGPoint(x: 300, y: 0),
-        CGPoint(x: 300, y: 300),
-        CGPoint(x: 0, y: 300),
-        CGPoint(x: 0, y: 0),
-      ], isDot: false),
-    // Diagonal lines to show the full area
-    PathData(
-      points: [
-        CGPoint(x: 0, y: 0),
-        CGPoint(x: 300, y: 300),
-      ], isDot: false),
-    PathData(
-      points: [
-        CGPoint(x: 300, y: 0),
-        CGPoint(x: 0, y: 300),
-      ], isDot: false),
-  ]
-  
-  return (try? JSONEncoder().encode(paths)) ?? Data()
-}
