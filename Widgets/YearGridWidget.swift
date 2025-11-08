@@ -293,7 +293,9 @@ struct YearGridWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
       YearGridWidgetView(entry: entry)
-        .containerBackground(.fill.tertiary, for: .widget)
+        .containerBackground(for: .widget) {
+          Color(UIColor.systemBackground)
+        }
     }
     .configurationDisplayName("Year Progress")
     .description("View your year at a glance with progress.")

@@ -453,7 +453,9 @@ struct SmallAnniversaryView: View {
         .foregroundColor(.secondary)
         .padding(.horizontal, 8)
     }
-    .containerBackground(for: .widget) { Color.clear }
+    .containerBackground(for: .widget) {
+      Color(UIColor.systemBackground)
+    }
   }
 }
 
@@ -509,7 +511,9 @@ struct MediumAnniversaryView: View {
       }
       .padding(.bottom, 12)
     }
-    .containerBackground(for: .widget) { Color.clear }
+    .containerBackground(for: .widget) {
+      Color(UIColor.systemBackground)
+    }
   }
 }
 
@@ -542,7 +546,9 @@ struct LargeAnniversaryView: View {
         .foregroundColor(.secondary)
         .padding(.horizontal, 16)
     }
-    .containerBackground(for: .widget) { Color.clear }
+    .containerBackground(for: .widget) {
+      Color(UIColor.systemBackground)
+    }
     .padding()
   }
 }
@@ -640,7 +646,9 @@ struct NoAnniversaryView: View {
         .multilineTextAlignment(.center)
     }
     .padding()
-    .containerBackground(for: .widget) { Color.clear }
+    .containerBackground(for: .widget) {
+      Color(UIColor.systemBackground)
+    }
   }
 }
 
