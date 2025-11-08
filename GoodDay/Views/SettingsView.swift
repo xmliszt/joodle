@@ -1,14 +1,49 @@
 import Observation
 import SwiftUI
 
+// MARK: - Navigation Coordinator for Swipe Back Gesture
+struct NavigationGestureEnabler: UIViewControllerRepresentable {
+  func makeUIViewController(context: Context) -> UIViewController {
+    let controller = UIViewController()
+    return controller
+  }
+
+  func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+    DispatchQueue.main.async {
+      if let navigationController = uiViewController.navigationController {
+        navigationController.interactivePopGestureRecognizer?.isEnabled = true
+        navigationController.interactivePopGestureRecognizer?.delegate = context.coordinator
+      }
+    }
+  }
+
+  func makeCoordinator() -> Coordinator {
+    Coordinator()
+  }
+
+  class Coordinator: NSObject, UIGestureRecognizerDelegate {
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+      return true
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+      return false
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+      return false
+    }
+  }
+}
+
 struct SettingsView: View {
   @Environment(UserPreferences.self) private var userPreferences: UserPreferences
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
-  
+
   var body: some View {
     Form {
-      
+
       // MARK: - View Mode Preferences
       Section("Default View Mode") {
         if #available(iOS 26.0, *) {
@@ -41,7 +76,7 @@ struct SettingsView: View {
           .pickerStyle(.palette)
         }
       }
-      
+
       // MARK: - Appearance Preferences
       Section("Appearance") {
         if #available(iOS 26.0, *) {
@@ -82,7 +117,7 @@ struct SettingsView: View {
           .pickerStyle(.palette)
         }
       }
-      
+
       // MARK: - Interaction Preferences
       Section("Interactions") {
         Toggle(
@@ -92,7 +127,7 @@ struct SettingsView: View {
             set: { userPreferences.enableHaptic = $0 }
           ))
       }
-      
+
       // MARK: - Reset Section
       Section {
         Button("Reset to Defaults", role: .destructive) {
@@ -106,6 +141,7 @@ struct SettingsView: View {
           .foregroundColor(.appTextSecondary)
       }
     }
+    .background(NavigationGestureEnabler())
     .navigationTitle("Settings")
     .navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden()
