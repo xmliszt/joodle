@@ -134,29 +134,67 @@ struct PathData: Codable {
 struct RandomDoodleWidgetView: View {
   var entry: RandomDoodleProvider.Entry
   @Environment(\.widgetFamily) var family
-  
+
   var body: some View {
-    if let doodle = entry.doodle {
-      DoodleView(drawingData: doodle.drawingData)
-        .padding(family == .systemLarge ? 48 : 24)
-        .widgetURL(URL(string: "goodday://date/\(Int(doodle.date.timeIntervalSince1970))"))
-        .containerBackground(for: .widget) {
-          Color(UIColor.systemBackground)
-        }
+    switch family {
+    case .accessoryCircular:
+      LockScreenCircularView(doodle: entry.doodle, family: family)
+    default:
+      if let doodle = entry.doodle {
+        DoodleView(drawingData: doodle.drawingData, family: family)
+          .padding(family == .systemLarge ? 48 : 24)
+          .widgetURL(URL(string: "goodday://date/\(Int(doodle.date.timeIntervalSince1970))"))
+          .containerBackground(for: .widget) {
+            Color(UIColor.systemBackground)
+          }
+      } else {
+        // Show not found status
+        NotFoundView(prompt: entry.prompt, family: family)
+          .padding(8)
+          .widgetURL(URL(string: "goodday://date/\(Int(Date().timeIntervalSince1970))"))
+          .containerBackground(for: .widget) {
+            Color(UIColor.systemBackground)
+          }
+      }
+    }
+  }
+}
+
+struct LockScreenCircularView: View {
+  let doodle: DoodleData?
+  let family: WidgetFamily
+
+  var body: some View {
+    if let doodle = doodle {
+      ZStack {
+        DoodleView(drawingData: doodle.drawingData, family: family)
+          .padding(8)
+      }
+      .widgetURL(URL(string: "goodday://date/\(Int(doodle.date.timeIntervalSince1970))"))
+      .containerBackground(for: .widget) {
+        Color.clear
+      }
     } else {
-      // Show not found status
-      NotFoundView(prompt: entry.prompt, family: family)
-        .padding(8)
-        .widgetURL(URL(string: "goodday://date/\(Int(Date().timeIntervalSince1970))"))
-        .containerBackground(for: .widget) {
-          Color(UIColor.systemBackground)
-        }
+      ZStack {
+        Circle()
+          .strokeBorder(lineWidth: 2)
+          .foregroundStyle(.secondary.opacity(0.3))
+
+        Image(systemName: "scribble")
+          .font(.system(size: 24))
+          .foregroundStyle(.secondary)
+      }
+      .widgetURL(URL(string: "goodday://date/\(Int(Date().timeIntervalSince1970))"))
+      .containerBackground(for: .widget) {
+        Color.clear
+      }
     }
   }
 }
 
 struct DoodleView: View {
   let drawingData: Data
+  let family: WidgetFamily
 
   var body: some View {
     Canvas { context, size in
@@ -201,7 +239,7 @@ struct DoodleView: View {
             scaledPath,
             with: .color(.accent),
             style: StrokeStyle(
-              lineWidth: 5.0 * scale,
+              lineWidth: (family == .accessoryCircular ? 10.0 :5.0) * scale,
               lineCap: .round,
               lineJoin: .round
             )
@@ -247,7 +285,7 @@ struct RandomDoodleWidget: Widget {
     }
     .configurationDisplayName("Random Doodle")
     .description("Random doodle from past one year. Refresh daily.")
-    .supportedFamilies([.systemSmall, .systemLarge])
+    .supportedFamilies([.systemSmall, .systemLarge, .accessoryCircular])
   }
 }
 
@@ -275,6 +313,21 @@ struct RandomDoodleWidget: Widget {
   RandomDoodleEntry(
     date: Date(),
     doodle: DoodleData(date: fiveDaysAgo, drawingData: mockDrawingData),
+    prompt: "Draw something"
+  )
+
+  // Preview without a doodle
+  RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺")
+}
+
+#Preview(as: .accessoryCircular) {
+  RandomDoodleWidget()
+} timeline: {
+  // Preview with a doodle
+  let mockDrawingData = createMockDrawingData()
+  RandomDoodleEntry(
+    date: Date(),
+    doodle: DoodleData(date: Date(), drawingData: mockDrawingData),
     prompt: "Draw something"
   )
 

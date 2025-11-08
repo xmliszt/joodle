@@ -500,13 +500,11 @@ struct MediumAnniversaryView: View {
             .font(.caption)
             .lineLimit(5)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.trailing, 16)
         } else {
-          Text("No notes for this special day")
+          Text("No notes for this special day.")
             .font(.caption)
             .foregroundColor(.secondary.opacity(0.5))
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.trailing, 16)
         }
       }
       .padding(.bottom, 12)
@@ -634,10 +632,10 @@ struct NoAnniversaryView: View {
   var body: some View {
     VStack(alignment: .center, spacing: 8) {
       Image(systemName: "calendar.badge.clock")
-        .font(.system(size: family == .systemSmall ? 32 : 48))
+        .font(.system(size: family == .systemSmall ? 32 : family == .systemMedium ? 40 : 48))
         .foregroundColor(.secondary.opacity(0.3))
       Text("No future anniversaries")
-        .font(family == .systemSmall ? .caption2 : .subheadline)
+        .font(family == .systemSmall ? .caption2 : family == .systemMedium ? .caption : .subheadline)
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
     }
@@ -731,7 +729,7 @@ struct AnniversaryWidget: Widget {
     date: Date(),
     anniversaryData: AnniversaryData(
       date: futureDate,
-      text: "This is a special anniversary!",
+      text: "Parents coming to Singapore! Finally!",
       drawingData: createMockDrawingData()
     ),
     configuration: AnniversaryConfigurationIntent()
