@@ -36,7 +36,7 @@ struct RandomDoodleProvider: TimelineProvider {
   func placeholder(in context: Context) -> RandomDoodleEntry {
     RandomDoodleEntry(date: Date(), doodle: nil, prompt: getRandomPrompt())
   }
-  
+
   func getSnapshot(in context: Context, completion: @escaping (RandomDoodleEntry) -> Void) {
     let entry = RandomDoodleEntry(
       date: Date(),
@@ -45,18 +45,18 @@ struct RandomDoodleProvider: TimelineProvider {
     )
     completion(entry)
   }
-  
+
   func getTimeline(in context: Context, completion: @escaping (Timeline<RandomDoodleEntry>) -> Void)
   {
     let currentDate = Date()
     let doodle = getRandomDoodle()
-    
+
     let entry = RandomDoodleEntry(
       date: currentDate,
       doodle: doodle,
       prompt: getRandomPrompt()
     )
-    
+
     // Update widget at midnight
     let calendar = Calendar.current
     let tomorrow = calendar.date(
@@ -64,41 +64,41 @@ struct RandomDoodleProvider: TimelineProvider {
       value: 1,
       to: calendar.startOfDay(for: currentDate)
     )!
-    
+
     let timeline = Timeline(entries: [entry], policy: .after(tomorrow))
     completion(timeline)
   }
-  
+
   private func getRandomDoodle() -> DoodleData? {
     let entries = WidgetDataManager.shared.loadEntries()
-    
+
     // Filter entries from the past year (365 days back) that have drawings
     let calendar = Calendar.current
     let today = calendar.startOfDay(for: Date())
     let oneYearAgo = calendar.date(byAdding: .day, value: -365, to: today)!
-    
+
     let doodleEntries = entries.filter { entry in
       let entryDate = calendar.startOfDay(for: entry.date)
       return entry.hasDrawing && entry.drawingData != nil && entryDate >= oneYearAgo
       && entryDate <= today
     }
-    
+
     guard !doodleEntries.isEmpty else {
       return nil
     }
-    
+
     // Select a stable random doodle based on current day
     // This ensures the same doodle is shown all day regardless of widget reloads
     let daysSince1970 = Int(today.timeIntervalSince1970 / 86400)
     let stableIndex = daysSince1970 % doodleEntries.count
     let selectedEntry = doodleEntries[stableIndex]
-    
+
     return DoodleData(
       date: selectedEntry.date,
       drawingData: selectedEntry.drawingData!
     )
   }
-  
+
   private func getRandomPrompt() -> String {
     return promptsWhenNoDoodle.randomElement()!
   }
@@ -118,13 +118,13 @@ struct DoodleData {
 struct PathData: Codable {
   let points: [CGPoint]
   let isDot: Bool
-  
+
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     points = try container.decode([CGPoint].self, forKey: .points)
     isDot = try container.decodeIfPresent(Bool.self, forKey: .isDot) ?? false
   }
-  
+
   private enum CodingKeys: String, CodingKey {
     case points
     case isDot
@@ -140,33 +140,37 @@ struct RandomDoodleWidgetView: View {
       DoodleView(drawingData: doodle.drawingData)
         .padding(family == .systemLarge ? 48 : 24)
         .widgetURL(URL(string: "goodday://date/\(Int(doodle.date.timeIntervalSince1970))"))
-        .containerBackground(.fill.tertiary, for: .widget)
+        .containerBackground(for: .widget) {
+          Color(UIColor.systemBackground)
+        }
     } else {
       // Show not found status
       NotFoundView(prompt: entry.prompt, family: family)
         .padding(8)
         .widgetURL(URL(string: "goodday://date/\(Int(Date().timeIntervalSince1970))"))
-        .containerBackground(.fill.tertiary, for: .widget)
+        .containerBackground(for: .widget) {
+          Color(UIColor.systemBackground)
+        }
     }
   }
 }
 
 struct DoodleView: View {
   let drawingData: Data
-  
+
   var body: some View {
     Canvas { context, size in
       // Decode and draw the paths
       let paths = decodePaths(from: drawingData)
-      
+
       // Calculate scale to fit drawing in widget
       let scale = min(size.width / 300, size.height / 300)
       let offsetX = (size.width - 300 * scale) / 2
       let offsetY = (size.height - 300 * scale) / 2
-      
+
       for pathData in paths {
         var scaledPath = Path()
-        
+
         if pathData.isDot && pathData.points.count >= 1 {
           // Draw dot
           let center = pathData.points[0]
@@ -206,7 +210,7 @@ struct DoodleView: View {
       }
     }
   }
-  
+
   private func decodePaths(from data: Data) -> [PathData] {
     do {
       return try JSONDecoder().decode([PathData].self, from: data)
@@ -220,12 +224,12 @@ struct DoodleView: View {
 struct NotFoundView: View {
   let prompt: String
   let family: WidgetFamily
-  
+
   var body: some View {
     VStack(alignment: .center, spacing: 8) {
       Image(systemName: "scribble")
         .font(.system(size: family == .systemLarge ? 50 : 32))
-        .foregroundColor(.accent)
+        .foregroundColor(.secondary.opacity(0.3))
       Text(prompt)
         .font(family == .systemLarge ? .callout : .caption)
         .foregroundColor(.secondary)
@@ -236,7 +240,7 @@ struct NotFoundView: View {
 
 struct RandomDoodleWidget: Widget {
   let kind: String = "RandomDoodleWidget"
-  
+
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: RandomDoodleProvider()) { entry in
       RandomDoodleWidgetView(entry: entry)
@@ -257,7 +261,7 @@ struct RandomDoodleWidget: Widget {
     doodle: DoodleData(date: Date(), drawingData: mockDrawingData),
     prompt: "Draw something"
   )
-  
+
   // Preview without a doodle
   RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺")
 }
@@ -273,7 +277,7 @@ struct RandomDoodleWidget: Widget {
     doodle: DoodleData(date: fiveDaysAgo, drawingData: mockDrawingData),
     prompt: "Draw something"
   )
-  
+
   // Preview without a doodle
   RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺")
 }

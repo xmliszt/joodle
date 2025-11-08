@@ -49,7 +49,8 @@ struct EntryEditingView: View {
   private var countdownText: String? {
     guard let date else { return nil }
     guard isFuture else { return nil }
-    guard entry != nil && !entry!.body.isEmpty else { return nil }
+    // Guard: only show countdown if at least there is body text, or drawing.
+    guard entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil) else { return nil }
     
     let calendar = Calendar.current
     let now = currentTime

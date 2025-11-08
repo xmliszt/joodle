@@ -85,6 +85,7 @@ struct AnniversaryEntryQuery: EntityQuery, EntityStringQuery {
   }
 
   private func makePreview(for entry: WidgetEntryData) -> String {
+    // If have text, show text
     if let text = entry.body, !text.isEmpty {
       // Show first 40 characters of text
       let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -92,21 +93,37 @@ struct AnniversaryEntryQuery: EntityQuery, EntityStringQuery {
         return String(trimmed.prefix(40)) + "..."
       }
       return trimmed
-    } else if entry.hasDrawing {
-      return "🎨 Drawing"
     }
-    return "Entry"
+    // Otherwise, only has drawing, show an emoji
+    else if entry.hasDrawing {
+      return "🎨"
+    }
+    // This is not possible, a future entry in this list should have at least either text or drawing
+    else {
+      fatalError("Future entry in anniversary list must have either text or drawing")
+    }
   }
 }
 
 // MARK: - Configuration Intent
 
-struct AnniversaryConfigurationIntent: WidgetConfigurationIntent {
-  static var title: LocalizedStringResource = "Anniversary Date"
-  static var description = IntentDescription("Choose a specific anniversary to display.")
+struct AnniversaryOptionsProvider: DynamicOptionsProvider {
+    func results() async throws -> [AnniversaryEntryEntity] {
+        let query = AnniversaryEntryQuery()
+        return try await query.suggestedEntities()
+    }
+}
 
-  @Parameter(title: "Anniversary Entry")
-  var selectedEntry: AnniversaryEntryEntity?
+struct AnniversaryConfigurationIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "Anniversary"
+    static var description = IntentDescription("Select an anniversary to display.")
+
+    @Parameter(
+      title: "Anniversary",
+      description: "Choose an anniversary to display in the widget.",
+      default: nil
+    )
+    var selectedEntry: AnniversaryEntryEntity?
 }
 
 // MARK: - Timeline Provider
@@ -581,11 +598,14 @@ struct AnniversaryDoodleView: View {
             scaledPath.addLine(to: scaledPoint)
           }
         }
-
         context.stroke(
           scaledPath,
           with: .color(.accent),
-          lineWidth: 2.0 * scale
+          style: StrokeStyle(
+            lineWidth: 5.0 * scale,
+            lineCap: .round,
+            lineJoin: .round
+          )
         )
       }
     }
