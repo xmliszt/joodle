@@ -44,7 +44,6 @@ struct HeaderView: View {
             selectedYear: $selectedYear
           )
           .lineLimit(1)
-          .fixedSize(horizontal: true, vertical: false)
           
           if let entry = highlightedEntry {
             if entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? false) {

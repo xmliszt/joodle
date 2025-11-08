@@ -12,11 +12,11 @@ struct EntryEditingView: View {
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
   @Query private var entries: [DayEntry]
-  
+
   let date: Date?
   let onOpenDrawingCanvas: (() -> Void)?
   let onFocusChange: ((Bool) -> Void)?
-  
+
   @State private var showDeleteConfirmation = false
   @State private var currentTime = Date()
   @State private var isTimerActive = false
@@ -25,17 +25,17 @@ struct EntryEditingView: View {
   @FocusState private var isTextFieldFocused
   @State private var entry: DayEntry?
   @State private var showButtons = true
-  
+
   private var isToday: Bool {
     guard let date else { return false }
     return Calendar.current.isDateInToday(date)
   }
-  
+
   private var isFuture: Bool {
     guard let date else { return false }
     return date > Date()
   }
-  
+
   private var weekdayLabel: String {
     guard let date else { return "" }
     if isToday { return "Today" }
@@ -44,19 +44,19 @@ struct EntryEditingView: View {
     formatter.dateFormat = "EEEE"
     return formatter.string(from: date)
   }
-  
+
   /// Show count down text for future entry with body
   private var countdownText: String? {
     guard let date else { return nil }
     guard isFuture else { return nil }
     // Guard: only show countdown if at least there is body text, or drawing.
     guard entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil) else { return nil }
-    
+
     let calendar = Calendar.current
     let now = currentTime
     let components = calendar.dateComponents(
       [.year, .month, .day, .hour, .minute, .second], from: now, to: date)
-    
+
     guard let years = components.year,
           let months = components.month,
           let days = components.day,
@@ -64,17 +64,17 @@ struct EntryEditingView: View {
           let minutes = components.minute,
           let seconds = components.second
     else { return nil }
-    
+
     // More than a year: show year + month + day
     if years > 0 {
       var parts: [String] = []
-      
+
       if years == 1 {
         parts.append("1 year")
       } else {
         parts.append("\(years) years")
       }
-      
+
       if months > 0 {
         if months == 1 {
           parts.append("1 month")
@@ -82,7 +82,7 @@ struct EntryEditingView: View {
           parts.append("\(months) months")
         }
       }
-      
+
       if days > 0 {
         if days == 1 {
           parts.append("1 day")
@@ -90,20 +90,20 @@ struct EntryEditingView: View {
           parts.append("\(days) days")
         }
       }
-      
+
       return "in " + parts.joined(separator: ", ")
     }
-    
+
     // More than a month but less than a year: show month + day
     if months > 0 {
       var parts: [String] = []
-      
+
       if months == 1 {
         parts.append("1 month")
       } else {
         parts.append("\(months) months")
       }
-      
+
       if days > 0 {
         if days == 1 {
           parts.append("1 day")
@@ -111,23 +111,23 @@ struct EntryEditingView: View {
           parts.append("\(days) days")
         }
       }
-      
+
       return "in " + parts.joined(separator: ", ")
     }
-    
+
     // More than 1 day: show days only
     if days > 1 {
       return "in \(days) days"
     }
-    
+
     if days == 1 {
       return "in 1 day"
     }
-    
+
     // Same day or next day with less than 24 hours: show hours, minutes, seconds
     if days == 0 && (hours > 0 || minutes > 0 || seconds > 0) {
       var parts: [String] = []
-      
+
       if hours > 0 {
         if hours == 1 {
           parts.append("1h")
@@ -135,7 +135,7 @@ struct EntryEditingView: View {
           parts.append("\(hours)h")
         }
       }
-      
+
       if minutes > 0 {
         if minutes == 1 {
           parts.append("1m")
@@ -143,13 +143,13 @@ struct EntryEditingView: View {
           parts.append("\(minutes)m")
         }
       }
-      
+
       // More than 1 hour, as we only update time per minute,
       // we show only minutes
       if hours >= 1 {
         return "in " + parts.joined(separator: " ")
       }
-      
+
       if seconds > 0 {
         if seconds == 1 {
           parts.append("1s")
@@ -157,31 +157,31 @@ struct EntryEditingView: View {
           parts.append("\(seconds)s")
         }
       }
-      
+
       if parts.isEmpty {
         return "now"
       }
-      
+
       return "in " + parts.joined(separator: " ")
     }
-    
+
     return nil
   }
-  
+
   var body: some View {
     ZStack {
       VStack(alignment: .leading, spacing: 0) {
         Rectangle()
           .fill(.clear)
           .frame(maxWidth: .infinity, maxHeight: 16)
-        
+
         // Note content
         ScrollView {
           VStack(alignment: .leading, spacing: 16) {
             // Text content
             ZStack(alignment: .topLeading) {
               TextEditor(text: $textContent)
-                .font(.body)
+                .font(.customBody)
                 .foregroundColor(.textColor)
                 .background(.backgroundColor)
                 .frame(minHeight: 40, maxHeight: isTextFieldFocused ? 160 : .infinity)
@@ -211,12 +211,12 @@ struct EntryEditingView: View {
                   if !textContent.isEmpty, let oldDate = oldValue {
                     saveNote(text: textContent, for: oldDate)
                   }
-                  
+
                   // Unfocus
                   withAnimation {
                     isTextFieldFocused = false
                   }
-                  
+
                   // Update entry if got new date
                   if let newDate = newValue {
                     entry = entries.first {
@@ -228,7 +228,7 @@ struct EntryEditingView: View {
                 }
                 .onChange(of: isTextFieldFocused) { _, newValue in
                   onFocusChange?(newValue)
-                  
+
                   // When starting to edit, hide buttons immediately
                   if newValue {
                     showButtons = false
@@ -245,13 +245,13 @@ struct EntryEditingView: View {
                 .scrollDismissesKeyboard(.never)
               if textContent.isEmpty {
                 Text("What's up...")
-                  .font(.body)
+                  .font(.customBody)
                   .foregroundColor(.textColor.opacity(0.5))
                   .allowsHitTesting(false)  // Important: prevents blocking TextEditor
               }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             // Drawing content
             if let drawingData = entry?.drawingData, !drawingData.isEmpty {
               VStack(alignment: .leading, spacing: 8) {
@@ -274,7 +274,7 @@ struct EntryEditingView: View {
           .padding(.top, 40)
         }
         .scrollDismissesKeyboard(.never)
-        
+
         Spacer()
       }
       .padding(20)
@@ -298,31 +298,31 @@ struct EntryEditingView: View {
       } message: {
         Text("Delete this note?")
       }
-      
+
       // Header with date and edit button
       VStack {
         HStack {
           VStack(alignment: .leading) {
             if let date {
               Text(date, style: .date)
-                .font(.headline)
+                .font(.customHeadline)
                 .foregroundColor(.textColor)
             }
             HStack(spacing: 8) {
               Text(weekdayLabel)
-                .font(.subheadline)
+                .font(.customSubheadline)
                 .foregroundColor(isToday ? .appPrimary : .secondaryTextColor)
-              
+
               if let countdown = countdownText {
                 Text(countdown)
-                  .font(.subheadline)
+                  .font(.customSubheadline)
                   .foregroundColor(.appPrimary.opacity(0.7))
               }
             }
           }
-          
+
           Spacer()
-          
+
           if #available(iOS 26.0, *) {
             GlassEffectContainer(spacing: 8) {
               HStack(spacing: 8) {
@@ -340,7 +340,7 @@ struct EntryEditingView: View {
                   .circularGlassButton()
                   .transition(.opacity.animation(.springFkingSatifying))
                 }
-                
+
                 // Delete entry button
                 if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
                     && !isTextFieldFocused && showButtons
@@ -353,7 +353,7 @@ struct EntryEditingView: View {
                   .circularGlassButton(tintColor: .red)
                   .transition(.opacity)
                 }
-                
+
                 // Drawing canvas button
                 if !isTextFieldFocused && showButtons {
                   Button {
@@ -385,7 +385,7 @@ struct EntryEditingView: View {
                 .circularGlassButton()
                 .transition(.opacity.animation(.springFkingSatifying))
               }
-              
+
               // Delete entry button
               if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
                   && !isTextFieldFocused && showButtons
@@ -398,7 +398,7 @@ struct EntryEditingView: View {
                 .circularGlassButton(tintColor: .red)
                 .transition(.opacity)
               }
-              
+
               // Drawing canvas button
               if !isTextFieldFocused && showButtons {
                 Button {
@@ -418,7 +418,7 @@ struct EntryEditingView: View {
         .background(
           ZStack {
             Rectangle().fill(.backgroundColor)  // blur layer
-            
+
             LinearGradient(
               gradient: Gradient(stops: [
                 .init(color: Color.black.opacity(1.0), location: 0.0),
@@ -432,27 +432,27 @@ struct EntryEditingView: View {
           }
             .compositingGroup()  // required for destinationOut to work
         )
-        
+
         Spacer()
       }
       .padding(20)
     }
   }
-  
+
   // MARK: - Private Methods
   /// Start the timer if needed
   private func startTimerIfNeeded() {
     // Only activate timer if we have a future entry with content and it's within 24 hours
     isTimerActive = isFuture && entry != nil && !entry!.body.isEmpty && needsRealTimeUpdates
-    
+
     if isTimerActive { currentTime = Date() }
   }
-  
+
   /// Stop the timer
   private func stopTimer() {
     isTimerActive = false
   }
-  
+
   /// Check if we need real-time updates for the countdown text
   /// If it's within 24 hours, we need real-time updates
   /// If it's more than 24 hours, we don't need real-time updates
@@ -461,11 +461,11 @@ struct EntryEditingView: View {
     let calendar = Calendar.current
     let now = Date()
     let components = calendar.dateComponents([.day, .hour], from: now, to: date)
-    
+
     // Need real-time updates if it's within 24 hours
     return (components.day ?? 0) <= 1 && (components.hour ?? 0) <= 24
   }
-  
+
   /// Calculate the timer interval based on the date
   /// If it's more than 1 day, we don't need real-time updates
   /// If it's more than 1 hour, we update every minute
@@ -476,38 +476,38 @@ struct EntryEditingView: View {
     let calendar = Calendar.current
     let now = Date()
     let components = calendar.dateComponents([.day, .hour, .minute], from: now, to: date)
-    
+
     let days = components.day ?? 0
     let hours = components.hour ?? 0
     let minutes = components.minute ?? 0
-    
+
     // More than 1 day: no timer needed (handled by needsRealTimeUpdates)
     if days > 1 { return 60.0 }
-    
+
     // More than 1 hour: update every minute
     if hours > 1 { return 60.0 }
-    
+
     // More than 1 minute: update every second
     if minutes > 1 { return 1.0 }
-    
+
     // Less than 1 minute: update every second for precise countdown
     return 1.0
   }
-  
+
   private func deleteEntry() {
     guard let entry else { return }
-    
+
     // Clear the entry's body and drawing data
     entry.body = ""
     entry.drawingData = nil
     textContent = ""
-    
+
     // Save the context to persist changes
     try? modelContext.save()
-    
+
     // Widget will be updated automatically by ContentView's @Query onChange handler
   }
-  
+
   private func saveNote(text: String, for date: Date) {
     if let entry {
       // Update existing entry
@@ -517,10 +517,10 @@ struct EntryEditingView: View {
       let newEntry = DayEntry(body: text, createdAt: date)
       modelContext.insert(newEntry)
     }
-    
+
     // Save the context to persist changes
     try? modelContext.save()
-    
+
     // Widget will be updated automatically by ContentView's @Query onChange handler
   }
 }

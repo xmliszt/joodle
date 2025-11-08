@@ -177,15 +177,13 @@ struct YearGridWidgetView: View {
         // Header
         HStack {
           Text(String(entry.year))
-            .font(.title3)
-            .fontWeight(.bold)
+            .font(.customTitle3)
             .foregroundColor(.primary)
 
           Spacer()
 
           Text(String(format: "%.1f%%", entry.percentage))
-            .font(.title3)
-            .fontWeight(.bold)
+            .font(.customTitle3)
             .foregroundColor(.accent)
         }
         .padding(.horizontal, horizontalPadding)

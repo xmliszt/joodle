@@ -269,7 +269,7 @@ struct NotFoundView: View {
         .font(.system(size: family == .systemLarge ? 50 : 32))
         .foregroundColor(.secondary.opacity(0.3))
       Text(prompt)
-        .font(family == .systemLarge ? .callout : .caption)
+        .font(family == .systemLarge ? .customCallout : .customCaption)
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
     }

@@ -23,20 +23,20 @@ struct GoodDayApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
   @State private var colorScheme: ColorScheme? = UserPreferences.shared.preferredColorScheme
   @State private var selectedDateFromWidget: Date?
-  
+
   var sharedModelContainer: ModelContainer = {
-    
+
     // 1. Define schemas
     let schema = Schema([
       DayEntry.self
     ])
-    
+
     // 2. Configure for iCloud
     let config = ModelConfiguration(
       schema: schema,
       isStoredInMemoryOnly: false,
     )
-    
+
     // 3. Create the container
     do {
       return try ModelContainer(for: schema, configurations: [config])
@@ -44,13 +44,14 @@ struct GoodDayApp: App {
       fatalError("Could not create ModelContainer: \(error)")
     }
   }()
-  
+
   var body: some Scene {
     WindowGroup {
       NavigationStack {
         ContentView(selectedDateFromWidget: $selectedDateFromWidget)
           .environment(UserPreferences.shared)
           .preferredColorScheme(colorScheme)
+          .font(.customBody)
           .onAppear {
             setupColorSchemeObserver()
           }
@@ -61,7 +62,7 @@ struct GoodDayApp: App {
     }
     .modelContainer(sharedModelContainer)
   }
-  
+
   private func setupColorSchemeObserver() {
     NotificationCenter.default.addObserver(
       forName: .didChangeColorScheme,
@@ -71,7 +72,7 @@ struct GoodDayApp: App {
       colorScheme = UserPreferences.shared.preferredColorScheme
     }
   }
-  
+
   private func handleWidgetURL(_ url: URL) {
     // Handle URL scheme: goodday://date/{timestamp}
     guard url.scheme == "goodday",
@@ -80,7 +81,7 @@ struct GoodDayApp: App {
           let timeInterval = TimeInterval(timestamp) else {
       return
     }
-    
+
     let date = Date(timeIntervalSince1970: timeInterval)
     selectedDateFromWidget = date
   }
