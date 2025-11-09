@@ -90,11 +90,11 @@ struct MinimalCardStyleView: View {
           Spacer()
           VStack {
             Text(dateString)
-              .font(.custom(size: 50 * scale))
+              .font(.custom(size: 64 * scale))
               .foregroundColor(.textColor)
             Spacer()
             Text(weekdayString)
-              .font(.custom(size: 44 * scale))
+              .font(.custom(size: 52 * scale))
               .foregroundColor(.secondaryTextColor)
           }
           .padding(.top, 30 * scale)

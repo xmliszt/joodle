@@ -8,14 +8,14 @@
 import Foundation
 
 enum ShareCardStyle: String, CaseIterable, Identifiable {
-  case square = "Square"
+  case doodleOnlySquare = "Square"
   case square2 = "Square2"
 
   var id: String { rawValue }
 
   var icon: String {
     switch self {
-    case .square:
+    case .doodleOnlySquare:
       return "square"
     case .square2:
       return "square"
@@ -24,8 +24,8 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
 
   var description: String {
     switch self {
-    case .square:
-      return "Perfect for Instagram posts"
+    case .doodleOnlySquare:
+      return ""
     case .square2:
       return "Perfect for Instagram posts, but smaller"
     }
@@ -34,7 +34,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Size for the actual share card (1:1 or 4:5 ratio)
   var cardSize: CGSize {
     switch self {
-    case .square:
+    case .doodleOnlySquare:
       return CGSize(width: 1080, height: 1080)
     case .square2:
       return CGSize(width: 800, height: 800)
@@ -44,7 +44,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Size for the preview in the carousel
   var previewSize: CGSize {
     switch self {
-    case .square:
+    case .doodleOnlySquare:
       return CGSize(width: 300, height: 300)
     case .square2:
       return CGSize(width: 200, height: 200)

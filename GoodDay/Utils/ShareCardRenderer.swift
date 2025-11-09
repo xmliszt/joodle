@@ -144,7 +144,7 @@ class ShareCardRenderer {
     highResDrawing: UIImage?
   ) -> some View {
     switch style {
-    case .square:
+    case .doodleOnlySquare:
       MinimalCardStyleView(entry: entry, date: date, highResDrawing: highResDrawing)
     case .square2:
       MinimalCardStyleView(entry: entry, date: date, highResDrawing: highResDrawing)

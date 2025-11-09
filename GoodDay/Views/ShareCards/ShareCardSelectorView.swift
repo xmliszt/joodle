@@ -13,16 +13,16 @@ struct ShareCardSelectorView: View {
   let date: Date
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
-
-  @State private var selectedStyle: ShareCardStyle = .square
+  
+  @State private var selectedStyle: ShareCardStyle = .doodleOnlySquare
   @State private var isSharing = false
   @State private var shareItem: ShareItem?
   @State private var previewColorScheme: ColorScheme = .light
-
+  
   // Cache rendered preview images for each style and color scheme
   @State private var renderedPreviews: [ShareCardStyle: [ColorScheme: UIImage]] = [:]
   @State private var renderingStyles: Set<ShareCardStyle> = []
-
+  
   var body: some View {
     NavigationView {
       VStack(spacing: 0) {
@@ -36,7 +36,7 @@ struct ShareCardSelectorView: View {
           }
           .tabViewStyle(.page(indexDisplayMode: .never))
           .frame(maxWidth: .infinity, minHeight: 400)
-
+          
           // Style indicator dots
           HStack(spacing: 12) {
             ForEach(ShareCardStyle.allCases) { style in
@@ -49,10 +49,27 @@ struct ShareCardSelectorView: View {
           .padding(.top, 24)
           .padding(.bottom, 16)
           
-          
-           // Color scheme toggle
-          if #available(iOS 26.0, *) {
-            GlassEffectContainer(spacing: 0) {
+//          // Style info
+//          VStack(spacing: 8) {
+//            HStack(spacing: 8) {
+//              Text(selectedStyle.rawValue)
+//                .font(.customHeadline)
+//                .foregroundColor(.textColor)
+//            }
+//            
+//            Text(selectedStyle.description)
+//              .font(.customSubheadline)
+//              .foregroundColor(.secondaryTextColor)
+//          }
+//          .animation(.springFkingSatifying, value: selectedStyle)
+        }
+        
+        Spacer().frame(maxHeight: .infinity)
+        
+        // Action buttons
+        if #available(iOS 26.0, *) {
+          GlassEffectContainer(spacing: 12) {
+            HStack(spacing: 12) {
               Button {
                 withAnimation(.springFkingSatifying) {
                   previewColorScheme = previewColorScheme == .light ? .dark : .light
@@ -63,12 +80,32 @@ struct ShareCardSelectorView: View {
                     .font(.system(size: 16, weight: .semibold))
                 }
                 .foregroundColor(.textColor)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
               }
-              .circularGlassButton()
+              .circularGlassButton(tintColor: .appPrimary)
+              
+              Button {
+                shareCard()
+              } label: {
+                HStack(spacing: 12) {
+                  Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 18, weight: .semibold))
+                  
+                  Text("Share")
+                    .font(.system(size: 18, weight:.semibold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(.appPrimary)
+                .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
+              }
+              .glassEffect(.regular.interactive())
+              .disabled(isSharing)
             }
-          } else {
+          }
+          .padding(.horizontal, UIDevice.screenCornerRadius / 2)
+        } else {
+          HStack(spacing: 12) {
             Button {
               withAnimation(.springFkingSatifying) {
                 previewColorScheme = previewColorScheme == .light ? .dark : .light
@@ -79,73 +116,17 @@ struct ShareCardSelectorView: View {
                   .font(.system(size: 16, weight: .semibold))
               }
               .foregroundColor(.textColor)
-              .padding(.horizontal, 20)
-              .padding(.vertical, 10)
             }
-          }
-          
-           // Style info
-           VStack(spacing: 8) {
-             HStack(spacing: 8) {
-               Text(selectedStyle.rawValue)
-                 .font(.customHeadline)
-                 .foregroundColor(.textColor)
-             }
-
-             Text(selectedStyle.description)
-               .font(.customSubheadline)
-               .foregroundColor(.secondaryTextColor)
-           }
-           .animation(.springFkingSatifying, value: selectedStyle)
-        }
-        
-        Spacer().frame(maxHeight: .infinity)
- 
-        // Action buttons
-        HStack(spacing: 12) {
-          if #available(iOS 26.0, *) {
-            GlassEffectContainer(spacing: 0) {
-              Button {
-                shareCard()
-              } label: {
-                HStack(spacing: 12) {
-                  if isSharing {
-                    ProgressView()
-                      .progressViewStyle(.circular)
-                      .tint(.white)
-                  } else {
-                    Image(systemName: "square.and.arrow.up")
-                      .font(.system(size: 18, weight: .semibold))
-                    
-                    Text("Share")
-                      .font(.system(size: 18, weight: .semibold))
-                  }
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(.appPrimary)
-                .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
-              }
-              .glassEffect(.clear.interactive())
-              .disabled(isSharing)
-            }
-          } else {
+            
             Button {
               shareCard()
             } label: {
               HStack(spacing: 12) {
-                if isSharing {
-                  ProgressView()
-                    .progressViewStyle(.circular)
-                    .tint(.white)
-                } else {
-                  Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 18, weight: .semibold))
-                  
-                  Text("Share")
-                    .font(.system(size: 18, weight: .semibold))
-                }
+                Image(systemName: "square.and.arrow.up")
+                  .font(.system(size: 18, weight: .semibold))
+                
+                Text("Share")
+                  .font(.system(size: 18, weight:.semibold))
               }
               .foregroundColor(.white)
               .frame(maxWidth: .infinity)
@@ -155,8 +136,8 @@ struct ShareCardSelectorView: View {
             }
             .disabled(isSharing)
           }
+          .padding(.horizontal, UIDevice.screenCornerRadius / 2)
         }
-        .padding(.horizontal, UIDevice.screenCornerRadius / 2)
       }
       .background(Color.backgroundColor)
       .navigationTitle("Share your day")
@@ -176,7 +157,7 @@ struct ShareCardSelectorView: View {
       }
     }
   }
-
+  
   @ViewBuilder
   private func cardPreview(style: ShareCardStyle) -> some View {
     ZStack {
@@ -191,22 +172,16 @@ struct ShareCardSelectorView: View {
         ZStack {
           Color.backgroundColor
             .frame(width: style.previewSize.width, height: style.previewSize.height)
-
-          VStack(spacing: 12) {
-            ProgressView()
-              .progressViewStyle(.circular)
-              .scaleEffect(1.5)
-
-            Text("Rendering preview...")
-              .font(.customSubheadline)
-              .foregroundColor(.secondaryTextColor)
-          }
+          
+          Text("Rendering preview...")
+            .font(.customSubheadline)
+            .foregroundColor(.secondaryTextColor)
         }
       } else {
         // Fallback to live preview
         Group {
           switch style {
-          case .square:
+          case .doodleOnlySquare:
             MinimalCardStyleView(entry: entry, date: date, highResDrawing: nil)
               .frame(width: style.previewSize.width, height: style.previewSize.height)
           case .square2:
@@ -227,15 +202,15 @@ struct ShareCardSelectorView: View {
       renderPreview(for: style)
     }
   }
-
+  
   private func renderPreview(for style: ShareCardStyle) {
     // Skip if already rendered or currently rendering
     guard renderedPreviews[style]?[previewColorScheme] == nil, !renderingStyles.contains(style) else {
       return
     }
-
+    
     renderingStyles.insert(style)
-
+    
     Task { @MainActor in
       let image = ShareCardRenderer.shared.renderCard(
         style: style,
@@ -243,7 +218,7 @@ struct ShareCardSelectorView: View {
         date: date,
         colorScheme: previewColorScheme
       )
-
+      
       if let image = image {
         if renderedPreviews[style] == nil {
           renderedPreviews[style] = [:]
@@ -253,17 +228,17 @@ struct ShareCardSelectorView: View {
       renderingStyles.remove(style)
     }
   }
-
+  
   private func shareCard() {
     // If we already have the rendered preview, use it directly
     if let cachedImage = renderedPreviews[selectedStyle]?[previewColorScheme] {
       shareItem = ShareItem(image: cachedImage)
       return
     }
-
+    
     // Otherwise render it now
     isSharing = true
-
+    
     Task { @MainActor in
       let image = ShareCardRenderer.shared.renderCard(
         style: selectedStyle,
@@ -271,7 +246,7 @@ struct ShareCardSelectorView: View {
         date: date,
         colorScheme: previewColorScheme
       )
-
+      
       isSharing = false
       if let image = image {
         shareItem = ShareItem(image: image)
@@ -289,7 +264,7 @@ struct ShareItem: Identifiable {
 // UIKit ShareSheet wrapper
 struct ShareSheet: UIViewControllerRepresentable {
   let items: [Any]
-
+  
   func makeUIViewController(context: Context) -> UIActivityViewController {
     let controller = UIActivityViewController(
       activityItems: items,
@@ -297,7 +272,7 @@ struct ShareSheet: UIViewControllerRepresentable {
     )
     return controller
   }
-
+  
   func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
