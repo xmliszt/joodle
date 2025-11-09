@@ -282,6 +282,17 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
           drawingData: matchingEntry.drawingData
         )
       }
+
+      // Selected entry has passed - automatically select the next closest anniversary
+      // Sort by date and pick the earliest one
+      let sortedEntries = futureEntries.sorted { $0.date < $1.date }
+      if let nextEntry = sortedEntries.first {
+        return AnniversaryData(
+          date: nextEntry.date,
+          text: nextEntry.body,
+          drawingData: nextEntry.drawingData
+        )
+      }
     }
 
     // Use true random selection (default behavior when nil or when random is selected)
