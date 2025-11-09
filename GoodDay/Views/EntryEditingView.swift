@@ -25,6 +25,7 @@ struct EntryEditingView: View {
   @FocusState private var isTextFieldFocused
   @State private var entry: DayEntry?
   @State private var showButtons = true
+  @State private var showShareSheet = false
 
   private var isToday: Bool {
     guard let date else { return false }
@@ -182,7 +183,8 @@ struct EntryEditingView: View {
                   dotStyle: .present,
                   accent: true,
                   highlighted: false,
-                  scale: 1.0
+                  scale: 1.0,
+                  useThumbnail: false
                 )
                 .frame(width: 200, height: 200)
                 .background(.appSurface)
@@ -230,6 +232,9 @@ struct EntryEditingView: View {
       } message: {
         Text("Delete this note?")
       }
+      .sheet(isPresented: $showShareSheet) {
+        ShareCardSelectorView(entry: entry, date: date ?? Date())
+      }
 
       // Header with date and edit button
       VStack {
@@ -271,6 +276,19 @@ struct EntryEditingView: View {
                   }
                   .circularGlassButton()
                   .transition(.opacity.animation(.springFkingSatifying))
+                }
+
+                // Share button
+                if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
+                    && !isTextFieldFocused && showButtons
+                {
+                  Button {
+                    showShareSheet = true
+                  } label: {
+                    Image(systemName: "square.and.arrow.up")
+                  }
+                  .circularGlassButton()
+                  .transition(.opacity)
                 }
 
                 // Delete entry button
@@ -316,6 +334,19 @@ struct EntryEditingView: View {
                 }
                 .circularGlassButton()
                 .transition(.opacity.animation(.springFkingSatifying))
+              }
+
+              // Share button
+              if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
+                  && !isTextFieldFocused && showButtons
+              {
+                Button {
+                  showShareSheet = true
+                } label: {
+                  Image(systemName: "square.and.arrow.up")
+                }
+                .circularGlassButton()
+                .transition(.opacity)
               }
 
               // Delete entry button
@@ -403,8 +434,6 @@ struct EntryEditingView: View {
 
     // Save the context to persist changes
     try? modelContext.save()
-
-    // Widget will be updated automatically by ContentView's @Query onChange handler
   }
 
   private func saveNote(text: String, for date: Date) {
@@ -419,7 +448,5 @@ struct EntryEditingView: View {
 
     // Save the context to persist changes
     try? modelContext.save()
-
-    // Widget will be updated automatically by ContentView's @Query onChange handler
   }
 }
