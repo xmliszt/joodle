@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Photos
 
 struct ShareCardSelectorView: View {
   let entry: DayEntry?
@@ -13,9 +14,11 @@ struct ShareCardSelectorView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
 
-  @State private var selectedStyle: ShareCardStyle = .minimal
+  @State private var selectedStyle: ShareCardStyle = .square
   @State private var isSharing = false
   @State private var shareItem: ShareItem?
+  @State private var showingSaveAlert = false
+  @State private var saveAlertMessage = ""
 
   var body: some View {
     NavigationView {
@@ -61,30 +64,55 @@ struct ShareCardSelectorView: View {
         .animation(.springFkingSatifying, value: selectedStyle)
         .padding(.bottom, 32)
 
-        // Share button
-        Button {
-          shareCard()
-        } label: {
-          HStack(spacing: 12) {
-            if isSharing {
-              ProgressView()
-                .progressViewStyle(.circular)
-                .tint(.white)
-            } else {
-              Image(systemName: "square.and.arrow.up")
-                .font(.system(size: 18, weight: .semibold))
-
-              Text("Share Card")
-                .font(.system(size: 18, weight: .semibold))
+        // Action buttons
+        HStack(spacing: 12) {
+          // Save to Photos button
+          Button {
+            saveToPhotos()
+          } label: {
+            HStack(spacing: 8) {
+              if isSharing {
+                ProgressView()
+                  .progressViewStyle(.circular)
+                  .tint(.white)
+              } else {
+                Image(systemName: "square.and.arrow.down")
+                  .font(.system(size: 18, weight: .semibold))
+              }
             }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(.appPrimary)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
           }
-          .foregroundColor(.white)
-          .frame(maxWidth: .infinity)
-          .frame(height: 56)
-          .background(.appPrimary)
-          .clipShape(RoundedRectangle(cornerRadius: 16))
+          .disabled(isSharing)
+
+          // Share button
+          Button {
+            shareCard()
+          } label: {
+            HStack(spacing: 12) {
+              if isSharing {
+                ProgressView()
+                  .progressViewStyle(.circular)
+                  .tint(.white)
+              } else {
+                Image(systemName: "square.and.arrow.up")
+                  .font(.system(size: 18, weight: .semibold))
+
+                Text("Share")
+                  .font(.system(size: 18, weight: .semibold))
+              }
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(.appPrimary)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+          }
+          .disabled(isSharing)
         }
-        .disabled(isSharing)
         .padding(.horizontal, 20)
         .padding(.bottom, 32)
       }
@@ -105,6 +133,11 @@ struct ShareCardSelectorView: View {
       .sheet(item: $shareItem) { item in
         ShareSheet(items: [item.image])
       }
+      .alert("Save to Photos", isPresented: $showingSaveAlert) {
+        Button("OK", role: .cancel) {}
+      } message: {
+        Text(saveAlertMessage)
+      }
     }
   }
 
@@ -112,38 +145,92 @@ struct ShareCardSelectorView: View {
   private func cardPreview(style: ShareCardStyle) -> some View {
     Group {
       switch style {
-      case .minimal:
+      case .square:
         MinimalCardStyleView(entry: entry, date: date)
-      case .classic:
+      case .rectangle:
         ClassicCardStyleView(entry: entry, date: date)
-      case .vibrant:
-        VibrantCardStyleView(entry: entry, date: date)
-      case .elegant:
-        ElegantCardStyleView(entry: entry, date: date)
       }
     }
-    .frame(width: 270, height: 480)
-    .clipShape(RoundedRectangle(cornerRadius: 24))
-    .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
-    .scaleEffect(0.9)
-    .padding(.horizontal, 40)
+    .frame(width: style.previewSize.width, height: style.previewSize.height)
+    .clipShape(RoundedRectangle(cornerRadius: 20))
+    .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 8)
   }
 
   private func shareCard() {
     isSharing = true
 
-    Task {
-      let image = await ShareCardRenderer.shared.renderCard(
+    Task { @MainActor in
+      let image = ShareCardRenderer.shared.renderCard(
         style: selectedStyle,
         entry: entry,
         date: date,
         colorScheme: colorScheme
       )
 
-      await MainActor.run {
-        isSharing = false
-        if let image = image {
-          shareItem = ShareItem(image: image)
+      isSharing = false
+      if let image = image {
+        shareItem = ShareItem(image: image)
+      }
+    }
+  }
+
+  private func saveToPhotos() {
+    // Check permission first
+    let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+
+    switch status {
+    case .notDetermined:
+      // Request permission
+      PHPhotoLibrary.requestAuthorization(for: .addOnly) { newStatus in
+        if newStatus == .authorized {
+          performSave()
+        } else {
+          DispatchQueue.main.async {
+            saveAlertMessage = "Photo library access denied. Please enable it in Settings."
+            showingSaveAlert = true
+          }
+        }
+      }
+    case .authorized, .limited:
+      performSave()
+    case .denied, .restricted:
+      saveAlertMessage = "Photo library access denied. Please enable it in Settings."
+      showingSaveAlert = true
+    @unknown default:
+      break
+    }
+  }
+
+  private func performSave() {
+    isSharing = true
+
+    Task { @MainActor in
+      let image = ShareCardRenderer.shared.renderCard(
+        style: selectedStyle,
+        entry: entry,
+        date: date,
+        colorScheme: colorScheme
+      )
+
+      isSharing = false
+
+      guard let image = image else {
+        saveAlertMessage = "Failed to generate image."
+        showingSaveAlert = true
+        return
+      }
+
+      // Save to photo library
+      PHPhotoLibrary.shared().performChanges {
+        PHAssetChangeRequest.creationRequestForAsset(from: image)
+      } completionHandler: { success, error in
+        DispatchQueue.main.async {
+          if success {
+            saveAlertMessage = "Saved to Photos successfully!"
+          } else {
+            saveAlertMessage = "Failed to save to Photos: \(error?.localizedDescription ?? "Unknown error")"
+          }
+          showingSaveAlert = true
         }
       }
     }
@@ -170,8 +257,6 @@ struct ShareSheet: UIViewControllerRepresentable {
 
   func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
-
-
 
 #Preview {
   ShareCardSelectorView(

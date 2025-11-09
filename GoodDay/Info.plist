@@ -17,5 +17,9 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Good Day needs access to save to Photos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Good Day needs access to save to Photos.</string>
 </dict>
 </plist>

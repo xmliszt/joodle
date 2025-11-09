@@ -46,8 +46,7 @@ class ShareCardRenderer {
     let cardView = createCardView(style: style, entry: entry, date: date)
       .environment(\.colorScheme, colorScheme)
 
-    let size = CGSize(width: 1080, height: 1920)
-    return render(view: cardView, size: size)
+    return render(view: cardView, size: style.cardSize)
   }
 
   /// Creates the appropriate card view based on style
@@ -58,14 +57,10 @@ class ShareCardRenderer {
     date: Date
   ) -> some View {
     switch style {
-    case .minimal:
+    case .square:
       MinimalCardStyleView(entry: entry, date: date)
-    case .classic:
+    case .rectangle:
       ClassicCardStyleView(entry: entry, date: date)
-    case .vibrant:
-      VibrantCardStyleView(entry: entry, date: date)
-    case .elegant:
-      ElegantCardStyleView(entry: entry, date: date)
     }
   }
 }

@@ -57,6 +57,8 @@ struct DrawingDisplayView: View {
         // Use pre-rendered thumbnail for performance
         Image(uiImage: thumbnailImage)
           .resizable()
+          .renderingMode(.template)
+          .foregroundStyle(foregroundColor)
           .frame(width: displaySize * scale, height: displaySize * scale)
           .scaleEffect(isVisible ? 1.0 : 0.9)
           .blur(radius: isVisible ? 0 : 5)
@@ -94,6 +96,7 @@ struct DrawingDisplayView: View {
     .animation(.springFkingSatifying, value: isVisible)
     .animation(.springFkingSatifying, value: scale)
     .animation(.springFkingSatifying, value: highlighted)
+    .animation(.springFkingSatifying, value: foregroundColor)
     .onAppear {
       // Load data immediately and animate
       loadDrawingData()
@@ -106,6 +109,18 @@ struct DrawingDisplayView: View {
       loadDrawingData()
       withAnimation(.springFkingSatifying) {
         isVisible = true
+      }
+    }
+    .onChange(of: entry?.drawingThumbnail20) { _, _ in
+      // Reload thumbnail when it's updated
+      if useThumbnail {
+        loadDrawingData()
+      }
+    }
+    .onChange(of: entry?.drawingThumbnail200) { _, _ in
+      // Reload thumbnail when it's updated
+      if useThumbnail {
+        loadDrawingData()
       }
     }
   }

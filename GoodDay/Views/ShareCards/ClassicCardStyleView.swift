@@ -13,7 +13,7 @@ struct ClassicCardStyleView: View {
 
   private var dateString: String {
     let formatter = DateFormatter()
-    formatter.dateStyle = .long
+    formatter.dateFormat = "MMMM d"
     return formatter.string(from: date)
   }
 
@@ -29,86 +29,77 @@ struct ClassicCardStyleView: View {
       Color.backgroundColor
         .ignoresSafeArea()
 
-      VStack(spacing: 48) {
-        Spacer()
-
-        // Date header - centered
-        VStack(spacing: 12) {
+      VStack(spacing: 0) {
+        // Date header at top
+        VStack(spacing: 8) {
           Text(weekdayString)
-            .font(.customHeadline)
-            .foregroundColor(.appPrimary)
-
-          Rectangle()
-            .fill(.appPrimary.opacity(0.3))
-            .frame(width: 60, height: 2)
+            .font(.system(size: 28, weight: .medium))
+            .foregroundColor(.textColor)
 
           Text(dateString)
-            .font(.customSubheadline)
+            .font(.system(size: 24, weight: .regular))
             .foregroundColor(.secondaryTextColor)
         }
+        .padding(.top, 60)
+        .padding(.bottom, 40)
 
-        // Drawing
+        Spacer()
+
+        // Main content - Drawing or Text
         if let entry = entry, let drawingData = entry.drawingData, !drawingData.isEmpty {
+          // Show drawing
           DrawingDisplayView(
             entry: entry,
-            displaySize: 450,
+            displaySize: 600,
             dotStyle: .present,
             accent: true,
             highlighted: false,
             scale: 1.0,
             useThumbnail: false
           )
-          .frame(width: 450, height: 450)
-          .background(.appSurface)
-          .clipShape(RoundedRectangle(cornerRadius: 32))
-          .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 10)
-        }
-
-        // Body text
-        if let entry = entry, !entry.body.isEmpty {
+          .frame(width: 600, height: 600)
+        } else if let entry = entry, !entry.body.isEmpty {
+          // Show text
           Text(entry.body)
-            .font(.customBody)
+            .font(.system(size: 42, weight: .regular))
             .foregroundColor(.textColor)
-            .lineLimit(nil)
+            .lineLimit(15)
             .multilineTextAlignment(.center)
-            .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 80)
+        } else {
+          // Empty state
+          Image(systemName: "scribble")
+            .font(.system(size: 100))
+            .foregroundColor(.textColor.opacity(0.3))
         }
 
         Spacer()
 
         // Footer branding
-        VStack(spacing: 8) {
-          Circle()
-            .fill(.appPrimary)
-            .frame(width: 8, height: 8)
-
-          Text("GoodDay")
-            .font(.customSubheadline)
-            .foregroundColor(.secondaryTextColor.opacity(0.6))
-        }
-        .padding(.bottom, 40)
+        Text("GoodDay")
+          .font(.system(size: 20, weight: .regular))
+          .foregroundColor(.secondaryTextColor.opacity(0.5))
+          .padding(.bottom, 60)
       }
-      .padding(60)
     }
-    .frame(width: 1080, height: 1920)
+    .frame(width: 1080, height: 1350)
   }
 }
 
-#Preview("With Drawing and Text") {
+#Preview("With Drawing") {
   ClassicCardStyleView(
     entry: DayEntry(
-      body: "Today was a wonderful day filled with new experiences and learning opportunities. Every moment counts.",
+      body: "",
       createdAt: Date()
     ),
     date: Date()
   )
 }
 
-#Preview("Text Only") {
+#Preview("With Text") {
   ClassicCardStyleView(
     entry: DayEntry(
-      body: "Sometimes the simplest days are the most memorable ones. Today was one of those days.",
+      body: "Today was a wonderful day filled with new experiences and learning opportunities.",
       createdAt: Date()
     ),
     date: Date()

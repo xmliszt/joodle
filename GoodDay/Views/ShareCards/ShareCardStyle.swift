@@ -8,36 +8,46 @@
 import Foundation
 
 enum ShareCardStyle: String, CaseIterable, Identifiable {
-  case minimal = "Minimal"
-  case classic = "Classic"
-  case vibrant = "Vibrant"
-  case elegant = "Elegant"
+  case square = "Square"
+  case rectangle = "Rectangle"
 
   var id: String { rawValue }
 
   var icon: String {
     switch self {
-    case .minimal:
-      return "circle"
-    case .classic:
+    case .square:
       return "square"
-    case .vibrant:
-      return "star.fill"
-    case .elegant:
-      return "sparkles"
+    case .rectangle:
+      return "rectangle"
     }
   }
 
   var description: String {
     switch self {
-    case .minimal:
-      return "Clean and simple"
-    case .classic:
-      return "Traditional style"
-    case .vibrant:
-      return "Bold and colorful"
-    case .elegant:
-      return "Refined design"
+    case .square:
+      return "Perfect for Instagram posts"
+    case .rectangle:
+      return "Great for stories and feeds"
+    }
+  }
+
+  /// Size for the actual share card (1:1 or 4:5 ratio)
+  var cardSize: CGSize {
+    switch self {
+    case .square:
+      return CGSize(width: 1080, height: 1080)
+    case .rectangle:
+      return CGSize(width: 1080, height: 1350) // 4:5 ratio
+    }
+  }
+
+  /// Size for the preview in the carousel
+  var previewSize: CGSize {
+    switch self {
+    case .square:
+      return CGSize(width: 300, height: 300)
+    case .rectangle:
+      return CGSize(width: 300, height: 375) // 4:5 ratio
     }
   }
 }

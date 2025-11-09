@@ -13,7 +13,7 @@ struct MinimalCardStyleView: View {
 
   private var dateString: String {
     let formatter = DateFormatter()
-    formatter.dateStyle = .long
+    formatter.dateFormat = "MMMM d"
     return formatter.string(from: date)
   }
 
@@ -29,75 +29,70 @@ struct MinimalCardStyleView: View {
       Color.backgroundColor
         .ignoresSafeArea()
 
-      VStack(alignment: .leading, spacing: 32) {
+      VStack(spacing: 0) {
         Spacer()
 
-        // Date header
-        VStack(alignment: .leading, spacing: 8) {
-          Text(weekdayString.uppercased())
-            .font(.customSubheadline)
-            .foregroundColor(.secondaryTextColor)
-            .tracking(2)
-
-          Text(dateString)
-            .font(.customTitle)
-            .foregroundColor(.textColor)
-        }
-
-        // Drawing
+        // Main content - Drawing or Text
         if let entry = entry, let drawingData = entry.drawingData, !drawingData.isEmpty {
+          // Show drawing
           DrawingDisplayView(
             entry: entry,
-            displaySize: 400,
+            displaySize: 600,
             dotStyle: .present,
             accent: true,
             highlighted: false,
             scale: 1.0,
             useThumbnail: false
           )
-          .frame(width: 400, height: 400)
-        }
-
-        // Body text
-        if let entry = entry, !entry.body.isEmpty {
+          .frame(width: 600, height: 600)
+        } else if let entry = entry, !entry.body.isEmpty {
+          // Show text
           Text(entry.body)
-            .font(.customBody)
+            .font(.system(size: 48, weight: .regular))
             .foregroundColor(.textColor)
-            .lineLimit(nil)
-            .multilineTextAlignment(.leading)
-            .fixedSize(horizontal: false, vertical: true)
+            .lineLimit(10)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 80)
+        } else {
+          // Empty state
+          Image(systemName: "scribble")
+            .font(.system(size: 120))
+            .foregroundColor(.textColor.opacity(0.3))
         }
 
         Spacer()
 
-        // Footer
-        HStack {
-          Spacer()
-          Text("GoodDay")
-            .font(.customSubheadline)
-            .foregroundColor(.secondaryTextColor.opacity(0.5))
+        // Date footer
+        VStack(spacing: 8) {
+          Text(dateString)
+            .font(.system(size: 32, weight: .medium))
+            .foregroundColor(.textColor)
+
+          Text(weekdayString)
+            .font(.system(size: 24, weight: .regular))
+            .foregroundColor(.secondaryTextColor)
         }
+        .padding(.bottom, 80)
       }
-      .padding(80)
     }
-    .frame(width: 1080, height: 1920)
+    .frame(width: 1080, height: 1080)
   }
 }
 
-#Preview("With Drawing and Text") {
+#Preview("With Drawing") {
   MinimalCardStyleView(
     entry: DayEntry(
-      body: "Today was amazing! I learned so much and felt really productive. Looking forward to tomorrow.",
+      body: "",
       createdAt: Date()
     ),
     date: Date()
   )
 }
 
-#Preview("Text Only") {
+#Preview("With Text") {
   MinimalCardStyleView(
     entry: DayEntry(
-      body: "A simple note for the day. Sometimes less is more, and today proved that.",
+      body: "Today was amazing! I learned so much and felt really productive.",
       createdAt: Date()
     ),
     date: Date()
