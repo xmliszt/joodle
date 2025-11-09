@@ -40,6 +40,7 @@ struct MinimalCardStyleView: View {
           // Main content - Drawing or Text
           if let highResDrawing = highResDrawing {
             // Show pre-rendered high-resolution drawing
+            // The image is already at the correct pixel size, just display it
             Image(uiImage: highResDrawing)
               .resizable()
               .scaledToFit()

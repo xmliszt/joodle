@@ -17,26 +17,24 @@ class ShareCardRenderer {
   /// Pre-renders a drawing at high resolution for embedding in share cards
   /// - Parameters:
   ///   - entry: The day entry containing the drawing data
-  ///   - size: The target size for the rendered drawing
-  /// - Returns: A high-resolution UIImage of the drawing
-  private func renderDrawingAtHighResolution(entry: DayEntry, size: CGSize) -> UIImage? {
+  ///   - targetPixelSize: The desired output size in physical pixels
+  /// - Returns: A high-resolution UIImage at 1x scale that will be downsized by SwiftUI
+  private func renderDrawingAtHighResolution(entry: DayEntry, targetPixelSize: CGSize) -> UIImage? {
     guard let drawingData = entry.drawingData, !drawingData.isEmpty else {
       return nil
     }
 
-    // Fixed scales for consistent crisp quality
-    // renderScale: how much to scale the logical view size
-    // formatScale: the backing scale for UIGraphicsImageRenderer (affects Canvas rasterization)
-    let renderScale: CGFloat = 3
-    let formatScale: CGFloat = 1
-    let renderSize = CGSize(width: size.width * renderScale, height: size.height * renderScale)
+    // Render at high physical pixel resolution to preserve vector quality
+    // The image will be created at 1x scale with high pixel dimensions
+    // SwiftUI will then scale it down to fit the container
+    let renderSize = targetPixelSize
 
-    print("🎨 Rendering doodle: \(size.width)x\(size.height) -> \(renderSize.width)x\(renderSize.height) @ \(formatScale)x = \(renderSize.width * formatScale) actual pixels")
+    print("🎨 Rendering doodle at high resolution: \(renderSize.width)x\(renderSize.height) pixels @ 1x scale")
 
     // Create a high-res drawing view
     let drawingView = DrawingDisplayView(
       entry: entry,
-      displaySize: size.width * renderScale,
+      displaySize: renderSize.width,
       dotStyle: .present,
       accent: true,
       highlighted: false,
@@ -51,7 +49,6 @@ class ShareCardRenderer {
     controller.view.backgroundColor = .clear
 
     // Add to a temporary window to ensure the view is in a window hierarchy
-    // This allows the view to render at least once before capture
     let window = UIWindow(frame: CGRect(origin: .zero, size: renderSize))
     window.rootViewController = controller
     window.isHidden = false
@@ -61,7 +58,7 @@ class ShareCardRenderer {
     controller.view.layoutIfNeeded()
 
     let format = UIGraphicsImageRendererFormat()
-    format.scale = formatScale
+    format.scale = 1.0  // Use 1x scale so image size = pixel size, SwiftUI will downsize
     format.opaque = false
 
     let renderer = UIGraphicsImageRenderer(size: renderSize, format: format)
@@ -73,7 +70,7 @@ class ShareCardRenderer {
     window.isHidden = true
     window.rootViewController = nil
 
-    print("🎨 Generated doodle image: \(image.size), scale: \(image.scale)")
+    print("🎨 Generated doodle image: \(image.size.width)x\(image.size.height) @ \(image.scale)x - will be scaled down by SwiftUI")
     return image
   }
 
@@ -92,9 +89,9 @@ class ShareCardRenderer {
     controller.view.bounds = CGRect(origin: .zero, size: targetSize)
     controller.view.layoutIfNeeded()
 
-    // Explicitly set scale to 1.0 to output exact pixel dimensions
+    // Use 3x scale for retina quality output
     let format = UIGraphicsImageRendererFormat()
-    format.scale = 1.0
+    format.scale = 3.0
 
     let renderer = UIGraphicsImageRenderer(size: size, format: format)
     return renderer.image { context in
@@ -118,9 +115,10 @@ class ShareCardRenderer {
     // Pre-render drawing at high resolution if present
     var highResDrawing: UIImage?
     if let entry = entry, entry.drawingData != nil {
-      let scale = style.cardSize.width / 1080.0
-      let drawingSize = CGSize(width: 600 * scale, height: 600 * scale)
-      highResDrawing = renderDrawingAtHighResolution(entry: entry, size: drawingSize)
+      // Render at high pixel resolution (1800x1800) @ 1x scale
+      // SwiftUI will scale it down to fit the 600*scale container
+      let highResPixelSize = CGSize(width: 1800, height: 1800)  // High resolution pixels
+      highResDrawing = renderDrawingAtHighResolution(entry: entry, targetPixelSize: highResPixelSize)
       print("🎨 High-res drawing generated: \(highResDrawing != nil)")
     }
 
@@ -147,7 +145,7 @@ class ShareCardRenderer {
   ) -> some View {
     switch style {
     case .square:
-      MinimalCardStyleView(entry: entry, date: date, highResDrawing: nil)
+      MinimalCardStyleView(entry: entry, date: date, highResDrawing: highResDrawing)
     }
   }
 }
