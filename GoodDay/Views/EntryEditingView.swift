@@ -52,120 +52,7 @@ struct EntryEditingView: View {
     // Guard: only show countdown if at least there is body text, or drawing.
     guard entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil) else { return nil }
 
-    let calendar = Calendar.current
-    let now = currentTime
-    let components = calendar.dateComponents(
-      [.year, .month, .day, .hour, .minute, .second], from: now, to: date)
-
-    guard let years = components.year,
-          let months = components.month,
-          let days = components.day,
-          let hours = components.hour,
-          let minutes = components.minute,
-          let seconds = components.second
-    else { return nil }
-
-    // More than a year: show year + month + day
-    if years > 0 {
-      var parts: [String] = []
-
-      if years == 1 {
-        parts.append("1 year")
-      } else {
-        parts.append("\(years) years")
-      }
-
-      if months > 0 {
-        if months == 1 {
-          parts.append("1 month")
-        } else {
-          parts.append("\(months) months")
-        }
-      }
-
-      if days > 0 {
-        if days == 1 {
-          parts.append("1 day")
-        } else {
-          parts.append("\(days) days")
-        }
-      }
-
-      return "in " + parts.joined(separator: ", ")
-    }
-
-    // More than a month but less than a year: show month + day
-    if months > 0 {
-      var parts: [String] = []
-
-      if months == 1 {
-        parts.append("1 month")
-      } else {
-        parts.append("\(months) months")
-      }
-
-      if days > 0 {
-        if days == 1 {
-          parts.append("1 day")
-        } else {
-          parts.append("\(days) days")
-        }
-      }
-
-      return "in " + parts.joined(separator: ", ")
-    }
-
-    // More than 1 day: show days only
-    if days > 1 {
-      return "in \(days) days"
-    }
-
-    if days == 1 {
-      return "in 1 day"
-    }
-
-    // Same day or next day with less than 24 hours: show hours, minutes, seconds
-    if days == 0 && (hours > 0 || minutes > 0 || seconds > 0) {
-      var parts: [String] = []
-
-      if hours > 0 {
-        if hours == 1 {
-          parts.append("1h")
-        } else {
-          parts.append("\(hours)h")
-        }
-      }
-
-      if minutes > 0 {
-        if minutes == 1 {
-          parts.append("1m")
-        } else {
-          parts.append("\(minutes)m")
-        }
-      }
-
-      // More than 1 hour, as we only update time per minute,
-      // we show only minutes
-      if hours >= 1 {
-        return "in " + parts.joined(separator: " ")
-      }
-
-      if seconds > 0 {
-        if seconds == 1 {
-          parts.append("1s")
-        } else {
-          parts.append("\(seconds)s")
-        }
-      }
-
-      if parts.isEmpty {
-        return "now"
-      }
-
-      return "in " + parts.joined(separator: " ")
-    }
-
-    return nil
+    return CountdownHelper.countdownText(from: currentTime, to: date)
   }
 
   var body: some View {
@@ -192,12 +79,6 @@ struct EntryEditingView: View {
                 .padding(.top, -8)
                 .padding(.horizontal, -5)
               //                                .animation(.springFkingSatifying, value: isTextFieldFocused)
-                .onAppear {
-                  guard let date else { return }
-                  entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
-                  guard let entry else { return }
-                  textContent = entry.body
-                }
                 .onDisappear {
                   withAnimation {
                     isTextFieldFocused = false
@@ -280,17 +161,27 @@ struct EntryEditingView: View {
       .padding(20)
       .background(.backgroundColor)
       .onAppear {
+        // Load entry first
+        guard let date else { return }
+        entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
+        if let entry {
+          textContent = entry.body
+        }
+        // Then start timer
+        startTimerIfNeeded()
+      }
+      .onChange(of: entry) { _, _ in
+        // Restart timer when entry changes (loaded or modified)
         startTimerIfNeeded()
       }
       .onDisappear {
         stopTimer()
       }
-      /// On receive timer interval, update the current time if we still need updates
-      .onReceive(Timer.publish(every: timerInterval, on: .main, in: .common).autoconnect()) { _ in
+      /// On receive timer interval, update the current time if we still need updates (every 1 second)
+      .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
         // Only update if timer is active and we still need updates
-        if isTimerActive && needsRealTimeUpdates {
-          currentTime = Date()
-        }
+        guard isTimerActive && needsRealTimeUpdates else { return }
+        currentTime = Date()
       }
       .confirmationDialog("Delete Note", isPresented: $showDeleteConfirmation) {
         Button("Delete", role: .destructive, action: deleteEntry)
@@ -442,10 +333,11 @@ struct EntryEditingView: View {
   // MARK: - Private Methods
   /// Start the timer if needed
   private func startTimerIfNeeded() {
-    // Only activate timer if we have a future entry with content and it's within 24 hours
-    isTimerActive = isFuture && entry != nil && !entry!.body.isEmpty && needsRealTimeUpdates
-
-    if isTimerActive { currentTime = Date() }
+    // Always activate timer for future dates within 24 hours
+    // countdownText will handle nil entry checks
+    guard isFuture && needsRealTimeUpdates else { return }
+    currentTime = Date()
+    isTimerActive = true
   }
 
   /// Stop the timer
@@ -454,44 +346,10 @@ struct EntryEditingView: View {
   }
 
   /// Check if we need real-time updates for the countdown text
-  /// If it's within 24 hours, we need real-time updates
-  /// If it's more than 24 hours, we don't need real-time updates
+  /// Uses shared CountdownHelper to determine if within 24 hours
   private var needsRealTimeUpdates: Bool {
     guard let date else { return false }
-    let calendar = Calendar.current
-    let now = Date()
-    let components = calendar.dateComponents([.day, .hour], from: now, to: date)
-
-    // Need real-time updates if it's within 24 hours
-    return (components.day ?? 0) <= 1 && (components.hour ?? 0) <= 24
-  }
-
-  /// Calculate the timer interval based on the date
-  /// If it's more than 1 day, we don't need real-time updates
-  /// If it's more than 1 hour, we update every minute
-  /// If it's more than 1 minute, we update every second
-  /// If it's less than 1 minute, we update every second for precise countdown
-  private var timerInterval: TimeInterval {
-    guard let date else { return 60.0 }
-    let calendar = Calendar.current
-    let now = Date()
-    let components = calendar.dateComponents([.day, .hour, .minute], from: now, to: date)
-
-    let days = components.day ?? 0
-    let hours = components.hour ?? 0
-    let minutes = components.minute ?? 0
-
-    // More than 1 day: no timer needed (handled by needsRealTimeUpdates)
-    if days > 1 { return 60.0 }
-
-    // More than 1 hour: update every minute
-    if hours > 1 { return 60.0 }
-
-    // More than 1 minute: update every second
-    if minutes > 1 { return 1.0 }
-
-    // Less than 1 minute: update every second for precise countdown
-    return 1.0
+    return CountdownHelper.needsRealTimeUpdates(from: Date(), to: date)
   }
 
   private func deleteEntry() {
@@ -523,12 +381,4 @@ struct EntryEditingView: View {
 
     // Widget will be updated automatically by ContentView's @Query onChange handler
   }
-}
-
-#Preview {
-  EntryEditingView(
-    date: Date(),
-    onOpenDrawingCanvas: nil,
-    onFocusChange: nil
-  )
 }

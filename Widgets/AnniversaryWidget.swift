@@ -8,16 +8,30 @@
 import AppIntents
 import SwiftUI
 import WidgetKit
+import Foundation
+
+// MARK: - Constants
+
+private let kRandomAnniversaryID = "random_anniversary"
 
 // MARK: - Anniversary Entry Entity
 
 struct AnniversaryEntryEntity: AppEntity {
   let id: String
-  let date: Date
+  let date: Date?
   let preview: String
 
   var displayRepresentation: DisplayRepresentation {
-    DisplayRepresentation(title: "\(formatDate(date))", subtitle: "\(preview)")
+    if let date = date {
+      // Regular anniversary with date
+      return DisplayRepresentation(
+        title: "\(formatDate(date))",
+        subtitle: "\(preview)"
+      )
+    } else {
+      // Random anniversary option
+      return DisplayRepresentation(title: "Random", subtitle: "\(preview)")
+    }
   }
 
   static var typeDisplayRepresentation: TypeDisplayRepresentation = "Anniversary"
@@ -37,21 +51,56 @@ struct AnniversaryEntryQuery: EntityQuery, EntityStringQuery {
   func entities(for identifiers: [AnniversaryEntryEntity.ID]) async throws
     -> [AnniversaryEntryEntity]
   {
+    let randomEntity = AnniversaryEntryEntity(
+      id: kRandomAnniversaryID,
+      date: nil,
+      preview: "🎲 Random anniversary (changes daily)"
+    )
+
+    var results: [AnniversaryEntryEntity] = []
+    if identifiers.contains(kRandomAnniversaryID) {
+      results.append(randomEntity)
+    }
+
     let allEntries = loadFutureAnniversaries()
-    return allEntries.filter { identifiers.contains($0.id) }
+    results += allEntries.filter { identifiers.contains($0.id) }
+
+    return results
   }
 
   func suggestedEntities() async throws -> [AnniversaryEntryEntity] {
-    return loadFutureAnniversaries()
+    let randomEntity = AnniversaryEntryEntity(
+      id: kRandomAnniversaryID,
+      date: nil,
+      preview: "🎲 Random anniversary (changes daily)"
+    )
+    return [randomEntity] + loadFutureAnniversaries()
   }
 
   func entities(matching string: String) async throws -> [AnniversaryEntryEntity] {
+    let randomEntity = AnniversaryEntryEntity(
+      id: kRandomAnniversaryID,
+      date: nil,
+      preview: "🎲 Random anniversary (changes daily)"
+    )
+
     let allEntries = loadFutureAnniversaries()
     let lowercasedString = string.lowercased()
-    return allEntries.filter { entity in
-      entity.preview.lowercased().contains(lowercasedString)
-        || formatDate(entity.date).lowercased().contains(lowercasedString)
+
+    var results: [AnniversaryEntryEntity] = []
+
+    // Check if random entity matches
+    if "random".contains(lowercasedString) || randomEntity.preview.lowercased().contains(lowercasedString) {
+      results.append(randomEntity)
     }
+
+    // Add matching anniversaries
+    results += allEntries.filter { entity in
+      entity.preview.lowercased().contains(lowercasedString)
+        || formatDate(entity.date!).lowercased().contains(lowercasedString)
+    }
+
+    return results
   }
 
   private func formatDate(_ date: Date) -> String {
@@ -80,7 +129,11 @@ struct AnniversaryEntryQuery: EntityQuery, EntityStringQuery {
     return sortedEntries.map { entry in
       let preview = makePreview(for: entry)
       let id = String(Int(entry.date.timeIntervalSince1970))
-      return AnniversaryEntryEntity(id: id, date: entry.date, preview: preview)
+      return AnniversaryEntryEntity(
+        id: id,
+        date: entry.date,
+        preview: preview
+      )
     }
   }
 
@@ -216,9 +269,10 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
       return nil
     }
 
-    // If user selected a specific entry, use that
-    if let selectedEntry = configuration.selectedEntry {
-      let targetDay = calendar.startOfDay(for: selectedEntry.date)
+    // If user selected a specific entry (not random or nil), use that
+    if let selectedEntry = configuration.selectedEntry,
+       selectedEntry.id != kRandomAnniversaryID {
+      let targetDay = calendar.startOfDay(for: selectedEntry.date!)
       if let matchingEntry = futureEntries.first(where: {
         calendar.startOfDay(for: $0.date) == targetDay
       }) {
@@ -230,11 +284,10 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
       }
     }
 
-    // Use stable randomness based on current day
-    let today = calendar.startOfDay(for: now)
-    let daysSince1970 = Int(today.timeIntervalSince1970 / 86400)
-    let stableIndex = daysSince1970 % futureEntries.count
-    let selectedEntry = futureEntries[stableIndex]
+    // Use true random selection (default behavior when nil or when random is selected)
+    guard let selectedEntry = futureEntries.randomElement() else {
+      return nil
+    }
 
     return AnniversaryData(
       date: selectedEntry.date,
@@ -263,134 +316,6 @@ struct AnniversaryData {
 
   var hasDrawing: Bool {
     drawingData != nil && !(drawingData?.isEmpty ?? true)
-  }
-}
-
-// MARK: - Countdown Helper
-
-struct CountdownHelper {
-  static func countdownText(from now: Date, to targetDate: Date) -> String {
-    let calendar = Calendar.current
-    let components = calendar.dateComponents(
-      [.year, .month, .day, .hour, .minute, .second],
-      from: now,
-      to: targetDate
-    )
-
-    guard let years = components.year,
-      let months = components.month,
-      let days = components.day,
-      let hours = components.hour,
-      let minutes = components.minute,
-      let seconds = components.second
-    else { return "" }
-
-    // More than a year: show year + month + day
-    if years > 0 {
-      var parts: [String] = []
-
-      if years == 1 {
-        parts.append("1 year")
-      } else {
-        parts.append("\(years) years")
-      }
-
-      if months > 0 {
-        if months == 1 {
-          parts.append("1 month")
-        } else {
-          parts.append("\(months) months")
-        }
-      }
-
-      if days > 0 {
-        if days == 1 {
-          parts.append("1 day")
-        } else {
-          parts.append("\(days) days")
-        }
-      }
-
-      return "in " + parts.joined(separator: ", ")
-    }
-
-    // More than a month but less than a year: show month + day
-    if months > 0 {
-      var parts: [String] = []
-
-      if months == 1 {
-        parts.append("1 month")
-      } else {
-        parts.append("\(months) months")
-      }
-
-      if days > 0 {
-        if days == 1 {
-          parts.append("1 day")
-        } else {
-          parts.append("\(days) days")
-        }
-      }
-
-      return "in " + parts.joined(separator: ", ")
-    }
-
-    // More than 1 day: show days only
-    if days > 1 {
-      return "in \(days) days"
-    }
-
-    if days == 1 {
-      return "in 1 day"
-    }
-
-    // Same day or next day with less than 24 hours: show hours, minutes, seconds
-    if days == 0 && (hours > 0 || minutes > 0 || seconds > 0) {
-      var parts: [String] = []
-
-      if hours > 0 {
-        if hours == 1 {
-          parts.append("1h")
-        } else {
-          parts.append("\(hours)h")
-        }
-      }
-
-      if minutes > 0 {
-        if minutes == 1 {
-          parts.append("1m")
-        } else {
-          parts.append("\(minutes)m")
-        }
-      }
-
-      // More than 1 hour, only show hours and minutes
-      if hours >= 1 {
-        return "in " + parts.joined(separator: " ")
-      }
-
-      if seconds > 0 {
-        if seconds == 1 {
-          parts.append("1s")
-        } else {
-          parts.append("\(seconds)s")
-        }
-      }
-
-      if parts.isEmpty {
-        return "now"
-      }
-
-      return "in " + parts.joined(separator: " ")
-    }
-
-    return ""
-  }
-
-  static func dateText(for date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "MMM d, yyyy"
-    return formatter.string(from: date)
   }
 }
 

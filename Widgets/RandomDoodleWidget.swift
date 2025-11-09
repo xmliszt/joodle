@@ -87,11 +87,10 @@ struct RandomDoodleProvider: TimelineProvider {
       return nil
     }
 
-    // Select a stable random doodle based on current day
-    // This ensures the same doodle is shown all day regardless of widget reloads
-    let daysSince1970 = Int(today.timeIntervalSince1970 / 86400)
-    let stableIndex = daysSince1970 % doodleEntries.count
-    let selectedEntry = doodleEntries[stableIndex]
+    // Select a random doodle
+    guard let selectedEntry = doodleEntries.randomElement() else {
+      return nil
+    }
 
     return DoodleData(
       date: selectedEntry.date,

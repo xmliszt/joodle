@@ -10,6 +10,8 @@
 		FA85D4502EB7AECA007D82EE /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D44F2EB7AECA007D82EE /* WidgetKit.framework */; };
 		FA85D4522EB7AECA007D82EE /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D4512EB7AECA007D82EE /* SwiftUI.framework */; };
 		FA85D4632EB7AECB007D82EE /* WidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FA905FD92EC0A39B004C5E7F /* CountdownHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA905FD72EC0A39B004C5E7F /* CountdownHelper.swift */; };
+		FA905FDA2EC0A39B004C5E7F /* CountdownHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA905FD72EC0A39B004C5E7F /* CountdownHelper.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +57,7 @@
 		FA85D44F2EB7AECA007D82EE /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		FA85D4512EB7AECA007D82EE /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		FA85D4732EB7AFC5007D82EE /* WidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WidgetsExtension.entitlements; sourceTree = "<group>"; };
+		FA905FD72EC0A39B004C5E7F /* CountdownHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownHelper.swift; sourceTree = "<group>"; };
 		FADC35832E48C2E1007AE111 /* Good Day.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Good Day.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		FADC35942E48C2E2007AE111 /* GoodDayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GoodDayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FADC359E2E48C2E2007AE111 /* GoodDayUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GoodDayUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -164,9 +167,18 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		FA905FD82EC0A39B004C5E7F /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				FA905FD72EC0A39B004C5E7F /* CountdownHelper.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		FADC357A2E48C2E1007AE111 = {
 			isa = PBXGroup;
 			children = (
+				FA905FD82EC0A39B004C5E7F /* Shared */,
 				FA85D4732EB7AFC5007D82EE /* WidgetsExtension.entitlements */,
 				FADC35852E48C2E1007AE111 /* GoodDay */,
 				FADC35972E48C2E2007AE111 /* GoodDayTests */,
@@ -369,6 +381,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA905FD92EC0A39B004C5E7F /* CountdownHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,6 +389,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA905FDA2EC0A39B004C5E7F /* CountdownHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
