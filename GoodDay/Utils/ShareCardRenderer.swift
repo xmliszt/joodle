@@ -115,9 +115,9 @@ class ShareCardRenderer {
     // Pre-render drawing at high resolution if present
     var highResDrawing: UIImage?
     if let entry = entry, entry.drawingData != nil {
-      // Render at high pixel resolution (1800x1800) @ 1x scale
+      // Render at high pixel resolution (2700x2700) max limit.
       // SwiftUI will scale it down to fit the 600*scale container
-      let highResPixelSize = CGSize(width: 1800, height: 1800)  // High resolution pixels
+      let highResPixelSize = CGSize(width: 2700, height: 2700)  // High resolution pixels
       highResDrawing = renderDrawingAtHighResolution(entry: entry, targetPixelSize: highResPixelSize)
       print("🎨 High-res drawing generated: \(highResDrawing != nil)")
     }
