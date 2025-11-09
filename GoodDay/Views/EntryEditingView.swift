@@ -64,21 +64,20 @@ struct EntryEditingView: View {
 
         // Note content
         ScrollView {
-          VStack(alignment: .leading, spacing: 16) {
+          VStack(alignment: .leading, spacing: 0) {
             // Text content
             ZStack(alignment: .topLeading) {
               TextEditor(text: $textContent)
                 .font(.customBody)
                 .foregroundColor(.textColor)
                 .background(.backgroundColor)
-                .frame(minHeight: 40, maxHeight: isTextFieldFocused ? 160 : .infinity)
+                .frame(minHeight: 40, maxHeight: 85)
                 .disableAutocorrection(false)
                 .autocapitalization(.sentences)
                 .focused($isTextFieldFocused)
-              // Alignment nudges to match the text view
+                // Nudge to align with placeholder text
                 .padding(.top, -8)
                 .padding(.horizontal, -5)
-              //                                .animation(.springFkingSatifying, value: isTextFieldFocused)
                 .onDisappear {
                   withAnimation {
                     isTextFieldFocused = false
@@ -132,6 +131,47 @@ struct EntryEditingView: View {
               }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 24)
+            // MARK: Overlay gradient
+            .overlay(alignment: .top) {
+              ZStack {
+                Rectangle().fill(.backgroundColor)  // blur layer
+
+                LinearGradient(
+                  gradient: Gradient(stops: [
+                    .init(color: Color.black.opacity(1.0), location: 0.0),
+                    .init(color: Color.black.opacity(0.0), location: 0.4),
+                    .init(color: Color.black.opacity(0.0), location: 1.0),
+                  ]),
+                  startPoint: .bottom,
+                  endPoint: .top
+                )
+                .blendMode(.destinationOut)  // punch transparency into the blur
+              }
+              .compositingGroup()  // required for destinationOut to work
+              .frame(height: 40)
+              .padding(.top, -40)
+              .allowsHitTesting(false)
+            }
+            .overlay(alignment: .bottom) {
+              ZStack {
+                Rectangle().fill(.backgroundColor)  // blur layer
+
+                LinearGradient(
+                  gradient: Gradient(stops: [
+                    .init(color: Color.black.opacity(1.0), location: 0.0),
+                    .init(color: Color.black.opacity(0.0), location: 0.4),
+                    .init(color: Color.black.opacity(0.0), location: 1.0),
+                  ]),
+                  startPoint: .top,
+                  endPoint: .bottom
+                )
+                .blendMode(.destinationOut)  // punch transparency into the blur
+              }
+              .compositingGroup()  // required for destinationOut to work
+              .frame(height: 40)
+              .allowsHitTesting(false)
+            }
 
             // Drawing content
             if let drawingData = entry?.drawingData, !drawingData.isEmpty {
@@ -145,13 +185,14 @@ struct EntryEditingView: View {
                   scale: 1.0
                 )
                 .frame(width: 200, height: 200)
-                .background(.controlBackgroundColor.opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .background(.appSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
               }
+              .padding(.top, -20)
             }
           }
           .frame(maxWidth: .infinity, alignment: .leading)
-          .frame(minHeight: 120, alignment: .topLeading)
+          // Offset the header part
           .padding(.top, 40)
         }
         .scrollDismissesKeyboard(.never)
