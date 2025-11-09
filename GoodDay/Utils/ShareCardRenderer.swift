@@ -89,9 +89,9 @@ class ShareCardRenderer {
     controller.view.bounds = CGRect(origin: .zero, size: targetSize)
     controller.view.layoutIfNeeded()
 
-    // Use 3x scale for retina quality output
+    // Use 1x scale for standard output
     let format = UIGraphicsImageRendererFormat()
-    format.scale = 3.0
+    format.scale = 1.0
 
     let renderer = UIGraphicsImageRenderer(size: size, format: format)
     return renderer.image { context in
@@ -145,6 +145,8 @@ class ShareCardRenderer {
   ) -> some View {
     switch style {
     case .square:
+      MinimalCardStyleView(entry: entry, date: date, highResDrawing: highResDrawing)
+    case .square2:
       MinimalCardStyleView(entry: entry, date: date, highResDrawing: highResDrawing)
     }
   }

@@ -9,12 +9,15 @@ import Foundation
 
 enum ShareCardStyle: String, CaseIterable, Identifiable {
   case square = "Square"
+  case square2 = "Square2"
 
   var id: String { rawValue }
 
   var icon: String {
     switch self {
     case .square:
+      return "square"
+    case .square2:
       return "square"
     }
   }
@@ -23,6 +26,8 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     switch self {
     case .square:
       return "Perfect for Instagram posts"
+    case .square2:
+      return "Perfect for Instagram posts, but smaller"
     }
   }
 
@@ -31,6 +36,8 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     switch self {
     case .square:
       return CGSize(width: 1080, height: 1080)
+    case .square2:
+      return CGSize(width: 800, height: 800)
     }
   }
 
@@ -39,6 +46,8 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     switch self {
     case .square:
       return CGSize(width: 300, height: 300)
+    case .square2:
+      return CGSize(width: 200, height: 200)
     }
   }
 }
