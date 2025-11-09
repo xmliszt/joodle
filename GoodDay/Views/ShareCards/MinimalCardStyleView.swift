@@ -24,58 +24,68 @@ struct MinimalCardStyleView: View {
   }
 
   var body: some View {
-    ZStack {
-      // Background
-      Color.backgroundColor
-        .ignoresSafeArea()
+    GeometryReader { geometry in
+      let size = geometry.size
+      let scale = size.width / 1080.0
 
-      VStack(spacing: 0) {
-        Spacer()
+      ZStack {
+        // Background
+        Color.backgroundColor
+          .ignoresSafeArea()
 
-        // Main content - Drawing or Text
-        if let entry = entry, let drawingData = entry.drawingData, !drawingData.isEmpty {
-          // Show drawing
-          DrawingDisplayView(
-            entry: entry,
-            displaySize: 600,
-            dotStyle: .present,
-            accent: true,
-            highlighted: false,
-            scale: 1.0,
-            useThumbnail: false
-          )
-          .frame(width: 600, height: 600)
-        } else if let entry = entry, !entry.body.isEmpty {
-          // Show text
-          Text(entry.body)
-            .font(.system(size: 48, weight: .regular))
-            .foregroundColor(.textColor)
-            .lineLimit(10)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 80)
-        } else {
-          // Empty state
-          Image(systemName: "scribble")
-            .font(.system(size: 120))
-            .foregroundColor(.textColor.opacity(0.3))
+        VStack(spacing: 0) {
+          Spacer()
+
+          // Main content - Drawing or Text
+          if let entry = entry, let drawingData = entry.drawingData, !drawingData.isEmpty {
+            // Show drawing
+            DrawingDisplayView(
+              entry: entry,
+              displaySize: 600 * scale,
+              dotStyle: .present,
+              accent: true,
+              highlighted: false,
+              scale: 1.0,
+              useThumbnail: false
+            )
+            .frame(width: 600 * scale, height: 600 * scale)
+          } else if let entry = entry, !entry.body.isEmpty {
+            // Show text
+            Text(entry.body)
+              .font(.custom(size: 48 * scale))
+              .foregroundColor(.textColor)
+              .lineLimit(10)
+              .multilineTextAlignment(.center)
+              .padding(.horizontal, 80 * scale)
+          } else {
+            // Empty state
+            Image(systemName: "scribble")
+              .font(.custom(size: 120 * scale))
+              .foregroundColor(.textColor.opacity(0.3))
+          }
+
+          Spacer()
+
         }
-
-        Spacer()
-
         // Date footer
-        VStack(spacing: 8) {
-          Text(dateString)
-            .font(.system(size: 32, weight: .medium))
-            .foregroundColor(.textColor)
-
-          Text(weekdayString)
-            .font(.system(size: 24, weight: .regular))
-            .foregroundColor(.secondaryTextColor)
+        VStack {
+          Spacer()
+          HStack {
+            Text(dateString)
+              .font(.custom(size: 50 * scale))
+              .foregroundColor(.textColor)
+            Spacer()
+            Text(weekdayString)
+              .font(.custom(size: 44 * scale))
+              .foregroundColor(.secondaryTextColor)
+          }
+          .padding(.bottom, 44 * scale)
+          .padding(.horizontal, 80 * scale)
         }
-        .padding(.bottom, 80)
       }
+      .frame(width: size.width, height: size.height)
     }
-    .frame(width: 1080, height: 1080)
+    .aspectRatio(1.0, contentMode: .fit)
   }
 }
 
@@ -83,10 +93,14 @@ struct MinimalCardStyleView: View {
   MinimalCardStyleView(
     entry: DayEntry(
       body: "",
-      createdAt: Date()
+      createdAt: Date(),
+      drawingData: createMockDrawingData()
     ),
     date: Date()
   )
+  .frame(width: 300, height: 300)
+  // add border
+  .border(Color.black)
 }
 
 #Preview("With Text") {
@@ -97,6 +111,23 @@ struct MinimalCardStyleView: View {
     ),
     date: Date()
   )
+  .frame(width: 300, height: 300)
+  // add border
+  .border(Color.black)
+}
+
+#Preview("With Drawing & Text") {
+  MinimalCardStyleView(
+    entry: DayEntry(
+      body: "Today was amazing! I learned so much and felt really productive.",
+      createdAt: Date(),
+      drawingData: createMockDrawingData()
+    ),
+    date: Date()
+  )
+  .frame(width: 300, height: 300)
+  // add border
+  .border(Color.black)
 }
 
 #Preview("Empty") {
@@ -104,4 +135,7 @@ struct MinimalCardStyleView: View {
     entry: nil,
     date: Date()
   )
+  .frame(width: 300, height: 300)
+  // add border
+  .border(Color.black)
 }

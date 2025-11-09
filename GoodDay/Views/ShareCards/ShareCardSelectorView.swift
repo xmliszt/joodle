@@ -13,13 +13,13 @@ struct ShareCardSelectorView: View {
   let date: Date
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
-
+  
   @State private var selectedStyle: ShareCardStyle = .square
   @State private var isSharing = false
   @State private var shareItem: ShareItem?
   @State private var showingSaveAlert = false
   @State private var saveAlertMessage = ""
-
+  
   var body: some View {
     NavigationView {
       VStack(spacing: 0) {
@@ -33,7 +33,7 @@ struct ShareCardSelectorView: View {
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(maxWidth: .infinity)
         .frame(height: 600)
-
+        
         // Style indicator dots
         HStack(spacing: 12) {
           ForEach(ShareCardStyle.allCases) { style in
@@ -44,51 +44,24 @@ struct ShareCardSelectorView: View {
           }
         }
         .padding(.vertical, 24)
-
+        
         // Style info
         VStack(spacing: 8) {
           HStack(spacing: 8) {
-            Image(systemName: selectedStyle.icon)
-              .font(.system(size: 20))
-              .foregroundColor(.appPrimary)
-
             Text(selectedStyle.rawValue)
               .font(.customHeadline)
               .foregroundColor(.textColor)
           }
-
+          
           Text(selectedStyle.description)
             .font(.customSubheadline)
             .foregroundColor(.secondaryTextColor)
         }
         .animation(.springFkingSatifying, value: selectedStyle)
         .padding(.bottom, 32)
-
+        
         // Action buttons
         HStack(spacing: 12) {
-          // Save to Photos button
-          Button {
-            saveToPhotos()
-          } label: {
-            HStack(spacing: 8) {
-              if isSharing {
-                ProgressView()
-                  .progressViewStyle(.circular)
-                  .tint(.white)
-              } else {
-                Image(systemName: "square.and.arrow.down")
-                  .font(.system(size: 18, weight: .semibold))
-              }
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(.appPrimary)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-          }
-          .disabled(isSharing)
-
-          // Share button
           Button {
             shareCard()
           } label: {
@@ -100,7 +73,7 @@ struct ShareCardSelectorView: View {
               } else {
                 Image(systemName: "square.and.arrow.up")
                   .font(.system(size: 18, weight: .semibold))
-
+                
                 Text("Share")
                   .font(.system(size: 18, weight: .semibold))
               }
@@ -109,23 +82,22 @@ struct ShareCardSelectorView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .background(.appPrimary)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
           }
           .disabled(isSharing)
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 32)
+        .padding(.horizontal, UIDevice.screenCornerRadius / 2)
+        .padding(.bottom, UIDevice.screenCornerRadius)
       }
       .background(Color.backgroundColor)
-      .navigationTitle("Share Your Day")
+      .navigationTitle("Share your day")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           Button {
             dismiss()
           } label: {
-            Image(systemName: "xmark.circle.fill")
-              .font(.system(size: 24))
+            Image(systemName: "xmark")
               .foregroundColor(.secondaryTextColor.opacity(0.5))
           }
         }
@@ -140,25 +112,23 @@ struct ShareCardSelectorView: View {
       }
     }
   }
-
+  
   @ViewBuilder
   private func cardPreview(style: ShareCardStyle) -> some View {
     Group {
       switch style {
       case .square:
         MinimalCardStyleView(entry: entry, date: date)
-      case .rectangle:
-        ClassicCardStyleView(entry: entry, date: date)
+          .frame(width: style.previewSize.width, height: style.previewSize.height)
       }
     }
-    .frame(width: style.previewSize.width, height: style.previewSize.height)
     .clipShape(RoundedRectangle(cornerRadius: 20))
     .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 8)
   }
-
+  
   private func shareCard() {
     isSharing = true
-
+    
     Task { @MainActor in
       let image = ShareCardRenderer.shared.renderCard(
         style: selectedStyle,
@@ -166,18 +136,18 @@ struct ShareCardSelectorView: View {
         date: date,
         colorScheme: colorScheme
       )
-
+      
       isSharing = false
       if let image = image {
         shareItem = ShareItem(image: image)
       }
     }
   }
-
+  
   private func saveToPhotos() {
     // Check permission first
     let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-
+    
     switch status {
     case .notDetermined:
       // Request permission
@@ -200,10 +170,10 @@ struct ShareCardSelectorView: View {
       break
     }
   }
-
+  
   private func performSave() {
     isSharing = true
-
+    
     Task { @MainActor in
       let image = ShareCardRenderer.shared.renderCard(
         style: selectedStyle,
@@ -211,15 +181,15 @@ struct ShareCardSelectorView: View {
         date: date,
         colorScheme: colorScheme
       )
-
+      
       isSharing = false
-
+      
       guard let image = image else {
         saveAlertMessage = "Failed to generate image."
         showingSaveAlert = true
         return
       }
-
+      
       // Save to photo library
       PHPhotoLibrary.shared().performChanges {
         PHAssetChangeRequest.creationRequestForAsset(from: image)
@@ -246,7 +216,7 @@ struct ShareItem: Identifiable {
 // UIKit ShareSheet wrapper
 struct ShareSheet: UIViewControllerRepresentable {
   let items: [Any]
-
+  
   func makeUIViewController(context: Context) -> UIActivityViewController {
     let controller = UIActivityViewController(
       activityItems: items,
@@ -254,7 +224,7 @@ struct ShareSheet: UIViewControllerRepresentable {
     )
     return controller
   }
-
+  
   func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
@@ -262,7 +232,9 @@ struct ShareSheet: UIViewControllerRepresentable {
   ShareCardSelectorView(
     entry: DayEntry(
       body: "Today was an incredible day filled with new experiences and wonderful moments!",
-      createdAt: Date()
+      createdAt: Date(),
+      drawingData: createMockDrawingData()
+      
     ),
     date: Date()
   )

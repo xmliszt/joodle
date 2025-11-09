@@ -24,9 +24,14 @@ class ShareCardRenderer {
     controller.view.bounds = CGRect(origin: .zero, size: size)
     controller.view.backgroundColor = .clear
 
+    // Force layout pass
+    let targetSize = controller.sizeThatFits(in: size)
+    controller.view.bounds = CGRect(origin: .zero, size: targetSize)
+    controller.view.layoutIfNeeded()
+
     let renderer = UIGraphicsImageRenderer(size: size)
     return renderer.image { context in
-      controller.view.layer.render(in: context.cgContext)
+      controller.view.drawHierarchy(in: CGRect(origin: .zero, size: size), afterScreenUpdates: true)
     }
   }
 
@@ -45,6 +50,8 @@ class ShareCardRenderer {
   ) -> UIImage? {
     let cardView = createCardView(style: style, entry: entry, date: date)
       .environment(\.colorScheme, colorScheme)
+      .frame(width: style.cardSize.width, height: style.cardSize.height)
+      .fixedSize()
 
     return render(view: cardView, size: style.cardSize)
   }
@@ -59,8 +66,6 @@ class ShareCardRenderer {
     switch style {
     case .square:
       MinimalCardStyleView(entry: entry, date: date)
-    case .rectangle:
-      ClassicCardStyleView(entry: entry, date: date)
     }
   }
 }

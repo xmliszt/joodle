@@ -63,9 +63,14 @@ struct DrawingDisplayView: View {
           .scaleEffect(isVisible ? 1.0 : 0.9)
           .blur(radius: isVisible ? 0 : 5)
       } else {
-        // Render vector paths (original behavior)
+        // Render vector paths at actual display size for high quality
         Canvas { context, size in
-          // Render at original canvas size (300x300) without scaling the paths
+          // Calculate scale from canvas size (300x300) to display size
+          let canvasScale = (displaySize * scale) / CANVAS_SIZE
+
+          // Scale the context to render at display size
+          context.scaleBy(x: canvasScale, y: canvasScale)
+
           for pathWithMetadata in pathsWithMetadata {
             let path = pathWithMetadata.path
 
@@ -85,10 +90,7 @@ struct DrawingDisplayView: View {
             }
           }
         }
-        .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-        .scaleEffect((displaySize * scale) / CANVAS_SIZE, anchor: .center)
         .frame(width: displaySize * scale, height: displaySize * scale)
-        .clipped()
         .scaleEffect(isVisible ? 1.0 : 0.9)
         .blur(radius: isVisible ? 0 : 5)
       }

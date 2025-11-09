@@ -9,7 +9,6 @@ import Foundation
 
 enum ShareCardStyle: String, CaseIterable, Identifiable {
   case square = "Square"
-  case rectangle = "Rectangle"
 
   var id: String { rawValue }
 
@@ -17,8 +16,6 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     switch self {
     case .square:
       return "square"
-    case .rectangle:
-      return "rectangle"
     }
   }
 
@@ -26,8 +23,6 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     switch self {
     case .square:
       return "Perfect for Instagram posts"
-    case .rectangle:
-      return "Great for stories and feeds"
     }
   }
 
@@ -36,8 +31,6 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     switch self {
     case .square:
       return CGSize(width: 1080, height: 1080)
-    case .rectangle:
-      return CGSize(width: 1080, height: 1350) // 4:5 ratio
     }
   }
 
@@ -46,8 +39,6 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     switch self {
     case .square:
       return CGSize(width: 300, height: 300)
-    case .rectangle:
-      return CGSize(width: 300, height: 375) // 4:5 ratio
     }
   }
 }
