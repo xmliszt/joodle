@@ -303,7 +303,7 @@ struct YearGridWidget: Widget {
         }
     }
     .configurationDisplayName("Year Progress")
-    .description("View your year at a glance with progress.")
+    .description("View your year progress at a glance.")
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }

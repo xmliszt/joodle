@@ -283,7 +283,7 @@ struct RandomDoodleWidget: Widget {
       RandomDoodleWidgetView(entry: entry)
     }
     .configurationDisplayName("Random Doodle")
-    .description("Random doodle from past one year. Refresh daily.")
+    .description("Random doodle from past year.")
     .supportedFamilies([.systemSmall, .systemLarge, .accessoryCircular])
   }
 }
