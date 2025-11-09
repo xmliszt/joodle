@@ -10,10 +10,11 @@ import SwiftUI
 struct MinimalCardStyleView: View {
   let entry: DayEntry?
   let date: Date
+  let highResDrawing: UIImage?
 
   private var dateString: String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "MMMM d"
+    formatter.dateFormat = "MMMM d, yyyy"
     return formatter.string(from: date)
   }
 
@@ -37,11 +38,22 @@ struct MinimalCardStyleView: View {
           Spacer()
 
           // Main content - Drawing or Text
-          if let entry = entry, let drawingData = entry.drawingData, !drawingData.isEmpty {
-            // Show drawing
+          if let highResDrawing = highResDrawing {
+            // Show pre-rendered high-resolution drawing
+            Image(uiImage: highResDrawing)
+              .resizable()
+              .scaledToFit()
+              .frame(width: 600 * scale, height: 600 * scale)
+              .padding()
+              .background(
+                RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
+                  .foregroundStyle(.appSurface)
+              )
+          } else if let entry = entry, let drawingData = entry.drawingData, !drawingData.isEmpty {
+            // Fallback to live Canvas rendering (for previews)
             DrawingDisplayView(
               entry: entry,
-              displaySize: 600 * scale,
+              displaySize: 450 * scale,
               dotStyle: .present,
               accent: true,
               highlighted: false,
@@ -49,6 +61,11 @@ struct MinimalCardStyleView: View {
               useThumbnail: false
             )
             .frame(width: 600 * scale, height: 600 * scale)
+            .padding()
+            .background(
+              RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
+                .foregroundStyle(.appSurface)
+            )
           } else if let entry = entry, !entry.body.isEmpty {
             // Show text
             Text(entry.body)
@@ -70,7 +87,7 @@ struct MinimalCardStyleView: View {
         // Date footer
         VStack {
           Spacer()
-          HStack {
+          VStack {
             Text(dateString)
               .font(.custom(size: 50 * scale))
               .foregroundColor(.textColor)
@@ -79,7 +96,8 @@ struct MinimalCardStyleView: View {
               .font(.custom(size: 44 * scale))
               .foregroundColor(.secondaryTextColor)
           }
-          .padding(.bottom, 44 * scale)
+          .padding(.top, 30 * scale)
+          .padding(.bottom, 80 * scale)
           .padding(.horizontal, 80 * scale)
         }
       }
@@ -96,7 +114,8 @@ struct MinimalCardStyleView: View {
       createdAt: Date(),
       drawingData: createMockDrawingData()
     ),
-    date: Date()
+    date: Date(),
+    highResDrawing: nil
   )
   .frame(width: 300, height: 300)
   // add border
@@ -109,7 +128,8 @@ struct MinimalCardStyleView: View {
       body: "Today was amazing! I learned so much and felt really productive.",
       createdAt: Date()
     ),
-    date: Date()
+    date: Date(),
+    highResDrawing: nil
   )
   .frame(width: 300, height: 300)
   // add border
@@ -123,7 +143,8 @@ struct MinimalCardStyleView: View {
       createdAt: Date(),
       drawingData: createMockDrawingData()
     ),
-    date: Date()
+    date: Date(),
+    highResDrawing: nil
   )
   .frame(width: 300, height: 300)
   // add border
@@ -133,7 +154,8 @@ struct MinimalCardStyleView: View {
 #Preview("Empty") {
   MinimalCardStyleView(
     entry: nil,
-    date: Date()
+    date: Date(),
+    highResDrawing: nil
   )
   .frame(width: 300, height: 300)
   // add border

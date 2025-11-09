@@ -13,13 +13,17 @@ struct ShareCardSelectorView: View {
   let date: Date
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
-  
+
   @State private var selectedStyle: ShareCardStyle = .square
   @State private var isSharing = false
   @State private var shareItem: ShareItem?
   @State private var showingSaveAlert = false
   @State private var saveAlertMessage = ""
-  
+
+  // Cache rendered preview images for each style
+  @State private var renderedPreviews: [ShareCardStyle: UIImage] = [:]
+  @State private var renderingStyles: Set<ShareCardStyle> = []
+
   var body: some View {
     NavigationView {
       VStack(spacing: 0) {
@@ -33,7 +37,7 @@ struct ShareCardSelectorView: View {
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(maxWidth: .infinity)
         .frame(height: 600)
-        
+
         // Style indicator dots
         HStack(spacing: 12) {
           ForEach(ShareCardStyle.allCases) { style in
@@ -44,7 +48,7 @@ struct ShareCardSelectorView: View {
           }
         }
         .padding(.vertical, 24)
-        
+
         // Style info
         VStack(spacing: 8) {
           HStack(spacing: 8) {
@@ -52,14 +56,14 @@ struct ShareCardSelectorView: View {
               .font(.customHeadline)
               .foregroundColor(.textColor)
           }
-          
+
           Text(selectedStyle.description)
             .font(.customSubheadline)
             .foregroundColor(.secondaryTextColor)
         }
         .animation(.springFkingSatifying, value: selectedStyle)
         .padding(.bottom, 32)
-        
+
         // Action buttons
         HStack(spacing: 12) {
           Button {
@@ -73,7 +77,7 @@ struct ShareCardSelectorView: View {
               } else {
                 Image(systemName: "square.and.arrow.up")
                   .font(.system(size: 18, weight: .semibold))
-                
+
                 Text("Share")
                   .font(.system(size: 18, weight: .semibold))
               }
@@ -112,23 +116,88 @@ struct ShareCardSelectorView: View {
       }
     }
   }
-  
+
   @ViewBuilder
   private func cardPreview(style: ShareCardStyle) -> some View {
-    Group {
-      switch style {
-      case .square:
-        MinimalCardStyleView(entry: entry, date: date)
+    ZStack {
+      if let previewImage = renderedPreviews[style] {
+        // Show the actual rendered export image
+        Image(uiImage: previewImage)
+          .resizable()
+          .scaledToFit()
           .frame(width: style.previewSize.width, height: style.previewSize.height)
+      } else if renderingStyles.contains(style) {
+        // Show loader while rendering
+        ZStack {
+          Color.backgroundColor
+            .frame(width: style.previewSize.width, height: style.previewSize.height)
+
+          VStack(spacing: 12) {
+            ProgressView()
+              .progressViewStyle(.circular)
+              .scaleEffect(1.5)
+
+            Text("Rendering preview...")
+              .font(.customSubheadline)
+              .foregroundColor(.secondaryTextColor)
+          }
+        }
+      } else {
+        // Fallback to live preview
+        Group {
+          switch style {
+          case .square:
+            MinimalCardStyleView(entry: entry, date: date, highResDrawing: nil)
+              .frame(width: style.previewSize.width, height: style.previewSize.height)
+          }
+        }
       }
     }
-    .clipShape(RoundedRectangle(cornerRadius: 20))
-    .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 8)
+    .clipShape(RoundedRectangle(cornerRadius: 30))
+    .shadow(color: .black.opacity(0.1), radius: 50, x: 0, y: 8)
+    .onAppear {
+      // Render preview when it appears
+      renderPreview(for: style)
+    }
+    .onChange(of: colorScheme) { _, _ in
+      // Re-render if color scheme changes
+      renderPreview(for: style)
+    }
   }
-  
+
+  private func renderPreview(for style: ShareCardStyle) {
+    // Skip if already rendered or currently rendering
+    guard renderedPreviews[style] == nil, !renderingStyles.contains(style) else {
+      return
+    }
+
+    renderingStyles.insert(style)
+
+    Task { @MainActor in
+      let image = ShareCardRenderer.shared.renderCard(
+        style: style,
+        entry: entry,
+        date: date,
+        colorScheme: colorScheme
+      )
+
+      if let image = image {
+        renderedPreviews[style] = image
+      }
+      renderingStyles.remove(style)
+    }
+  }
+
   private func shareCard() {
+    // If we already have the rendered preview, use it directly
+    if let cachedImage = renderedPreviews[selectedStyle] {
+      shareItem = ShareItem(image: cachedImage)
+      return
+    }
+
+    // Otherwise render it now
     isSharing = true
-    
+
     Task { @MainActor in
       let image = ShareCardRenderer.shared.renderCard(
         style: selectedStyle,
@@ -136,72 +205,10 @@ struct ShareCardSelectorView: View {
         date: date,
         colorScheme: colorScheme
       )
-      
+
       isSharing = false
       if let image = image {
         shareItem = ShareItem(image: image)
-      }
-    }
-  }
-  
-  private func saveToPhotos() {
-    // Check permission first
-    let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-    
-    switch status {
-    case .notDetermined:
-      // Request permission
-      PHPhotoLibrary.requestAuthorization(for: .addOnly) { newStatus in
-        if newStatus == .authorized {
-          performSave()
-        } else {
-          DispatchQueue.main.async {
-            saveAlertMessage = "Photo library access denied. Please enable it in Settings."
-            showingSaveAlert = true
-          }
-        }
-      }
-    case .authorized, .limited:
-      performSave()
-    case .denied, .restricted:
-      saveAlertMessage = "Photo library access denied. Please enable it in Settings."
-      showingSaveAlert = true
-    @unknown default:
-      break
-    }
-  }
-  
-  private func performSave() {
-    isSharing = true
-    
-    Task { @MainActor in
-      let image = ShareCardRenderer.shared.renderCard(
-        style: selectedStyle,
-        entry: entry,
-        date: date,
-        colorScheme: colorScheme
-      )
-      
-      isSharing = false
-      
-      guard let image = image else {
-        saveAlertMessage = "Failed to generate image."
-        showingSaveAlert = true
-        return
-      }
-      
-      // Save to photo library
-      PHPhotoLibrary.shared().performChanges {
-        PHAssetChangeRequest.creationRequestForAsset(from: image)
-      } completionHandler: { success, error in
-        DispatchQueue.main.async {
-          if success {
-            saveAlertMessage = "Saved to Photos successfully!"
-          } else {
-            saveAlertMessage = "Failed to save to Photos: \(error?.localizedDescription ?? "Unknown error")"
-          }
-          showingSaveAlert = true
-        }
       }
     }
   }
@@ -216,7 +223,7 @@ struct ShareItem: Identifiable {
 // UIKit ShareSheet wrapper
 struct ShareSheet: UIViewControllerRepresentable {
   let items: [Any]
-  
+
   func makeUIViewController(context: Context) -> UIActivityViewController {
     let controller = UIActivityViewController(
       activityItems: items,
@@ -224,7 +231,7 @@ struct ShareSheet: UIViewControllerRepresentable {
     )
     return controller
   }
-  
+
   func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
@@ -234,7 +241,7 @@ struct ShareSheet: UIViewControllerRepresentable {
       body: "Today was an incredible day filled with new experiences and wonderful moments!",
       createdAt: Date(),
       drawingData: createMockDrawingData()
-      
+
     ),
     date: Date()
   )
