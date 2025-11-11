@@ -4,7 +4,7 @@
 <dict>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Mansalva.ttf</string>
+		<string>StayWriter.otf</string>
 	</array>
 	<key>CFBundleURLTypes</key>
 	<array>

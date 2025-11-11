@@ -70,6 +70,7 @@ struct EntryEditingView: View {
             ZStack(alignment: .topLeading) {
               TextEditor(text: $textContent)
                 .font(.customBody)
+                .lineSpacing(6)
                 .foregroundColor(.textColor)
                 .background(.backgroundColor)
                 .frame(minHeight: 40, maxHeight: 85)

@@ -29,8 +29,6 @@ class ShareCardRenderer {
     // SwiftUI will then scale it down to fit the container
     let renderSize = targetPixelSize
 
-    print("🎨 Rendering doodle at high resolution: \(renderSize.width)x\(renderSize.height) pixels @ 1x scale")
-
     // Create a high-res drawing view
     let drawingView = DrawingDisplayView(
       entry: entry,
@@ -70,7 +68,6 @@ class ShareCardRenderer {
     window.isHidden = true
     window.rootViewController = nil
 
-    print("🎨 Generated doodle image: \(image.size.width)x\(image.size.height) @ \(image.scale)x - will be scaled down by SwiftUI")
     return image
   }
 
@@ -119,7 +116,6 @@ class ShareCardRenderer {
       // SwiftUI will scale it down to fit the 600*scale container
       let highResPixelSize = CGSize(width: 2700, height: 2700)  // High resolution pixels
       highResDrawing = renderDrawingAtHighResolution(entry: entry, targetPixelSize: highResPixelSize)
-      print("🎨 High-res drawing generated: \(highResDrawing != nil)")
     }
 
     let cardView = createCardView(
