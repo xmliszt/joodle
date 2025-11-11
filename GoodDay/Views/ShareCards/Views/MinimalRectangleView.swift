@@ -80,7 +80,7 @@ struct MinimalRectangleView: View {
             VStack(spacing: 0) {
               Text(entry?.body ?? "")
                 .font(.custom(size: 52 * scale))
-                .lineSpacing(6 * scale)
+                .lineSpacing(4 * scale)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 

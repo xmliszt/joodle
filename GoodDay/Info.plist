@@ -4,7 +4,7 @@
 <dict>
 	<key>UIAppFonts</key>
 	<array>
-		<string>StayWriter.otf</string>
+		<string>Quicksand-VariableFont_wght.ttf</string>
 	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
