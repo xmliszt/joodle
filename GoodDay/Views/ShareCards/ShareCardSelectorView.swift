@@ -13,16 +13,16 @@ struct ShareCardSelectorView: View {
   let date: Date
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
-  
-  @State private var selectedStyle: ShareCardStyle = .doodleOnlySquare
+
+  @State private var selectedStyle: ShareCardStyle = .minimalSquare
   @State private var isSharing = false
   @State private var shareItem: ShareItem?
   @State private var previewColorScheme: ColorScheme = .light
-  
+
   // Cache rendered preview images for each style and color scheme
   @State private var renderedPreviews: [ShareCardStyle: [ColorScheme: UIImage]] = [:]
   @State private var renderingStyles: Set<ShareCardStyle> = []
-  
+
   var body: some View {
     NavigationView {
       VStack(spacing: 0) {
@@ -36,36 +36,36 @@ struct ShareCardSelectorView: View {
           }
           .tabViewStyle(.page(indexDisplayMode: .never))
           .frame(maxWidth: .infinity, minHeight: 400)
-          
-          // Style indicator dots
-          HStack(spacing: 12) {
-            ForEach(ShareCardStyle.allCases) { style in
-              Circle()
-                .fill(selectedStyle == style ? Color.appPrimary : Color.secondaryTextColor.opacity(0.3))
-                .frame(width: 8, height: 8)
-                .animation(.springFkingSatifying, value: selectedStyle)
+
+          VStack(spacing: 24) {
+            // Style info
+            VStack(spacing: 8) {
+              HStack(spacing: 8) {
+                Text(selectedStyle.rawValue)
+                  .font(.customHeadline)
+                  .foregroundColor(.textColor)
+              }
+
+              Text(selectedStyle.description)
+                .font(.customSubheadline)
+                .foregroundColor(.secondaryTextColor)
+            }
+            .animation(.springFkingSatifying, value: selectedStyle)
+
+            // Style indicator dots
+            HStack(spacing: 12) {
+              ForEach(ShareCardStyle.allCases) { style in
+                Circle()
+                  .fill(selectedStyle == style ? Color.appPrimary : Color.secondaryTextColor.opacity(0.3))
+                  .frame(width: 8, height: 8)
+                  .animation(.springFkingSatifying, value: selectedStyle)
+              }
             }
           }
-          .padding(.top, 24)
-          .padding(.bottom, 16)
-          
-//          // Style info
-//          VStack(spacing: 8) {
-//            HStack(spacing: 8) {
-//              Text(selectedStyle.rawValue)
-//                .font(.customHeadline)
-//                .foregroundColor(.textColor)
-//            }
-//            
-//            Text(selectedStyle.description)
-//              .font(.customSubheadline)
-//              .foregroundColor(.secondaryTextColor)
-//          }
-//          .animation(.springFkingSatifying, value: selectedStyle)
         }
-        
+
         Spacer().frame(maxHeight: .infinity)
-        
+
         // Action buttons
         if #available(iOS 26.0, *) {
           GlassEffectContainer(spacing: 12) {
@@ -82,14 +82,14 @@ struct ShareCardSelectorView: View {
                 .foregroundColor(.textColor)
               }
               .circularGlassButton(tintColor: .appPrimary)
-              
+
               Button {
                 shareCard()
               } label: {
                 HStack(spacing: 12) {
                   Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 18, weight: .semibold))
-                  
+
                   Text("Share")
                     .font(.system(size: 18, weight:.semibold))
                 }
@@ -117,14 +117,14 @@ struct ShareCardSelectorView: View {
               }
               .foregroundColor(.textColor)
             }
-            
+
             Button {
               shareCard()
             } label: {
               HStack(spacing: 12) {
                 Image(systemName: "square.and.arrow.up")
                   .font(.system(size: 18, weight: .semibold))
-                
+
                 Text("Share")
                   .font(.system(size: 18, weight:.semibold))
               }
@@ -157,7 +157,7 @@ struct ShareCardSelectorView: View {
       }
     }
   }
-  
+
   @ViewBuilder
   private func cardPreview(style: ShareCardStyle) -> some View {
     ZStack {
@@ -172,27 +172,13 @@ struct ShareCardSelectorView: View {
         ZStack {
           Color.backgroundColor
             .frame(width: style.previewSize.width, height: style.previewSize.height)
-          
+
           Text("Rendering preview...")
             .font(.customSubheadline)
             .foregroundColor(.secondaryTextColor)
         }
-      } else {
-        // Fallback to live preview
-        Group {
-          switch style {
-          case .doodleOnlySquare:
-            MinimalCardStyleView(entry: entry, date: date, highResDrawing: nil)
-              .frame(width: style.previewSize.width, height: style.previewSize.height)
-          case .square2:
-            MinimalCardStyleView(entry: entry, date: date, highResDrawing: nil)
-              .frame(width: style.previewSize.width, height: style.previewSize.height)
-          }
-        }
       }
     }
-    .clipShape(RoundedRectangle(cornerRadius: 30))
-    .shadow(color: .black.opacity(0.1), radius: 25, x: 0, y: 8)
     .onAppear {
       // Render preview when it appears
       renderPreview(for: style)
@@ -202,15 +188,15 @@ struct ShareCardSelectorView: View {
       renderPreview(for: style)
     }
   }
-  
+
   private func renderPreview(for style: ShareCardStyle) {
     // Skip if already rendered or currently rendering
     guard renderedPreviews[style]?[previewColorScheme] == nil, !renderingStyles.contains(style) else {
       return
     }
-    
+
     renderingStyles.insert(style)
-    
+
     Task { @MainActor in
       let image = ShareCardRenderer.shared.renderCard(
         style: style,
@@ -218,7 +204,7 @@ struct ShareCardSelectorView: View {
         date: date,
         colorScheme: previewColorScheme
       )
-      
+
       if let image = image {
         if renderedPreviews[style] == nil {
           renderedPreviews[style] = [:]
@@ -228,17 +214,17 @@ struct ShareCardSelectorView: View {
       renderingStyles.remove(style)
     }
   }
-  
+
   private func shareCard() {
     // If we already have the rendered preview, use it directly
     if let cachedImage = renderedPreviews[selectedStyle]?[previewColorScheme] {
       shareItem = ShareItem(image: cachedImage)
       return
     }
-    
+
     // Otherwise render it now
     isSharing = true
-    
+
     Task { @MainActor in
       let image = ShareCardRenderer.shared.renderCard(
         style: selectedStyle,
@@ -246,7 +232,7 @@ struct ShareCardSelectorView: View {
         date: date,
         colorScheme: previewColorScheme
       )
-      
+
       isSharing = false
       if let image = image {
         shareItem = ShareItem(image: image)
@@ -264,15 +250,34 @@ struct ShareItem: Identifiable {
 // UIKit ShareSheet wrapper
 struct ShareSheet: UIViewControllerRepresentable {
   let items: [Any]
-  
+
   func makeUIViewController(context: Context) -> UIActivityViewController {
+    // Convert UIImages to PNG data to preserve transparency
+    let activityItems = items.map { item -> Any in
+      if let image = item as? UIImage, let pngData = image.pngData() {
+        // Create a temporary file URL for the PNG
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileName = "GoodDay-\(UUID().uuidString).png"
+        let fileURL = tempDir.appendingPathComponent(fileName)
+
+        do {
+          try pngData.write(to: fileURL)
+          return fileURL
+        } catch {
+          print("Failed to write PNG data: \(error)")
+          return image
+        }
+      }
+      return item
+    }
+
     let controller = UIActivityViewController(
-      activityItems: items,
+      activityItems: activityItems,
       applicationActivities: nil
     )
     return controller
   }
-  
+
   func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 

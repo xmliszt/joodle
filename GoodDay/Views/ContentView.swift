@@ -319,15 +319,15 @@ struct ContentView: View {
     .onAppear {
       // Sync widget data when app launches
       WidgetHelper.shared.updateWidgetData(with: entries)
-      
-      
-      // Debug: print font family
-      for family: String in UIFont.familyNames {
-          print(family)
-          for names: String in UIFont.fontNames(forFamilyName: family) {
-              print("== \(names)")
-          }
-      }
+      //
+      //
+      //      // Debug: print font family
+      //      for family: String in UIFont.familyNames {
+      //          print(family)
+      //          for names: String in UIFont.fontNames(forFamilyName: family) {
+      //              print("== \(names)")
+      //          }
+      //      }
     }
     .onChange(of: entries.count) { _, _ in
       // Sync widget data when entries are added or removed

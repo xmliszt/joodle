@@ -8,30 +8,6 @@
 import SwiftUI
 import WidgetKit
 
-let promptsWhenNoDoodle = [
-  "Blank page who??",
-  "Cook something wild 🍳",
-  "Your brain called 🧠",
-  "Draw... anything? 👀",
-  "Feeling artsy or what?",
-  "Prove you exist ✍️",
-  "Create. Or don't. 😏",
-  "Make a mess 🎨",
-  "Surprise yourself 💥",
-  "Draw your nonsense 💫",
-  "Anything fun today?",
-  "Unleash the scribble 🌀",
-  "Start the chaos 😈",
-  "No doodles? Tragic.",
-  "Draw before thinking 🤪",
-  "One line = therapy",
-  "Your canvas is lonely 🥺",
-  "Scribble responsibly 🚫",
-  "Manifest vibes only 🌈",
-  "Brain dump zone 💭",
-  "Go feral with it 🐾",
-]
-
 struct RandomDoodleProvider: TimelineProvider {
   func placeholder(in context: Context) -> RandomDoodleEntry {
     RandomDoodleEntry(date: Date(), doodle: nil, prompt: getRandomPrompt())
@@ -99,7 +75,7 @@ struct RandomDoodleProvider: TimelineProvider {
   }
 
   private func getRandomPrompt() -> String {
-    return promptsWhenNoDoodle.randomElement()!
+    return EMPTY_PLACEHOLDERS.randomElement()!
   }
 }
 

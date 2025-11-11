@@ -1,33 +1,21 @@
-//
-//  MinimalCardStyleView.swift
-//  GoodDay
-//
-//  Created by Li Yuxuan on 10/8/25.
-//
-
 import SwiftUI
 
-struct MinimalCardStyleView: View {
+struct MinimalSquareView: View {
+  private let cardStyle: ShareCardStyle = .minimalSquare
   let entry: DayEntry?
   let date: Date
   let highResDrawing: UIImage?
 
   private var dateString: String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "MMMM d, yyyy"
-    return formatter.string(from: date)
-  }
-
-  private var weekdayString: String {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "EEEE"
+    formatter.dateFormat = "EEE, yyyy MMM dd"
     return formatter.string(from: date)
   }
 
   var body: some View {
     GeometryReader { geometry in
       let size = geometry.size
-      let scale = size.width / 1080.0
+      let scale = size.width / cardStyle.cardSize.width
 
       ZStack {
         // Background
@@ -50,15 +38,16 @@ struct MinimalCardStyleView: View {
                 RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
                   .foregroundStyle(.appSurface)
               )
+              .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
           } else if let entry = entry, let drawingData = entry.drawingData, !drawingData.isEmpty {
             // Fallback to live Canvas rendering (for previews)
             DrawingDisplayView(
               entry: entry,
-              displaySize: 450 * scale,
+              displaySize: 450,
               dotStyle: .present,
               accent: true,
               highlighted: false,
-              scale: 1.0,
+              scale: scale,
               useThumbnail: false
             )
             .frame(width: 600 * scale, height: 600 * scale)
@@ -67,49 +56,50 @@ struct MinimalCardStyleView: View {
               RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
                 .foregroundStyle(.appSurface)
             )
-          } else if let entry = entry, !entry.body.isEmpty {
-            // Show text
-            Text(entry.body)
-              .font(.custom(size: 48 * scale))
-              .foregroundColor(.textColor)
-              .lineLimit(10)
-              .multilineTextAlignment(.center)
-              .padding(.horizontal, 80 * scale)
+            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
           } else {
             // Empty state
             Image(systemName: "scribble")
-              .font(.custom(size: 120 * scale))
+              .font(.custom(size: 100 * scale))
+              .frame(width: 600 * scale, height: 600 * scale)
               .foregroundColor(.textColor.opacity(0.3))
+              .padding()
+              .background(
+                RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
+                  .foregroundStyle(.appSurface)
+              )
+              .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
           }
 
+          Spacer()
           Spacer()
 
         }
         // Date footer
-        VStack {
+        VStack(){
           Spacer()
-          VStack {
-            Text(dateString)
-              .font(.custom(size: 64 * scale))
-              .foregroundColor(.textColor)
-            Spacer()
-            Text(weekdayString)
+          VStack(spacing: 14 * scale) {
+            Text(entry?.body ?? "")
               .font(.custom(size: 52 * scale))
-              .foregroundColor(.secondaryTextColor)
+              .lineLimit(1)
+              .padding(.horizontal, 140 * scale)
+            Text(dateString)
+              .font(.custom(size: 48 * scale))
+              .foregroundColor(.appTextSecondary)
           }
-          .padding(.top, 30 * scale)
-          .padding(.bottom, 80 * scale)
-          .padding(.horizontal, 80 * scale)
         }
+        .padding(.top, 30 * scale)
+        .padding(.bottom, 100 * scale)
+        .padding(.horizontal, 80 * scale)
       }
       .frame(width: size.width, height: size.height)
     }
-    .aspectRatio(1.0, contentMode: .fit)
+    .aspectRatio(cardStyle.cardSize.width / cardStyle.cardSize.height, contentMode: .fit)
   }
 }
 
 #Preview("With Drawing") {
-  MinimalCardStyleView(
+  MinimalSquareView(
     entry: DayEntry(
       body: "",
       createdAt: Date(),
@@ -124,7 +114,7 @@ struct MinimalCardStyleView: View {
 }
 
 #Preview("With Text") {
-  MinimalCardStyleView(
+  MinimalSquareView(
     entry: DayEntry(
       body: "Today was amazing! I learned so much and felt really productive.",
       createdAt: Date()
@@ -138,7 +128,7 @@ struct MinimalCardStyleView: View {
 }
 
 #Preview("With Drawing & Text") {
-  MinimalCardStyleView(
+  MinimalSquareView(
     entry: DayEntry(
       body: "Today was amazing! I learned so much and felt really productive.",
       createdAt: Date(),
@@ -153,7 +143,7 @@ struct MinimalCardStyleView: View {
 }
 
 #Preview("Empty") {
-  MinimalCardStyleView(
+  MinimalSquareView(
     entry: nil,
     date: Date(),
     highResDrawing: nil

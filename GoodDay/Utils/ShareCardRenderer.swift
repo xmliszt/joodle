@@ -89,6 +89,7 @@ class ShareCardRenderer {
     // Use 1x scale for standard output
     let format = UIGraphicsImageRendererFormat()
     format.scale = 1.0
+    format.opaque = false  // Transparent background
 
     let renderer = UIGraphicsImageRenderer(size: size, format: format)
     return renderer.image { context in
@@ -118,17 +119,32 @@ class ShareCardRenderer {
       highResDrawing = renderDrawingAtHighResolution(entry: entry, targetPixelSize: highResPixelSize)
     }
 
-    let cardView = createCardView(
-      style: style,
-      entry: entry,
-      date: date,
-      highResDrawing: highResDrawing
+
+    // Add padding to capture rounded corners and shadow
+    let padding: CGFloat = 60
+    let paddedSize = CGSize(
+      width: style.cardSize.width + padding * 2,
+      height: style.cardSize.height + padding * 2
     )
+
+    let cardView = ZStack(alignment: .center) {
+      Color.clear  // Transparent background
+
+      createCardView(
+        style: style,
+        entry: entry,
+        date: date,
+        highResDrawing: highResDrawing
+      )
+      .frame(width: style.cardSize.width, height: style.cardSize.height)
+      .clipShape(RoundedRectangle(cornerRadius: 80))
+      .shadow(color: .black.opacity(0.07), radius: 10, x: 0, y: 8)
+    }
+    .frame(width: paddedSize.width, height: paddedSize.height, alignment: .center)
     .environment(\.colorScheme, colorScheme)
-    .frame(width: style.cardSize.width, height: style.cardSize.height)
     .fixedSize()
 
-    return render(view: cardView, size: style.cardSize)
+    return render(view: cardView, size: paddedSize)
   }
 
   /// Creates the appropriate card view based on style
@@ -140,10 +156,10 @@ class ShareCardRenderer {
     highResDrawing: UIImage?
   ) -> some View {
     switch style {
-    case .doodleOnlySquare:
-      MinimalCardStyleView(entry: entry, date: date, highResDrawing: highResDrawing)
-    case .square2:
-      MinimalCardStyleView(entry: entry, date: date, highResDrawing: highResDrawing)
+    case .minimalSquare:
+      MinimalSquareView(entry: entry, date: date, highResDrawing: highResDrawing)
+    case .minimalRectangle:
+      MinimalRectangleView(entry: entry, date: date, highResDrawing: highResDrawing)
     }
   }
 }
