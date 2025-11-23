@@ -73,7 +73,7 @@ struct EntryEditingView: View {
                 .lineSpacing(4)
                 .foregroundColor(.textColor)
                 .background(.backgroundColor)
-                .frame(minHeight: 40, maxHeight: 85)
+                .frame(minHeight: 40, maxHeight: 175)
                 .disableAutocorrection(false)
                 .autocapitalization(.sentences)
                 .focused($isTextFieldFocused)
@@ -191,7 +191,6 @@ struct EntryEditingView: View {
                 .background(.appSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 20))
               }
-              .padding(.top, -20)
             }
           }
           .frame(maxWidth: .infinity, alignment: .leading)
