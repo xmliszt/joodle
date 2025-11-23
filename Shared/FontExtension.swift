@@ -1,7 +1,7 @@
 import SwiftUI
 
 extension Font {
-    private static let customFontName = "Quicksand-Regular"
+    private static let customFontName = "Mansalva"
 
     static func custom(size: CGFloat) -> Font {
         return .custom(customFontName, size: size)

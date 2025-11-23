@@ -71,6 +71,7 @@
 		FABB3D932EBF4E7900C8CCBA /* Exceptions for "Fonts" folder in "WidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"Mansalva-Regular.ttf",
 				"Quicksand-VariableFont_wght.ttf",
 				StayWriter.otf,
 			);
