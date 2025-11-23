@@ -14,7 +14,7 @@ struct ShareCardSelectorView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
 
-  @State private var selectedStyle: ShareCardStyle = .minimalSquare
+  @State private var selectedStyle: ShareCardStyle = .minimal
   @State private var isSharing = false
   @State private var shareItem: ShareItem?
   @State private var previewColorScheme: ColorScheme = .light
@@ -42,12 +42,12 @@ struct ShareCardSelectorView: View {
             VStack(spacing: 8) {
               HStack(spacing: 8) {
                 Text(selectedStyle.rawValue)
-                  .font(.customHeadline)
+                  .font(.mansalva(size: 17))
                   .foregroundColor(.textColor)
               }
 
               Text(selectedStyle.description)
-                .font(.customSubheadline)
+                .font(.mansalva(size: 15))
                 .foregroundColor(.secondaryTextColor)
             }
             .animation(.springFkingSatifying, value: selectedStyle)
@@ -174,7 +174,7 @@ struct ShareCardSelectorView: View {
             .frame(width: style.previewSize.width, height: style.previewSize.height)
 
           Text("Rendering preview...")
-            .font(.customSubheadline)
+            .font(.mansalva(size: 15))
             .foregroundColor(.secondaryTextColor)
         }
       }

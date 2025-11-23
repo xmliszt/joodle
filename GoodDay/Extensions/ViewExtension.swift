@@ -15,7 +15,7 @@ struct CircularGlassButtonStyle: ViewModifier {
     if #available(iOS 26, *) {
       // iOS 26+: Use native glass background effect with circular shape
       content
-        .font(.custom(size: 18))
+        .font(.mansalva(size: 18))
         .if(tintColor != nil) { view in
           view.foregroundColor(tintColor)
         }
@@ -26,7 +26,7 @@ struct CircularGlassButtonStyle: ViewModifier {
     } else {
       // Pre-iOS 26: Use custom circular background style
       content
-        .font(.custom(size: 18))
+        .font(.mansalva(size: 18))
         .if(tintColor != nil) { view in
           view.foregroundColor(tintColor)
         }

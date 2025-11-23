@@ -4,7 +4,6 @@
 <dict>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Quicksand-VariableFont_wght.ttf</string>
 		<string>Mansalva-Regular.ttf</string>
 	</array>
 	<key>CFBundleURLTypes</key>

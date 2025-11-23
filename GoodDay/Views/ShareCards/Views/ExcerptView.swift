@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct MinimalSquareView: View {
-  private let cardStyle: ShareCardStyle = .minimalSquare
+struct ExcerptView: View {
+  private let cardStyle: ShareCardStyle = .excerpt
   let entry: DayEntry?
   let date: Date
   let highResDrawing: UIImage?
@@ -60,7 +60,7 @@ struct MinimalSquareView: View {
           } else {
             // Empty state
             Image(systemName: "scribble")
-              .font(.custom(size: 100 * scale))
+              .font(.mansalva(size: 100 * scale))
               .frame(width: 600 * scale, height: 600 * scale)
               .foregroundColor(.textColor.opacity(0.3))
               .padding()
@@ -80,11 +80,11 @@ struct MinimalSquareView: View {
           Spacer()
           VStack(spacing: 14 * scale) {
             Text(entry?.body ?? "")
-              .font(.custom(size: 52 * scale))
+              .font(.mansalva(size: 52 * scale))
               .lineLimit(1)
               .padding(.horizontal, 140 * scale)
             Text(dateString)
-              .font(.custom(size: 48 * scale))
+              .font(.mansalva(size: 48 * scale))
               .foregroundColor(.appTextSecondary)
           }
         }
@@ -99,13 +99,13 @@ struct MinimalSquareView: View {
 }
 
 #Preview("With Drawing") {
-  MinimalSquareView(
+  ExcerptView(
     entry: DayEntry(
       body: "",
       createdAt: Date(),
       drawingData: createMockDrawingData()
     ),
-    date: Date(),
+    date: Date(), 
     highResDrawing: nil
   )
   .frame(width: 300, height: 300)
@@ -114,7 +114,7 @@ struct MinimalSquareView: View {
 }
 
 #Preview("With Text") {
-  MinimalSquareView(
+  ExcerptView(
     entry: DayEntry(
       body: "Today was amazing! I learned so much and felt really productive.",
       createdAt: Date()
@@ -128,7 +128,7 @@ struct MinimalSquareView: View {
 }
 
 #Preview("With Drawing & Text") {
-  MinimalSquareView(
+  ExcerptView(
     entry: DayEntry(
       body: "Today was amazing! I learned so much and felt really productive.",
       createdAt: Date(),
@@ -143,7 +143,7 @@ struct MinimalSquareView: View {
 }
 
 #Preview("Empty") {
-  MinimalSquareView(
+  ExcerptView(
     entry: nil,
     date: Date(),
     highResDrawing: nil

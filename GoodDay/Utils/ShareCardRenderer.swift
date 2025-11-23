@@ -156,10 +156,12 @@ class ShareCardRenderer {
     highResDrawing: UIImage?
   ) -> some View {
     switch style {
-    case .minimalSquare:
-      MinimalSquareView(entry: entry, date: date, highResDrawing: highResDrawing)
-    case .minimalRectangle:
-      MinimalRectangleView(entry: entry, date: date, highResDrawing: highResDrawing)
+    case .minimal:
+      MinimalView(entry: entry, date: date, highResDrawing: highResDrawing)
+    case .excerpt:
+      ExcerptView(entry: entry, date: date, highResDrawing: highResDrawing)
+    case .detailed:
+      DetailedView(entry: entry, date: date, highResDrawing: highResDrawing)
     }
   }
 }

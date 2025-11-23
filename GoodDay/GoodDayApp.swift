@@ -51,7 +51,7 @@ struct GoodDayApp: App {
         ContentView(selectedDateFromWidget: $selectedDateFromWidget)
           .environment(UserPreferences.shared)
           .preferredColorScheme(colorScheme)
-          .font(.customBody)
+          .font(.mansalva(size: 17))
           .onAppear {
             setupColorSchemeObserver()
           }

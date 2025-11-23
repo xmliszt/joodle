@@ -5,7 +5,6 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>Mansalva-Regular.ttf</string>
-		<string>Quicksand-VariableFont_wght.ttf</string>
 	</array>
 	<key>NSExtension</key>
 	<dict>

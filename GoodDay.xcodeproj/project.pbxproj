@@ -72,8 +72,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"Mansalva-Regular.ttf",
-				"Quicksand-VariableFont_wght.ttf",
-				StayWriter.otf,
 			);
 			target = FA85D44C2EB7AECA007D82EE /* WidgetsExtension */;
 		};

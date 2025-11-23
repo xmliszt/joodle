@@ -69,7 +69,7 @@ struct EntryEditingView: View {
             // Text content
             ZStack(alignment: .topLeading) {
               TextEditor(text: $textContent)
-                .font(.customBody)
+                .font(.body)
                 .lineSpacing(4)
                 .foregroundColor(.textColor)
                 .background(.backgroundColor)
@@ -127,7 +127,7 @@ struct EntryEditingView: View {
                 .scrollDismissesKeyboard(.never)
               if textContent.isEmpty {
                 Text("What's up...")
-                  .font(.customBody)
+                  .font(.mansalva(size: 17))
                   .foregroundColor(.textColor.opacity(0.5))
                   .allowsHitTesting(false)  // Important: prevents blocking TextEditor
               }
@@ -248,17 +248,17 @@ struct EntryEditingView: View {
           VStack(alignment: .leading) {
             if let date {
               Text(date, style: .date)
-                .font(.customHeadline)
+                .font(.mansalva(size: 17))
                 .foregroundColor(.textColor)
             }
             HStack(spacing: 8) {
               Text(weekdayLabel)
-                .font(.customSubheadline)
+                .font(.mansalva(size: 15))
                 .foregroundColor(isToday ? .appPrimary : .secondaryTextColor)
 
               if let countdown = countdownText {
                 Text(countdown)
-                  .font(.customSubheadline)
+                  .font(.mansalva(size: 15))
                   .foregroundColor(.appPrimary.opacity(0.7))
               }
             }

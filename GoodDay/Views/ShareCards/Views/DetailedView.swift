@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct MinimalRectangleView: View {
-  private let cardStyle: ShareCardStyle = .minimalRectangle
+struct DetailedView: View {
+  private let cardStyle: ShareCardStyle = .detailed
   let entry: DayEntry?
   let date: Date
   let highResDrawing: UIImage?
@@ -59,7 +59,7 @@ struct MinimalRectangleView: View {
             } else {
               // Empty state
               Image(systemName: "scribble")
-                .font(.custom(size: 60 * scale))
+                .font(.mansalva(size: 60 * scale))
                 .frame(width: 200 * scale, height: 200 * scale)
                 .foregroundColor(.textColor.opacity(0.3))
                 .padding(32 * scale)
@@ -79,14 +79,14 @@ struct MinimalRectangleView: View {
           VStack(spacing: 24 * scale) {
             VStack(spacing: 0) {
               Text(entry?.body ?? "")
-                .font(.custom(size: 52 * scale))
+                .font(.system(size: 40 * scale))
                 .lineSpacing(4 * scale)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
             VStack(spacing: 0) {
               Text(dateString)
-                .font(.custom(size: 48 * scale))
+                .font(.mansalva(size: 48 * scale))
                 .foregroundColor(.appTextSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
@@ -104,7 +104,7 @@ struct MinimalRectangleView: View {
 }
 
 #Preview("With Drawing") {
-  MinimalRectangleView(
+  DetailedView(
     entry: DayEntry(
       body: "",
       createdAt: Date(),
@@ -119,7 +119,7 @@ struct MinimalRectangleView: View {
 }
 
 #Preview("With Text") {
-  MinimalRectangleView(
+  DetailedView(
     entry: DayEntry(
       body: "Today was amazing! I learned so much and felt really productive.",
       createdAt: Date()
@@ -133,7 +133,7 @@ struct MinimalRectangleView: View {
 }
 
 #Preview("With Drawing & Text") {
-  MinimalRectangleView(
+  DetailedView(
     entry: DayEntry(
       body: "Today was amazing! I learned so much and felt really productive.",
       createdAt: Date(),
@@ -148,7 +148,7 @@ struct MinimalRectangleView: View {
 }
 
 #Preview("Empty") {
-  MinimalRectangleView(
+  DetailedView(
     entry: nil,
     date: Date(),
     highResDrawing: nil
