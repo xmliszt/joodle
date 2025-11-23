@@ -15,13 +15,15 @@ struct WidgetEntryData: Codable {
   let hasText: Bool
   let hasDrawing: Bool
   let drawingData: Data?
+  let thumbnail: Data?
   let body: String?
 
-  init(date: Date, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil, body: String? = nil) {
+  init(date: Date, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil, thumbnail: Data? = nil, body: String? = nil) {
     self.date = date
     self.hasText = hasText
     self.hasDrawing = hasDrawing
     self.drawingData = drawingData
+    self.thumbnail = thumbnail
     self.body = body
   }
 }
@@ -63,6 +65,7 @@ class WidgetHelper {
         hasText: !entry.body.isEmpty,
         hasDrawing: entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true),
         drawingData: entry.drawingData,
+        thumbnail: entry.drawingThumbnail20,
         body: entry.body.isEmpty ? nil : entry.body
       )
     }
