@@ -203,6 +203,12 @@ struct EntryEditingView: View {
       }
       .padding(20)
       .background(.backgroundColor)
+      .contentShape(Rectangle()) // Ensure the background is tappable
+      .onTapGesture {
+        if isTextFieldFocused {
+          confirmAndDismiss()
+        }
+      }
       .onAppear {
         // Load entry first
         guard let date else { return }
@@ -266,11 +272,7 @@ struct EntryEditingView: View {
                 // Confirm button
                 if isTextFieldFocused {
                   Button {
-                    withAnimation(.easeIn(duration: 0.25)) {
-                      isTextFieldFocused = false
-                      guard let date else { return }
-                      saveNote(text: textContent, for: date)
-                    }
+                    confirmAndDismiss()
                   } label: {
                     Image(systemName: "checkmark")
                   }
@@ -324,11 +326,7 @@ struct EntryEditingView: View {
               // Confirm button
               if isTextFieldFocused {
                 Button {
-                  withAnimation(.easeIn(duration: 0.25)) {
-                    isTextFieldFocused = false
-                    guard let date else { return }
-                    saveNote(text: textContent, for: date)
-                  }
+                  confirmAndDismiss()
                 } label: {
                   Image(systemName: "checkmark")
                 }
@@ -448,5 +446,13 @@ struct EntryEditingView: View {
 
     // Save the context to persist changes
     try? modelContext.save()
+  }
+
+  private func confirmAndDismiss() {
+    withAnimation(.easeIn(duration: 0.25)) {
+      isTextFieldFocused = false
+      guard let date else { return }
+      saveNote(text: textContent, for: date)
+    }
   }
 }
