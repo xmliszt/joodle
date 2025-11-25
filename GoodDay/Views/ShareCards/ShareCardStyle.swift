@@ -11,6 +11,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   case minimal = "Minimal"
   case excerpt = "Excerpt"
   case detailed = "Detailed"
+  case anniversary = "Anniversary"
 
   var id: String { rawValue }
 
@@ -23,17 +24,21 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return "square"
     case .detailed:
       return "square"
+    case .anniversary:
+      return "square"
     }
   }
 
   var description: String {
     switch self {
     case .minimal:
-      return "Just your doodle"
+      return "Doodle only"
     case .excerpt:
-      return "Doodle and first few words of your note"
+      return "Doodle & snippet"
     case .detailed:
-      return "Smaller doodle and more words of your note"
+      return "Doodle & note"
+    case .anniversary:
+      return "Doodle and countdown"
     }
   }
 
@@ -46,6 +51,8 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return CGSize(width: 1080, height: 1080)
     case .detailed:
       return CGSize(width: 1080, height: 1080)
+    case .anniversary:
+      return CGSize(width: 1080, height: 1080)
     }
   }
 
@@ -57,6 +64,8 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     case .excerpt:
       return CGSize(width: 300, height: 300)
     case .detailed:
+      return CGSize(width: 300, height: 300)
+    case .anniversary:
       return CGSize(width: 300, height: 300)
     }
   }

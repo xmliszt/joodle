@@ -162,6 +162,8 @@ class ShareCardRenderer {
       ExcerptView(entry: entry, date: date, highResDrawing: highResDrawing)
     case .detailed:
       DetailedView(entry: entry, date: date, highResDrawing: highResDrawing)
+    case .anniversary:
+      AnniversaryView(entry: entry, date: date, highResDrawing: highResDrawing)
     }
   }
 }

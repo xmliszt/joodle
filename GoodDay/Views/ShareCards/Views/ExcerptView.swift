@@ -26,50 +26,20 @@ struct ExcerptView: View {
           Spacer()
 
           // Main content - Drawing or Text
-          if let highResDrawing = highResDrawing {
-            // Show pre-rendered high-resolution drawing
-            // The image is already at the correct pixel size, just display it
-            Image(uiImage: highResDrawing)
-              .resizable()
-              .scaledToFit()
-              .frame(width: 600 * scale, height: 600 * scale)
-              .padding()
-              .background(
-                RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
-                  .foregroundStyle(.appSurface)
-              )
-              .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
-          } else if let entry = entry, let drawingData = entry.drawingData, !drawingData.isEmpty {
-            // Fallback to live Canvas rendering (for previews)
-            DrawingDisplayView(
-              entry: entry,
-              displaySize: 450,
-              dotStyle: .present,
-              accent: true,
-              highlighted: false,
-              scale: scale,
-              useThumbnail: false
-            )
-            .frame(width: 600 * scale, height: 600 * scale)
-            .padding()
-            .background(
-              RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
-                .foregroundStyle(.appSurface)
-            )
-            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
-          } else {
-            // Empty state
-            Image(systemName: "scribble")
-              .font(.mansalva(size: 100 * scale))
-              .frame(width: 600 * scale, height: 600 * scale)
-              .foregroundColor(.textColor.opacity(0.3))
-              .padding()
-              .background(
-                RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
-                  .foregroundStyle(.appSurface)
-              )
-              .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
-          }
+          // Main content - Drawing or Text
+          DrawingPreviewView(
+            entry: entry,
+            highResDrawing: highResDrawing,
+            size: 600 * scale,
+            scale: scale,
+            logicalDisplaySize: 450 // Matches original 450
+          )
+          .padding()
+          .background(
+            RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
+              .foregroundStyle(.appSurface)
+          )
+          .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
 
           Spacer()
           Spacer()

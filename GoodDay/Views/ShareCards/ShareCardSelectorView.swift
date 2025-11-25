@@ -23,13 +23,22 @@ struct ShareCardSelectorView: View {
   @State private var renderedPreviews: [ShareCardStyle: [ColorScheme: UIImage]] = [:]
   @State private var renderingStyles: Set<ShareCardStyle> = []
 
+  private var availableStyles: [ShareCardStyle] {
+    let isFuture = Calendar.current.startOfDay(for: date) > Calendar.current.startOfDay(for: Date())
+    if isFuture {
+      return ShareCardStyle.allCases
+    } else {
+      return ShareCardStyle.allCases.filter { $0 != .anniversary }
+    }
+  }
+
   var body: some View {
     NavigationView {
       VStack(spacing: 0) {
         VStack {
           // Card preview carousel
           TabView(selection: $selectedStyle) {
-            ForEach(ShareCardStyle.allCases) { style in
+            ForEach(availableStyles) { style in
               cardPreview(style: style)
                 .tag(style)
             }
@@ -54,7 +63,7 @@ struct ShareCardSelectorView: View {
 
             // Style indicator dots
             HStack(spacing: 12) {
-              ForEach(ShareCardStyle.allCases) { style in
+              ForEach(availableStyles) { style in
                 Circle()
                   .fill(selectedStyle == style ? Color.appPrimary : Color.secondaryTextColor.opacity(0.3))
                   .frame(width: 8, height: 8)

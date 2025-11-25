@@ -1,10 +1,14 @@
 import SwiftUI
 
-struct MinimalView: View {
-  private let cardStyle: ShareCardStyle = .minimal
+struct AnniversaryView: View {
+  private let cardStyle: ShareCardStyle = .anniversary
   let entry: DayEntry?
   let date: Date
   let highResDrawing: UIImage?
+
+  private var countdownString: String {
+    return CountdownHelper.countdownText(from: Date(), to: date)
+  }
 
   var body: some View {
     GeometryReader { geometry in
@@ -16,15 +20,16 @@ struct MinimalView: View {
         Color.backgroundColor
           .ignoresSafeArea()
 
-        VStack {
-          // Main content - Drawing or Text
+        VStack(spacing: 0) {
+          Spacer()
+
           // Main content - Drawing or Text
           DrawingPreviewView(
             entry: entry,
             highResDrawing: highResDrawing,
-            size: 800 * scale,
+            size: 600 * scale,
             scale: scale,
-            logicalDisplaySize: nil // Use default calculation
+            logicalDisplaySize: 450 // Matches original 450
           )
           .padding()
           .background(
@@ -32,7 +37,27 @@ struct MinimalView: View {
               .foregroundStyle(.appSurface)
           )
           .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
+
+          Spacer()
+          Spacer()
+
         }
+        // Date footer
+        VStack(){
+          Spacer()
+          VStack(spacing: 14 * scale) {
+            Text(entry?.body ?? "")
+              .font(.mansalva(size: 52 * scale))
+              .lineLimit(1)
+              .padding(.horizontal, 140 * scale)
+            Text(countdownString)
+              .font(.mansalva(size: 48 * scale))
+              .foregroundColor(.appTextSecondary)
+          }
+        }
+        .padding(.top, 30 * scale)
+        .padding(.bottom, 100 * scale)
+        .padding(.horizontal, 80 * scale)
       }
       .frame(width: size.width, height: size.height)
     }
@@ -41,24 +66,13 @@ struct MinimalView: View {
 }
 
 #Preview("With Drawing") {
-  MinimalView(
+  AnniversaryView(
     entry: DayEntry(
       body: "",
       createdAt: Date(),
       drawingData: createMockDrawingData()
     ),
-    date: Date(),
-    highResDrawing: nil
-  )
-  .frame(width: 300, height: 300)
-  // add border
-  .border(Color.black)
-}
-
-#Preview("Empty") {
-  MinimalView(
-    entry: nil,
-    date: Date(),
+    date: Date().addingTimeInterval(86400 * 5), // 5 days later
     highResDrawing: nil
   )
   .frame(width: 300, height: 300)
