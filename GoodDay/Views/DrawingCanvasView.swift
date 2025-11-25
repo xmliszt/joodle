@@ -413,6 +413,9 @@ struct DrawingCanvasView: View {
     // Also clear from store
     if let existingEntry = entry {
       existingEntry.drawingData = nil
+      existingEntry.drawingThumbnail20 = nil
+      existingEntry.drawingThumbnail200 = nil
+      existingEntry.drawingThumbnail1080 = nil
       try? modelContext.save()
     }
   }
