@@ -9,7 +9,7 @@ struct NavigationGestureEnabler: UIViewControllerRepresentable {
     let controller = UIViewController()
     return controller
   }
-  
+
   func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
     DispatchQueue.main.async {
       if let navigationController = uiViewController.navigationController {
@@ -18,20 +18,20 @@ struct NavigationGestureEnabler: UIViewControllerRepresentable {
       }
     }
   }
-  
+
   func makeCoordinator() -> Coordinator {
     Coordinator()
   }
-  
+
   class Coordinator: NSObject, UIGestureRecognizerDelegate {
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
       return true
     }
-    
+
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
       return false
     }
-    
+
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
       return false
     }
@@ -46,14 +46,14 @@ struct SettingsView: View {
   @Environment(\.modelContext) private var modelContext
   @State private var showOnboarding = false
   @State private var showPlaceholderGenerator = false
-  
+
   // Import/Export State
   @State private var showFileExporter = false
   @State private var showFileImporter = false
   @State private var exportDocument: JSONDocument?
   @State private var importMessage = ""
   @State private var showImportAlert = false
-  
+
   // MARK: - Computed Bindings
   private var viewModeBinding: Binding<ViewMode> {
     Binding(
@@ -61,7 +61,7 @@ struct SettingsView: View {
       set: { userPreferences.defaultViewMode = $0 }
     )
   }
-  
+
   private var colorSchemeBinding: Binding<ColorScheme?> {
     Binding(
       get: { userPreferences.preferredColorScheme },
@@ -72,22 +72,22 @@ struct SettingsView: View {
       }
     )
   }
-  
+
   private var hapticBinding: Binding<Bool> {
     Binding(
       get: { userPreferences.enableHaptic },
       set: { userPreferences.enableHaptic = $0 }
     )
   }
-  
+
   // Only show backup/restore when iCloud is not available or not enabled
   private var shouldShowManualBackup: Bool {
     return !cloudSyncManager.canSync
   }
-  
+
   var body: some View {
     Form {
-      
+
       // MARK: - View Mode Preferences
       Section("Default View Mode") {
         if #available(iOS 26.0, *) {
@@ -108,7 +108,7 @@ struct SettingsView: View {
           .pickerStyle(.palette)
         }
       }
-      
+
       // MARK: - Appearance Preferences
       Section("Appearance") {
         if #available(iOS 26.0, *) {
@@ -129,12 +129,12 @@ struct SettingsView: View {
           .pickerStyle(.palette)
         }
       }
-      
+
       // MARK: - Interaction Preferences
       Section("Interactions") {
         Toggle("Enable haptic feedback", isOn: hapticBinding)
       }
-      
+
       // MARK: - iCloud Sync
       Section("iCloud Sync") {
         NavigationLink {
@@ -155,7 +155,7 @@ struct SettingsView: View {
           }
         }
       }
-      
+
       // MARK: - Data Management
       // Only show manual backup/restore when iCloud sync is not active
       if shouldShowManualBackup {
@@ -165,7 +165,7 @@ struct SettingsView: View {
           }) {
             Label("Manual backup...", systemImage: "square.and.arrow.up")
           }
-          
+
           Button(action: {
             showFileImporter = true
           }) {
@@ -173,7 +173,7 @@ struct SettingsView: View {
           }
         }
       }
-      
+
       // MARK: - Developer Options
       Section("Developer Options") {
         Button("Revisit Onboarding") {
@@ -239,7 +239,7 @@ struct SettingsView: View {
       Text(importMessage)
     }
   }
-  
+
   private func exportData() {
     do {
       let descriptor = FetchDescriptor<DayEntry>()
@@ -261,23 +261,26 @@ struct SettingsView: View {
       print("Failed to prepare export: \(error)")
     }
   }
-  
+
   private func importData(from url: URL) {
     guard url.startAccessingSecurityScopedResource() else { return }
     defer { url.stopAccessingSecurityScopedResource() }
-    
+
     do {
       let data = try Data(contentsOf: url)
       let dtos = try JSONDecoder().decode([DayEntryDTO].self, from: data)
-      
+
       var count = 0
       for dto in dtos {
-        // Check for duplicates based on createdAt
+        // Check for duplicates based on same day
         let date = dto.createdAt
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+
         let descriptor = FetchDescriptor<DayEntry>(predicate: #Predicate<DayEntry> { entry in
-          entry.createdAt == date
+          entry.createdAt >= startOfDay && entry.createdAt < endOfDay
         })
-        
+
         let existing = try modelContext.fetch(descriptor)
         if existing.isEmpty {
           let newEntry = DayEntry(
@@ -292,7 +295,7 @@ struct SettingsView: View {
           count += 1
         }
       }
-      
+
       try modelContext.save()
       importMessage = "Successfully imported \(count) entries."
       showImportAlert = true
@@ -301,16 +304,16 @@ struct SettingsView: View {
       showImportAlert = true
     }
   }
-  
+
   private func clearTodaysEntries() {
     let today = Date()
     let startOfDay = Calendar.current.startOfDay(for: today)
     let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-    
+
     let predicate = #Predicate<DayEntry> { entry in
       entry.createdAt >= startOfDay && entry.createdAt < endOfDay
     }
-    
+
     do {
       try modelContext.delete(model: DayEntry.self, where: predicate)
       try modelContext.save()
@@ -332,18 +335,18 @@ struct DayEntryDTO: Codable {
 struct JSONDocument: FileDocument {
   static var readableContentTypes: [UTType] { [.json] }
   var data: Data
-  
+
   init(data: Data) {
     self.data = data
   }
-  
+
   init(configuration: ReadConfiguration) throws {
     guard let data = configuration.file.regularFileContents else {
       throw CocoaError(.fileReadCorruptFile)
     }
     self.data = data
   }
-  
+
   func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
     return FileWrapper(regularFileWithContents: data)
   }
