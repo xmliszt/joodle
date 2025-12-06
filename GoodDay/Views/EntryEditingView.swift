@@ -236,7 +236,7 @@ struct EntryEditingView: View {
         Button("Delete", role: .destructive, action: deleteEntry)
         Button("Cancel", role: .cancel) {}
       } message: {
-        Text("Delete this note?")
+        Text("Delete this note? This cannot be undone.")
       }
       .sheet(isPresented: $showShareSheet) {
         ShareCardSelectorView(entry: entry, date: date ?? Date())
