@@ -1,6 +1,7 @@
 import Observation
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Navigation Coordinator for Swipe Back Gesture
 struct NavigationGestureEnabler: UIViewControllerRepresentable {
@@ -44,6 +45,13 @@ struct SettingsView: View {
   @Environment(\.modelContext) private var modelContext
   @State private var showOnboarding = false
   @State private var showPlaceholderGenerator = false
+
+  // Import/Export State
+  @State private var showFileExporter = false
+  @State private var showFileImporter = false
+  @State private var exportDocument: JSONDocument?
+  @State private var importMessage = ""
+  @State private var showImportAlert = false
 
   var body: some View {
     Form {
@@ -132,6 +140,16 @@ struct SettingsView: View {
           ))
       }
 
+      // MARK: - Data Management
+      Section("Data Management") {
+        Button("Export Data (Backup)") {
+          exportData()
+        }
+        Button("Import Data (Restore)") {
+          showFileImporter = true
+        }
+      }
+
       // MARK: - Developer Options
       Section("Developer Options") {
         Button("Revisit Onboarding") {
@@ -167,6 +185,97 @@ struct SettingsView: View {
     .sheet(isPresented: $showPlaceholderGenerator) {
       PlaceholderGeneratorView()
     }
+    .fileExporter(
+      isPresented: $showFileExporter,
+      document: exportDocument,
+      contentType: .json,
+      defaultFilename: "joodle-backup"
+    ) { result in
+      if case .failure(let error) = result {
+        print("Export failed: \(error.localizedDescription)")
+      }
+    }
+    .fileImporter(
+      isPresented: $showFileImporter,
+      allowedContentTypes: [.json],
+      allowsMultipleSelection: false
+    ) { result in
+      switch result {
+      case .success(let urls):
+        if let url = urls.first {
+          importData(from: url)
+        }
+      case .failure(let error):
+        print("Import failed: \(error.localizedDescription)")
+      }
+    }
+    .alert("Import Result", isPresented: $showImportAlert) {
+      Button("OK", role: .cancel) { }
+    } message: {
+      Text(importMessage)
+    }
+  }
+
+  private func exportData() {
+    do {
+      let descriptor = FetchDescriptor<DayEntry>()
+      let entries = try modelContext.fetch(descriptor)
+      let dtos = entries.map { entry in
+        DayEntryDTO(
+          body: entry.body,
+          createdAt: entry.createdAt,
+          drawingData: entry.drawingData,
+          drawingThumbnail20: entry.drawingThumbnail20,
+          drawingThumbnail200: entry.drawingThumbnail200,
+          drawingThumbnail1080: entry.drawingThumbnail1080
+        )
+      }
+      let data = try JSONEncoder().encode(dtos)
+      exportDocument = JSONDocument(data: data)
+      showFileExporter = true
+    } catch {
+      print("Failed to prepare export: \(error)")
+    }
+  }
+
+  private func importData(from url: URL) {
+    guard url.startAccessingSecurityScopedResource() else { return }
+    defer { url.stopAccessingSecurityScopedResource() }
+
+    do {
+      let data = try Data(contentsOf: url)
+      let dtos = try JSONDecoder().decode([DayEntryDTO].self, from: data)
+
+      var count = 0
+      for dto in dtos {
+        // Check for duplicates based on createdAt
+        let date = dto.createdAt
+        let descriptor = FetchDescriptor<DayEntry>(predicate: #Predicate<DayEntry> { entry in
+          entry.createdAt == date
+        })
+
+        let existing = try modelContext.fetch(descriptor)
+        if existing.isEmpty {
+          let newEntry = DayEntry(
+            body: dto.body,
+            createdAt: dto.createdAt,
+            drawingData: dto.drawingData
+          )
+          newEntry.drawingThumbnail20 = dto.drawingThumbnail20
+          newEntry.drawingThumbnail200 = dto.drawingThumbnail200
+          newEntry.drawingThumbnail1080 = dto.drawingThumbnail1080
+          modelContext.insert(newEntry)
+          count += 1
+        }
+      }
+
+      try modelContext.save()
+      importMessage = "Successfully imported \(count) entries."
+      showImportAlert = true
+    } catch {
+      importMessage = "Import failed: \(error.localizedDescription)"
+      showImportAlert = true
+    }
   }
 
   private func clearTodaysEntries() {
@@ -184,6 +293,35 @@ struct SettingsView: View {
     } catch {
       print("Failed to clear today's entries: \(error)")
     }
+  }
+}
+
+struct DayEntryDTO: Codable {
+  let body: String
+  let createdAt: Date
+  let drawingData: Data?
+  let drawingThumbnail20: Data?
+  let drawingThumbnail200: Data?
+  let drawingThumbnail1080: Data?
+}
+
+struct JSONDocument: FileDocument {
+  static var readableContentTypes: [UTType] { [.json] }
+  var data: Data
+
+  init(data: Data) {
+    self.data = data
+  }
+
+  init(configuration: ReadConfiguration) throws {
+    guard let data = configuration.file.regularFileContents else {
+      throw CocoaError(.fileReadCorruptFile)
+    }
+    self.data = data
+  }
+
+  func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+    return FileWrapper(regularFileWithContents: data)
   }
 }
 
