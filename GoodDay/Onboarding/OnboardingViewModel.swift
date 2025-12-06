@@ -11,6 +11,7 @@ enum OnboardingStep: Hashable, CaseIterable {
 }
 
 // 2. The Brain: Manages data and navigation logic
+@MainActor
 class OnboardingViewModel: ObservableObject {
     @Published var navigationPath = NavigationPath()
 
@@ -71,12 +72,10 @@ class OnboardingViewModel: ObservableObject {
                 // Generate thumbnails
                 Task {
                     let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
-                    await MainActor.run {
-                        entryToUpdate.drawingThumbnail20 = thumbnails.0
-                        entryToUpdate.drawingThumbnail200 = thumbnails.1
-                        entryToUpdate.drawingThumbnail1080 = thumbnails.2
-                        try? context.save()
-                    }
+                    entryToUpdate.drawingThumbnail20 = thumbnails.0
+                    entryToUpdate.drawingThumbnail200 = thumbnails.1
+                    entryToUpdate.drawingThumbnail1080 = thumbnails.2
+                    try? context.save()
                 }
             } catch {
                 print("Failed to fetch/save entry: \(error)")

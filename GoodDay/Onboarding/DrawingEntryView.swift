@@ -23,8 +23,11 @@ struct DrawingEntryView: View {
             Spacer()
 
             // 2. Your Drawing Component
-            OnboardingDrawingCanvas(drawingData: $viewModel.firstDoodleData)
-                .padding()
+            OnboardingDrawingCanvas(
+                drawingData: $viewModel.firstDoodleData,
+                placeholderData: PLACEHOLDER_DATA
+            )
+            .padding()
 
             Spacer()
 
@@ -32,7 +35,7 @@ struct DrawingEntryView: View {
             Button {
                 viewModel.completeStep(.drawingEntry)
             } label: {
-                Text("I've captured the moment")
+                Text("Capture this moment")
             }
             .buttonStyle(OnboardingButtonStyle())
         }

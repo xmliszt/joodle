@@ -10,7 +10,7 @@ struct WidgetTutorialView: View {
             Text("You're all set!")
                 .font(.largeTitle.bold())
 
-            Text("Add the GoodDay widget to your home screen to never miss a moment.")
+            Text("Add Joodle widgets to your home screen and never miss a moment.")
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
                 .padding(.horizontal)
@@ -35,7 +35,7 @@ struct WidgetTutorialView: View {
 
             Spacer()
 
-            Button("Get Started") {
+            Button("Unlock my Joodle") {
                 viewModel.completeStep(.widgetTutorial)
             }
             .buttonStyle(OnboardingButtonStyle())

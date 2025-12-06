@@ -101,9 +101,10 @@ struct EntryEditingView: View {
 
                   // Update entry if got new date
                   if let newDate = newValue {
-                    entry = entries.first {
-                      Calendar.current.isDate($0.createdAt, inSameDayAs: newDate)
-                    }
+                    let candidates = entries.filter { Calendar.current.isDate($0.createdAt, inSameDayAs: newDate) }
+                    // Prioritize entry with content
+                    entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
+
                     guard let entry else { return }
                     textContent = entry.body
                   }
@@ -212,12 +213,30 @@ struct EntryEditingView: View {
       .onAppear {
         // Load entry first
         guard let date else { return }
-        entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
+        let candidates = entries.filter { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
+        // Prioritize entry with content
+        entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
+
         if let entry {
           textContent = entry.body
         }
         // Then start timer
         startTimerIfNeeded()
+      }
+      .onChange(of: entries) { _, newEntries in
+        guard let date else { return }
+        // If we don't have an entry yet, try to find one in the new entries
+        if entry == nil {
+          let candidates = newEntries.filter { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
+          // Prioritize entry with content
+          if let found = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first {
+            entry = found
+            // Only update textContent if user hasn't typed anything yet
+            if textContent.isEmpty {
+              textContent = found.body
+            }
+          }
+        }
       }
       .onChange(of: entry) { _, _ in
         // Restart timer when entry changes (loaded or modified)
@@ -425,13 +444,10 @@ struct EntryEditingView: View {
   private func deleteEntry() {
     guard let entry else { return }
 
-    // Clear the entry's body and drawing data
-    entry.body = ""
-    entry.drawingData = nil
-    entry.drawingThumbnail20 = nil
-    entry.drawingThumbnail200 = nil
-    entry.drawingThumbnail1080 = nil
+    // Delete the entry from context
+    modelContext.delete(entry)
     textContent = ""
+    self.entry = nil
 
     // Save the context to persist changes
     try? modelContext.save()

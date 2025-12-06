@@ -2,6 +2,7 @@ import SwiftUI
 
 struct OnboardingDrawingCanvas: View {
     @Binding var drawingData: Data?
+    var placeholderData: Data? = nil
 
     @State private var currentPath = Path()
     @State private var paths: [Path] = []
@@ -17,15 +18,9 @@ struct OnboardingDrawingCanvas: View {
                 currentPath: $currentPath,
                 currentPathIsDot: $currentPathIsDot,
                 isDrawing: $isDrawing,
+                placeholderData: placeholderData,
                 onCommitStroke: commitCurrentStroke
             )
-
-            // Placeholder text if empty
-            if paths.isEmpty && currentPath.isEmpty {
-                Text("Draw something here...")
-                    .foregroundColor(.secondary)
-                    .allowsHitTesting(false)
-            }
 
             // Clear button
             if !paths.isEmpty {

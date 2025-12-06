@@ -14,11 +14,11 @@ struct PaywallView: View {
             Spacer()
 
             VStack(spacing: 16) {
-                Text("Unlock Full Journal")
+                Text("Unlock Full Joodle")
                     .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
 
-                Text("Get unlimited entries, iCloud sync, and advanced insights.")
+                Text("Unlimited entries, iCloud sync, more widgets.")
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -29,7 +29,7 @@ struct PaywallView: View {
             VStack(spacing: 12) {
                 planButton(
                     title: "Monthly",
-                    price: "$4.99/mo",
+                    price: "$2.99/mo",
                     isSelected: selectedPlan == .monthly
                 ) {
                     selectedPlan = .monthly
@@ -37,7 +37,7 @@ struct PaywallView: View {
 
                 planButton(
                     title: "Yearly (Best Value)",
-                    price: "$39.99/yr",
+                    price: "$23.99/yr",
                     isSelected: selectedPlan == .yearly
                 ) {
                     selectedPlan = .yearly
@@ -48,7 +48,7 @@ struct PaywallView: View {
             Spacer()
 
             VStack(spacing: 16) {
-                Button("Start Free Trial") {
+                Button("Start 7 Day Free Trial") {
                     // Simulate Purchase Logic
                     viewModel.isPremium = true
                     viewModel.completeStep(.paywall)

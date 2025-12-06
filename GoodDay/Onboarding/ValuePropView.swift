@@ -22,7 +22,7 @@ struct ValuePropView: View {
             Text("First memory unlocked!")
                 .font(.title2.bold())
 
-            Text("That doodle is the start of your visual timeline. Track your year, set future anniversaries, and see your life in sketches.")
+            Text("That doodle is the start of your visual timeline. Track your year, and see your life in sketches.")
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
                 .padding(.horizontal)

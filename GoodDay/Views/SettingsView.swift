@@ -43,6 +43,7 @@ struct SettingsView: View {
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
   @State private var showOnboarding = false
+  @State private var showPlaceholderGenerator = false
 
   var body: some View {
     Form {
@@ -131,31 +132,17 @@ struct SettingsView: View {
           ))
       }
 
-      // MARK: - Onboarding
-      Section {
+      // MARK: - Developer Options
+      Section("Developer Options") {
         Button("Revisit Onboarding") {
           showOnboarding = true
         }
-      }
-
-      // MARK: - Developer Options
-      Section("Developer Options") {
         Button("Clear Today's Entries", role: .destructive) {
           clearTodaysEntries()
         }
-      }
-
-      // MARK: - Reset Section
-      Section {
-        Button("Reset to Defaults", role: .destructive) {
-          withAnimation {
-            userPreferences.resetToDefaults()
-          }
+        Button("Generate Placeholder") {
+          showPlaceholderGenerator = true
         }
-      } footer: {
-        Text("This will reset all preferences to their default values.")
-          .font(.caption)
-          .foregroundColor(.appTextSecondary)
       }
     }
     .background(NavigationGestureEnabler())
@@ -176,6 +163,9 @@ struct SettingsView: View {
     }
     .fullScreenCover(isPresented: $showOnboarding) {
       OnboardingFlowView()
+    }
+    .sheet(isPresented: $showPlaceholderGenerator) {
+      PlaceholderGeneratorView()
     }
   }
 

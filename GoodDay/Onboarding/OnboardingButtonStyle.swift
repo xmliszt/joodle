@@ -4,10 +4,10 @@ struct OnboardingButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline)
-            .foregroundColor(Color(uiColor: .systemBackground))
+            .foregroundColor(.appBackground)
             .frame(maxWidth: .infinity)
             .frame(height: 56)
-            .background(Color.primary)
+            .background(.appPrimary)
             .clipShape(Capsule())
             .padding(.horizontal)
             .padding(.bottom, 10)
