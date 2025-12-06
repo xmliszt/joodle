@@ -40,6 +40,7 @@ struct NavigationGestureEnabler: UIViewControllerRepresentable {
 
 struct SettingsView: View {
   @Environment(\.userPreferences) private var userPreferences
+  @Environment(\.cloudSyncManager) private var cloudSyncManager
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
@@ -77,6 +78,11 @@ struct SettingsView: View {
       get: { userPreferences.enableHaptic },
       set: { userPreferences.enableHaptic = $0 }
     )
+  }
+  
+  // Only show backup/restore when iCloud is not available or not enabled
+  private var shouldShowManualBackup: Bool {
+    return !cloudSyncManager.canSync
   }
   
   var body: some View {
@@ -137,7 +143,7 @@ struct SettingsView: View {
           HStack {
             Text("Sync to iCloud")
             Spacer()
-            if !CloudSyncManager.shared.isCloudAvailable {
+            if !cloudSyncManager.canSync {
               Image(systemName: "xmark.circle.fill")
                 .foregroundStyle(.red)
                 .font(.caption)
@@ -151,17 +157,20 @@ struct SettingsView: View {
       }
       
       // MARK: - Data Management
-      Section("Backup & Restore") {
-        Button(action: {
-          exportData()
-        }) {
-          Label("Manual backup...", systemImage: "square.and.arrow.up")
-        }
-        
-        Button(action: {
-          showFileImporter = true
-        }) {
-          Label("Manual restore...", systemImage: "square.and.arrow.down")
+      // Only show manual backup/restore when iCloud sync is not active
+      if shouldShowManualBackup {
+        Section("Backup & Restore") {
+          Button(action: {
+            exportData()
+          }) {
+            Label("Manual backup...", systemImage: "square.and.arrow.up")
+          }
+          
+          Button(action: {
+            showFileImporter = true
+          }) {
+            Label("Manual restore...", systemImage: "square.and.arrow.down")
+          }
         }
       }
       
