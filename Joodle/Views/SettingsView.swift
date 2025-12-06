@@ -140,6 +140,23 @@ struct SettingsView: View {
           ))
       }
 
+      // MARK: - iCloud Preferences
+      Section {
+        Toggle(
+          "iCloud sync",
+          isOn: Binding(
+            get: { userPreferences.isCloudSyncEnabled },
+            set: { userPreferences.isCloudSyncEnabled = $0 }
+          )
+        )
+      } header: {
+        Text("iCloud Sync")
+      } footer: {
+        Text("Last synced: \(userPreferences.lastCloudSyncDate?.formatted(date: .abbreviated, time: .shortened) ?? "never")")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+
       // MARK: - Data Management
       Section("Data Management") {
         Button("Export Data (Backup)") {
