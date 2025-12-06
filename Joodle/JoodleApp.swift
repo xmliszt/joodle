@@ -38,15 +38,21 @@ struct JoodleApp: App {
       DayEntry.self
     ])
 
-    // 2. Configure for iCloud based on user preference
-    let isCloudEnabled = UserPreferences.shared.isCloudSyncEnabled
+    // 2. Check BOTH user preference AND system availability
+    let userWantsCloud = UserPreferences.shared.isCloudSyncEnabled
+    let systemCloudEnabled = FileManager.default.ubiquityIdentityToken != nil
+
+    // Only enable cloud if BOTH user wants it AND system allows it
+    let shouldUseCloud = userWantsCloud && systemCloudEnabled
+
+    // 3. Configure for iCloud only if both conditions are met
     let config = ModelConfiguration(
       schema: schema,
       isStoredInMemoryOnly: false,
-      cloudKitDatabase: isCloudEnabled ? .private("iCloud.dev.liyuxuan.joodle") : .none
+      cloudKitDatabase: shouldUseCloud ? .private("iCloud.dev.liyuxuan.joodle") : .none
     )
 
-    // 3. Create the container
+    // 4. Create the container
     do {
       return try ModelContainer(for: schema, configurations: [config])
     } catch {
@@ -73,6 +79,7 @@ struct JoodleApp: App {
             .onAppear {
               setupColorSchemeObserver()
               setupSyncObserver()
+              setupUbiquityObserver()
             }
             .onOpenURL { url in
               handleWidgetURL(url)
@@ -116,6 +123,30 @@ struct JoodleApp: App {
       // Recreate the model container with new configuration
       modelContainer = Self.createModelContainer()
       containerKey = UUID()
+    }
+  }
+
+  private func setupUbiquityObserver() {
+    // Monitor system-level iCloud Documents & Data changes
+    NotificationCenter.default.addObserver(
+      forName: NSNotification.Name.NSUbiquityIdentityDidChange,
+      object: nil,
+      queue: .main
+    ) { [self] _ in
+      // Check if we need to recreate the container
+      let userWantsCloud = UserPreferences.shared.isCloudSyncEnabled
+      let systemCloudEnabled = FileManager.default.ubiquityIdentityToken != nil
+
+      // If there's a mismatch between what we're using and what's available, recreate
+      if userWantsCloud && !systemCloudEnabled {
+        // System cloud was disabled but user preference is still on
+        // CloudSyncManager will handle updating the preference
+        // We just need to recreate the container after that happens
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+          modelContainer = Self.createModelContainer()
+          containerKey = UUID()
+        }
+      }
     }
   }
 }

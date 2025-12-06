@@ -24,6 +24,9 @@ final class CloudSyncManager {
   var errorMessage: String?
   var isCloudAvailable = false
 
+  // System-level iCloud Documents & Data status
+  var isSystemCloudEnabled = false
+
   // Observed sync events (best-effort detection, not guaranteed)
   var lastObservedImport: Date?
   var lastObservedExport: Date?
@@ -34,25 +37,131 @@ final class CloudSyncManager {
   private let networkMonitor = NetworkMonitor.shared
   private let preferencesSyncManager = PreferencesSyncManager.shared
   private var syncEventObserver: NSObjectProtocol?
+  private var ubiquityIdentityObserver: NSObjectProtocol?
+
+  // Track the ubiquity identity token to detect iCloud Documents & Data changes
+  private var currentUbiquityToken: (any NSCoding & NSCopying & NSObjectProtocol)?
 
   // MARK: - Initialization
   private init() {
+    checkSystemCloudAvailability()
     checkCloudAvailability()
     setupCloudKitEventObserver()
+    setupUbiquityIdentityObserver()
   }
 
   deinit {
     removeSyncEventObserver()
+    removeUbiquityIdentityObserver()
   }
 
-  // MARK: - Cloud Availability
+  // MARK: - System Cloud Availability (iCloud Documents & Data)
+  /// Check if iCloud Documents & Data is enabled at the system level
+  /// This is separate from CloudKit account status
+  private func checkSystemCloudAvailability() {
+    // Get the current ubiquity identity token
+    currentUbiquityToken = FileManager.default.ubiquityIdentityToken
+
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else { return }
+
+      // If token exists, iCloud Documents & Data is enabled
+      let wasEnabled = self.isSystemCloudEnabled
+      self.isSystemCloudEnabled = self.currentUbiquityToken != nil
+
+      // If system cloud was disabled, sync our app preference
+      if wasEnabled && !self.isSystemCloudEnabled {
+        self.handleSystemCloudDisabled()
+      }
+    }
+  }
+
+  /// Monitor changes to iCloud Documents & Data availability
+  private func setupUbiquityIdentityObserver() {
+    ubiquityIdentityObserver = NotificationCenter.default.addObserver(
+      forName: NSNotification.Name.NSUbiquityIdentityDidChange,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.handleUbiquityIdentityChange()
+    }
+  }
+
+  private func removeUbiquityIdentityObserver() {
+    if let observer = ubiquityIdentityObserver {
+      NotificationCenter.default.removeObserver(observer)
+      ubiquityIdentityObserver = nil
+    }
+  }
+
+  /// Handle changes to ubiquity identity (iCloud Documents & Data toggle in Settings)
+  private func handleUbiquityIdentityChange() {
+    let newToken = FileManager.default.ubiquityIdentityToken
+    let oldToken = currentUbiquityToken
+
+    // Update our token
+    currentUbiquityToken = newToken
+
+    // Determine if it changed from enabled to disabled or vice versa
+    let wasEnabled = oldToken != nil
+    let isNowEnabled = newToken != nil
+
+    isSystemCloudEnabled = isNowEnabled
+
+    if wasEnabled && !isNowEnabled {
+      // User disabled iCloud Documents & Data in iOS Settings
+      handleSystemCloudDisabled()
+    } else if !wasEnabled && isNowEnabled {
+      // User enabled iCloud Documents & Data in iOS Settings
+      handleSystemCloudEnabled()
+    }
+  }
+
+  /// Called when system-level iCloud Documents & Data is disabled
+  private func handleSystemCloudDisabled() {
+    print("📱 System iCloud Documents & Data was disabled in Settings")
+
+    // If our app preference still thinks sync is enabled, disable it
+    if userPreferences.isCloudSyncEnabled {
+      print("📱 Auto-disabling app cloud sync preference to match system")
+      userPreferences.isCloudSyncEnabled = false
+
+      // Notify the app to recreate the ModelContainer
+      NotificationCenter.default.post(
+        name: NSNotification.Name("CloudSyncPreferenceChanged"),
+        object: nil
+      )
+
+      // Update UI state
+      hasError = true
+      errorMessage = "iCloud was disabled in Settings. Switched to local storage."
+    }
+  }
+
+  /// Called when system-level iCloud Documents & Data is enabled
+  private func handleSystemCloudEnabled() {
+    print("📱 System iCloud Documents & Data was enabled in Settings")
+
+    // Don't automatically enable app sync - let user choose
+    // Just clear any error messages
+    if errorMessage == "iCloud was disabled in Settings. Switched to local storage." {
+      hasError = false
+      errorMessage = nil
+    }
+  }
+
+  // MARK: - Cloud Availability (CloudKit Account Status)
   func checkCloudAvailability() {
     CKContainer.default().accountStatus { [weak self] status, error in
       DispatchQueue.main.async {
         switch status {
         case .available:
           self?.isCloudAvailable = true
-          self?.hasError = false
+          // Only clear errors related to account status
+          if self?.hasError == true && self?.errorMessage?.contains("iCloud account") == true {
+            self?.hasError = false
+            self?.errorMessage = nil
+          }
         case .noAccount:
           self?.isCloudAvailable = false
           self?.hasError = true
@@ -137,6 +246,12 @@ final class CloudSyncManager {
 
   // MARK: - Enable/Disable Sync
   func enableSync() {
+    guard isSystemCloudEnabled else {
+      hasError = true
+      errorMessage = "iCloud Documents & Data is disabled in Settings. Please enable it first."
+      return
+    }
+
     guard isCloudAvailable else {
       hasError = true
       errorMessage = "iCloud is not available. Please check your settings."
@@ -174,11 +289,13 @@ final class CloudSyncManager {
 
   // MARK: - Computed Properties
   var canSync: Bool {
-    return isCloudAvailable && networkMonitor.isConnected && userPreferences.isCloudSyncEnabled
+    return isSystemCloudEnabled && isCloudAvailable && networkMonitor.isConnected && userPreferences.isCloudSyncEnabled
   }
 
   var statusMessage: String {
-    if !isCloudAvailable {
+    if !isSystemCloudEnabled {
+      return "iCloud Documents disabled in Settings"
+    } else if !isCloudAvailable {
       return "iCloud not available"
     } else if !networkMonitor.isConnected {
       return "No internet connection"
