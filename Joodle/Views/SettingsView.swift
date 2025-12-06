@@ -146,24 +146,18 @@ struct SettingsView: View {
           iCloudSyncView()
         } label: {
           HStack {
-            Label("iCloud Sync", systemImage: "icloud")
+            Label("Sync to iCloud")
             Spacer()
-            if userPreferences.isCloudSyncEnabled {
+            if !CloudSyncManager.shared.isCloudAvailable {
+              Image(systemName: "xmark.circle.fill")
+                .foregroundStyle(.red)
+                .font(.caption)
+            } else if userPreferences.isCloudSyncEnabled && CloudSyncManager.shared.isCloudAvailable {
               Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(.green)
                 .font(.caption)
             }
           }
-        }
-      } footer: {
-        if userPreferences.isCloudSyncEnabled {
-          Text("Sync is enabled. SwiftData automatically syncs journal entries in the background.")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        } else {
-          Text("Keep your journal entries in sync across all your devices")
-            .font(.caption)
-            .foregroundStyle(.secondary)
         }
       }
 
