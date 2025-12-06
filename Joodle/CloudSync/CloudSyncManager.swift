@@ -119,11 +119,8 @@ final class CloudSyncManager {
 
   /// Called when system-level iCloud Documents & Data is disabled
   private func handleSystemCloudDisabled() {
-    print("📱 System iCloud Documents & Data was disabled in Settings")
-
     // If our app preference still thinks sync is enabled, disable it
     if userPreferences.isCloudSyncEnabled {
-      print("📱 Auto-disabling app cloud sync preference to match system")
       userPreferences.isCloudSyncEnabled = false
 
       // Notify the app to recreate the ModelContainer
@@ -140,8 +137,6 @@ final class CloudSyncManager {
 
   /// Called when system-level iCloud Documents & Data is enabled
   private func handleSystemCloudEnabled() {
-    print("📱 System iCloud Documents & Data was enabled in Settings")
-
     // Don't automatically enable app sync - let user choose
     // Just clear any error messages
     if errorMessage == "iCloud was disabled in Settings. Switched to local storage." {

@@ -53,19 +53,39 @@ struct SettingsView: View {
   @State private var importMessage = ""
   @State private var showImportAlert = false
 
+  // MARK: - Computed Bindings
+  private var viewModeBinding: Binding<ViewMode> {
+    Binding(
+      get: { userPreferences.defaultViewMode },
+      set: { userPreferences.defaultViewMode = $0 }
+    )
+  }
+
+  private var colorSchemeBinding: Binding<ColorScheme?> {
+    Binding(
+      get: { userPreferences.preferredColorScheme },
+      set: { newValue in
+        userPreferences.preferredColorScheme = newValue
+        // Force UI update immediately
+        NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
+      }
+    )
+  }
+
+  private var hapticBinding: Binding<Bool> {
+    Binding(
+      get: { userPreferences.enableHaptic },
+      set: { userPreferences.enableHaptic = $0 }
+    )
+  }
+
   var body: some View {
     Form {
 
       // MARK: - View Mode Preferences
       Section("Default View Mode") {
         if #available(iOS 26.0, *) {
-          Picker(
-            "View Mode",
-            selection: Binding(
-              get: { userPreferences.defaultViewMode },
-              set: { userPreferences.defaultViewMode = $0 }
-            )
-          ) {
+          Picker("View Mode", selection: viewModeBinding) {
             ForEach(ViewMode.allCases, id: \.self) { mode in
               Text(mode.displayName).tag(mode)
             }
@@ -74,13 +94,7 @@ struct SettingsView: View {
           .glassEffect(.regular.interactive())
         } else {
           // Fallback on earlier versions
-          Picker(
-            "View Mode",
-            selection: Binding(
-              get: { userPreferences.defaultViewMode },
-              set: { userPreferences.defaultViewMode = $0 }
-            )
-          ) {
+          Picker("View Mode", selection: viewModeBinding) {
             ForEach(ViewMode.allCases, id: \.self) { mode in
               Text(mode.displayName).tag(mode)
             }
@@ -92,17 +106,7 @@ struct SettingsView: View {
       // MARK: - Appearance Preferences
       Section("Appearance") {
         if #available(iOS 26.0, *) {
-          Picker(
-            "Color Scheme",
-            selection: Binding(
-              get: { userPreferences.preferredColorScheme },
-              set: {
-                userPreferences.preferredColorScheme = $0
-                // Force UI update immediately
-                NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
-              }
-            )
-          ) {
+          Picker("Color Scheme", selection: colorSchemeBinding) {
             Text("System").tag(nil as ColorScheme?)
             Text("Light").tag(ColorScheme.light as ColorScheme?)
             Text("Dark").tag(ColorScheme.dark as ColorScheme?)
@@ -111,17 +115,7 @@ struct SettingsView: View {
           .glassEffect(.regular.interactive())
         } else {
           // Fallback on earlier versions
-          Picker(
-            "Color Scheme",
-            selection: Binding(
-              get: { userPreferences.preferredColorScheme },
-              set: {
-                userPreferences.preferredColorScheme = $0
-                // Force UI update immediately
-                NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
-              }
-            )
-          ) {
+          Picker("Color Scheme", selection: colorSchemeBinding) {
             Text("System").tag(nil as ColorScheme?)
             Text("Light").tag(ColorScheme.light as ColorScheme?)
             Text("Dark").tag(ColorScheme.dark as ColorScheme?)
@@ -132,21 +126,16 @@ struct SettingsView: View {
 
       // MARK: - Interaction Preferences
       Section("Interactions") {
-        Toggle(
-          "Enable haptic feedback",
-          isOn: Binding(
-            get: { userPreferences.enableHaptic },
-            set: { userPreferences.enableHaptic = $0 }
-          ))
+        Toggle("Enable haptic feedback", isOn: hapticBinding)
       }
 
       // MARK: - iCloud Sync
-      Section {
+      Section("iCloud") {
         NavigationLink {
           iCloudSyncView()
         } label: {
           HStack {
-            Label("Sync to iCloud")
+            Text("Sync to iCloud")
             Spacer()
             if !CloudSyncManager.shared.isCloudAvailable {
               Image(systemName: "xmark.circle.fill")
