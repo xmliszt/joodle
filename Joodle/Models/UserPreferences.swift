@@ -14,6 +14,8 @@ enum Pref {
   static let defaultViewMode = Key(key: "default_view_mode", default: ViewMode.now)
   static let preferredColorScheme = Key<ColorScheme?>(key: "preferred_color_scheme", default: nil)
   static let enableHaptic = Key(key: "enable_haptic", default: true)
+  static let isCloudSyncEnabled = Key(key: "is_cloud_sync_enabled", default: false)
+  static let lastCloudSyncDate = Key<Date?>(key: "last_cloud_sync_date", default: nil)
 
   // Add new preferences here - just specify the default!
   // static let newSetting = Key(default: "defaultValue")
@@ -34,6 +36,8 @@ enum Pref {
     defaultViewMode.key,
     preferredColorScheme.key,
     enableHaptic.key,
+    isCloudSyncEnabled.key,
+    lastCloudSyncDate.key,
   ]
 }
 
@@ -67,6 +71,12 @@ final class UserPreferences {
   }
   var enableHaptic: Bool = Pref.enableHaptic.defaultValue {
     didSet { _enableHapticWatcher = enableHaptic }
+  }
+  var isCloudSyncEnabled: Bool = Pref.isCloudSyncEnabled.defaultValue {
+    didSet { _isCloudSyncEnabledWatcher = isCloudSyncEnabled }
+  }
+  var lastCloudSyncDate: Date? = Pref.lastCloudSyncDate.defaultValue {
+    didSet { _lastCloudSyncDateWatcher = lastCloudSyncDate }
   }
 
   // MARK: - Step 4: Add private watchers that update UserDefaults when properties change
@@ -105,12 +115,30 @@ final class UserPreferences {
     set { set(Pref.enableHaptic, newValue) }
   }
 
+  private var _isCloudSyncEnabledWatcher: Bool {
+    get { get(Pref.isCloudSyncEnabled) }
+    set { set(Pref.isCloudSyncEnabled, newValue) }
+  }
+
+  private var _lastCloudSyncDateWatcher: Date? {
+    get { defaults.object(forKey: Pref.lastCloudSyncDate.key) as? Date }
+    set {
+      if let date = newValue {
+        defaults.set(date, forKey: Pref.lastCloudSyncDate.key)
+      } else {
+        defaults.removeObject(forKey: Pref.lastCloudSyncDate.key)
+      }
+    }
+  }
+
   // MARK: - Step 5: Add your property to load during initialization
   init() {
     // Load initial values from UserDefaults
     defaultViewMode = _defaultViewModeWatcher
     preferredColorScheme = _preferredColorSchemeWatcher
     enableHaptic = _enableHapticWatcher
+    isCloudSyncEnabled = _isCloudSyncEnabledWatcher
+    lastCloudSyncDate = _lastCloudSyncDateWatcher
   }
 
   // MARK: - Reset Method (automatically uses all registered keys!)
@@ -123,6 +151,8 @@ final class UserPreferences {
     defaultViewMode = Pref.defaultViewMode.defaultValue
     preferredColorScheme = Pref.preferredColorScheme.defaultValue
     enableHaptic = Pref.enableHaptic.defaultValue
+    isCloudSyncEnabled = Pref.isCloudSyncEnabled.defaultValue
+    lastCloudSyncDate = Pref.lastCloudSyncDate.defaultValue
   }
 }
 

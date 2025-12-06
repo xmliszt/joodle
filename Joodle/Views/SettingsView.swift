@@ -39,7 +39,7 @@ struct NavigationGestureEnabler: UIViewControllerRepresentable {
 }
 
 struct SettingsView: View {
-  @Environment(UserPreferences.self) private var userPreferences: UserPreferences
+  @Environment(\.userPreferences) private var userPreferences
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
@@ -140,21 +140,31 @@ struct SettingsView: View {
           ))
       }
 
-      // MARK: - iCloud Preferences
+      // MARK: - iCloud Sync
       Section {
-        Toggle(
-          "iCloud sync",
-          isOn: Binding(
-            get: { userPreferences.isCloudSyncEnabled },
-            set: { userPreferences.isCloudSyncEnabled = $0 }
-          )
-        )
-      } header: {
-        Text("iCloud Sync")
+        NavigationLink {
+          iCloudSyncView()
+        } label: {
+          HStack {
+            Label("iCloud Sync", systemImage: "icloud")
+            Spacer()
+            if userPreferences.isCloudSyncEnabled {
+              Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .font(.caption)
+            }
+          }
+        }
       } footer: {
-        Text("Last synced: \(userPreferences.lastCloudSyncDate?.formatted(date: .abbreviated, time: .shortened) ?? "never")")
-          .font(.caption)
-          .foregroundStyle(.secondary)
+        if userPreferences.isCloudSyncEnabled {
+          Text("Last synced: \(userPreferences.lastCloudSyncDate?.formatted(date: .abbreviated, time: .shortened) ?? "never")")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        } else {
+          Text("Keep your journal entries in sync across all your devices")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
       }
 
       // MARK: - Data Management
@@ -345,6 +355,6 @@ struct JSONDocument: FileDocument {
 #Preview {
   NavigationStack {
     SettingsView()
-      .environment(UserPreferences.shared)
+      .environment(\.userPreferences, UserPreferences.shared)
   }
 }

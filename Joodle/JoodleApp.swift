@@ -8,6 +8,7 @@
 import SwiftData
 import SwiftUI
 import UIKit
+import Combine
 
 // AppDelegate to enforce portrait orientation
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -24,18 +25,25 @@ struct JoodleApp: App {
   @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
   @State private var colorScheme: ColorScheme? = UserPreferences.shared.preferredColorScheme
   @State private var selectedDateFromWidget: Date?
+  @State private var containerKey = UUID()
+  @State private var modelContainer: ModelContainer
 
-  var sharedModelContainer: ModelContainer = {
+  init() {
+    _modelContainer = State(initialValue: Self.createModelContainer())
+  }
 
+  static func createModelContainer() -> ModelContainer {
     // 1. Define schemas
     let schema = Schema([
       DayEntry.self
     ])
 
-    // 2. Configure for iCloud
+    // 2. Configure for iCloud based on user preference
+    let isCloudEnabled = UserPreferences.shared.isCloudSyncEnabled
     let config = ModelConfiguration(
       schema: schema,
       isStoredInMemoryOnly: false,
+      cloudKitDatabase: isCloudEnabled ? .private("iCloud.dev.liyuxuan.joodle") : .none
     )
 
     // 3. Create the container
@@ -44,31 +52,34 @@ struct JoodleApp: App {
     } catch {
       fatalError("Could not create ModelContainer: \(error)")
     }
-  }()
+  }
 
   var body: some Scene {
     WindowGroup {
       if !hasCompletedOnboarding {
         OnboardingFlowView()
-          .environment(UserPreferences.shared)
+          .environment(\.userPreferences, UserPreferences.shared)
           .preferredColorScheme(colorScheme)
           .font(.mansalva(size: 17))
       } else {
         NavigationStack {
           ContentView(selectedDateFromWidget: $selectedDateFromWidget)
-            .environment(UserPreferences.shared)
+            .environment(\.userPreferences, UserPreferences.shared)
+            .environment(\.cloudSyncManager, CloudSyncManager.shared)
             .preferredColorScheme(colorScheme)
             .font(.mansalva(size: 17))
             .onAppear {
               setupColorSchemeObserver()
+              setupSyncObserver()
             }
             .onOpenURL { url in
               handleWidgetURL(url)
             }
+            .id(containerKey)
         }
       }
     }
-    .modelContainer(sharedModelContainer)
+    .modelContainer(modelContainer)
   }
 
   private func setupColorSchemeObserver() {
@@ -92,5 +103,17 @@ struct JoodleApp: App {
 
     let date = Date(timeIntervalSince1970: timeInterval)
     selectedDateFromWidget = date
+  }
+
+  private func setupSyncObserver() {
+    NotificationCenter.default.addObserver(
+      forName: NSNotification.Name("CloudSyncPreferenceChanged"),
+      object: nil,
+      queue: .main
+    ) { [self] _ in
+      // Recreate the model container with new configuration
+      modelContainer = Self.createModelContainer()
+      containerKey = UUID()
+    }
   }
 }

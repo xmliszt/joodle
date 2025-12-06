@@ -10,8 +10,8 @@ import SwiftData
 
 @Model
 final class DayEntry {
-  var body: String
-  var createdAt: Date
+  var body: String = ""
+  var createdAt: Date = Date()
   var drawingData: Data?
 
   // Pre-rendered thumbnails for optimized display

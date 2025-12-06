@@ -12,7 +12,7 @@ struct ContentView: View {
   @Environment(\.modelContext) private var modelContext
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.scenePhase) private var scenePhase
-  @Environment(UserPreferences.self) private var userPreferences
+  @Environment(\.userPreferences) private var userPreferences
 
   @Query private var entries: [DayEntry]
 
@@ -278,7 +278,6 @@ struct ContentView: View {
       // Navigate to setting view
       .navigationDestination(isPresented: $navigateToSettings) {
         SettingsView()
-          .environment(userPreferences)
       }
       .onChange(of: navigateToSettings) { _, newValue in
         // If setting presented, hide dynamic island view
@@ -624,6 +623,6 @@ struct ContentView: View {
 #Preview {
   ContentView(selectedDateFromWidget: .constant(nil))
     .modelContainer(for: DayEntry.self, inMemory: true)
-    .environment(UserPreferences.shared)
+    .environment(\.userPreferences, UserPreferences.shared)
     .preferredColorScheme(.light)
 }
