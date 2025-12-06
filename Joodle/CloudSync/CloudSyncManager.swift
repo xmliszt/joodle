@@ -283,6 +283,22 @@ final class CloudSyncManager {
   }
 
   // MARK: - Computed Properties
+
+  /// App-level preference (controlled by the app)
+  var appCloudEnabled: Bool {
+    return userPreferences.isCloudSyncEnabled
+  }
+
+  /// System-level iCloud Documents & Data status (controlled by iOS Settings)
+  var systemCloudEnabled: Bool {
+    return isSystemCloudEnabled
+  }
+
+  /// Whether the toggles are out of sync (app wants cloud but system has it disabled)
+  var needsSystemSettingsChange: Bool {
+    return appCloudEnabled && !systemCloudEnabled
+  }
+
   var canSync: Bool {
     return isSystemCloudEnabled && isCloudAvailable && networkMonitor.isConnected && userPreferences.isCloudSyncEnabled
   }
@@ -296,6 +312,23 @@ final class CloudSyncManager {
       return "No internet connection"
     } else if userPreferences.isCloudSyncEnabled {
       return "Sync enabled"
+    } else {
+      return "Sync disabled"
+    }
+  }
+
+  /// Detailed sync status message for UI display
+  var syncStatusMessage: String {
+    if needsSystemSettingsChange {
+      return "iCloud is disabled in iOS Settings. Enable it in \"Settings → [Your Name] → iCloud → Saved to iCloud -> Joodle\" to sync."
+    } else if systemCloudEnabled && !appCloudEnabled {
+      return "Sync is disabled in app. Enable it to sync with iCloud."
+    } else if systemCloudEnabled && appCloudEnabled && isCloudAvailable && networkMonitor.isConnected {
+      return "Sync to iCloud is enabled"
+    } else if !isCloudAvailable {
+      return "No iCloud available. Sign in to iCloud in Settings."
+    } else if !networkMonitor.isConnected {
+      return "No internet connection"
     } else {
       return "Sync disabled"
     }
@@ -319,6 +352,17 @@ final class CloudSyncManager {
       return "Last observed: \(formatter.localizedString(for: lastSync, relativeTo: Date()))"
     } else {
       return "No sync observed yet"
+    }
+  }
+
+  // MARK: - System Settings
+
+  /// Opens iOS Settings app
+  func openSystemSettings() {
+    if let url = URL(string: "App-prefs:") {
+      Task { @MainActor in
+        await UIApplication.shared.open(url)
+      }
     }
   }
 }

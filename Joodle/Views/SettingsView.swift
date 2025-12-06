@@ -130,7 +130,7 @@ struct SettingsView: View {
       }
 
       // MARK: - iCloud Sync
-      Section("iCloud") {
+      Section("iCloud Sync") {
         NavigationLink {
           iCloudSyncView()
         } label: {
