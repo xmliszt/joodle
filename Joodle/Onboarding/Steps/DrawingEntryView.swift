@@ -44,6 +44,7 @@ struct DrawingEntryView: View {
           Text("Capture this moment")
         }
         .buttonStyle(OnboardingButtonStyle())
+        .disabled(viewModel.firstDoodleData?.isEmpty ?? true)
       }
     }
     .frame(maxWidth: .infinity)
