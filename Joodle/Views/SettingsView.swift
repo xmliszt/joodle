@@ -157,7 +157,7 @@ struct SettingsView: View {
         }
       } footer: {
         if userPreferences.isCloudSyncEnabled {
-          Text("Last synced: \(userPreferences.lastCloudSyncDate?.formatted(date: .abbreviated, time: .shortened) ?? "never")")
+          Text("Sync is enabled. SwiftData automatically syncs journal entries in the background.")
             .font(.caption)
             .foregroundStyle(.secondary)
         } else {

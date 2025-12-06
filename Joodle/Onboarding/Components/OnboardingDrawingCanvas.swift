@@ -68,3 +68,41 @@ struct OnboardingDrawingCanvas: View {
     }
 
 }
+
+#Preview("Empty placeholder") {
+    StatefulPreviewWrapper(nil as Data?) { binding in
+        OnboardingDrawingCanvas(drawingData: binding, placeholderData: nil)
+            .padding()
+            .background(Color(uiColor: .systemBackground))
+    }
+}
+
+#Preview("With sample placeholder") {
+    // Provide a tiny sample JSON as placeholderData to visualize the placeholder rendering if supported
+    let samplePaths: [PathData] = [
+        PathData(points: [CGPoint(x: 10, y: 10), CGPoint(x: 60, y: 60)], isDot: false),
+        PathData(points: [CGPoint(x: 80, y: 20), CGPoint(x: 90, y: 30)], isDot: true)
+    ]
+    let placeholder = try? JSONEncoder().encode(samplePaths)
+
+    StatefulPreviewWrapper(nil as Data?) { binding in
+        OnboardingDrawingCanvas(drawingData: binding, placeholderData: placeholder)
+            .padding()
+            .background(Color(uiColor: .systemBackground))
+    }
+}
+
+// A tiny utility to create @State bindings for previews
+struct StatefulPreviewWrapper<Value, Content: View>: View {
+    @State private var value: Value
+    let content: (Binding<Value>) -> Content
+
+    init(_ initialValue: Value, content: @escaping (Binding<Value>) -> Content) {
+        _value = State(wrappedValue: initialValue)
+        self.content = content
+    }
+
+    var body: some View {
+        content($value)
+    }
+}

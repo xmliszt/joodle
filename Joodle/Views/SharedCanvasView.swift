@@ -7,6 +7,35 @@
 
 import SwiftUI
 
+/// Configuration for the canvas action buttons
+struct CanvasButtonsConfig {
+  let onClear: () -> Void
+  let onUndo: (() -> Void)?
+  let onRedo: (() -> Void)?
+  let canClear: Bool
+  let canUndo: Bool
+  let canRedo: Bool
+  let showClearConfirmation: Binding<Bool>?
+
+  init(
+    onClear: @escaping () -> Void,
+    onUndo: (() -> Void)? = nil,
+    onRedo: (() -> Void)? = nil,
+    canClear: Bool = true,
+    canUndo: Bool = false,
+    canRedo: Bool = false,
+    showClearConfirmation: Binding<Bool>? = nil
+  ) {
+    self.onClear = onClear
+    self.onUndo = onUndo
+    self.onRedo = onRedo
+    self.canClear = canClear
+    self.canUndo = canUndo
+    self.canRedo = canRedo
+    self.showClearConfirmation = showClearConfirmation
+  }
+}
+
 /// A reusable canvas view that handles drawing logic, rendering, and gestures.
 /// It is designed to be stateless regarding the data persistence, delegating that to the parent view.
 struct SharedCanvasView: View {
@@ -17,6 +46,7 @@ struct SharedCanvasView: View {
   @Binding var isDrawing: Bool
 
   var placeholderData: Data? = nil
+  var buttonsConfig: CanvasButtonsConfig? = nil
 
   /// Callback when a stroke is finished (finger lifted or moved out of bounds)
   var onCommitStroke: () -> Void
@@ -152,6 +182,56 @@ struct SharedCanvasView: View {
             currentPathIsDot = false
           }
       )
+
+      // Optional action buttons overlay
+      if let config = buttonsConfig, config.canClear && !paths.isEmpty {
+        VStack {
+          HStack {
+            Spacer()
+
+            // Action buttons
+            HStack(spacing: 12) {
+              // Undo button (if configured)
+              if let onUndo = config.onUndo {
+                Button(action: onUndo) {
+                  Image(systemName: "arrow.uturn.backward")
+                    .font(.system(size: 20))
+                    .foregroundColor(config.canUndo ? .primary : .secondary)
+                }
+                .disabled(!config.canUndo)
+                .opacity(config.canUndo ? 1.0 : 0.3)
+              }
+
+              // Redo button (if configured)
+              if let onRedo = config.onRedo {
+                Button(action: onRedo) {
+                  Image(systemName: "arrow.uturn.forward")
+                    .font(.system(size: 20))
+                    .foregroundColor(config.canRedo ? .primary : .secondary)
+                }
+                .disabled(!config.canRedo)
+                .opacity(config.canRedo ? 1.0 : 0.3)
+              }
+
+              // Clear/trash button
+              Button(action: {
+                if let showConfirmation = config.showClearConfirmation {
+                  showConfirmation.wrappedValue = true
+                } else {
+                  config.onClear()
+                }
+              }) {
+                Image(systemName: "trash.circle.fill")
+                  .font(.system(size: 30))
+                  .foregroundColor(.secondary.opacity(0.6))
+              }
+            }
+            .padding(10)
+          }
+
+          Spacer()
+        }
+      }
     }
     .onAppear {
       decodePlaceholder()
@@ -201,5 +281,274 @@ struct SharedCanvasView: View {
       placeholderPaths = []
       placeholderID = UUID()
     }
+  }
+}
+
+// MARK: - Previews
+
+#Preview("Empty Canvas - No Buttons") {
+  StatefulPreviewWrapperForSharedCanvas(
+    paths: [Path](),
+    pathMetadata: [PathMetadata](),
+    currentPath: Path(),
+    currentPathIsDot: false,
+    isDrawing: false
+  ) { paths, pathMetadata, currentPath, currentPathIsDot, isDrawing in
+    SharedCanvasView(
+      paths: paths,
+      pathMetadata: pathMetadata,
+      currentPath: currentPath,
+      currentPathIsDot: currentPathIsDot,
+      isDrawing: isDrawing,
+      onCommitStroke: {}
+    )
+    .padding()
+    .background(Color(uiColor: .systemBackground))
+  }
+}
+
+#Preview("With Content - Clear Button Only") {
+  let samplePaths = createSamplePaths()
+
+  StatefulPreviewWrapperForSharedCanvas(
+    paths: samplePaths.0,
+    pathMetadata: samplePaths.1,
+    currentPath: Path(),
+    currentPathIsDot: false,
+    isDrawing: false
+  ) { paths, pathMetadata, currentPath, currentPathIsDot, isDrawing in
+    SharedCanvasView(
+      paths: paths,
+      pathMetadata: pathMetadata,
+      currentPath: currentPath,
+      currentPathIsDot: currentPathIsDot,
+      isDrawing: isDrawing,
+      buttonsConfig: CanvasButtonsConfig(
+        onClear: {
+          paths.wrappedValue.removeAll()
+          pathMetadata.wrappedValue.removeAll()
+        },
+        canClear: !paths.wrappedValue.isEmpty
+      ),
+      onCommitStroke: {}
+    )
+    .padding()
+    .background(Color(uiColor: .systemBackground))
+  }
+}
+
+#Preview("With Undo/Redo Buttons") {
+  let samplePaths = createSamplePaths()
+
+  StatefulPreviewWrapperWithUndo(
+    paths: samplePaths.0,
+    pathMetadata: samplePaths.1
+  ) { paths, pathMetadata, currentPath, currentPathIsDot, isDrawing, undoStack, redoStack in
+    SharedCanvasView(
+      paths: paths,
+      pathMetadata: pathMetadata,
+      currentPath: currentPath,
+      currentPathIsDot: currentPathIsDot,
+      isDrawing: isDrawing,
+      buttonsConfig: CanvasButtonsConfig(
+        onClear: {
+          paths.wrappedValue.removeAll()
+          pathMetadata.wrappedValue.removeAll()
+        },
+        onUndo: {
+          guard !undoStack.wrappedValue.isEmpty else { return }
+          redoStack.wrappedValue.append((paths.wrappedValue, pathMetadata.wrappedValue))
+          let (previousPaths, previousMetadata) = undoStack.wrappedValue.removeLast()
+          paths.wrappedValue = previousPaths
+          pathMetadata.wrappedValue = previousMetadata
+        },
+        onRedo: {
+          guard !redoStack.wrappedValue.isEmpty else { return }
+          undoStack.wrappedValue.append((paths.wrappedValue, pathMetadata.wrappedValue))
+          let (redoPaths, redoMetadata) = redoStack.wrappedValue.removeLast()
+          paths.wrappedValue = redoPaths
+          pathMetadata.wrappedValue = redoMetadata
+        },
+        canClear: !paths.wrappedValue.isEmpty,
+        canUndo: !undoStack.wrappedValue.isEmpty,
+        canRedo: !redoStack.wrappedValue.isEmpty
+      ),
+      onCommitStroke: {}
+    )
+    .padding()
+    .background(Color(uiColor: .systemBackground))
+  }
+}
+
+#Preview("With Placeholder") {
+  let placeholder = createPlaceholderData()
+
+  StatefulPreviewWrapperForSharedCanvas(
+    paths: [Path](),
+    pathMetadata: [PathMetadata](),
+    currentPath: Path(),
+    currentPathIsDot: false,
+    isDrawing: false
+  ) { paths, pathMetadata, currentPath, currentPathIsDot, isDrawing in
+    SharedCanvasView(
+      paths: paths,
+      pathMetadata: pathMetadata,
+      currentPath: currentPath,
+      currentPathIsDot: currentPathIsDot,
+      isDrawing: isDrawing,
+      placeholderData: placeholder,
+      buttonsConfig: CanvasButtonsConfig(
+        onClear: {
+          paths.wrappedValue.removeAll()
+          pathMetadata.wrappedValue.removeAll()
+        },
+        canClear: !paths.wrappedValue.isEmpty
+      ),
+      onCommitStroke: {}
+    )
+    .padding()
+    .background(Color(uiColor: .systemBackground))
+  }
+}
+
+// MARK: - Preview Helpers
+
+private func createSamplePaths() -> ([Path], [PathMetadata]) {
+  var paths: [Path] = []
+  var metadata: [PathMetadata] = []
+
+  // Create a simple line path
+  var path1 = Path()
+  path1.move(to: CGPoint(x: 50, y: 50))
+  path1.addLine(to: CGPoint(x: 150, y: 100))
+  path1.addLine(to: CGPoint(x: 100, y: 150))
+  paths.append(path1)
+  metadata.append(PathMetadata(isDot: false))
+
+  // Create a dot path
+  var path2 = Path()
+  let dotRadius = DRAWING_LINE_WIDTH / 2
+  path2.addEllipse(
+    in: CGRect(
+      x: 200 - dotRadius,
+      y: 80 - dotRadius,
+      width: dotRadius * 2,
+      height: dotRadius * 2
+    ))
+  paths.append(path2)
+  metadata.append(PathMetadata(isDot: true))
+
+  // Create another line path
+  var path3 = Path()
+  path3.move(to: CGPoint(x: 180, y: 180))
+  path3.addLine(to: CGPoint(x: 220, y: 200))
+  paths.append(path3)
+  metadata.append(PathMetadata(isDot: false))
+
+  return (paths, metadata)
+}
+
+private func createPlaceholderData() -> Data? {
+  let samplePaths: [PathData] = [
+    PathData(
+      points: [
+        CGPoint(x: 100, y: 100),
+        CGPoint(x: 200, y: 150),
+        CGPoint(x: 150, y: 200)
+      ],
+      isDot: false
+    ),
+    PathData(
+      points: [CGPoint(x: 250, y: 120)],
+      isDot: true
+    )
+  ]
+  return try? JSONEncoder().encode(samplePaths)
+}
+
+// MARK: - Preview Wrapper Utilities
+private struct StatefulPreviewWrapperForSharedCanvas<Content: View>: View {
+  @State private var paths: [Path]
+  @State private var pathMetadata: [PathMetadata]
+  @State private var currentPath: Path
+  @State private var currentPathIsDot: Bool
+  @State private var isDrawing: Bool
+
+  let content: (
+    Binding<[Path]>,
+    Binding<[PathMetadata]>,
+    Binding<Path>,
+    Binding<Bool>,
+    Binding<Bool>
+  ) -> Content
+
+  init(
+    paths: [Path],
+    pathMetadata: [PathMetadata],
+    currentPath: Path,
+    currentPathIsDot: Bool,
+    isDrawing: Bool,
+    @ViewBuilder content: @escaping (
+      Binding<[Path]>,
+      Binding<[PathMetadata]>,
+      Binding<Path>,
+      Binding<Bool>,
+      Binding<Bool>
+    ) -> Content
+  ) {
+    _paths = State(wrappedValue: paths)
+    _pathMetadata = State(wrappedValue: pathMetadata)
+    _currentPath = State(wrappedValue: currentPath)
+    _currentPathIsDot = State(wrappedValue: currentPathIsDot)
+    _isDrawing = State(wrappedValue: isDrawing)
+    self.content = content
+  }
+
+  var body: some View {
+    content($paths, $pathMetadata, $currentPath, $currentPathIsDot, $isDrawing)
+  }
+}
+
+private struct StatefulPreviewWrapperWithUndo<Content: View>: View {
+  @State private var paths: [Path]
+  @State private var pathMetadata: [PathMetadata]
+  @State private var currentPath: Path = Path()
+  @State private var currentPathIsDot: Bool = false
+  @State private var isDrawing: Bool = false
+  @State private var undoStack: [([Path], [PathMetadata])] = []
+  @State private var redoStack: [([Path], [PathMetadata])] = []
+
+  let content: (
+    Binding<[Path]>,
+    Binding<[PathMetadata]>,
+    Binding<Path>,
+    Binding<Bool>,
+    Binding<Bool>,
+    Binding<[([Path], [PathMetadata])]>,
+    Binding<[([Path], [PathMetadata])]>
+  ) -> Content
+
+  init(
+    paths: [Path],
+    pathMetadata: [PathMetadata],
+    @ViewBuilder content: @escaping (
+      Binding<[Path]>,
+      Binding<[PathMetadata]>,
+      Binding<Path>,
+      Binding<Bool>,
+      Binding<Bool>,
+      Binding<[([Path], [PathMetadata])]>,
+      Binding<[([Path], [PathMetadata])]>
+    ) -> Content
+  ) {
+    _paths = State(wrappedValue: paths)
+    _pathMetadata = State(wrappedValue: pathMetadata)
+    // Initialize with one item in undo stack for demo
+    _undoStack = State(wrappedValue: [(paths, pathMetadata)])
+    self.content = content
+  }
+
+  var body: some View {
+    content($paths, $pathMetadata, $currentPath, $currentPathIsDot, $isDrawing, $undoStack, $redoStack)
   }
 }

@@ -66,6 +66,8 @@ struct JoodleApp: App {
           ContentView(selectedDateFromWidget: $selectedDateFromWidget)
             .environment(\.userPreferences, UserPreferences.shared)
             .environment(\.cloudSyncManager, CloudSyncManager.shared)
+            .environment(\.networkMonitor, NetworkMonitor.shared)
+            .environment(\.preferencesSyncManager, PreferencesSyncManager.shared)
             .preferredColorScheme(colorScheme)
             .font(.mansalva(size: 17))
             .onAppear {
