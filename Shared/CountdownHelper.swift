@@ -1,6 +1,6 @@
 //
 //  CountdownHelper.swift
-//  GoodDay
+//  Joodle
 //
 //  Shared utility for countdown text generation
 //

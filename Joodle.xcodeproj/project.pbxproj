@@ -1,0 +1,807 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		FA85D4502EB7AECA007D82EE /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D44F2EB7AECA007D82EE /* WidgetKit.framework */; };
+		FA85D4632EB7AECB007D82EE /* WidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FAB12DE32ED57E2F00F6006A /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D4512EB7AECA007D82EE /* SwiftUI.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		FA85D4612EB7AECB007D82EE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FADC357B2E48C2E1007AE111 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FA85D44C2EB7AECA007D82EE;
+			remoteInfo = WidgetsExtension;
+		};
+		FADC35952E48C2E2007AE111 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FADC357B2E48C2E1007AE111 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FADC35822E48C2E1007AE111;
+			remoteInfo = Joodle;
+		};
+		FADC359F2E48C2E2007AE111 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FADC357B2E48C2E1007AE111 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FADC35822E48C2E1007AE111;
+			remoteInfo = Joodle;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FA85D4682EB7AECB007D82EE /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				FA85D4632EB7AECB007D82EE /* WidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA85D44F2EB7AECA007D82EE /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		FA85D4512EB7AECA007D82EE /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		FA85D4732EB7AFC5007D82EE /* WidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WidgetsExtension.entitlements; sourceTree = "<group>"; };
+		FA88AA2D2EE41776009AEFEB /* Joodle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Joodle.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FADC35942E48C2E2007AE111 /* JoodleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JoodleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FADC359E2E48C2E2007AE111 /* JoodleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JoodleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FA85D4672EB7AECB007D82EE /* Exceptions for "Widgets" folder in "WidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FA85D44C2EB7AECA007D82EE /* WidgetsExtension */;
+		};
+		FABB3D932EBF4E7900C8CCBA /* Exceptions for "Fonts" folder in "WidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"Mansalva-Regular.ttf",
+			);
+			target = FA85D44C2EB7AECA007D82EE /* WidgetsExtension */;
+		};
+		FADC35A62E48C2E2007AE111 /* Exceptions for "Joodle" folder in "Joodle" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FADC35822E48C2E1007AE111 /* Joodle */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		FA85D4532EB7AECA007D82EE /* Widgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FA85D4672EB7AECB007D82EE /* Exceptions for "Widgets" folder in "WidgetsExtension" target */,
+			);
+			path = Widgets;
+			sourceTree = "<group>";
+		};
+		FABB3D8E2EBF4E7300C8CCBA /* Fonts */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FABB3D932EBF4E7900C8CCBA /* Exceptions for "Fonts" folder in "WidgetsExtension" target */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		FADC35852E48C2E1007AE111 /* Joodle */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FADC35A62E48C2E2007AE111 /* Exceptions for "Joodle" folder in "Joodle" target */,
+			);
+			path = Joodle;
+			sourceTree = "<group>";
+		};
+		FADC35972E48C2E2007AE111 /* JoodleTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = JoodleTests;
+			sourceTree = "<group>";
+		};
+		FADC35A12E48C2E2007AE111 /* JoodleUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = JoodleUITests;
+			sourceTree = "<group>";
+		};
+		FAE73C552EC0D32800AFCED7 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FA85D44A2EB7AECA007D82EE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FAB12DE32ED57E2F00F6006A /* SwiftUI.framework in Frameworks */,
+				FA85D4502EB7AECA007D82EE /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FADC35802E48C2E1007AE111 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FADC35912E48C2E2007AE111 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FADC359B2E48C2E2007AE111 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FA85D44E2EB7AECA007D82EE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FA85D44F2EB7AECA007D82EE /* WidgetKit.framework */,
+				FA85D4512EB7AECA007D82EE /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		FADC357A2E48C2E1007AE111 = {
+			isa = PBXGroup;
+			children = (
+				FAE73C552EC0D32800AFCED7 /* Shared */,
+				FA85D4732EB7AFC5007D82EE /* WidgetsExtension.entitlements */,
+				FADC35852E48C2E1007AE111 /* Joodle */,
+				FADC35972E48C2E2007AE111 /* JoodleTests */,
+				FADC35A12E48C2E2007AE111 /* JoodleUITests */,
+				FA85D4532EB7AECA007D82EE /* Widgets */,
+				FA85D44E2EB7AECA007D82EE /* Frameworks */,
+				FADC35842E48C2E1007AE111 /* Products */,
+				FABB3D8E2EBF4E7300C8CCBA /* Fonts */,
+			);
+			sourceTree = "<group>";
+		};
+		FADC35842E48C2E1007AE111 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FADC35942E48C2E2007AE111 /* JoodleTests.xctest */,
+				FADC359E2E48C2E2007AE111 /* JoodleUITests.xctest */,
+				FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */,
+				FA88AA2D2EE41776009AEFEB /* Joodle.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FA85D44C2EB7AECA007D82EE /* WidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA85D4642EB7AECB007D82EE /* Build configuration list for PBXNativeTarget "WidgetsExtension" */;
+			buildPhases = (
+				FA85D4492EB7AECA007D82EE /* Sources */,
+				FA85D44A2EB7AECA007D82EE /* Frameworks */,
+				FA85D44B2EB7AECA007D82EE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				FA85D4532EB7AECA007D82EE /* Widgets */,
+				FAE73C552EC0D32800AFCED7 /* Shared */,
+			);
+			name = WidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = WidgetsExtension;
+			productReference = FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		FADC35822E48C2E1007AE111 /* Joodle */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FADC35A72E48C2E2007AE111 /* Build configuration list for PBXNativeTarget "Joodle" */;
+			buildPhases = (
+				FADC357F2E48C2E1007AE111 /* Sources */,
+				FADC35802E48C2E1007AE111 /* Frameworks */,
+				FADC35812E48C2E1007AE111 /* Resources */,
+				FA85D4682EB7AECB007D82EE /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FA85D4622EB7AECB007D82EE /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FABB3D8E2EBF4E7300C8CCBA /* Fonts */,
+				FADC35852E48C2E1007AE111 /* Joodle */,
+				FAE73C552EC0D32800AFCED7 /* Shared */,
+			);
+			name = Joodle;
+			packageProductDependencies = (
+			);
+			productName = Joodle;
+			productReference = FA88AA2D2EE41776009AEFEB /* Joodle.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FADC35932E48C2E2007AE111 /* JoodleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FADC35AC2E48C2E2007AE111 /* Build configuration list for PBXNativeTarget "JoodleTests" */;
+			buildPhases = (
+				FADC35902E48C2E2007AE111 /* Sources */,
+				FADC35912E48C2E2007AE111 /* Frameworks */,
+				FADC35922E48C2E2007AE111 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FADC35962E48C2E2007AE111 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FADC35972E48C2E2007AE111 /* JoodleTests */,
+			);
+			name = JoodleTests;
+			packageProductDependencies = (
+			);
+			productName = JoodleTests;
+			productReference = FADC35942E48C2E2007AE111 /* JoodleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		FADC359D2E48C2E2007AE111 /* JoodleUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FADC35AF2E48C2E2007AE111 /* Build configuration list for PBXNativeTarget "JoodleUITests" */;
+			buildPhases = (
+				FADC359A2E48C2E2007AE111 /* Sources */,
+				FADC359B2E48C2E2007AE111 /* Frameworks */,
+				FADC359C2E48C2E2007AE111 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FADC35A02E48C2E2007AE111 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FADC35A12E48C2E2007AE111 /* JoodleUITests */,
+			);
+			name = JoodleUITests;
+			packageProductDependencies = (
+			);
+			productName = JoodleUITests;
+			productReference = FADC359E2E48C2E2007AE111 /* JoodleUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FADC357B2E48C2E1007AE111 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2610;
+				TargetAttributes = {
+					FA85D44C2EB7AECA007D82EE = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					FADC35822E48C2E1007AE111 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					FADC35932E48C2E2007AE111 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = FADC35822E48C2E1007AE111;
+					};
+					FADC359D2E48C2E2007AE111 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = FADC35822E48C2E1007AE111;
+					};
+				};
+			};
+			buildConfigurationList = FADC357E2E48C2E1007AE111 /* Build configuration list for PBXProject "Joodle" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = FADC357A2E48C2E1007AE111;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = FADC35842E48C2E1007AE111 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FADC35822E48C2E1007AE111 /* Joodle */,
+				FADC35932E48C2E2007AE111 /* JoodleTests */,
+				FADC359D2E48C2E2007AE111 /* JoodleUITests */,
+				FA85D44C2EB7AECA007D82EE /* WidgetsExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FA85D44B2EB7AECA007D82EE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FADC35812E48C2E1007AE111 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FADC35922E48C2E2007AE111 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FADC359C2E48C2E2007AE111 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FA85D4492EB7AECA007D82EE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FADC357F2E48C2E1007AE111 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FADC35902E48C2E2007AE111 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FADC359A2E48C2E2007AE111 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		FA85D4622EB7AECB007D82EE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FA85D44C2EB7AECA007D82EE /* WidgetsExtension */;
+			targetProxy = FA85D4612EB7AECB007D82EE /* PBXContainerItemProxy */;
+		};
+		FADC35962E48C2E2007AE111 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FADC35822E48C2E1007AE111 /* Joodle */;
+			targetProxy = FADC35952E48C2E2007AE111 /* PBXContainerItemProxy */;
+		};
+		FADC35A02E48C2E2007AE111 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FADC35822E48C2E1007AE111 /* Joodle */;
+			targetProxy = FADC359F2E48C2E2007AE111 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		FA85D4652EB7AECB007D82EE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = WidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AB3TLZ2LJT;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Widgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Widgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.liyuxuan.joodle.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FA85D4662EB7AECB007D82EE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = WidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AB3TLZ2LJT;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Widgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Widgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.liyuxuan.joodle.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		FADC35A82E48C2E2007AE111 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = joodle/joodle.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AB3TLZ2LJT;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Joodle/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Joodle;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Joodle needs access to save to Photos.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Joodle needs access to save to Photos.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.liyuxuan.joodle;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FADC35A92E48C2E2007AE111 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = joodle/joodle.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AB3TLZ2LJT;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Joodle/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Joodle;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Joodle needs access to save to Photos.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Joodle needs access to save to Photos.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.liyuxuan.joodle;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		FADC35AA2E48C2E2007AE111 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = AB3TLZ2LJT;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		FADC35AB2E48C2E2007AE111 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = AB3TLZ2LJT;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		FADC35AD2E48C2E2007AE111 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AB3TLZ2LJT;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.liyuxuan.JoodleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Joodle.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Joodle";
+			};
+			name = Debug;
+		};
+		FADC35AE2E48C2E2007AE111 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AB3TLZ2LJT;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.liyuxuan.JoodleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Joodle.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Joodle";
+			};
+			name = Release;
+		};
+		FADC35B02E48C2E2007AE111 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AB3TLZ2LJT;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.liyuxuan.JoodleUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Joodle;
+			};
+			name = Debug;
+		};
+		FADC35B12E48C2E2007AE111 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AB3TLZ2LJT;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.liyuxuan.JoodleUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Joodle;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FA85D4642EB7AECB007D82EE /* Build configuration list for PBXNativeTarget "WidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FA85D4652EB7AECB007D82EE /* Debug */,
+				FA85D4662EB7AECB007D82EE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FADC357E2E48C2E1007AE111 /* Build configuration list for PBXProject "Joodle" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FADC35AA2E48C2E2007AE111 /* Debug */,
+				FADC35AB2E48C2E2007AE111 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FADC35A72E48C2E2007AE111 /* Build configuration list for PBXNativeTarget "Joodle" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FADC35A82E48C2E2007AE111 /* Debug */,
+				FADC35A92E48C2E2007AE111 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FADC35AC2E48C2E2007AE111 /* Build configuration list for PBXNativeTarget "JoodleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FADC35AD2E48C2E2007AE111 /* Debug */,
+				FADC35AE2E48C2E2007AE111 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FADC35AF2E48C2E2007AE111 /* Build configuration list for PBXNativeTarget "JoodleUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FADC35B02E48C2E2007AE111 /* Debug */,
+				FADC35B12E48C2E2007AE111 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = FADC357B2E48C2E1007AE111 /* Project object */;
+}

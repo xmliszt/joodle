@@ -350,7 +350,7 @@ struct AnniversaryWidgetView: View {
           NoAnniversaryView(family: family)
         }
       }
-      .widgetURL(URL(string: "goodday://date/\(Int(anniversaryData.date.timeIntervalSince1970))"))
+      .widgetURL(URL(string: "joodle://date/\(Int(anniversaryData.date.timeIntervalSince1970))"))
     } else {
       NoAnniversaryView(family: family)
     }

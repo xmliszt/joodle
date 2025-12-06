@@ -118,7 +118,7 @@ struct RandomDoodleWidgetView: View {
       if let doodle = entry.doodle {
         DoodleView(drawingData: doodle.drawingData, family: family)
           .padding(family == .systemLarge ? 48 : 24)
-          .widgetURL(URL(string: "goodday://date/\(Int(doodle.date.timeIntervalSince1970))"))
+          .widgetURL(URL(string: "joodle://date/\(Int(doodle.date.timeIntervalSince1970))"))
           .containerBackground(for: .widget) {
             Color(UIColor.systemBackground)
           }
@@ -126,7 +126,7 @@ struct RandomDoodleWidgetView: View {
         // Show not found status
         NotFoundView(prompt: entry.prompt, family: family)
           .padding(8)
-          .widgetURL(URL(string: "goodday://date/\(Int(Date().timeIntervalSince1970))"))
+          .widgetURL(URL(string: "joodle://date/\(Int(Date().timeIntervalSince1970))"))
           .containerBackground(for: .widget) {
             Color(UIColor.systemBackground)
           }
@@ -145,7 +145,7 @@ struct LockScreenCircularView: View {
         DoodleView(drawingData: doodle.drawingData, family: family)
           .padding(8)
       }
-      .widgetURL(URL(string: "goodday://date/\(Int(doodle.date.timeIntervalSince1970))"))
+      .widgetURL(URL(string: "joodle://date/\(Int(doodle.date.timeIntervalSince1970))"))
       .containerBackground(for: .widget) {
         Color.clear
       }
@@ -159,7 +159,7 @@ struct LockScreenCircularView: View {
           .font(.system(size: 24))
           .foregroundStyle(.secondary)
       }
-      .widgetURL(URL(string: "goodday://date/\(Int(Date().timeIntervalSince1970))"))
+      .widgetURL(URL(string: "joodle://date/\(Int(Date().timeIntervalSince1970))"))
       .containerBackground(for: .widget) {
         Color.clear
       }

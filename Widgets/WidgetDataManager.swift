@@ -31,7 +31,7 @@ struct WidgetEntryData: Codable {
 struct WidgetDataManager {
   static let shared = WidgetDataManager()
 
-  private let appGroupIdentifier = "group.dev.liyuxuan.GoodDay"
+  private let appGroupIdentifier = "group.dev.liyuxuan.joodle"
   private let entriesKey = "widgetEntries"
 
   private init() {}

@@ -1,6 +1,6 @@
 //
 //  MockData.swift
-//  GoodDay
+//  Joodle
 //
 //  Created by Li Yuxuan on 8/11/25.
 //
