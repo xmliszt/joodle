@@ -30,6 +30,7 @@ struct DrawingEntryView: View {
           drawingData: $viewModel.firstDoodleData,
           placeholderData: PLACEHOLDER_DATA
         )
+        .padding()
         .padding(.top, 64)
       }
       .frame(maxWidth: .infinity)

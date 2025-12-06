@@ -89,3 +89,8 @@ struct PaywallView: View {
         }
     }
 }
+
+
+#Preview {
+  PaywallView(viewModel: OnboardingViewModel())
+}

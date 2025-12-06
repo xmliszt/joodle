@@ -7,18 +7,20 @@ struct OnboardingButtonStyle: ButtonStyle {
           .font(.headline)
           .foregroundColor(.appBackground)
           .frame(maxWidth: 237)
-          .frame(height: 56)
+          .frame(height: 48)
           .background(.appPrimary)
           .clipShape(Capsule())
           .glassEffect(.regular.interactive())
+          .shadow(color: .appBackground.opacity(0.15), radius: 8, x: 0, y: 4)
       } else {
         configuration.label
           .font(.headline)
           .foregroundColor(.appBackground)
           .frame(maxWidth: 237)
-          .frame(height: 56)
+          .frame(height: 48)
           .background(.appPrimary)
           .clipShape(Capsule())
+          .shadow(color: .appBackground.opacity(0.15), radius: 8, x: 0, y: 4)
       }
     }
 }

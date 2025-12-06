@@ -40,6 +40,11 @@ struct WidgetTutorialView: View {
             }
             .buttonStyle(OnboardingButtonStyle())
         }
+        .padding(.horizontal)
         .navigationBarBackButtonHidden(true)
     }
+}
+
+#Preview {
+  WidgetTutorialView(viewModel: OnboardingViewModel())
 }
