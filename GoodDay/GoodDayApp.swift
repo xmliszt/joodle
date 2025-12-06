@@ -21,6 +21,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 @main
 struct GoodDayApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+  @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
   @State private var colorScheme: ColorScheme? = UserPreferences.shared.preferredColorScheme
   @State private var selectedDateFromWidget: Date?
 
@@ -47,17 +48,24 @@ struct GoodDayApp: App {
 
   var body: some Scene {
     WindowGroup {
-      NavigationStack {
-        ContentView(selectedDateFromWidget: $selectedDateFromWidget)
+      if !hasCompletedOnboarding {
+        OnboardingFlowView()
           .environment(UserPreferences.shared)
           .preferredColorScheme(colorScheme)
           .font(.mansalva(size: 17))
-          .onAppear {
-            setupColorSchemeObserver()
-          }
-          .onOpenURL { url in
-            handleWidgetURL(url)
-          }
+      } else {
+        NavigationStack {
+          ContentView(selectedDateFromWidget: $selectedDateFromWidget)
+            .environment(UserPreferences.shared)
+            .preferredColorScheme(colorScheme)
+            .font(.mansalva(size: 17))
+            .onAppear {
+              setupColorSchemeObserver()
+            }
+            .onOpenURL { url in
+              handleWidgetURL(url)
+            }
+        }
       }
     }
     .modelContainer(sharedModelContainer)

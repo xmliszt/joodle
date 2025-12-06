@@ -1,4 +1,5 @@
 import Observation
+import SwiftData
 import SwiftUI
 
 // MARK: - Navigation Coordinator for Swipe Back Gesture
@@ -40,6 +41,8 @@ struct SettingsView: View {
   @Environment(UserPreferences.self) private var userPreferences: UserPreferences
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.modelContext) private var modelContext
+  @State private var showOnboarding = false
 
   var body: some View {
     Form {
@@ -128,6 +131,20 @@ struct SettingsView: View {
           ))
       }
 
+      // MARK: - Onboarding
+      Section {
+        Button("Revisit Onboarding") {
+          showOnboarding = true
+        }
+      }
+
+      // MARK: - Developer Options
+      Section("Developer Options") {
+        Button("Clear Today's Entries", role: .destructive) {
+          clearTodaysEntries()
+        }
+      }
+
       // MARK: - Reset Section
       Section {
         Button("Reset to Defaults", role: .destructive) {
@@ -156,6 +173,26 @@ struct SettingsView: View {
     .onChange(of: userPreferences.preferredColorScheme) { _, _ in
       // Force view refresh when color scheme changes
       NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
+    }
+    .fullScreenCover(isPresented: $showOnboarding) {
+      OnboardingFlowView()
+    }
+  }
+
+  private func clearTodaysEntries() {
+    let today = Date()
+    let startOfDay = Calendar.current.startOfDay(for: today)
+    let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+
+    let predicate = #Predicate<DayEntry> { entry in
+      entry.createdAt >= startOfDay && entry.createdAt < endOfDay
+    }
+
+    do {
+      try modelContext.delete(model: DayEntry.self, where: predicate)
+      try modelContext.save()
+    } catch {
+      print("Failed to clear today's entries: \(error)")
     }
   }
 }
