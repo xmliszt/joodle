@@ -163,7 +163,7 @@ class StoreKitManager: ObservableObject {
                             let transactionInfo = try checkVerified(status.transaction)
 
                             // Check if in trial period
-                            if let offerType = transactionInfo.offerType {
+                          if let offerType = transactionInfo.offer?.type {
                                 inTrial = (offerType == .introductory)
                             }
 
