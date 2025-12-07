@@ -57,7 +57,7 @@ struct DetailedView: View {
 
             VStack(spacing: 0) {
               Text(dateString)
-                .font(.mansalva(size: 48 * scale))
+                .font(.system(size: 48 * scale))
                 .foregroundColor(.appTextSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)

@@ -421,7 +421,7 @@ struct SmallAnniversaryView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if anniversaryData.hasText, let text = anniversaryData.text {
           Text(text)
-            .font(.mansalva(size: 12))
+            .font(.system(size: 12))
             .lineLimit(4)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 12)
@@ -433,7 +433,7 @@ struct SmallAnniversaryView: View {
 
       // Countdown text at bottom
       Text(CountdownHelper.countdownText(from: currentDate, to: anniversaryData.date))
-        .font(.mansalva(size: 12))
+        .font(.system(size: 12))
         .foregroundColor(.secondary)
         .padding(.horizontal, 8)
     }
@@ -454,11 +454,11 @@ struct MediumAnniversaryView: View {
       // Top bar with date and countdown
       HStack {
         Text(CountdownHelper.dateText(for: anniversaryData.date))
-          .font(.mansalva(size: 12))
+          .font(.system(size: 12))
           .foregroundColor(.secondary)
         Spacer()
         Text(CountdownHelper.countdownText(from: currentDate, to: anniversaryData.date))
-          .font(.mansalva(size: 12))
+          .font(.system(size: 12))
           .foregroundColor(.secondary)
       }
       .padding(.horizontal, 16)
@@ -483,12 +483,12 @@ struct MediumAnniversaryView: View {
         // Right side: Text or placeholder
         if anniversaryData.hasText, let text = anniversaryData.text {
           Text(text)
-            .font(.mansalva(size: 12))
+            .font(.system(size: 12))
             .lineLimit(5)
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {
           Text("No notes for this special day.")
-            .font(.mansalva(size: 12))
+            .font(.system(size: 12))
             .foregroundColor(.secondary.opacity(0.5))
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -517,7 +517,7 @@ struct LargeAnniversaryView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if anniversaryData.hasText, let text = anniversaryData.text {
           Text(text)
-            .font(.mansalva(size: 20))
+            .font(.system(size: 20))
             .multilineTextAlignment(.center)
             .padding(.horizontal, 12)
         }
@@ -526,7 +526,7 @@ struct LargeAnniversaryView: View {
 
       // Countdown text at bottom
       Text(CountdownHelper.countdownText(from: currentDate, to: anniversaryData.date))
-        .font(.mansalva(size: 16))
+        .font(.system(size: 16))
         .foregroundColor(.secondary)
         .padding(.horizontal, 16)
     }
@@ -625,7 +625,7 @@ struct NoAnniversaryView: View {
         .font(.system(size: family == .systemSmall ? 32 : family == .systemMedium ? 40 : 48))
         .foregroundColor(.secondary.opacity(0.3))
       Text("No future anniversaries")
-        .font(family == .systemSmall ? .mansalva(size: 11) : family == .systemMedium ? .mansalva(size: 11) : .mansalva(size: 15))
+        .font(family == .systemSmall ? .system(size: 11) : family == .systemMedium ? .system(size: 11) : .system(size: 15))
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
     }

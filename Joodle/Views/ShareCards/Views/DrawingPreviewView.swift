@@ -31,7 +31,7 @@ struct DrawingPreviewView: View {
     } else {
       // Empty state
       Image(systemName: "scribble")
-        .font(.mansalva(size: size * 0.16)) // Approx ratio based on ExcerptView (100/600)
+        .font(.system(size: size * 0.16)) // Approx ratio based on ExcerptView (100/600)
         .frame(width: size, height: size)
         .foregroundColor(.textColor.opacity(0.3))
     }

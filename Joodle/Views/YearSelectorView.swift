@@ -56,7 +56,7 @@ struct YearSelectorView: View {
     } label: {
       HStack(spacing: 4) {
         Text(headerText)
-          .font(.mansalva(size: 28))
+          .font(.title.bold())
           .foregroundColor(headerColor)
           .lineLimit(1)
           .minimumScaleFactor(0.8)

@@ -66,7 +66,7 @@ struct JoodleApp: App {
         OnboardingFlowView()
           .environment(\.userPreferences, UserPreferences.shared)
           .preferredColorScheme(colorScheme)
-          .font(.mansalva(size: 17))
+          .font(.system(size: 17))
       } else {
         NavigationStack {
           ContentView(selectedDateFromWidget: $selectedDateFromWidget)
@@ -75,7 +75,7 @@ struct JoodleApp: App {
             .environment(\.networkMonitor, NetworkMonitor.shared)
             .environment(\.preferencesSyncManager, PreferencesSyncManager.shared)
             .preferredColorScheme(colorScheme)
-            .font(.mansalva(size: 17))
+            .font(.system(size: 17))
             .onAppear {
               setupColorSchemeObserver()
               setupSyncObserver()
