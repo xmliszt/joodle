@@ -97,7 +97,6 @@ struct DrawingDisplayView: View {
     }
     .animation(.springFkingSatifying, value: isVisible)
     .animation(.springFkingSatifying, value: scale)
-    .animation(.springFkingSatifying, value: foregroundColor)
     .onAppear {
       // Load data immediately and animate
       loadDrawingData()
