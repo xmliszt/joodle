@@ -27,6 +27,7 @@ struct JoodleApp: App {
   @State private var selectedDateFromWidget: Date?
   @State private var containerKey = UUID()
   @State private var modelContainer: ModelContainer
+  @State private var showLaunchScreen = true
 
   init() {
     _modelContainer = State(initialValue: Self.createModelContainer())
@@ -87,6 +88,15 @@ struct JoodleApp: App {
               }
               .id(containerKey)
           }
+        }
+        
+        if showLaunchScreen {
+          LaunchScreenView()
+            .onAppear {
+              DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                showLaunchScreen = false
+              }
+            }
         }
       }
       .preferredColorScheme(colorScheme)
