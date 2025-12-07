@@ -252,16 +252,18 @@ struct SettingsView: View {
           .frame(maxWidth: .infinity, alignment: .leading)
       }
       
-      // MARK: - Developer Options
-      Section("Developer Options") {
-        Button("Revisit Onboarding") {
-          showOnboarding = true
-        }
-        Button("Clear Today's Entries", role: .destructive) {
-          clearTodaysEntries()
-        }
-        Button("Generate Placeholder") {
-          showPlaceholderGenerator = true
+      // MARK: - Developer Options (Only show in debug build)
+      if AppEnvironment.isDebug {
+        Section("Developer Options") {
+          Button("Revisit Onboarding") {
+            showOnboarding = true
+          }
+          Button("Clear Today's Entries", role: .destructive) {
+            clearTodaysEntries()
+          }
+          Button("Generate Placeholder") {
+            showPlaceholderGenerator = true
+          }
         }
       }
     }
