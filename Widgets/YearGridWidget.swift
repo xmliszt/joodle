@@ -211,10 +211,8 @@ struct YearGridWidgetView: View {
           Text(String(format: "%.1f%%", entry.percentage))
             .font(.mansalva(size: 20))
             .foregroundColor(.accent)
-          }
         }
         .padding(.horizontal, horizontalPadding)
-        .padding(.top, widgetFamily == .systemMedium ? 4 : 16)
 
         // Grid
         let availableWidth = geometry.size.width - (horizontalPadding * 2)
@@ -227,9 +225,13 @@ struct YearGridWidgetView: View {
           }
         }
         .padding(.horizontal, horizontalPadding)
-        .padding(.bottom, widgetFamily == .systemMedium ? 4 : 8)
       }
+      .padding(.top, widgetFamily == .systemMedium ? 4 : 16)
+      .padding(.bottom, widgetFamily == .systemMedium ? 4 : 8)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+    .containerBackground(for: .widget) {
+      Color(UIColor.systemBackground)
     }
   }
 
