@@ -208,15 +208,28 @@ class StoreKitManager: ObservableObject {
 
         let monthlyYearlyCost = monthly.price * 12
         let savings = monthlyYearlyCost - yearly.price
-        let percentage = (savings / monthlyYearlyCost) * 100
 
-        let percentageInt = NSDecimalNumber(decimal: percentage).intValue
+        // Convert to NSDecimalNumber for proper division
+        let savingsNumber = NSDecimalNumber(decimal: savings)
+        let costNumber = NSDecimalNumber(decimal: monthlyYearlyCost)
+
+        // Perform division and multiply by 100 for percentage
+        let percentageDecimal = savingsNumber.dividing(by: costNumber).multiplying(by: 100)
+        let percentageInt = percentageDecimal.rounding(accordingToBehavior: NSDecimalNumberHandler(
+            roundingMode: .plain,
+            scale: 0,
+            raiseOnExactness: false,
+            raiseOnOverflow: false,
+            raiseOnUnderflow: false,
+            raiseOnDivideByZero: false
+        )).intValue
 
         print("💵 Savings Calculation:")
         print("   Monthly: \(monthly.displayPrice) (\(monthly.price))")
         print("   Yearly: \(yearly.displayPrice) (\(yearly.price))")
         print("   Monthly x12: \(monthlyYearlyCost)")
         print("   Savings: \(savings)")
+        print("   Percentage Decimal: \(percentageDecimal)")
         print("   Percentage: \(percentageInt)%")
 
         return percentageInt

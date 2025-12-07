@@ -34,7 +34,7 @@ struct OnboardingSecondaryButtonStyle: ButtonStyle {
       if #available(iOS 26.0, *) {
         configuration.label
           .font(.headline)
-          .foregroundColor(.appTextSecondary)
+          .foregroundColor(.appTextPrimary)
           .frame(maxWidth: 237)
           .frame(height: 48)
           .background(.appBorder)

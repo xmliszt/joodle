@@ -156,7 +156,7 @@ struct PaywallView: View {
                     viewModel.isPremium = false
                     viewModel.completeStep(.paywall)
                   } label: {
-                    Text("Continue with Free Version")
+                    Text("Continue for free")
                       .font(.headline)
                   }
                   .buttonStyle(OnboardingSecondaryButtonStyle())
@@ -374,7 +374,7 @@ struct PricingCard: View {
               Capsule()
                 .fill(.accent)
             )
-            .offset(x: -12, y: -8)
+            .offset(x: -0, y: -12)
         }
       }
     }
