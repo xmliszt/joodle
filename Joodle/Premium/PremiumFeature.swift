@@ -182,6 +182,7 @@ final class PremiumAccessController: ObservableObject {
 
 extension Notification.Name {
     static let subscriptionDidExpire = Notification.Name("subscriptionDidExpire")
+    static let subscriptionDidActivate = Notification.Name("subscriptionDidActivate")
     static let premiumFeatureAccessed = Notification.Name("premiumFeatureAccessed")
 }
 

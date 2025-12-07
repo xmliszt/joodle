@@ -117,6 +117,11 @@ class SubscriptionManager: ObservableObject {
             handleSubscriptionLost()
         }
 
+        // Check if user just upgraded from free to subscribed
+        if !wasSubscribed && self.isSubscribed {
+            handleSubscriptionGained()
+        }
+
         print("📊 SubscriptionManager updated:")
         print("   isSubscribed: \(isSubscribed)")
         print("   isInTrialPeriod: \(isInTrialPeriod)")
@@ -155,7 +160,41 @@ class SubscriptionManager: ObservableObject {
         }
     }
 
-    // MARK: - Subscription Loss Handling
+    // MARK: - Subscription State Change Handling
+
+    private func handleSubscriptionGained() {
+        print("🎉 Subscription gained - enabling premium features")
+
+        // Auto-enable iCloud sync when user upgrades
+        if !UserPreferences.shared.isCloudSyncEnabled {
+            // Check if system requirements are met for iCloud sync
+            let syncManager = CloudSyncManager.shared
+
+            if syncManager.isCloudAvailable && syncManager.systemCloudEnabled {
+                print("   Auto-enabling iCloud sync for new subscriber")
+                UserPreferences.shared.isCloudSyncEnabled = true
+
+                // Notify the app to recreate ModelContainer with cloud sync
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("CloudSyncPreferenceChanged"),
+                    object: nil
+                )
+            } else {
+                print("   iCloud sync not auto-enabled: system requirements not met")
+                print("   isCloudAvailable: \(syncManager.isCloudAvailable)")
+                print("   systemCloudEnabled: \(syncManager.systemCloudEnabled)")
+            }
+        }
+
+        // Update widget subscription status
+        WidgetHelper.shared.updateSubscriptionStatus()
+
+        // Post notification for other parts of the app
+        NotificationCenter.default.post(
+            name: .subscriptionDidActivate,
+            object: nil
+        )
+    }
 
     private func handleSubscriptionLost() {
         print("⚠️ Subscription lost - disabling premium features")
