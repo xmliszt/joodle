@@ -147,7 +147,7 @@ struct SubscriptionsView: View {
       }
       .padding(.horizontal, 20)
       
-      if subscriptionManager.isInTrialPeriod {
+      if subscriptionManager.isInTrialPeriod && subscriptionManager.willAutoRenew {
         Text("Your free trial will automatically convert to a paid subscription on \(subscriptionManager.subscriptionExpirationDate?.formatted(date: .long, time: .omitted) ?? "the expiration date"). Cancel anytime before then to avoid charges.")
           .font(.caption2)
           .foregroundColor(.secondary)

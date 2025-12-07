@@ -83,11 +83,6 @@ struct SettingsView: View {
     )
   }
   
-  // Only show backup/restore when iCloud is not available or not enabled
-  private var shouldShowManualBackup: Bool {
-    return !cloudSyncManager.canSync
-  }
-  
   var body: some View {
     Form {
       
@@ -135,7 +130,7 @@ struct SettingsView: View {
       
       // MARK: - Interaction Preferences
       Section("Interactions") {
-        Toggle("Enable haptic feedback", isOn: hapticBinding)
+        Toggle("Haptic feedback", isOn: hapticBinding)
       }
       
       // MARK: - Subscription
@@ -218,14 +213,12 @@ struct SettingsView: View {
             }
           }
         }
-        if shouldShowManualBackup {
-          Button(action: { exportData() }) {
-            Text("Backup")
-          }
-          
-          Button(action: { showFileImporter = true }) {
-            Text("Restore")
-          }
+        Button(action: { exportData() }) {
+          Text("Backup locally")
+        }
+        
+        Button(action: { showFileImporter = true }) {
+          Text("Restore from local backup")
         }
       }
       
@@ -299,7 +292,7 @@ struct SettingsView: View {
       isPresented: $showFileExporter,
       document: exportDocument,
       contentType: .json,
-      defaultFilename: "Joodle_Data_Bakcup_\(Date().timeIntervalSince1970)"
+      defaultFilename: "Joodle_Data_Backup_\(Date().timeIntervalSince1970)"
     ) { result in
       if case .failure(let error) = result {
         print("Backup failed: \(error.localizedDescription)")

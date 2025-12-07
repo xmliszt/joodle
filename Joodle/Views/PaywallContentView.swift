@@ -121,11 +121,12 @@ struct PaywallContentView: View {
                 subtitle: "Sync across all your devices"
             )
 
-            FeatureRow(
-                icon: "square.and.arrow.up.fill",
-                title: "More share templates",
-                subtitle: "Beautiful templates for sharing"
-            )
+            // TODO: Unhide when share templates feature is ready
+            // FeatureRow(
+            //     icon: "square.and.arrow.up.fill",
+            //     title: "More share templates",
+            //     subtitle: "Beautiful templates for sharing"
+            // )
         }
         .padding()
     }
@@ -238,7 +239,7 @@ struct PaywallContentView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                .toggleStyle(.switch)
+                .tint(.accent)
                 .frame(width: 150)
                 .padding(.horizontal, 48)
             }

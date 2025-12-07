@@ -21,6 +21,8 @@ struct OnboardingFlowView: View {
                         PaywallView(viewModel: viewModel)
                     case .widgetTutorial:
                         WidgetTutorialView(viewModel: viewModel)
+                    case .onboardingCompletion:
+                        OnboardingCompletionView(viewModel: viewModel)
                     }
                 }
         }

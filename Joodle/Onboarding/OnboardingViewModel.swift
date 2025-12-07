@@ -8,7 +8,8 @@ enum OnboardingStep: Hashable, CaseIterable {
     case valueProposition  // Confetti + Explanation
     case paywall           // Subscription choice
     // case icloudConfig   // Skipped for V1
-    case widgetTutorial    // Final welcome
+    case widgetTutorial    // Final welcome (hidden for now)
+    case onboardingCompletion // Completion step
 }
 
 // 2. The Brain: Manages data and navigation logic
@@ -38,13 +39,22 @@ class OnboardingViewModel: ObservableObject {
             navigationPath.append(OnboardingStep.valueProposition)
 
         case .valueProposition:
-            navigationPath.append(OnboardingStep.paywall)
+            // Skip paywall and finish immediately if user already has an active subscription
+            if StoreKitManager.shared.hasActiveSubscription {
+                finishOnboarding()
+            } else {
+                navigationPath.append(OnboardingStep.paywall)
+            }
 
         case .paywall:
-            // V1: Skip iCloud config, go straight to widget tutorial
-            navigationPath.append(OnboardingStep.widgetTutorial)
+            // Skip widget tutorial (not ready), go straight to completion
+            navigationPath.append(OnboardingStep.onboardingCompletion)
 
         case .widgetTutorial:
+            // Widget tutorial is currently hidden, but if somehow reached, go to completion
+            navigationPath.append(OnboardingStep.onboardingCompletion)
+
+        case .onboardingCompletion:
             finishOnboarding()
         }
     }
