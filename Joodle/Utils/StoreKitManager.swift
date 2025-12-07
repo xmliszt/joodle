@@ -17,6 +17,11 @@ class StoreKitManager: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    // Subscription status details
+    @Published var isInTrialPeriod = false
+    @Published var subscriptionExpirationDate: Date?
+    @Published var willAutoRenew = true
+
     private let productIDs: [String] = [
         "dev.liyuxuan.joodle.super.monthly",
         "dev.liyuxuan.joodle.super.yearly"
@@ -133,6 +138,9 @@ class StoreKitManager: ObservableObject {
 
     func updatePurchasedProducts() async {
         var purchasedIDs: Set<String> = []
+        var expirationDate: Date?
+        var inTrial = false
+        var autoRenew = true
 
         for await result in Transaction.currentEntitlements {
             do {
@@ -141,6 +149,33 @@ class StoreKitManager: ObservableObject {
                 // Check if the subscription is still active
                 if transaction.revocationDate == nil {
                     purchasedIDs.insert(transaction.productID)
+
+                    // Get subscription status details
+                    if let product = products.first(where: { $0.id == transaction.productID }),
+                       let subscription = product.subscription {
+
+                        // Check current subscription status
+                        let statuses = try await subscription.status
+
+                        for status in statuses {
+                            // Verify the status
+                            let renewalInfo = try checkVerified(status.renewalInfo)
+                            let transactionInfo = try checkVerified(status.transaction)
+
+                            // Check if in trial period
+                            if let offerType = transactionInfo.offerType {
+                                inTrial = (offerType == .introductory)
+                            }
+
+                            // Get expiration date
+                            if let expiration = transactionInfo.expirationDate {
+                                expirationDate = expiration
+                            }
+
+                            // Check auto-renewal status
+                            autoRenew = renewalInfo.willAutoRenew
+                        }
+                    }
                 }
             } catch {
                 debugPrint("Failed to verify transaction: \(error)")
@@ -148,6 +183,15 @@ class StoreKitManager: ObservableObject {
         }
 
         self.purchasedProductIDs = purchasedIDs
+        self.isInTrialPeriod = inTrial
+        self.subscriptionExpirationDate = expirationDate
+        self.willAutoRenew = autoRenew
+
+        print("📊 Subscription Status:")
+        print("   Active: \(!purchasedIDs.isEmpty)")
+        print("   Trial: \(inTrial)")
+        print("   Expiration: \(expirationDate?.formatted() ?? "N/A")")
+        print("   Auto-Renew: \(autoRenew)")
     }
 
     // MARK: - Transaction Verification

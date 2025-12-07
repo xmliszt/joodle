@@ -55,10 +55,6 @@ struct DotView: View {
                             .springFkingSatifying,
                             value: scale
                         )
-                        .animation(
-                            .springFkingSatifying,
-                            value: highlighted
-                        )
                 } else {
                     // Fallback on earlier versions
                     Circle()
@@ -67,10 +63,6 @@ struct DotView: View {
                         .animation(
                             .springFkingSatifying,
                             value: scale
-                        )
-                        .animation(
-                            .springFkingSatifying,
-                            value: highlighted
                         )
                 }
             } else {
@@ -82,10 +74,6 @@ struct DotView: View {
                         .springFkingSatifying,
                         value: scale
                     )
-                    .animation(
-                        .springFkingSatifying,
-                        value: highlighted
-                    )
             }
 
             // Ring for entries - positioned absolutely
@@ -96,10 +84,6 @@ struct DotView: View {
                     .animation(
                         .springFkingSatifying,
                         value: scale
-                    )
-                    .animation(
-                        .springFkingSatifying,
-                        value: highlighted
                     )
             }
         }

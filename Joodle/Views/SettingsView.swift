@@ -44,8 +44,11 @@ struct SettingsView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
+  @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var showOnboarding = false
   @State private var showPlaceholderGenerator = false
+  @State private var showPaywall = false
+  @State private var showSubscriptions = false
 
   // Import/Export State
   @State private var showFileExporter = false
@@ -135,6 +138,64 @@ struct SettingsView: View {
         Toggle("Enable haptic feedback", isOn: hapticBinding)
       }
 
+      // MARK: - Subscription
+      Section {
+        if subscriptionManager.isSubscribed {
+          // Detailed subscription status card
+          Button {
+            showSubscriptions = true
+          } label: {
+            VStack(alignment: .leading, spacing: 12) {
+              HStack {
+                HStack(spacing: 8) {
+                  Image(systemName: "crown.fill")
+                    .foregroundStyle(.accent)
+                    .font(.body)
+                  Text("Joodle Super")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                  .font(.caption)
+                  .foregroundColor(.secondary)
+              }
+
+              if let statusMessage = subscriptionManager.subscriptionStatusMessage {
+                // Trial or cancellation status
+                Text(statusMessage)
+                  .font(.subheadline)
+                  .foregroundColor(.secondary)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+              } else {
+                // Active subscription with no issues
+                Text("You have full access to all premium features")
+                  .font(.subheadline)
+                  .foregroundColor(.secondary)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+              }
+            }
+            .padding(.vertical, 4)
+          }
+        } else {
+          // No subscription - show simple upgrade button
+          Button {
+            showPaywall = true
+          } label: {
+            HStack {
+              Text("Joodle Super")
+              Spacer()
+              Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+          }
+          .foregroundColor(.primary)
+        }
+      } header: {
+        Text("Subscription")
+      }
+
       // MARK: - iCloud Sync
       Section("iCloud Sync") {
         NavigationLink {
@@ -209,6 +270,12 @@ struct SettingsView: View {
     .sheet(isPresented: $showPlaceholderGenerator) {
       PlaceholderGeneratorView()
     }
+    .sheet(isPresented: $showPaywall) {
+      StandalonePaywallView()
+    }
+    .navigationDestination(isPresented: $showSubscriptions) {
+      SubscriptionsView()
+    }
     .fileExporter(
       isPresented: $showFileExporter,
       document: exportDocument,
@@ -237,6 +304,13 @@ struct SettingsView: View {
       Button("OK", role: .cancel) { }
     } message: {
       Text(importMessage)
+    }
+    .onAppear {
+      // Check subscription status when view appears
+      Task {
+        await StoreKitManager.shared.updatePurchasedProducts()
+        await subscriptionManager.updateSubscriptionStatus()
+      }
     }
   }
 
