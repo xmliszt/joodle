@@ -29,6 +29,9 @@ class StoreKitManager: ObservableObject {
 
     private var updateListenerTask: Task<Void, Error>?
 
+    /// Debug logger for TestFlight troubleshooting
+    private let debugLogger = PaywallDebugLogger.shared
+
     init() {
         updateListenerTask = listenForTransactions()
         Task {
@@ -47,12 +50,16 @@ class StoreKitManager: ObservableObject {
         isLoading = true
         errorMessage = nil
 
+        debugLogger.logProductsLoading()
         print("📦 StoreKit: Loading products for IDs: \(productIDs)")
         print("📦 StoreKit: Environment - \(getEnvironmentInfo())")
 
         do {
             let loadedProducts = try await Product.products(for: productIDs)
             print("📦 StoreKit: Loaded \(loadedProducts.count) products")
+
+            // Log to debug logger
+            debugLogger.logProductsLoaded(count: loadedProducts.count, productIDs: loadedProducts.map { $0.id })
 
             for product in loadedProducts {
                 print("📦 Product: \(product.id)")
@@ -61,6 +68,13 @@ class StoreKitManager: ObservableObject {
                 print("   💰 Raw Price: \(product.price)")
                 print("   💰 Currency Code: \(product.priceFormatStyle.currencyCode)")
                 print("   🌍 Locale: \(product.priceFormatStyle.locale.identifier)")
+
+                // Log each product to debug logger
+                debugLogger.logProductDetails(
+                    id: product.id,
+                    displayName: product.displayName,
+                    price: product.displayPrice
+                )
             }
 
             self.products = loadedProducts.sorted { product1, product2 in
@@ -85,17 +99,20 @@ class StoreKitManager: ObservableObject {
                 """
                 errorMessage = "Unable to load subscription plans. Please try again later."
                 print("⚠️ StoreKit: \(troubleshootingMessage)")
+                debugLogger.log(.warning, "No products found", details: troubleshootingMessage)
             }
         } catch let error as StoreKitError {
             let detailedError = handleStoreKitError(error)
             errorMessage = detailedError
             print("❌ StoreKit Error (StoreKitError): \(error)")
             print("❌ Detailed: \(detailedError)")
+            debugLogger.logStoreKitError(error, context: "Loading products (StoreKitError)")
         } catch {
             errorMessage = "Failed to load products: \(error.localizedDescription)"
             print("❌ StoreKit Error: \(error)")
             print("❌ Error type: \(type(of: error))")
             print("❌ Full error description: \(String(describing: error))")
+            debugLogger.logStoreKitError(error, context: "Loading products")
         }
 
         isLoading = false
@@ -146,31 +163,42 @@ class StoreKitManager: ObservableObject {
         isLoading = true
         errorMessage = nil
 
+        debugLogger.logPurchaseAttempt(productID: product.id)
+
         defer { isLoading = false }
 
-        let result = try await product.purchase()
+        do {
+            let result = try await product.purchase()
 
-        switch result {
-        case .success(let verification):
-            // Check if the transaction is verified
-            let transaction = try checkVerified(verification)
+            switch result {
+            case .success(let verification):
+                // Check if the transaction is verified
+                let transaction = try checkVerified(verification)
 
-            // Update purchased products
-            await updatePurchasedProducts()
+                // Update purchased products
+                await updatePurchasedProducts()
 
-            // Finish the transaction
-            await transaction.finish()
+                // Finish the transaction
+                await transaction.finish()
 
-            return transaction
+                debugLogger.logPurchaseSuccess(productID: product.id)
+                return transaction
 
-        case .userCancelled:
-            return nil
+            case .userCancelled:
+                debugLogger.logPurchaseCancelled()
+                return nil
 
-        case .pending:
-            return nil
+            case .pending:
+                debugLogger.log(.info, "Purchase pending", details: product.id)
+                return nil
 
-        @unknown default:
-            return nil
+            @unknown default:
+                debugLogger.log(.warning, "Unknown purchase result", details: product.id)
+                return nil
+            }
+        } catch {
+            debugLogger.logPurchaseFailed(productID: product.id, error: error)
+            throw error
         }
     }
 
@@ -180,12 +208,16 @@ class StoreKitManager: ObservableObject {
         isLoading = true
         errorMessage = nil
 
+        debugLogger.logRestoreAttempt()
+
         do {
             try await AppStore.sync()
             await updatePurchasedProducts()
+            debugLogger.logRestoreSuccess(productIDs: purchasedProductIDs)
         } catch {
             errorMessage = "Failed to restore purchases: \(error.localizedDescription)"
             debugPrint("Failed to restore purchases: \(error)")
+            debugLogger.logRestoreFailed(error)
         }
 
         isLoading = false
@@ -249,6 +281,10 @@ class StoreKitManager: ObservableObject {
         print("   Trial: \(inTrial)")
         print("   Expiration: \(expirationDate?.formatted() ?? "N/A")")
         print("   Auto-Renew: \(autoRenew)")
+
+        // Log subscription status to debug logger
+        let statusDetails = "Active: \(!purchasedIDs.isEmpty), Trial: \(inTrial), Auto-Renew: \(autoRenew)"
+        debugLogger.log(.debug, "Subscription status updated", details: statusDetails)
     }
 
     // MARK: - Transaction Verification
