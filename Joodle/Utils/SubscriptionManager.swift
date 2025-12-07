@@ -85,11 +85,11 @@ class SubscriptionManager: ObservableObject {
         isSubscribed
     }
 
-    // Free plan limits
-    static let freeDoodlesPerYear = 30
+    // Free plan limits - maximum total doodles allowed for free users
+    static let freeDoodlesAllowed = 21
 
-    var doodlesPerYear: Int {
-        isSubscribed ? Int.max : Self.freeDoodlesPerYear
+    var maxDoodlesAllowed: Int {
+        isSubscribed ? Int.max : Self.freeDoodlesAllowed
     }
 
     // MARK: - Update Status
@@ -334,37 +334,34 @@ class SubscriptionManager: ObservableObject {
     // MARK: - Doodle Limit Helpers
 
     /// Check if user can create a new doodle based on their plan
-    func canCreateDoodle(currentYearlyCount: Int) -> Bool {
+    func canCreateDoodle(currentTotalCount: Int) -> Bool {
         if hasUnlimitedDoodles {
             return true
         }
-        return currentYearlyCount < doodlesPerYear
+        return currentTotalCount < maxDoodlesAllowed
     }
 
     /// Get remaining doodles for free users
-    func remainingDoodles(currentYearlyCount: Int) -> Int {
+    func remainingDoodles(currentTotalCount: Int) -> Int {
         if hasUnlimitedDoodles {
             return Int.max
         }
-        return max(0, doodlesPerYear - currentYearlyCount)
+        return max(0, maxDoodlesAllowed - currentTotalCount)
     }
 
-    /// Get count of doodles created in the past year
-    func doodleCountThisYear(from entries: [DayEntry]) -> Int {
-        let calendar = Calendar.current
-        let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: Date())!
-
+    /// Get total count of doodles across all entries
+    func totalDoodleCount(from entries: [DayEntry]) -> Int {
         return entries.filter { entry in
-            entry.drawingData != nil && entry.createdAt >= oneYearAgo
+            entry.drawingData != nil
         }.count
     }
 
-    /// Check if a specific doodle can be edited (by its yearly index, 0-based)
-    func canEditDoodle(atYearlyIndex index: Int) -> Bool {
+    /// Check if a specific doodle can be edited (by its index, 0-based)
+    func canEditDoodle(atIndex index: Int) -> Bool {
         if hasUnlimitedDoodles {
             return true
         }
-        // Free users can only edit their first N doodles of the year
-        return index < doodlesPerYear
+        // Free users can only edit their first N doodles
+        return index < maxDoodlesAllowed
     }
 }

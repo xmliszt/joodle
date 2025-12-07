@@ -57,11 +57,9 @@ struct ContentView: View {
 
   // MARK: Computed
 
-  /// Entries with drawings from the past year (for doodle limit calculation)
-  private var entriesThisYear: [DayEntry] {
-    let calendar = Calendar.current
-    let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: Date())!
-    return entries.filter { $0.createdAt >= oneYearAgo }
+  /// All entries (for doodle limit calculation)
+  private var allEntriesArray: [DayEntry] {
+    return Array(entries)
   }
 
   /// Flattened array of items to be displayed in the year grid.
@@ -278,7 +276,7 @@ struct ContentView: View {
             showDrawingCanvas = false
           },
           isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland,
-          allEntriesThisYear: entriesThisYear
+          allEntries: allEntriesArray
         )
         .disabled(selectedDateItem == nil)
         .presentationDetents([.height(420)])
@@ -314,7 +312,7 @@ struct ContentView: View {
                 showDrawingCanvas = false
               },
               isShowing: showDrawingCanvas,
-              allEntriesThisYear: entriesThisYear
+              allEntries: allEntriesArray
             )
           },
           // Hide dynamic island view when navigate to setting

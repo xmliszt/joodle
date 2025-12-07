@@ -30,8 +30,8 @@ struct DrawingCanvasView: View {
   /// But that doesn't make it visible yet as controlled by DynamicIslandExpandedView
   let isShowing: Bool
 
-  /// All entries this year for doodle limit calculation
-  let allEntriesThisYear: [DayEntry]
+  /// All entries for doodle limit calculation
+  let allEntries: [DayEntry]
 
   @State private var currentPath = Path()
   @State private var paths: [Path] = []
@@ -124,18 +124,18 @@ struct DrawingCanvasView: View {
   // MARK: - Access Control UI
 
   private var remainingDoodlesHeader: some View {
-    let yearlyCount = subscriptionManager.doodleCountThisYear(from: allEntriesThisYear)
-    let remaining = subscriptionManager.remainingDoodles(currentYearlyCount: yearlyCount)
+    let totalCount = subscriptionManager.totalDoodleCount(from: allEntries)
+    let remaining = subscriptionManager.remainingDoodles(currentTotalCount: totalCount)
 
     return HStack(spacing: 6) {
       Image(systemName: remaining > 0 ? "scribble" : "lock.fill")
         .font(.caption)
 
       if remaining > 0 {
-        Text("\(remaining) doodles left this year")
+        Text("\(remaining) doodles left")
           .font(.caption)
       } else {
-        Text("Yearly limit reached")
+        Text("Limit reached")
           .font(.caption)
       }
 
@@ -225,25 +225,25 @@ struct DrawingCanvasView: View {
     let hasExistingDrawing = entry?.drawingData != nil
 
     if hasExistingDrawing {
-      // Editing existing - check if within first 60 of the year
-      let entriesWithDrawings = allEntriesThisYear
+      // Editing existing - check if within first N doodles
+      let entriesWithDrawings = allEntries
         .filter { $0.drawingData != nil }
         .sorted { $0.createdAt < $1.createdAt }
 
       if let entry = entry,
          let index = entriesWithDrawings.firstIndex(where: { $0.id == entry.id }) {
-        if subscriptionManager.canEditDoodle(atYearlyIndex: index) {
+        if subscriptionManager.canEditDoodle(atIndex: index) {
           accessState = .canEdit
         } else {
-          accessState = .editingLocked(reason: "Free accounts can only edit their first \(SubscriptionManager.freeDoodlesPerYear) doodles per year. This doodle is #\(index + 1).")
+          accessState = .editingLocked(reason: "Free accounts can only edit their first \(SubscriptionManager.freeDoodlesAllowed) doodles. This doodle is #\(index + 1).")
         }
       } else {
         accessState = .canEdit
       }
     } else {
       // Creating new - check limit
-      let yearlyCount = subscriptionManager.doodleCountThisYear(from: allEntriesThisYear)
-      if subscriptionManager.canCreateDoodle(currentYearlyCount: yearlyCount) {
+      let totalCount = subscriptionManager.totalDoodleCount(from: allEntries)
+      if subscriptionManager.canCreateDoodle(currentTotalCount: totalCount) {
         accessState = .canCreate
       } else {
         accessState = .limitReached
@@ -475,6 +475,6 @@ struct DrawingCanvasView: View {
     entry: DayEntry(body: "HELLO", createdAt: Date(), drawingData: nil),
     onDismiss: {},
     isShowing: true,
-    allEntriesThisYear: []
+    allEntries: []
   )
 }

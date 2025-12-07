@@ -66,7 +66,7 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
     var freeLimit: Int? {
         switch self {
         case .unlimitedDoodles:
-            return 60 // 60 doodles per year
+            return SubscriptionManager.freeDoodlesAllowed
         default:
             return nil
         }
@@ -119,30 +119,30 @@ final class PremiumAccessController: ObservableObject {
         return isSubscribed
     }
 
-    /// Check if user can create a new doodle based on current count
-    func canCreateDoodle(currentYearlyCount: Int) -> Bool {
+    /// Check if user can create a new doodle based on current total count
+    func canCreateDoodle(currentTotalCount: Int) -> Bool {
         if isSubscribed {
             return true
         }
-        return currentYearlyCount < (PremiumFeature.unlimitedDoodles.freeLimit ?? 60)
+        return currentTotalCount < (PremiumFeature.unlimitedDoodles.freeLimit ?? SubscriptionManager.freeDoodlesAllowed)
     }
 
-    /// Check if user can edit a specific doodle (by index in yearly order)
-    func canEditDoodle(atYearlyIndex index: Int) -> Bool {
+    /// Check if user can edit a specific doodle (by index in total order)
+    func canEditDoodle(atIndex index: Int) -> Bool {
         if isSubscribed {
             return true
         }
-        // Free users can only edit their first 60 doodles of the year
-        return index < (PremiumFeature.unlimitedDoodles.freeLimit ?? 60)
+        // Free users can only edit their first N doodles
+        return index < (PremiumFeature.unlimitedDoodles.freeLimit ?? SubscriptionManager.freeDoodlesAllowed)
     }
 
     /// Get remaining doodles for free users
-    func remainingDoodles(currentYearlyCount: Int) -> Int {
+    func remainingDoodles(currentTotalCount: Int) -> Int {
         if isSubscribed {
             return Int.max
         }
-        let limit = PremiumFeature.unlimitedDoodles.freeLimit ?? 60
-        return max(0, limit - currentYearlyCount)
+        let limit = PremiumFeature.unlimitedDoodles.freeLimit ?? SubscriptionManager.freeDoodlesAllowed
+        return max(0, limit - currentTotalCount)
     }
 
     // MARK: - Subscription Expiry Handling
@@ -334,14 +334,14 @@ struct RemainingDoodlesIndicator: View {
 
     var body: some View {
         if !accessController.isSubscribed {
-            let remaining = accessController.remainingDoodles(currentYearlyCount: currentCount)
+            let remaining = accessController.remainingDoodles(currentTotalCount: currentCount)
 
             HStack(spacing: 4) {
                 Image(systemName: remaining > 0 ? "scribble" : "lock.fill")
                     .font(.caption)
 
                 if remaining > 0 {
-                    Text("\(remaining) doodles left this year")
+                    Text("\(remaining) doodles left")
                         .font(.caption)
                 } else {
                     Text("Limit reached")
@@ -396,11 +396,11 @@ extension View {
 
 // MARK: - Doodle Access Helper
 
-/// Helper to check doodle access based on entry date and yearly index
+/// Helper to check doodle access based on entry index
 @MainActor
 struct DoodleAccessChecker {
-    /// Check if a doodle can be edited based on its position in the yearly list
-    static func canEdit(entry: DayEntry, allEntriesThisYear: [DayEntry]) -> Bool {
+    /// Check if a doodle can be edited based on its position in the total list
+    static func canEdit(entry: DayEntry, allEntries: [DayEntry]) -> Bool {
         let accessController = PremiumAccessController.shared
 
         // Subscribed users can edit any doodle
@@ -409,7 +409,7 @@ struct DoodleAccessChecker {
         }
 
         // Sort entries by date (oldest first) and find the index
-        let sortedEntries = allEntriesThisYear
+        let sortedEntries = allEntries
             .filter { $0.drawingData != nil }
             .sorted { $0.createdAt < $1.createdAt }
 
@@ -418,22 +418,19 @@ struct DoodleAccessChecker {
             return true
         }
 
-        return accessController.canEditDoodle(atYearlyIndex: index)
+        return accessController.canEditDoodle(atIndex: index)
     }
 
-    /// Get entries from the current year that have drawings
-    static func entriesWithDrawingsThisYear(from entries: [DayEntry]) -> [DayEntry] {
-        let calendar = Calendar.current
-        let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: Date())!
-
+    /// Get all entries that have drawings
+    static func entriesWithDrawings(from entries: [DayEntry]) -> [DayEntry] {
         return entries.filter { entry in
-            entry.drawingData != nil && entry.createdAt >= oneYearAgo
+            entry.drawingData != nil
         }
     }
 
-    /// Count doodles created in the past year
-    static func doodleCountThisYear(from entries: [DayEntry]) -> Int {
-        return entriesWithDrawingsThisYear(from: entries).count
+    /// Count total doodles across all entries
+    static func totalDoodleCount(from entries: [DayEntry]) -> Int {
+        return entriesWithDrawings(from: entries).count
     }
 }
 
