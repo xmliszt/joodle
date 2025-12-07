@@ -26,14 +26,10 @@ struct iCloudSyncView: View {
           VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
               Image(systemName: "crown.fill")
-                .foregroundStyle(.yellow)
+                .foregroundStyle(.accent)
                 .font(.title2)
 
               VStack(alignment: .leading, spacing: 4) {
-                Text("Premium Feature")
-                  .font(.headline)
-                  .foregroundStyle(.primary)
-
                 Text("iCloud Sync is available with Joodle Super. Upgrade to sync your doodles across all your devices.")
                   .font(.caption)
                   .foregroundStyle(.secondary)
@@ -44,11 +40,8 @@ struct iCloudSyncView: View {
             Button {
               showPaywall = true
             } label: {
-              HStack {
-                Image(systemName: "crown.fill")
-                Text("Upgrade to Joodle Super")
-              }
-              .frame(maxWidth: .infinity)
+              Text("Upgrade to Joodle Super")
+                .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .tint(.accent)
@@ -127,11 +120,7 @@ struct iCloudSyncView: View {
         }
         .disabled(!subscriptionManager.hasICloudSync || !syncManager.systemCloudEnabled || !syncManager.isCloudAvailable || !networkMonitor.isConnected)
       } footer: {
-        if !subscriptionManager.hasICloudSync {
-          Text("iCloud Sync requires Joodle Super subscription.")
-            .font(.caption)
-            .foregroundStyle(.accent)
-        } else if syncManager.needsSystemSettingsChange {
+        if syncManager.needsSystemSettingsChange {
           Text("Joodle can't sync with iCloud because \"Saved to iCloud\" is disabled in system settings.")
             .font(.caption)
             .foregroundStyle(.accent)
@@ -256,12 +245,12 @@ struct iCloudSyncView: View {
         } header: {
           Text("Advanced")
         }
-        .sheet(isPresented: $showPaywall) {
-          StandalonePaywallView()
-        }
       }
     }
     .navigationTitle("Sync to iCloud")
+    .sheet(isPresented: $showPaywall) {
+      StandalonePaywallView()
+    }
     .navigationBarTitleDisplayMode(.inline)
     .alert("Enable iCloud Sync", isPresented: $showEnableAlert) {
       Button("Cancel", role: .cancel) { }

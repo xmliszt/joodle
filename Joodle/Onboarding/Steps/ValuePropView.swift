@@ -13,7 +13,7 @@ struct ValuePropView: View {
           .resizable()
           .scaledToFit()
           .frame(width: 80, height: 80)
-          .foregroundColor(.yellow)
+          .foregroundColor(.accent)
           .symbolEffect(.bounce, value: animate)
           .onAppear {
             animate = true

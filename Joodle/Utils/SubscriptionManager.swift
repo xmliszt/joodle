@@ -86,7 +86,7 @@ class SubscriptionManager: ObservableObject {
     }
 
     // Free plan limits
-    static let freeDoodlesPerYear = 60
+    static let freeDoodlesPerYear = 30
 
     var doodlesPerYear: Int {
         isSubscribed ? Int.max : Self.freeDoodlesPerYear

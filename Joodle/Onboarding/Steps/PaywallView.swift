@@ -29,7 +29,7 @@ struct PaywallView: View {
               .font(.system(size: 34, weight: .bold))
               .multilineTextAlignment(.center)
 
-            Text("Unleash your creativity with unlimited features")
+            Text("Supercharge your creativity with unlimited features")
               .font(.body)
               .foregroundColor(.secondary)
               .multilineTextAlignment(.center)
@@ -43,7 +43,7 @@ struct PaywallView: View {
             FeatureRow(
               icon: "scribble.variable",
               title: "Unlimited doodles",
-              subtitle: "Draw as much as you want, no limits"
+              subtitle: "Draw as many as you want, no limits"
             )
 
             FeatureRow(

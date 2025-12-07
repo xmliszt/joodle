@@ -129,12 +129,14 @@ struct SharedCanvasView<TrailingHeader: View>: View {
             TrailingHeaderView()
           }
           
-        }.padding(.horizontal, 24)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 12)
       }
       
       ZStack {
         // Canvas background
-        RoundedRectangle(cornerRadius: 12)
+        RoundedRectangle(cornerRadius: 32, style: .continuous)
           .fill(.backgroundColor)
           .stroke(.borderColor, lineWidth: 1.0)
           .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
@@ -202,7 +204,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           }
         }
         .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
         .id(placeholderID)
         .gesture(
           DragGesture(minimumDistance: 0)

@@ -146,16 +146,17 @@ struct DrawingCanvasView: View {
       } label: {
         Text("Upgrade")
           .font(.caption.bold())
+          .foregroundStyle(.white)
       }
       .buttonStyle(.borderedProminent)
       .buttonBorderShape(.capsule)
       .controlSize(.mini)
     }
-    .foregroundColor(remaining > 10 ? .secondary : (remaining > 0 ? .accent : .red))
+    .foregroundColor(.secondary)
     .padding(.horizontal, 16)
     .padding(.vertical, 8)
-    .background(Color(.systemGray6))
-    .cornerRadius(12)
+    .background(.appBorder.opacity(0.2))
+    .cornerRadius(24)
   }
 
   private var accessDeniedOverlay: some View {
@@ -195,28 +196,20 @@ struct DrawingCanvasView: View {
       } label: {
         HStack {
           Image(systemName: "crown.fill")
-          Text("Upgrade to Joodle Super")
+          Text("Upgrade")
         }
         .font(.headline)
         .foregroundColor(.black)
         .padding(.horizontal, 24)
         .padding(.vertical, 12)
-        .background(Color.yellow)
-        .cornerRadius(12)
-      }
-
-      Button {
-        onDismiss()
-      } label: {
-        Text("Not Now")
-          .font(.subheadline)
-          .foregroundColor(.white.opacity(0.7))
+        .background(.accent)
+        .cornerRadius(32)
       }
     }
     .padding(32)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.black.opacity(0.75))
-    .cornerRadius(20)
+    .background(.black)
+    .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
   }
 
   // MARK: - Access Check
