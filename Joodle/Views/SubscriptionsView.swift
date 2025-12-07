@@ -118,10 +118,6 @@ struct SubscriptionsView: View {
         badge: subscriptionManager.isInTrialPeriod ? "FREE TRIAL" : nil,
         onSelect: {}
       )
-      .overlay(
-        RoundedRectangle(cornerRadius: 32)
-          .strokeBorder(.accent, lineWidth: 2)
-      )
       .padding(.horizontal, 20)
     }
   }
