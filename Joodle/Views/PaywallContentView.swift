@@ -134,10 +134,7 @@ struct PaywallContentView: View {
 
     private var pricingSection: some View {
         VStack(spacing: 16) {
-            if storeManager.isLoading {
-                ProgressView()
-                    .padding(.vertical, 40)
-            } else if storeManager.products.isEmpty {
+            if storeManager.products.isEmpty {
                 emptyProductsView
             } else {
                 productCards
@@ -340,12 +337,8 @@ struct PaywallContentView: View {
                                 .font(.headline)
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.accent)
-                    .foregroundColor(.white)
-                    .cornerRadius(16)
                 }
+                .buttonStyle(OnboardingButtonStyle())
                 .disabled(isPurchasing)
             }
         }

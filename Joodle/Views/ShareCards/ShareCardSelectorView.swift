@@ -17,7 +17,7 @@ struct ShareCardSelectorView: View {
   @State private var selectedStyle: ShareCardStyle = .minimal
   @State private var isSharing = false
   @State private var shareItem: ShareItem?
-  @State private var previewColorScheme: ColorScheme = .light
+  @State private var previewColorScheme: ColorScheme = (UserPreferences.shared.preferredColorScheme ?? .light)
 
   // Cache rendered preview images for each style and color scheme
   @State private var renderedPreviews: [ShareCardStyle: [ColorScheme: UIImage]] = [:]

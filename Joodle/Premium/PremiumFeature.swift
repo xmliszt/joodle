@@ -285,7 +285,7 @@ struct PremiumFeatureBadge: View {
             Capsule()
                 .fill(
                     LinearGradient(
-                        colors: [.yellow, .accent],
+                        colors: [.orange, .accent],
                         startPoint: .leading,
                         endPoint: .trailing
                     )

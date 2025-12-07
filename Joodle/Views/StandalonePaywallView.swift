@@ -34,14 +34,6 @@ struct StandalonePaywallView: View {
                         }
                     }
                 ))
-
-                // Loading overlay
-                if isPurchasing || storeManager.isLoading {
-                    Color.black.opacity(0.3)
-                        .ignoresSafeArea()
-                    ProgressView()
-                        .scaleEffect(1.5)
-                }
             }
         }
     }

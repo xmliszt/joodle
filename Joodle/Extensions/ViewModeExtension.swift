@@ -31,8 +31,8 @@ extension ViewMode: CaseIterable {
 
   var displayName: String {
     switch self {
-    case .now: return "Now"
-    case .year: return "Year"
+    case .now: return "Normal"
+    case .year: return "Minimized"
     }
   }
 }
