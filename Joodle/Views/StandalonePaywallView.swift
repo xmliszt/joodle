@@ -179,16 +179,8 @@ struct StandalonePaywallView: View {
                         .scaleEffect(1.5)
                 }
             }
-            .navigationTitle("Subscribe")
+            .navigationTitle("Subscribe to Joodle Super")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("dismiss", systemImage: "smallcircle.filled.circle.fill") {
-                        dismiss()
-                    }
-                    .tint(Color.appPrimary)
-                }
-            }
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
             } message: {

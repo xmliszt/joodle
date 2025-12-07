@@ -145,9 +145,9 @@ struct SettingsView: View {
           Button {
             showSubscriptions = true
           } label: {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
               HStack {
-                HStack(spacing: 8) {
+                HStack(spacing: 4) {
                   Image(systemName: "crown.fill")
                     .foregroundStyle(.accent)
                     .font(.body)
@@ -183,7 +183,7 @@ struct SettingsView: View {
             showPaywall = true
           } label: {
             HStack {
-              Text("Joodle Super")
+              Text("Unlock Joodle Super")
               Spacer()
               Image(systemName: "chevron.right")
                 .font(.caption)
@@ -224,13 +224,13 @@ struct SettingsView: View {
           Button(action: {
             exportData()
           }) {
-            Label("Manual backup...", systemImage: "square.and.arrow.up")
+            Text("Backup")
           }
 
           Button(action: {
             showFileImporter = true
           }) {
-            Label("Manual restore...", systemImage: "square.and.arrow.down")
+            Text("Restore")
           }
         }
       }

@@ -193,13 +193,13 @@ struct iCloudSyncView: View {
           NavigationLink {
             SyncActivityDetailView()
           } label: {
-            Label("Sync Activity Details", systemImage: "chart.line.uptrend.xyaxis")
+            Label("Sync Activity Details", systemImage: "chart.line.uptrend.xyaxis").foregroundStyle(.primary)
           }
 
           NavigationLink {
             TroubleshootingView()
           } label: {
-            Label("Troubleshooting Guide", systemImage: "wrench.and.screwdriver")
+            Label("Troubleshooting Guide", systemImage: "wrench.and.screwdriver").foregroundStyle(.primary)
           }
         } header: {
           Text("Advanced")
@@ -264,7 +264,7 @@ struct SyncActivityDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
           HStack(spacing: 8) {
             Image(systemName: "note.text")
-              .foregroundStyle(.accent)
+              .foregroundStyle(.primary)
               .frame(width: 24)
             VStack(alignment: .leading) {
               Text("Journal Entries")
@@ -274,7 +274,7 @@ struct SyncActivityDetailView: View {
 
           HStack(spacing: 8) {
             Image(systemName: "gear")
-              .foregroundStyle(.accent)
+              .foregroundStyle(.primary)
               .frame(width: 24)
             VStack(alignment: .leading) {
               Text("User Preferences")
@@ -288,7 +288,7 @@ struct SyncActivityDetailView: View {
 
       Section("Last sync activities") {
         if let lastImport = syncManager.lastObservedImport {
-          VStack(alignment: .leading, spacing: 8) {
+          VStack(alignment: .leading, spacing: 4) {
             HStack {
               Image(systemName: "arrow.down.circle.fill")
                 .foregroundStyle(.blue)
@@ -313,7 +313,7 @@ struct SyncActivityDetailView: View {
         }
 
         if let lastExport = syncManager.lastObservedExport {
-          VStack(alignment: .leading, spacing: 8) {
+          VStack(alignment: .leading, spacing: 4) {
             HStack {
               Image(systemName: "arrow.up.circle.fill")
                 .foregroundStyle(.green)
@@ -338,7 +338,7 @@ struct SyncActivityDetailView: View {
         }
       }
     }
-    .navigationTitle("Sync Activity")
+    .navigationTitle("Sync Activity Details")
     .navigationBarTitleDisplayMode(.inline)
   }
 }
@@ -393,11 +393,9 @@ struct TroubleshootingView: View {
             description: "Try disabling iCloud sync, waiting 10 seconds, then re-enabling it. This recreates the sync connection."
           )
         }
-        .padding(.vertical, 8)
-      } header: {
-        Text("Troubleshooting Guides")
+        .padding(.bottom, 8)
       }
-
+      
       Section {
         Button {
           syncManager.openSystemSettings()
@@ -454,7 +452,7 @@ struct TroubleshootingView: View {
         Text("Manual Actions")
       }
     }
-    .navigationTitle("Troubleshooting")
+    .navigationTitle("Troubleshooting Guide")
     .navigationBarTitleDisplayMode(.inline)
   }
 
@@ -504,12 +502,12 @@ struct TroubleshootingStep: View {
     HStack(alignment: .top, spacing: 12) {
       Text(number)
         .font(.title2)
-        .fontWeight(.bold)
-        .foregroundStyle(.blue)
+        .fontWeight(.semibold)
+        .foregroundStyle(.accent)
         .frame(width: 32, height: 32)
         .background(
           Circle()
-            .fill(.blue.opacity(0.1))
+            .fill(.accent.opacity(0.1))
         )
 
       VStack(alignment: .leading, spacing: 4) {
