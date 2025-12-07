@@ -62,31 +62,34 @@ struct JoodleApp: App {
 
   var body: some Scene {
     WindowGroup {
-      if !hasCompletedOnboarding {
-        OnboardingFlowView()
-          .environment(\.userPreferences, UserPreferences.shared)
-          .preferredColorScheme(colorScheme)
-          .font(.system(size: 17))
-      } else {
-        NavigationStack {
-          ContentView(selectedDateFromWidget: $selectedDateFromWidget)
+      ZStack {
+        if !hasCompletedOnboarding {
+          OnboardingFlowView()
             .environment(\.userPreferences, UserPreferences.shared)
-            .environment(\.cloudSyncManager, CloudSyncManager.shared)
-            .environment(\.networkMonitor, NetworkMonitor.shared)
-            .environment(\.preferencesSyncManager, PreferencesSyncManager.shared)
             .preferredColorScheme(colorScheme)
             .font(.system(size: 17))
-            .onAppear {
-              setupColorSchemeObserver()
-              setupSyncObserver()
-              setupUbiquityObserver()
-            }
-            .onOpenURL { url in
-              handleWidgetURL(url)
-            }
-            .id(containerKey)
+        } else {
+          NavigationStack {
+            ContentView(selectedDateFromWidget: $selectedDateFromWidget)
+              .environment(\.userPreferences, UserPreferences.shared)
+              .environment(\.cloudSyncManager, CloudSyncManager.shared)
+              .environment(\.networkMonitor, NetworkMonitor.shared)
+              .environment(\.preferencesSyncManager, PreferencesSyncManager.shared)
+              .preferredColorScheme(colorScheme)
+              .font(.system(size: 17))
+              .onAppear {
+                setupColorSchemeObserver()
+                setupSyncObserver()
+                setupUbiquityObserver()
+              }
+              .onOpenURL { url in
+                handleWidgetURL(url)
+              }
+              .id(containerKey)
+          }
         }
       }
+      .preferredColorScheme(colorScheme)
     }
     .modelContainer(modelContainer)
   }
