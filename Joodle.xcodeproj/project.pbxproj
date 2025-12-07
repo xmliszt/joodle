@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		FA85D4502EB7AECA007D82EE /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D44F2EB7AECA007D82EE /* WidgetKit.framework */; };
 		FA85D4632EB7AECB007D82EE /* WidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		FAA748F12EE56B050059BF9B /* Configuration.storekit in Resources */ = {isa = PBXBuildFile; fileRef = FAA748F02EE56B050059BF9B /* Configuration.storekit */; };
 		FAB12DE32ED57E2F00F6006A /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D4512EB7AECA007D82EE /* SwiftUI.framework */; };
 /* End PBXBuildFile section */
 
@@ -56,6 +57,7 @@
 		FA85D4512EB7AECA007D82EE /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		FA85D4732EB7AFC5007D82EE /* WidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WidgetsExtension.entitlements; sourceTree = "<group>"; };
 		FA88AA2D2EE41776009AEFEB /* Joodle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Joodle.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FAA748F02EE56B050059BF9B /* Configuration.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
 		FADC35942E48C2E2007AE111 /* JoodleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JoodleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FADC359E2E48C2E2007AE111 /* JoodleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JoodleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -172,6 +174,7 @@
 		FADC357A2E48C2E1007AE111 = {
 			isa = PBXGroup;
 			children = (
+				FAA748F02EE56B050059BF9B /* Configuration.storekit */,
 				FAE73C552EC0D32800AFCED7 /* Shared */,
 				FA85D4732EB7AFC5007D82EE /* WidgetsExtension.entitlements */,
 				FADC35852E48C2E1007AE111 /* Joodle */,
@@ -353,6 +356,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FAA748F12EE56B050059BF9B /* Configuration.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

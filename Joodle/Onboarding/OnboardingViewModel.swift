@@ -1,5 +1,6 @@
 import SwiftData
 import SwiftUI
+import Combine
 
 // 1. The Steps: Easy to reorder or add new ones here.
 enum OnboardingStep: Hashable, CaseIterable {
@@ -22,6 +23,13 @@ class OnboardingViewModel: ObservableObject {
     @Published var shouldDismiss = false
 
     var modelContext: ModelContext?
+    private var cancellables = Set<AnyCancellable>()
+
+    init() {
+        // Monitor subscription status changes
+        SubscriptionManager.shared.$isSubscribed
+            .assign(to: &$isPremium)
+    }
 
     // Actions
     func completeStep(_ step: OnboardingStep) {
@@ -44,6 +52,12 @@ class OnboardingViewModel: ObservableObject {
     private func finishOnboarding() {
         // Save flags to UserDefaults to hide onboarding on next launch
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+
+        // Update subscription status if premium was set during onboarding
+        if isPremium {
+            SubscriptionManager.shared.grantSubscription()
+        }
+
         shouldDismiss = true
 
         if let data = firstDoodleData, let context = modelContext {
