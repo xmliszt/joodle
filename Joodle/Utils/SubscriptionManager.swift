@@ -86,7 +86,7 @@ class SubscriptionManager: ObservableObject {
     }
 
     // Free plan limits - maximum total doodles allowed for free users
-    static let freeDoodlesAllowed = 21
+    nonisolated static let freeDoodlesAllowed = 21
 
     var maxDoodlesAllowed: Int {
         isSubscribed ? Int.max : Self.freeDoodlesAllowed

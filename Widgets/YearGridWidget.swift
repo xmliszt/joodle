@@ -18,7 +18,7 @@ struct YearGridProvider: TimelineProvider {
       isSubscribed: true
     )
   }
-
+  
   func getSnapshot(in context: Context, completion: @escaping (YearGridEntry) -> Void) {
     let isSubscribed = WidgetDataManager.shared.isSubscribed()
     let entry = YearGridEntry(
@@ -30,14 +30,14 @@ struct YearGridProvider: TimelineProvider {
     )
     completion(entry)
   }
-
+  
   func getTimeline(in context: Context, completion: @escaping (Timeline<YearGridEntry>) -> Void) {
     let currentDate = Date()
     let year = Calendar.current.component(.year, from: currentDate)
     let percentage = calculateYearProgress()
     let isSubscribed = WidgetDataManager.shared.isSubscribed()
     let entries = isSubscribed ? loadEntries() : []
-
+    
     let entry = YearGridEntry(
       date: currentDate,
       year: year,
@@ -45,7 +45,7 @@ struct YearGridProvider: TimelineProvider {
       entries: entries,
       isSubscribed: isSubscribed
     )
-
+    
     // Update widget based on subscription status
     let calendar = Calendar.current
     let nextUpdate: Date
@@ -59,29 +59,29 @@ struct YearGridProvider: TimelineProvider {
       // Update more frequently to catch subscription changes
       nextUpdate = calendar.date(byAdding: .minute, value: 15, to: currentDate)!
     }
-
+    
     let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
     completion(timeline)
   }
-
+  
   private func calculateYearProgress() -> Double {
     let calendar = Calendar.current
     let now = Date()
     let year = calendar.component(.year, from: now)
-
+    
     guard
       let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1)),
       let endOfYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1))
     else {
       return 0.0
     }
-
+    
     let totalSeconds = endOfYear.timeIntervalSince(startOfYear)
     let elapsedSeconds = now.timeIntervalSince(startOfYear)
-
+    
     return (elapsedSeconds / totalSeconds) * 100.0
   }
-
+  
   private func loadEntries() -> [WidgetDayEntry] {
     let widgetEntries = WidgetDataManager.shared.loadEntries()
     // Only keep essential data to reduce memory usage
@@ -109,7 +109,7 @@ struct WidgetDayEntry {
   let hasText: Bool
   let hasDrawing: Bool
   let thumbnail: Data?
-
+  
   var hasEntry: Bool {
     return hasText || hasDrawing
   }
@@ -119,20 +119,20 @@ struct YearGridWidgetView: View {
   var entry: YearGridProvider.Entry
   var showDoodles: Bool
   @Environment(\.widgetFamily) var widgetFamily
-
+  
   private var dotSize: CGFloat {
     widgetFamily == .systemMedium ? 4.5 : 7.5
   }
-
+  
   private var horizontalPadding: CGFloat {
     widgetFamily == .systemMedium ? 12.0 : 18.0
   }
-
+  
   // Check if widget should show locked view
   private var shouldShowLockedView: Bool {
     !entry.isSubscribed
   }
-
+  
   private func calculateDotsPerRow(availableWidth: CGFloat) -> Int {
     // Calculate how many dots can fit in the available width
     // Formula: (availableWidth + spacing) / (dotSize + spacing)
@@ -140,7 +140,7 @@ struct YearGridWidgetView: View {
     let dotsPerRow = Int((availableWidth + minSpacing) / (dotSize + minSpacing))
     return max(1, dotsPerRow)
   }
-
+  
   private func calculateSpacing(availableWidth: CGFloat, dotsCount: Int) -> CGFloat {
     // Calculate spacing to distribute dots evenly across the width
     guard dotsCount > 1 else { return 0 }
@@ -148,16 +148,16 @@ struct YearGridWidgetView: View {
     let totalSpacing = availableWidth - totalDotWidth
     return totalSpacing / CGFloat(dotsCount - 1)
   }
-
+  
   private var dateItems: [WidgetDateItem] {
     let calendar = Calendar.current
     guard let startOfYear = calendar.date(from: DateComponents(year: entry.year, month: 1, day: 1))
     else {
       return []
     }
-
+    
     let daysInYear = calendar.range(of: .day, in: .year, for: startOfYear)?.count ?? 365
-
+    
     return (0..<daysInYear).map { dayOffset in
       let date = calendar.date(byAdding: .day, value: dayOffset, to: startOfYear)!
       return WidgetDateItem(
@@ -166,19 +166,19 @@ struct YearGridWidgetView: View {
       )
     }
   }
-
+  
   private var todayStart: Date {
     Calendar.current.startOfDay(for: Date())
   }
-
+  
   private var entriesByDateKey: [String: WidgetDayEntry] {
     let calendar = Calendar.current
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy-MM-dd"
-
+    
     var lookup: [String: WidgetDayEntry] = [:]
     lookup.reserveCapacity(entry.entries.count)
-
+    
     for dayEntry in entry.entries {
       let dayStart = calendar.startOfDay(for: dayEntry.date)
       let key = formatter.string(from: dayStart)
@@ -186,11 +186,11 @@ struct YearGridWidgetView: View {
     }
     return lookup
   }
-
+  
   private func numberOfRows(dotsPerRow: Int) -> Int {
     dateItems.count / dotsPerRow + (dateItems.count.isMultiple(of: dotsPerRow) ? 0 : 1)
   }
-
+  
   var body: some View {
     if shouldShowLockedView {
       YearGridWidgetLockedView(widgetFamily: widgetFamily)
@@ -198,48 +198,49 @@ struct YearGridWidgetView: View {
           Color(UIColor.systemBackground)
         }
     } else {
-    GeometryReader { geometry in
-      VStack(alignment: .leading, spacing: widgetFamily == .systemMedium ? 8 : 12) {
-        // Header
-        HStack {
-          Text(String(entry.year))
-            .font(.mansalva(size: 20))
-            .foregroundColor(.primary)
-
-          Spacer()
-
-          Text(String(format: "%.1f%%", entry.percentage))
-            .font(.mansalva(size: 20))
-            .foregroundColor(.accent)
-        }
-        .padding(.horizontal, horizontalPadding)
-
-        // Grid
-        let availableWidth = geometry.size.width - (horizontalPadding * 2)
-        let dotsPerRow = calculateDotsPerRow(availableWidth: availableWidth)
-        let spacing = calculateSpacing(availableWidth: availableWidth, dotsCount: dotsPerRow)
-
-        LazyVStack(alignment: .leading, spacing: spacing) {
-          ForEach(0..<numberOfRows(dotsPerRow: dotsPerRow), id: \.self) { rowIndex in
-            createRow(for: rowIndex, dotsPerRow: dotsPerRow, spacing: spacing)
+      GeometryReader { geometry in
+        VStack(alignment: .leading, spacing: widgetFamily == .systemMedium ? 8 : 12) {
+          // Header
+          HStack {
+            Text(String(entry.year))
+              .font(.mansalva(size: 20))
+              .foregroundColor(.primary)
+            
+            Spacer()
+            
+            Text(String(format: "%.1f%%", entry.percentage))
+              .font(.mansalva(size: 20))
+              .foregroundColor(.accent)
           }
+          .padding(.horizontal, horizontalPadding)
+          
+          // Grid
+          let availableWidth = geometry.size.width - (horizontalPadding * 2)
+          let dotsPerRow = calculateDotsPerRow(availableWidth: availableWidth)
+          let spacing = calculateSpacing(availableWidth: availableWidth, dotsCount: dotsPerRow)
+          
+          LazyVStack(alignment: .leading, spacing: spacing) {
+            ForEach(0..<numberOfRows(dotsPerRow: dotsPerRow), id: \.self) { rowIndex in
+              createRow(for: rowIndex, dotsPerRow: dotsPerRow, spacing: spacing)
+            }
+          }
+          .padding(.horizontal, horizontalPadding)
         }
-        .padding(.horizontal, horizontalPadding)
+        .padding(.top, widgetFamily == .systemMedium ? 4 : 16)
+        .padding(.bottom, widgetFamily == .systemMedium ? 4 : 8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
       }
-      .padding(.top, widgetFamily == .systemMedium ? 4 : 16)
-      .padding(.bottom, widgetFamily == .systemMedium ? 4 : 8)
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-    .containerBackground(for: .widget) {
-      Color(UIColor.systemBackground)
+      .containerBackground(for: .widget) {
+        Color(UIColor.systemBackground)
+      }
     }
   }
-
+  
   @ViewBuilder
   private func createRow(for rowIndex: Int, dotsPerRow: Int, spacing: CGFloat) -> some View {
     let rowStart = rowIndex * dotsPerRow
     let rowEnd = min(rowStart + dotsPerRow, dateItems.count)
-
+    
     if rowStart < dateItems.count {
       HStack(alignment: .top, spacing: spacing) {
         ForEach(rowStart..<rowEnd, id: \.self) { index in
@@ -247,7 +248,7 @@ struct YearGridWidgetView: View {
           let dotStyle = getDotStyle(for: item.date)
           let dayEntry = getEntryForDate(item.date)
           let hasEntry = dayEntry?.hasEntry ?? false
-
+          
           WidgetDotView(
             size: dotSize,
             withEntry: hasEntry,
@@ -256,7 +257,7 @@ struct YearGridWidgetView: View {
           )
           .frame(width: dotSize, height: dotSize)
         }
-
+        
         // Add spacer for the last row if it's not full
         if rowEnd < rowStart + dotsPerRow {
           Spacer(minLength: 0)
@@ -264,7 +265,7 @@ struct YearGridWidgetView: View {
       }
     }
   }
-
+  
   private func getDotStyle(for date: Date) -> WidgetDotStyle {
     if date < todayStart {
       return .past
@@ -273,7 +274,7 @@ struct YearGridWidgetView: View {
     }
     return .future
   }
-
+  
   private func getEntryForDate(_ date: Date) -> WidgetDayEntry? {
     let calendar = Calendar.current
     let dayStart = calendar.startOfDay(for: date)
@@ -300,12 +301,12 @@ struct WidgetDotView: View {
   let withEntry: Bool
   let dotStyle: WidgetDotStyle
   var thumbnail: Data? = nil
-
+  
   private var dotColor: Color {
     let baseColor: Color = withEntry ? .accent : .primary
     return baseColor.opacity(dotStyle == .future ? 0.15 : 1)
   }
-
+  
   var body: some View {
     ZStack {
       if let thumbnail = thumbnail, let uiImage = UIImage(data: thumbnail) {
@@ -329,7 +330,7 @@ struct WidgetDotView: View {
 
 struct YearGridWidgetLockedView: View {
   let widgetFamily: WidgetFamily
-
+  
   var body: some View {
     VStack(spacing: widgetFamily == .systemLarge ? 16 : 8) {
       Image(systemName: "crown.fill")
@@ -341,12 +342,12 @@ struct YearGridWidgetLockedView: View {
             endPoint: .bottomTrailing
           )
         )
-
+      
       VStack(spacing: 4) {
         Text("Joodle Super")
           .font(widgetFamily == .systemLarge ? .headline : .caption.bold())
           .foregroundColor(.primary)
-
+        
         Text("Upgrade to unlock widgets")
           .font(widgetFamily == .systemLarge ? .subheadline : .caption2)
           .foregroundColor(.secondary)
@@ -360,7 +361,7 @@ struct YearGridWidgetLockedView: View {
 
 struct YearGridWidget: Widget {
   let kind: String = "YearGridWidget"
-
+  
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
       YearGridWidgetView(entry: entry, showDoodles: false)
@@ -376,7 +377,7 @@ struct YearGridWidget: Widget {
 
 struct YearGridDoodleWidget: Widget {
   let kind: String = "YearGridDoodleWidget"
-
+  
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
       YearGridWidgetView(entry: entry, showDoodles: true)
@@ -398,7 +399,7 @@ struct YearGridDoodleWidget: Widget {
   let calendar = Calendar.current
   let currentYear = 2025
   let startOfYear = calendar.date(from: DateComponents(year: currentYear, month: 1, day: 1))!
-
+  
   let mockEntries: [WidgetDayEntry] = [
     // Text entries
     WidgetDayEntry(
@@ -455,7 +456,7 @@ struct YearGridDoodleWidget: Widget {
       date: calendar.date(byAdding: .day, value: 290, to: startOfYear)!, hasText: false,
       hasDrawing: true, thumbnail: nil),
   ]
-
+  
   YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries, isSubscribed: true)
 }
 
@@ -466,7 +467,7 @@ struct YearGridDoodleWidget: Widget {
   let calendar = Calendar.current
   let currentYear = 2025
   let startOfYear = calendar.date(from: DateComponents(year: currentYear, month: 1, day: 1))!
-
+  
   let mockEntries: [WidgetDayEntry] = [
     // Text entries
     WidgetDayEntry(
@@ -523,7 +524,7 @@ struct YearGridDoodleWidget: Widget {
       date: calendar.date(byAdding: .day, value: 290, to: startOfYear)!, hasText: false,
       hasDrawing: true, thumbnail: nil),
   ]
-
+  
   YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries, isSubscribed: true)
 }
 
@@ -534,10 +535,10 @@ struct YearGridDoodleWidget: Widget {
   let calendar = Calendar.current
   let currentYear = 2025
   let startOfYear = calendar.date(from: DateComponents(year: currentYear, month: 1, day: 1))!
-
+  
   // Create mock thumbnail data (1x1 pixel red image)
   let mockThumbnail = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
-
+  
   let mockEntries: [WidgetDayEntry] = [
     // Text entries
     WidgetDayEntry(
@@ -594,6 +595,6 @@ struct YearGridDoodleWidget: Widget {
       date: calendar.date(byAdding: .day, value: 290, to: startOfYear)!, hasText: false,
       hasDrawing: true, thumbnail: mockThumbnail),
   ]
-
+  
   YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries, isSubscribed: true)
 }
