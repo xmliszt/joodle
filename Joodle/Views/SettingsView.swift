@@ -204,7 +204,11 @@ struct SettingsView: View {
           HStack {
             Text("Sync to iCloud")
             Spacer()
-            if !cloudSyncManager.canSync {
+
+            // Show premium badge if not subscribed
+            if !subscriptionManager.hasICloudSync {
+              PremiumFeatureBadge()
+            } else if !cloudSyncManager.canSync {
               Image(systemName: "xmark.circle.fill")
                 .foregroundStyle(.red)
                 .font(.caption)
@@ -309,6 +313,12 @@ struct SettingsView: View {
       // Check subscription status when view appears
       Task {
         await StoreKitManager.shared.updatePurchasedProducts()
+        await subscriptionManager.updateSubscriptionStatus()
+      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .subscriptionDidExpire)) { _ in
+      // Refresh UI when subscription expires
+      Task {
         await subscriptionManager.updateSubscriptionStatus()
       }
     }

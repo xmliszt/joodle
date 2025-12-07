@@ -10,14 +10,16 @@ import WidgetKit
 
 struct RandomDoodleProvider: TimelineProvider {
   func placeholder(in context: Context) -> RandomDoodleEntry {
-    RandomDoodleEntry(date: Date(), doodle: nil, prompt: getRandomPrompt())
+    RandomDoodleEntry(date: Date(), doodle: nil, prompt: getRandomPrompt(), isSubscribed: true)
   }
 
   func getSnapshot(in context: Context, completion: @escaping (RandomDoodleEntry) -> Void) {
+    let isSubscribed = WidgetDataManager.shared.isSubscribed()
     let entry = RandomDoodleEntry(
       date: Date(),
-      doodle: getRandomDoodle(),
-      prompt: getRandomPrompt()
+      doodle: isSubscribed ? getRandomDoodle() : nil,
+      prompt: getRandomPrompt(),
+      isSubscribed: isSubscribed
     )
     completion(entry)
   }
@@ -25,23 +27,31 @@ struct RandomDoodleProvider: TimelineProvider {
   func getTimeline(in context: Context, completion: @escaping (Timeline<RandomDoodleEntry>) -> Void)
   {
     let currentDate = Date()
-    let doodle = getRandomDoodle()
+    let isSubscribed = WidgetDataManager.shared.isSubscribed()
+    let doodle = isSubscribed ? getRandomDoodle() : nil
 
     let entry = RandomDoodleEntry(
       date: currentDate,
       doodle: doodle,
-      prompt: getRandomPrompt()
+      prompt: getRandomPrompt(),
+      isSubscribed: isSubscribed
     )
 
-    // Update widget at midnight
+    // Update widget more frequently to catch subscription changes
+    // Every 15 minutes if not subscribed, midnight if subscribed
     let calendar = Calendar.current
-    let tomorrow = calendar.date(
-      byAdding: .day,
-      value: 1,
-      to: calendar.startOfDay(for: currentDate)
-    )!
+    let nextUpdate: Date
+    if isSubscribed {
+      nextUpdate = calendar.date(
+        byAdding: .day,
+        value: 1,
+        to: calendar.startOfDay(for: currentDate)
+      )!
+    } else {
+      nextUpdate = calendar.date(byAdding: .minute, value: 15, to: currentDate)!
+    }
 
-    let timeline = Timeline(entries: [entry], policy: .after(tomorrow))
+    let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
     completion(timeline)
   }
 
@@ -83,6 +93,7 @@ struct RandomDoodleEntry: TimelineEntry {
   let date: Date
   let doodle: DoodleData?
   let prompt: String
+  let isSubscribed: Bool
 }
 
 struct DoodleData {
@@ -111,27 +122,68 @@ struct RandomDoodleWidgetView: View {
   @Environment(\.widgetFamily) var family
 
   var body: some View {
-    switch family {
-    case .accessoryCircular:
-      LockScreenCircularView(doodle: entry.doodle, family: family)
-    default:
-      if let doodle = entry.doodle {
-        DoodleView(drawingData: doodle.drawingData, family: family)
-          .padding(family == .systemLarge ? 48 : 24)
-          .widgetURL(URL(string: "joodle://date/\(Int(doodle.date.timeIntervalSince1970))"))
-          .containerBackground(for: .widget) {
-            Color(UIColor.systemBackground)
-          }
-      } else {
-        // Show not found status
-        NotFoundView(prompt: entry.prompt, family: family)
-          .padding(8)
-          .widgetURL(URL(string: "joodle://date/\(Int(Date().timeIntervalSince1970))"))
-          .containerBackground(for: .widget) {
-            Color(UIColor.systemBackground)
-          }
+    // Check subscription status first
+    if !entry.isSubscribed {
+      WidgetLockedView(family: family)
+        .containerBackground(for: .widget) {
+          Color(UIColor.systemBackground)
+        }
+    } else {
+      switch family {
+      case .accessoryCircular:
+        LockScreenCircularView(doodle: entry.doodle, family: family)
+      default:
+        if let doodle = entry.doodle {
+          DoodleView(drawingData: doodle.drawingData, family: family)
+            .padding(family == .systemLarge ? 48 : 24)
+            .widgetURL(URL(string: "joodle://date/\(Int(doodle.date.timeIntervalSince1970))"))
+            .containerBackground(for: .widget) {
+              Color(UIColor.systemBackground)
+            }
+        } else {
+          // Show not found status
+          NotFoundView(prompt: entry.prompt, family: family)
+            .padding(8)
+            .widgetURL(URL(string: "joodle://date/\(Int(Date().timeIntervalSince1970))"))
+            .containerBackground(for: .widget) {
+              Color(UIColor.systemBackground)
+            }
+        }
       }
     }
+  }
+}
+
+// MARK: - Widget Locked View (Premium Required)
+
+struct WidgetLockedView: View {
+  let family: WidgetFamily
+
+  var body: some View {
+    VStack(spacing: family == .systemLarge ? 16 : 8) {
+      Image(systemName: "crown.fill")
+        .font(.system(size: family == .systemLarge ? 40 : 24))
+        .foregroundStyle(
+          LinearGradient(
+            colors: [.yellow, .accent],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+          )
+        )
+
+      VStack(spacing: 4) {
+        Text("Joodle Super")
+          .font(family == .systemLarge ? .headline : .caption.bold())
+          .foregroundColor(.primary)
+
+        Text("Upgrade to unlock widgets")
+          .font(family == .systemLarge ? .subheadline : .caption2)
+          .foregroundColor(.secondary)
+          .multilineTextAlignment(.center)
+          .lineSpacing(4)
+      }
+    }
+    .padding()
   }
 }
 
@@ -267,45 +319,48 @@ struct RandomDoodleWidget: Widget {
 #Preview(as: .systemSmall) {
   RandomDoodleWidget()
 } timeline: {
-  // Preview with a doodle
+  // Preview with a doodle (subscribed)
   let mockDrawingData = createMockDrawingData()
   RandomDoodleEntry(
     date: Date(),
     doodle: DoodleData(date: Date(), drawingData: mockDrawingData),
-    prompt: "Draw something"
+    prompt: "Draw something",
+    isSubscribed: true
   )
 
-  // Preview without a doodle
-  RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺")
+  // Preview without subscription (locked)
+  RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
 }
 
 #Preview(as: .systemLarge) {
   RandomDoodleWidget()
 } timeline: {
-  // Preview with a doodle from 5 days ago
+  // Preview with a doodle from 5 days ago (subscribed)
   let mockDrawingData = createMockDrawingData()
   let fiveDaysAgo = Calendar.current.date(byAdding: .day, value: -5, to: Date())!
   RandomDoodleEntry(
     date: Date(),
     doodle: DoodleData(date: fiveDaysAgo, drawingData: mockDrawingData),
-    prompt: "Draw something"
+    prompt: "Draw something",
+    isSubscribed: true
   )
 
-  // Preview without a doodle
-  RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺")
+  // Preview without subscription (locked)
+  RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
 }
 
 #Preview(as: .accessoryCircular) {
   RandomDoodleWidget()
 } timeline: {
-  // Preview with a doodle
+  // Preview with a doodle (subscribed)
   let mockDrawingData = createMockDrawingData()
   RandomDoodleEntry(
     date: Date(),
     doodle: DoodleData(date: Date(), drawingData: mockDrawingData),
-    prompt: "Draw something"
+    prompt: "Draw something",
+    isSubscribed: true
   )
 
-  // Preview without a doodle
-  RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺")
+  // Preview without subscription (locked)
+  RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
 }

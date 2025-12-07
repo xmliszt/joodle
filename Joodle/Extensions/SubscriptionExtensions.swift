@@ -19,7 +19,6 @@ extension View {
 
 struct SubscriptionRequiredModifier: ViewModifier {
     @Binding var isPresented: Bool
-    @StateObject private var subscriptionManager = SubscriptionManager.shared
 
     func body(content: Content) -> some View {
         content
@@ -31,11 +30,11 @@ struct SubscriptionRequiredModifier: ViewModifier {
 
 // MARK: - Subscription Prompt View
 
+/// A quick upgrade prompt view for showing when premium features are accessed
 struct SubscriptionPromptView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var storeManager = StoreKitManager.shared
     @StateObject private var subscriptionManager = SubscriptionManager.shared
-    @State private var selectedProductID: String?
     @State private var isPurchasing = false
 
     var body: some View {
@@ -45,8 +44,8 @@ struct SubscriptionPromptView: View {
 
                 Image(systemName: "crown.fill")
                     .font(.system(size: 60))
-                    .foregroundStyle(.yellow)
-                    .shadow(color: .yellow.opacity(0.3), radius: 10)
+                    .foregroundStyle(.accent)
+                    .shadow(color: .accent.opacity(0.3), radius: 10)
 
                 VStack(spacing: 12) {
                     Text("Upgrade to Joodle Super")
@@ -128,41 +127,10 @@ struct SubscriptionPromptView: View {
     }
 }
 
-// MARK: - Doodle Limit Helper
-
-extension SubscriptionManager {
-    /// Check if user can create a new doodle based on their plan
-    func canCreateDoodle(currentCount: Int) -> Bool {
-        if hasUnlimitedDoodles {
-            return true
-        }
-
-        return currentCount < doodlesPerYear
-    }
-
-    /// Get remaining doodles for free users
-    func remainingDoodles(currentCount: Int) -> Int {
-        if hasUnlimitedDoodles {
-            return Int.max
-        }
-
-        return max(0, doodlesPerYear - currentCount)
-    }
-
-    /// Get count of doodles created in the past year
-    func doodleCountThisYear(from entries: [DayEntry]) -> Int {
-        let calendar = Calendar.current
-        let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: Date())!
-
-        return entries.filter { entry in
-            entry.drawingData != nil && entry.createdAt >= oneYearAgo
-        }.count
-    }
-}
-
-// MARK: - Feature Gate Helper
+// MARK: - Legacy Feature Gate (Deprecated - Use PremiumFeature instead)
 
 /// Use this to gate features behind subscription
+/// @available(*, deprecated, message: "Use PremiumFeature enum and PremiumAccessController instead")
 struct FeatureGate {
     @MainActor
     static func checkAccess(
@@ -179,7 +147,7 @@ struct FeatureGate {
             }
 
         case .allWidgets:
-            if !manager.hasAllWidgets {
+            if !manager.hasWidgets {
                 showPaywall()
                 return false
             }
@@ -208,8 +176,9 @@ struct FeatureGate {
     }
 }
 
-// MARK: - Badge View for Premium Features
+// MARK: - Badge View for Premium Features (Legacy - Use PremiumFeatureBadge instead)
 
+/// @available(*, deprecated, message: "Use PremiumFeatureBadge from PremiumFeature.swift instead")
 struct PremiumBadge: View {
     var body: some View {
         HStack(spacing: 4) {
@@ -225,7 +194,7 @@ struct PremiumBadge: View {
             Capsule()
                 .fill(
                     LinearGradient(
-                        colors: [.yellow, .orange],
+                        colors: [.yellow, .accent],
                         startPoint: .leading,
                         endPoint: .trailing
                     )

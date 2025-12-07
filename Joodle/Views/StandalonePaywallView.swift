@@ -46,8 +46,8 @@ struct StandalonePaywallView: View {
 
                             FeatureRow(
                                 icon: "square.grid.3x3.fill",
-                                title: "More widget options",
-                                subtitle: "Access all exclusive widgets"
+                                title: "Home Screen Widgets",
+                                subtitle: "Add Joodle widgets to your Home Screen"
                             )
 
                             FeatureRow(
@@ -70,9 +70,45 @@ struct StandalonePaywallView: View {
                                 ProgressView()
                                     .padding(.vertical, 40)
                             } else if storeManager.products.isEmpty {
-                                Text("Unable to load plans")
-                                    .foregroundColor(.secondary)
-                                    .padding(.vertical, 40)
+                                VStack(spacing: 12) {
+                                    Text("Unable to load plans")
+                                        .foregroundColor(.secondary)
+
+                                    Text("Please check your internet connection and try again.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.center)
+
+                                    Button {
+                                        Task {
+                                            await storeManager.loadProducts()
+                                        }
+                                    } label: {
+                                        Label("Retry", systemImage: "arrow.clockwise")
+                                            .font(.subheadline)
+                                    }
+                                    .buttonStyle(.bordered)
+
+                                    #if DEBUG
+                                    // Debug info only shown in debug builds
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Debug Info:")
+                                            .font(.caption2.bold())
+                                        Text("Product IDs: dev.liyuxuan.joodle.super.monthly, dev.liyuxuan.joodle.super.yearly")
+                                            .font(.caption2)
+                                        if let error = storeManager.errorMessage {
+                                            Text("Error: \(error)")
+                                                .font(.caption2)
+                                                .foregroundColor(.red)
+                                        }
+                                    }
+                                    .padding(8)
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(8)
+                                    .padding(.top, 8)
+                                    #endif
+                                }
+                                .padding(.vertical, 40)
                             } else {
                                 if let yearly = storeManager.yearlyProduct {
                                     PricingCard(
@@ -179,8 +215,6 @@ struct StandalonePaywallView: View {
                         .scaleEffect(1.5)
                 }
             }
-            .navigationTitle("Subscribe to Joodle Super")
-            .navigationBarTitleDisplayMode(.inline)
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -189,8 +223,26 @@ struct StandalonePaywallView: View {
                 }
             }
             .onAppear {
+                // Debug: Log StoreKit status
+                print("📱 StandalonePaywallView appeared")
+                print("📦 Products loaded: \(storeManager.products.count)")
+                print("📦 Is loading: \(storeManager.isLoading)")
+                print("📦 Error message: \(storeManager.errorMessage ?? "none")")
+
                 if selectedProductID == nil, !storeManager.products.isEmpty {
                     selectedProductID = storeManager.yearlyProduct?.id
+                }
+
+                if storeManager.products.isEmpty && !storeManager.isLoading {
+                    print("⚠️ No products loaded!")
+                    print("⚠️ If running in Xcode: Check Edit Scheme → Run → Options → StoreKit Configuration")
+                    print("⚠️ If running in TestFlight: Products must be configured in App Store Connect")
+                    print("⚠️ Expected product IDs: dev.liyuxuan.joodle.super.monthly, dev.liyuxuan.joodle.super.yearly")
+
+                    // Try to reload products if none are loaded
+                    Task {
+                        await storeManager.loadProducts()
+                    }
                 }
             }
             .onChange(of: storeManager.products) { _, newProducts in

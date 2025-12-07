@@ -15,6 +15,7 @@ struct ContentView: View {
   @Environment(\.userPreferences) private var userPreferences
 
   @Query private var entries: [DayEntry]
+  @StateObject private var subscriptionManager = SubscriptionManager.shared
 
   @Binding var selectedDateFromWidget: Date?
 
@@ -55,6 +56,14 @@ struct ContentView: View {
   private let expandThreshold: CGFloat = 1.2  // Threshold for detecting significant expand
 
   // MARK: Computed
+
+  /// Entries with drawings from the past year (for doodle limit calculation)
+  private var entriesThisYear: [DayEntry] {
+    let calendar = Calendar.current
+    let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: Date())!
+    return entries.filter { $0.createdAt >= oneYearAgo }
+  }
+
   /// Flattened array of items to be displayed in the year grid.
   private var itemsInYear: [DateItem] {
     let calendar = Calendar.current
@@ -268,7 +277,8 @@ struct ContentView: View {
           onDismiss: {
             showDrawingCanvas = false
           },
-          isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland
+          isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland,
+          allEntriesThisYear: entriesThisYear
         )
         .disabled(selectedDateItem == nil)
         .presentationDetents([.height(420)])
@@ -303,7 +313,8 @@ struct ContentView: View {
               onDismiss: {
                 showDrawingCanvas = false
               },
-              isShowing: showDrawingCanvas
+              isShowing: showDrawingCanvas,
+              allEntriesThisYear: entriesThisYear
             )
           },
           // Hide dynamic island view when navigate to setting
@@ -315,9 +326,21 @@ struct ContentView: View {
         .id("DynamicIslandExpandedView-\(selectedDateItem?.id ?? "none")")
       }
     }
+    .alert("Subscription Ended", isPresented: $subscriptionManager.subscriptionJustExpired) {
+      Button("OK") {
+        subscriptionManager.acknowledgeExpiry()
+      }
+    } message: {
+      Text("Your Joodle Super subscription has ended. Some features are now limited, including iCloud sync and unlimited doodles.")
+    }
     .onAppear {
       // Sync widget data when app launches
       WidgetHelper.shared.updateWidgetData(with: entries)
+
+      // Refresh subscription status
+      Task {
+        await subscriptionManager.updateSubscriptionStatus()
+      }
       //
       //
       //            // Debug: print font family

@@ -48,6 +48,7 @@ class StoreKitManager: ObservableObject {
         errorMessage = nil
 
         print("📦 StoreKit: Loading products for IDs: \(productIDs)")
+        print("📦 StoreKit: Environment - \(getEnvironmentInfo())")
 
         do {
             let loadedProducts = try await Product.products(for: productIDs)
@@ -71,16 +72,72 @@ class StoreKitManager: ObservableObject {
             }
 
             if loadedProducts.isEmpty {
-                errorMessage = "No products found. Make sure StoreKit Configuration is selected in scheme."
-                print("⚠️ StoreKit: No products loaded. Check scheme settings.")
+                let troubleshootingMessage = """
+                No products found. This typically means:
+
+                1. Products not created in App Store Connect
+                2. Products not in 'Ready to Submit' or 'Approved' status
+                3. Product IDs don't match exactly
+                4. Paid Applications Agreement not active
+                5. Products just created (wait 24-48 hours for propagation)
+
+                Expected IDs: \(productIDs.joined(separator: ", "))
+                """
+                errorMessage = "Unable to load subscription plans. Please try again later."
+                print("⚠️ StoreKit: \(troubleshootingMessage)")
             }
+        } catch let error as StoreKitError {
+            let detailedError = handleStoreKitError(error)
+            errorMessage = detailedError
+            print("❌ StoreKit Error (StoreKitError): \(error)")
+            print("❌ Detailed: \(detailedError)")
         } catch {
             errorMessage = "Failed to load products: \(error.localizedDescription)"
             print("❌ StoreKit Error: \(error)")
-            print("❌ Make sure 'SyncedProducts.storekit' is selected in Edit Scheme → Run → Options → StoreKit Configuration")
+            print("❌ Error type: \(type(of: error))")
+            print("❌ Full error description: \(String(describing: error))")
         }
 
         isLoading = false
+    }
+
+    // MARK: - Debug Helpers
+
+    private func getEnvironmentInfo() -> String {
+        #if DEBUG
+        return "DEBUG build"
+        #else
+        // Check if running from TestFlight
+        if let receiptURL = Bundle.main.appStoreReceiptURL {
+            if receiptURL.lastPathComponent == "sandboxReceipt" {
+                return "TestFlight/Sandbox"
+            } else if receiptURL.path.contains("sandboxReceipt") {
+                return "TestFlight/Sandbox (path)"
+            }
+        }
+        return "Production/App Store"
+        #endif
+    }
+
+    private func handleStoreKitError(_ error: StoreKitError) -> String {
+        switch error {
+        case .unknown:
+            return "Unknown StoreKit error. Check App Store Connect configuration."
+        case .userCancelled:
+            return "Request was cancelled."
+        case .networkError(let underlyingError):
+            return "Network error: \(underlyingError.localizedDescription). Check internet connection."
+        case .systemError(let underlyingError):
+            return "System error: \(underlyingError.localizedDescription)"
+        case .notAvailableInStorefront:
+            return "Products not available in your region. Check App Store Connect territories."
+        case .notEntitled:
+            return "Not entitled to access these products."
+        case .unsupported:
+            return "This device is not capable of making payments."
+        @unknown default:
+            return "Unexpected StoreKit error: \(error.localizedDescription)"
+        }
     }
 
     // MARK: - Purchase Product

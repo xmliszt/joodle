@@ -186,18 +186,21 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
     return AnniversaryEntry(
       date: Date(),
       anniversaryData: nil,
-      configuration: AnniversaryConfigurationIntent()
+      configuration: AnniversaryConfigurationIntent(),
+      isSubscribed: true
     )
   }
 
   func snapshot(for configuration: AnniversaryConfigurationIntent, in context: Context) async
     -> AnniversaryEntry
   {
-    let anniversaryData = getAnniversary(for: configuration)
+    let isSubscribed = WidgetDataManager.shared.isSubscribed()
+    let anniversaryData = isSubscribed ? getAnniversary(for: configuration) : nil
     return AnniversaryEntry(
       date: Date(),
       anniversaryData: anniversaryData,
-      configuration: configuration
+      configuration: configuration,
+      isSubscribed: isSubscribed
     )
   }
 
@@ -205,19 +208,24 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
     -> Timeline<AnniversaryEntry>
   {
     let currentDate = Date()
-    let anniversaryData = getAnniversary(for: configuration)
+    let isSubscribed = WidgetDataManager.shared.isSubscribed()
+    let anniversaryData = isSubscribed ? getAnniversary(for: configuration) : nil
 
     let entry = AnniversaryEntry(
       date: currentDate,
       anniversaryData: anniversaryData,
-      configuration: configuration
+      configuration: configuration,
+      isSubscribed: isSubscribed
     )
 
     // Update widget based on countdown timing
     let calendar = Calendar.current
     let nextUpdate: Date
 
-    if let annivData = anniversaryData {
+    // If not subscribed, update more frequently to catch subscription changes
+    if !isSubscribed {
+      nextUpdate = calendar.date(byAdding: .minute, value: 15, to: currentDate) ?? currentDate
+    } else if let annivData = anniversaryData {
       let components = calendar.dateComponents(
         [.year, .month, .day, .hour, .minute],
         from: currentDate,
@@ -314,6 +322,7 @@ struct AnniversaryEntry: TimelineEntry {
   let date: Date
   let anniversaryData: AnniversaryData?
   let configuration: AnniversaryConfigurationIntent
+  let isSubscribed: Bool
 }
 
 struct AnniversaryData {
@@ -337,7 +346,13 @@ struct AnniversaryWidgetView: View {
   @Environment(\.widgetFamily) var family
 
   var body: some View {
-    if let anniversaryData = entry.anniversaryData {
+    // Check subscription status first
+    if !entry.isSubscribed {
+      AnniversaryWidgetLockedView(family: family)
+        .containerBackground(for: .widget) {
+          Color(UIColor.systemBackground)
+        }
+    } else if let anniversaryData = entry.anniversaryData {
       Group {
         switch family {
         case .systemSmall:
@@ -354,6 +369,39 @@ struct AnniversaryWidgetView: View {
     } else {
       NoAnniversaryView(family: family)
     }
+  }
+}
+
+// MARK: - Anniversary Widget Locked View (Premium Required)
+
+struct AnniversaryWidgetLockedView: View {
+  let family: WidgetFamily
+
+  var body: some View {
+    VStack(spacing: family == .systemLarge ? 16 : 8) {
+      Image(systemName: "crown.fill")
+        .font(.system(size: family == .systemLarge ? 40 : (family == .systemMedium ? 28 : 24)))
+        .foregroundStyle(
+          LinearGradient(
+            colors: [.yellow, .accent],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+          )
+        )
+
+      VStack(spacing: 4) {
+        Text("Joodle Super")
+          .font(family == .systemLarge ? .headline : .caption.bold())
+          .foregroundColor(.primary)
+
+        Text("Upgrade to unlock widgets")
+          .font(family == .systemLarge ? .subheadline : .caption2)
+          .foregroundColor(.secondary)
+          .multilineTextAlignment(.center)
+          .lineSpacing(4)
+      }
+    }
+    .padding()
   }
 }
 
@@ -619,7 +667,8 @@ struct AnniversaryWidget: Widget {
       text: nil,
       drawingData: createMockDrawingData()
     ),
-    configuration: AnniversaryConfigurationIntent()
+    configuration: AnniversaryConfigurationIntent(),
+    isSubscribed: true
   )
 
   // Preview with text only
@@ -630,14 +679,16 @@ struct AnniversaryWidget: Widget {
       text: "This is a special anniversary!",
       drawingData: nil
     ),
-    configuration: AnniversaryConfigurationIntent()
+    configuration: AnniversaryConfigurationIntent(),
+    isSubscribed: true
   )
 
   // Preview with no anniversary
   AnniversaryEntry(
     date: Date(),
     anniversaryData: nil,
-    configuration: AnniversaryConfigurationIntent()
+    configuration: AnniversaryConfigurationIntent(),
+    isSubscribed: true
   )
 }
 
@@ -654,7 +705,8 @@ struct AnniversaryWidget: Widget {
       text: nil,
       drawingData: createMockDrawingData()
     ),
-    configuration: AnniversaryConfigurationIntent()
+    configuration: AnniversaryConfigurationIntent(),
+    isSubscribed: true
   )
 
   // Preview with text only
@@ -665,7 +717,8 @@ struct AnniversaryWidget: Widget {
       text: "This is a special anniversary!",
       drawingData: nil
     ),
-    configuration: AnniversaryConfigurationIntent()
+    configuration: AnniversaryConfigurationIntent(),
+    isSubscribed: true
   )
 
   // Preview with both
@@ -676,14 +729,16 @@ struct AnniversaryWidget: Widget {
       text: "Parents coming to Singapore! Finally!",
       drawingData: createMockDrawingData()
     ),
-    configuration: AnniversaryConfigurationIntent()
+    configuration: AnniversaryConfigurationIntent(),
+    isSubscribed: true
   )
 
   // Preview with no anniversary
   AnniversaryEntry(
     date: Date(),
     anniversaryData: nil,
-    configuration: AnniversaryConfigurationIntent()
+    configuration: AnniversaryConfigurationIntent(),
+    isSubscribed: true
   )
 }
 
@@ -700,7 +755,8 @@ struct AnniversaryWidget: Widget {
       text: nil,
       drawingData: createMockDrawingData()
     ),
-    configuration: AnniversaryConfigurationIntent()
+    configuration: AnniversaryConfigurationIntent(),
+    isSubscribed: true
   )
 
   // Preview with text only
@@ -712,13 +768,15 @@ struct AnniversaryWidget: Widget {
         "This is a special anniversary that I want to remember forever! This is a special anniversary that I want to remember forever! This is a special anniversary that I want to remember forever! This is a special anniversary that I want to remember forever! This is a special anniversary that I want to remember forever!",
       drawingData: nil
     ),
-    configuration: AnniversaryConfigurationIntent()
+    configuration: AnniversaryConfigurationIntent(),
+    isSubscribed: true
   )
 
   // Preview with no anniversary
   AnniversaryEntry(
     date: Date(),
     anniversaryData: nil,
-    configuration: AnniversaryConfigurationIntent()
+    configuration: AnniversaryConfigurationIntent(),
+    isSubscribed: true
   )
 }

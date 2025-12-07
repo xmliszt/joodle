@@ -14,16 +14,19 @@ struct YearGridProvider: TimelineProvider {
       date: Date(),
       year: Calendar.current.component(.year, from: Date()),
       percentage: 0.0,
-      entries: []
+      entries: [],
+      isSubscribed: true
     )
   }
 
   func getSnapshot(in context: Context, completion: @escaping (YearGridEntry) -> Void) {
+    let isSubscribed = WidgetDataManager.shared.isSubscribed()
     let entry = YearGridEntry(
       date: Date(),
       year: Calendar.current.component(.year, from: Date()),
       percentage: calculateYearProgress(),
-      entries: loadEntries()
+      entries: isSubscribed ? loadEntries() : [],
+      isSubscribed: isSubscribed
     )
     completion(entry)
   }
@@ -32,24 +35,32 @@ struct YearGridProvider: TimelineProvider {
     let currentDate = Date()
     let year = Calendar.current.component(.year, from: currentDate)
     let percentage = calculateYearProgress()
-    let entries = loadEntries()
+    let isSubscribed = WidgetDataManager.shared.isSubscribed()
+    let entries = isSubscribed ? loadEntries() : []
 
     let entry = YearGridEntry(
       date: currentDate,
       year: year,
       percentage: percentage,
-      entries: entries
+      entries: entries,
+      isSubscribed: isSubscribed
     )
 
-    // Update widget at midnight
+    // Update widget based on subscription status
     let calendar = Calendar.current
-    let tomorrow = calendar.date(
-      byAdding: .day,
-      value: 1,
-      to: calendar.startOfDay(for: currentDate)
-    )!
+    let nextUpdate: Date
+    if isSubscribed {
+      nextUpdate = calendar.date(
+        byAdding: .day,
+        value: 1,
+        to: calendar.startOfDay(for: currentDate)
+      )!
+    } else {
+      // Update more frequently to catch subscription changes
+      nextUpdate = calendar.date(byAdding: .minute, value: 15, to: currentDate)!
+    }
 
-    let timeline = Timeline(entries: [entry], policy: .after(tomorrow))
+    let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
     completion(timeline)
   }
 
@@ -90,6 +101,7 @@ struct YearGridEntry: TimelineEntry {
   let year: Int
   let percentage: Double
   let entries: [WidgetDayEntry]
+  let isSubscribed: Bool
 }
 
 struct WidgetDayEntry {
@@ -114,6 +126,11 @@ struct YearGridWidgetView: View {
 
   private var horizontalPadding: CGFloat {
     widgetFamily == .systemMedium ? 12.0 : 18.0
+  }
+
+  // Check if widget should show locked view
+  private var shouldShowLockedView: Bool {
+    !entry.isSubscribed
   }
 
   private func calculateDotsPerRow(availableWidth: CGFloat) -> Int {
@@ -175,6 +192,12 @@ struct YearGridWidgetView: View {
   }
 
   var body: some View {
+    if shouldShowLockedView {
+      YearGridWidgetLockedView(widgetFamily: widgetFamily)
+        .containerBackground(for: .widget) {
+          Color(UIColor.systemBackground)
+        }
+    } else {
     GeometryReader { geometry in
       VStack(alignment: .leading, spacing: widgetFamily == .systemMedium ? 8 : 12) {
         // Header
@@ -188,6 +211,7 @@ struct YearGridWidgetView: View {
           Text(String(format: "%.1f%%", entry.percentage))
             .font(.mansalva(size: 20))
             .foregroundColor(.accent)
+          }
         }
         .padding(.horizontal, horizontalPadding)
         .padding(.top, widgetFamily == .systemMedium ? 4 : 16)
@@ -299,6 +323,39 @@ struct WidgetDotView: View {
 }
 
 // MARK: - Widget definitions
+// MARK: - Year Grid Widget Locked View (Premium Required)
+
+struct YearGridWidgetLockedView: View {
+  let widgetFamily: WidgetFamily
+
+  var body: some View {
+    VStack(spacing: widgetFamily == .systemLarge ? 16 : 8) {
+      Image(systemName: "crown.fill")
+        .font(.system(size: widgetFamily == .systemLarge ? 40 : (widgetFamily == .systemMedium ? 28 : 24)))
+        .foregroundStyle(
+          LinearGradient(
+            colors: [.yellow, .accent],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+          )
+        )
+
+      VStack(spacing: 4) {
+        Text("Joodle Super")
+          .font(widgetFamily == .systemLarge ? .headline : .caption.bold())
+          .foregroundColor(.primary)
+
+        Text("Upgrade to unlock widgets")
+          .font(widgetFamily == .systemLarge ? .subheadline : .caption2)
+          .foregroundColor(.secondary)
+          .multilineTextAlignment(.center)
+          .lineSpacing(4)
+      }
+    }
+    .padding()
+  }
+}
+
 struct YearGridWidget: Widget {
   let kind: String = "YearGridWidget"
 
@@ -397,7 +454,7 @@ struct YearGridDoodleWidget: Widget {
       hasDrawing: true, thumbnail: nil),
   ]
 
-  YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries)
+  YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries, isSubscribed: true)
 }
 
 #Preview(as: .systemLarge) {
@@ -465,7 +522,7 @@ struct YearGridDoodleWidget: Widget {
       hasDrawing: true, thumbnail: nil),
   ]
 
-  YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries)
+  YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries, isSubscribed: true)
 }
 
 #Preview("Doodles", as: .systemMedium) {
@@ -536,5 +593,5 @@ struct YearGridDoodleWidget: Widget {
       hasDrawing: true, thumbnail: mockThumbnail),
   ]
 
-  YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries)
+  YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries, isSubscribed: true)
 }

@@ -14,6 +14,7 @@ import Observation
 import SwiftData
 import SwiftUI
 
+@MainActor
 @Observable
 final class CloudSyncManager {
   // MARK: - Singleton
@@ -50,11 +51,6 @@ final class CloudSyncManager {
     setupUbiquityIdentityObserver()
   }
 
-  deinit {
-    removeSyncEventObserver()
-    removeUbiquityIdentityObserver()
-  }
-
   // MARK: - System Cloud Availability (iCloud Documents & Data)
   /// Check if iCloud Documents & Data is enabled at the system level
   /// This is separate from CloudKit account status
@@ -62,17 +58,13 @@ final class CloudSyncManager {
     // Get the current ubiquity identity token
     currentUbiquityToken = FileManager.default.ubiquityIdentityToken
 
-    DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
+    // If token exists, iCloud Documents & Data is enabled
+    let wasEnabled = self.isSystemCloudEnabled
+    self.isSystemCloudEnabled = self.currentUbiquityToken != nil
 
-      // If token exists, iCloud Documents & Data is enabled
-      let wasEnabled = self.isSystemCloudEnabled
-      self.isSystemCloudEnabled = self.currentUbiquityToken != nil
-
-      // If system cloud was disabled, sync our app preference
-      if wasEnabled && !self.isSystemCloudEnabled {
-        self.handleSystemCloudDisabled()
-      }
+    // If system cloud was disabled, sync our app preference
+    if wasEnabled && !self.isSystemCloudEnabled {
+      self.handleSystemCloudDisabled()
     }
   }
 
@@ -83,14 +75,19 @@ final class CloudSyncManager {
       object: nil,
       queue: .main
     ) { [weak self] _ in
-      self?.handleUbiquityIdentityChange()
+      Task { @MainActor in
+        self?.handleUbiquityIdentityChange()
+      }
     }
   }
 
-  private func removeUbiquityIdentityObserver() {
-    if let observer = ubiquityIdentityObserver {
-      NotificationCenter.default.removeObserver(observer)
-      ubiquityIdentityObserver = nil
+  private nonisolated func removeUbiquityIdentityObserver() {
+    // Access observer in a thread-safe way
+    MainActor.assumeIsolated {
+      if let observer = ubiquityIdentityObserver {
+        NotificationCenter.default.removeObserver(observer)
+        ubiquityIdentityObserver = nil
+      }
     }
   }
 
@@ -148,35 +145,36 @@ final class CloudSyncManager {
   // MARK: - Cloud Availability (CloudKit Account Status)
   func checkCloudAvailability() {
     CKContainer.default().accountStatus { [weak self] status, error in
-      DispatchQueue.main.async {
+      Task { @MainActor in
+        guard let self = self else { return }
         switch status {
         case .available:
-          self?.isCloudAvailable = true
+          self.isCloudAvailable = true
           // Only clear errors related to account status
-          if self?.hasError == true && self?.errorMessage?.contains("iCloud account") == true {
-            self?.hasError = false
-            self?.errorMessage = nil
+          if self.hasError == true && self.errorMessage?.contains("iCloud account") == true {
+            self.hasError = false
+            self.errorMessage = nil
           }
         case .noAccount:
-          self?.isCloudAvailable = false
-          self?.hasError = true
-          self?.errorMessage = "No iCloud account found. Please sign in to iCloud in Settings."
+          self.isCloudAvailable = false
+          self.hasError = true
+          self.errorMessage = "No iCloud account found. Please sign in to iCloud in Settings."
         case .restricted:
-          self?.isCloudAvailable = false
-          self?.hasError = true
-          self?.errorMessage = "iCloud is restricted on this device."
+          self.isCloudAvailable = false
+          self.hasError = true
+          self.errorMessage = "iCloud is restricted on this device."
         case .couldNotDetermine:
-          self?.isCloudAvailable = false
-          self?.hasError = true
-          self?.errorMessage = "Unable to determine iCloud status."
+          self.isCloudAvailable = false
+          self.hasError = true
+          self.errorMessage = "Unable to determine iCloud status."
         case .temporarilyUnavailable:
-          self?.isCloudAvailable = false
-          self?.hasError = true
-          self?.errorMessage = "iCloud is temporarily unavailable."
+          self.isCloudAvailable = false
+          self.hasError = true
+          self.errorMessage = "iCloud is temporarily unavailable."
         @unknown default:
-          self?.isCloudAvailable = false
-          self?.hasError = true
-          self?.errorMessage = "Unknown iCloud status."
+          self.isCloudAvailable = false
+          self.hasError = true
+          self.errorMessage = "Unknown iCloud status."
         }
       }
     }
@@ -192,14 +190,18 @@ final class CloudSyncManager {
       object: nil,
       queue: .main
     ) { [weak self] notification in
-      self?.handleCloudKitEvent(notification)
+      Task { @MainActor in
+        self?.handleCloudKitEvent(notification)
+      }
     }
   }
 
-  private func removeSyncEventObserver() {
-    if let observer = syncEventObserver {
-      NotificationCenter.default.removeObserver(observer)
-      syncEventObserver = nil
+  private nonisolated func removeSyncEventObserver() {
+    MainActor.assumeIsolated {
+      if let observer = syncEventObserver {
+        NotificationCenter.default.removeObserver(observer)
+        syncEventObserver = nil
+      }
     }
   }
 
@@ -240,23 +242,30 @@ final class CloudSyncManager {
   }
 
   // MARK: - Enable/Disable Sync
-  func enableSync() {
+  func enableSync() -> Bool {
+    // Check subscription first
+    guard SubscriptionManager.shared.hasICloudSync else {
+      hasError = true
+      errorMessage = "iCloud Sync requires Joodle Super subscription."
+      return false
+    }
+
     guard isSystemCloudEnabled else {
       hasError = true
       errorMessage = "iCloud Documents & Data is disabled in Settings. Please enable it first."
-      return
+      return false
     }
 
     guard isCloudAvailable else {
       hasError = true
       errorMessage = "iCloud is not available. Please check your settings."
-      return
+      return false
     }
 
     guard networkMonitor.isConnected else {
       hasError = true
       errorMessage = "No internet connection. iCloud sync requires an active internet connection."
-      return
+      return false
     }
 
     userPreferences.isCloudSyncEnabled = true
@@ -267,6 +276,32 @@ final class CloudSyncManager {
 
     // Indicate we're expecting sync activity
     isObservingSyncActivity = true
+    return true
+  }
+
+  /// Check if user can enable sync (has subscription and system requirements met)
+  var canEnableSync: Bool {
+    return SubscriptionManager.shared.hasICloudSync &&
+           isSystemCloudEnabled &&
+           isCloudAvailable &&
+           networkMonitor.isConnected
+  }
+
+  /// Reason why sync cannot be enabled (for UI display)
+  var syncBlockedReason: String? {
+    if !SubscriptionManager.shared.hasICloudSync {
+      return "Requires Joodle Super"
+    }
+    if !isSystemCloudEnabled {
+      return "iCloud disabled in Settings"
+    }
+    if !isCloudAvailable {
+      return "No iCloud account"
+    }
+    if !networkMonitor.isConnected {
+      return "No internet connection"
+    }
+    return nil
   }
 
   func disableSync() {
@@ -300,11 +335,17 @@ final class CloudSyncManager {
   }
 
   var canSync: Bool {
-    return isSystemCloudEnabled && isCloudAvailable && networkMonitor.isConnected && userPreferences.isCloudSyncEnabled
+    return SubscriptionManager.shared.hasICloudSync &&
+           isSystemCloudEnabled &&
+           isCloudAvailable &&
+           networkMonitor.isConnected &&
+           userPreferences.isCloudSyncEnabled
   }
 
   var statusMessage: String {
-    if !isSystemCloudEnabled {
+    if !SubscriptionManager.shared.hasICloudSync {
+      return "Requires Joodle Super"
+    } else if !isSystemCloudEnabled {
       return "iCloud Documents disabled in Settings"
     } else if !isCloudAvailable {
       return "iCloud not available"
@@ -319,7 +360,9 @@ final class CloudSyncManager {
 
   /// Detailed sync status message for UI display
   var syncStatusMessage: String {
-    if needsSystemSettingsChange {
+    if !SubscriptionManager.shared.hasICloudSync {
+      return "iCloud Sync is a Joodle Super feature. Upgrade to sync your doodles across devices."
+    } else if needsSystemSettingsChange {
       return "iCloud is disabled in iOS Settings. Enable it in \"Settings → [Your Name] → iCloud → Saved to iCloud -> Joodle\" to sync."
     } else if systemCloudEnabled && !appCloudEnabled {
       return "Sync is disabled in app. Enable it to sync with iCloud."
@@ -365,9 +408,22 @@ final class CloudSyncManager {
       }
     }
   }
+
+  // MARK: - Cleanup
+
+  func cleanup() {
+    if let observer = syncEventObserver {
+      NotificationCenter.default.removeObserver(observer)
+      syncEventObserver = nil
+    }
+    if let observer = ubiquityIdentityObserver {
+      NotificationCenter.default.removeObserver(observer)
+      ubiquityIdentityObserver = nil
+    }
+  }
 }
 
 // MARK: - Environment Extension
 extension EnvironmentValues {
-  @Entry var cloudSyncManager: CloudSyncManager = CloudSyncManager.shared
+  @Entry var cloudSyncManager: CloudSyncManager = MainActor.assumeIsolated { CloudSyncManager.shared }
 }

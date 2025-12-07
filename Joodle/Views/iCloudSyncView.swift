@@ -12,14 +12,53 @@ struct iCloudSyncView: View {
   @Environment(\.cloudSyncManager) private var syncManager
   @Environment(\.networkMonitor) private var networkMonitor
   @Environment(\.preferencesSyncManager) private var prefsSync
+  @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var showEnableAlert = false
   @State private var showDisableAlert = false
   @State private var showSystemSettingsAlert = false
+  @State private var showPaywall = false
 
   var body: some View {
     List {
+      // MARK: - Premium Feature Banner
+      if !subscriptionManager.hasICloudSync {
+        Section {
+          VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+              Image(systemName: "crown.fill")
+                .foregroundStyle(.yellow)
+                .font(.title2)
+
+              VStack(alignment: .leading, spacing: 4) {
+                Text("Premium Feature")
+                  .font(.headline)
+                  .foregroundStyle(.primary)
+
+                Text("iCloud Sync is available with Joodle Super. Upgrade to sync your doodles across all your devices.")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                  .fixedSize(horizontal: false, vertical: true)
+              }
+            }
+
+            Button {
+              showPaywall = true
+            } label: {
+              HStack {
+                Image(systemName: "crown.fill")
+                Text("Upgrade to Joodle Super")
+              }
+              .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.accent)
+          }
+          .padding(.vertical, 8)
+        }
+      }
+
       // MARK: - System vs App Toggle Warning
-      if syncManager.needsSystemSettingsChange {
+      if syncManager.needsSystemSettingsChange && subscriptionManager.hasICloudSync {
         Section {
           VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
@@ -61,8 +100,10 @@ struct iCloudSyncView: View {
           get: { userPreferences.isCloudSyncEnabled },
           set: { newValue in
             if newValue {
-              // Check if system cloud is disabled
-              if !syncManager.systemCloudEnabled {
+              // Check subscription first
+              if !subscriptionManager.hasICloudSync {
+                showPaywall = true
+              } else if !syncManager.systemCloudEnabled {
                 showSystemSettingsAlert = true
               } else {
                 showEnableAlert = true
@@ -72,17 +113,28 @@ struct iCloudSyncView: View {
             }
           }
         )) {
-          VStack(alignment: .leading, spacing: 4) {
-            Text("iCloud Sync")
-              .font(.body)
+          HStack {
+            VStack(alignment: .leading, spacing: 4) {
+              Text("iCloud Sync")
+                .font(.body)
+            }
+
+            if !subscriptionManager.hasICloudSync {
+              Spacer()
+              PremiumFeatureBadge()
+            }
           }
         }
-        .disabled(!syncManager.systemCloudEnabled || !syncManager.isCloudAvailable || !networkMonitor.isConnected)
+        .disabled(!subscriptionManager.hasICloudSync || !syncManager.systemCloudEnabled || !syncManager.isCloudAvailable || !networkMonitor.isConnected)
       } footer: {
-        if syncManager.needsSystemSettingsChange {
+        if !subscriptionManager.hasICloudSync {
+          Text("iCloud Sync requires Joodle Super subscription.")
+            .font(.caption)
+            .foregroundStyle(.accent)
+        } else if syncManager.needsSystemSettingsChange {
           Text("Joodle can't sync with iCloud because \"Saved to iCloud\" is disabled in system settings.")
             .font(.caption)
-            .foregroundStyle(.orange)
+            .foregroundStyle(.accent)
         } else if !syncManager.systemCloudEnabled {
           Text("\"Saved to iCloud\" is disabled. Enable it in Settings → [Your Name] → iCloud → Saved to iCloud → Joodle.")
             .font(.caption)
@@ -204,6 +256,9 @@ struct iCloudSyncView: View {
         } header: {
           Text("Advanced")
         }
+        .sheet(isPresented: $showPaywall) {
+          StandalonePaywallView()
+        }
       }
     }
     .navigationTitle("Sync to iCloud")
@@ -212,18 +267,18 @@ struct iCloudSyncView: View {
       Button("Cancel", role: .cancel) { }
       if #available(iOS 26.0, *) {
         Button("Enable", role: .confirm) {
-          userPreferences.isCloudSyncEnabled = true
-          syncManager.enableSync()
-          // Notify to recreate container
-          NotificationCenter.default.post(name: NSNotification.Name("CloudSyncPreferenceChanged"), object: nil)
+          if syncManager.enableSync() {
+            // Notify to recreate container
+            NotificationCenter.default.post(name: NSNotification.Name("CloudSyncPreferenceChanged"), object: nil)
+          }
         }
       } else {
         // Fallback on earlier versions
         Button("Enable") {
-          userPreferences.isCloudSyncEnabled = true
-          syncManager.enableSync()
-          // Notify to recreate container
-          NotificationCenter.default.post(name: NSNotification.Name("CloudSyncPreferenceChanged"), object: nil)
+          if syncManager.enableSync() {
+            // Notify to recreate container
+            NotificationCenter.default.post(name: NSNotification.Name("CloudSyncPreferenceChanged"), object: nil)
+          }
         }
       }
     } message: {
@@ -395,7 +450,7 @@ struct TroubleshootingView: View {
         }
         .padding(.bottom, 8)
       }
-      
+
       Section {
         Button {
           syncManager.openSystemSettings()

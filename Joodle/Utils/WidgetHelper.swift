@@ -8,6 +8,27 @@
 import Foundation
 import WidgetKit
 
+// MARK: - Subscription Status for Widget
+
+/// Subscription status shared between main app and widget extension
+struct WidgetSubscriptionStatus: Codable {
+  let isSubscribed: Bool
+  let expirationDate: Date?
+  let lastUpdated: Date
+
+  init(isSubscribed: Bool, expirationDate: Date? = nil) {
+    self.isSubscribed = isSubscribed
+    self.expirationDate = expirationDate
+    self.lastUpdated = Date()
+  }
+
+  /// Check if status is still valid (updated within last hour)
+  var isValid: Bool {
+    let oneHourAgo = Date().addingTimeInterval(-3600)
+    return lastUpdated > oneHourAgo
+  }
+}
+
 /// Data model for encoding/decoding entries to share with widget
 /// Note: Drawing data is included optionally for widgets that need to display the actual drawing
 struct WidgetEntryData: Codable {
@@ -40,8 +61,49 @@ class WidgetHelper {
 
   private let appGroupIdentifier = "group.dev.liyuxuan.joodle"
   private let entriesKey = "widgetEntries"
+  private let subscriptionKey = "widgetSubscriptionStatus"
 
   private init() {}
+
+  // MARK: - Subscription Status
+
+  /// Update subscription status for widget extension
+  @MainActor func updateSubscriptionStatus() {
+    guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
+      print("Failed to access shared UserDefaults for widget subscription")
+      return
+    }
+
+    let status = WidgetSubscriptionStatus(
+      isSubscribed: SubscriptionManager.shared.isSubscribed,
+      expirationDate: SubscriptionManager.shared.subscriptionExpirationDate
+    )
+
+    do {
+      let data = try JSONEncoder().encode(status)
+      sharedDefaults.set(data, forKey: subscriptionKey)
+      sharedDefaults.synchronize()
+
+      // Reload widgets to reflect subscription change
+      WidgetCenter.shared.reloadAllTimelines()
+    } catch {
+      print("Failed to encode subscription status: \(error)")
+    }
+  }
+
+  /// Load subscription status (for widget extension use)
+  static func loadSubscriptionStatus(from sharedDefaults: UserDefaults) -> WidgetSubscriptionStatus? {
+    guard let data = sharedDefaults.data(forKey: "widgetSubscriptionStatus") else {
+      return nil
+    }
+
+    do {
+      return try JSONDecoder().decode(WidgetSubscriptionStatus.self, from: data)
+    } catch {
+      print("Failed to decode subscription status: \(error)")
+      return nil
+    }
+  }
 
   /// Update widget data with current entries from SwiftData and reload widget timelines
   ///
@@ -51,7 +113,7 @@ class WidgetHelper {
   /// 3. Triggers widget timeline reload to display updated data
   ///
   /// - Parameter entries: Array of DayEntry objects from SwiftData
-  func updateWidgetData(with entries: [DayEntry]) {
+  @MainActor func updateWidgetData(with entries: [DayEntry]) {
     guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
       print("Failed to access shared UserDefaults for widget")
       return
@@ -75,6 +137,9 @@ class WidgetHelper {
       let data = try JSONEncoder().encode(widgetEntries)
       sharedDefaults.set(data, forKey: entriesKey)
       sharedDefaults.synchronize()
+
+      // Also update subscription status
+      updateSubscriptionStatus()
 
       // Reload widget timelines
       WidgetCenter.shared.reloadAllTimelines()
