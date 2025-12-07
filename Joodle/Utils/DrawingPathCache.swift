@@ -76,7 +76,10 @@ class DrawingPathCache: ObservableObject {
       let decodedPaths = try JSONDecoder().decode([PathData].self, from: data)
       return decodedPaths.map { pathData in
         var path = Path()
-        if pathData.isDot && pathData.points.count >= 1 {
+        // Treat as dot if isDot flag is true OR if there's only a single point
+        let shouldRenderAsDot = pathData.isDot || pathData.points.count == 1
+
+        if shouldRenderAsDot && pathData.points.count >= 1 {
           // Recreate dot as ellipse
           let center = pathData.points[0]
           let dotRadius = DRAWING_LINE_WIDTH / 2
@@ -99,7 +102,7 @@ class DrawingPathCache: ObservableObject {
         }
         return PathWithMetadata(
           path: path,
-          metadata: PathMetadata(isDot: pathData.isDot)
+          metadata: PathMetadata(isDot: shouldRenderAsDot)
         )
       }
     } catch {
