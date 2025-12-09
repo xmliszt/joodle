@@ -16,7 +16,7 @@ struct CanvasButtonsConfig {
   let canUndo: Bool
   let canRedo: Bool
   let showClearConfirmation: Binding<Bool>?
-  
+
   init(
     onClear: @escaping () -> Void,
     onUndo: (() -> Void)? = nil,
@@ -44,19 +44,19 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   @Binding var currentPath: Path
   @Binding var currentPathIsDot: Bool
   @Binding var isDrawing: Bool
-  
+
   var placeholderData: Data? = nil
   var buttonsConfig: CanvasButtonsConfig? = nil
-  
+
   /// Callback when a stroke is finished (finger lifted or moved out of bounds)
   var onCommitStroke: () -> Void
-  
+
   /// Optional trailing content for the header row (e.g. Save button)
   var TrailingHeaderView: () -> TrailingHeader
-  
+
   @State private var placeholderPaths: [(path: Path, isDot: Bool)] = []
   @State private var placeholderID = UUID()
-  
+
   init(
     paths: Binding<[Path]>,
     pathMetadata: Binding<[PathMetadata]>,
@@ -78,7 +78,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.onCommitStroke = onCommitStroke
     self.TrailingHeaderView = trailingHeader
   }
-  
+
   var body: some View {
     VStack(spacing: 16) {
       // Action Buttons Row
@@ -97,9 +97,9 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           .circularGlassButton(tintColor: .red)
           .disabled(!config.canClear)
           .opacity(config.canClear ? 1.0 : 0.5)
-          
+
           Spacer()
-          
+
           // Undo/Redo buttons
           HStack(spacing: 8) {
             // Undo button
@@ -111,7 +111,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               .disabled(!config.canUndo)
               .opacity(config.canUndo ? 1.0 : 0.3)
             }
-            
+
             // Redo button
             if let onRedo = config.onRedo {
               Button(action: onRedo) {
@@ -122,25 +122,25 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               .opacity(config.canRedo ? 1.0 : 0.3)
             }
           }
-          
+
           // Trailing content (e.g. Save button)
           if !(TrailingHeaderView() is EmptyView) {
             Spacer()
             TrailingHeaderView()
           }
-          
+
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 12)
       }
-      
+
       ZStack {
         // Canvas background
         RoundedRectangle(cornerRadius: 32, style: .continuous)
           .fill(.backgroundColor)
           .stroke(.borderColor, lineWidth: 1.0)
           .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-        
+
         // Drawing area
         Canvas { context, size in
           // Draw placeholder if empty
@@ -161,12 +161,12 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               }
             }
           }
-          
+
           // Draw all completed paths
           for (index, path) in paths.enumerated() {
             // Use stored metadata to determine rendering
             let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
-            
+
             if isDot {
               // Fill ellipse paths (dots)
               context.fill(path, with: .color(.appPrimary))
@@ -183,7 +183,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               )
             }
           }
-          
+
           // Draw current path being drawn
           if !currentPath.isEmpty {
             if currentPathIsDot {
@@ -212,7 +212,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               let point = value.location
               let isInBounds =
               point.x >= 0 && point.x <= CANVAS_SIZE && point.y >= 0 && point.y <= CANVAS_SIZE
-              
+
               if isInBounds {
                 // Point is within bounds
                 if !isDrawing {
@@ -233,9 +233,10 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               }
             }
             .onEnded { value in
-              let isTap = value.velocity == .zero
-              
-              // Check if this was a single tap
+              let translation = value.translation
+              let isTap = abs(translation.width) < 1 && abs(translation.height) < 1
+
+              // Check if this was a single tap (minimal movement)
               if isTap {
                 // Create a small circle for the dot
                 let point = value.location
@@ -250,12 +251,12 @@ struct SharedCanvasView<TrailingHeader: View>: View {
                     height: dotRadius * 2
                   ))
               }
-              
+
               // Commit the stroke
               if isDrawing && !currentPath.isEmpty {
                 onCommitStroke()
               }
-              
+
               // Reset drawing state
               isDrawing = false
               currentPathIsDot = false
@@ -270,14 +271,14 @@ struct SharedCanvasView<TrailingHeader: View>: View {
       decodePlaceholder()
     }
   }
-  
+
   private func decodePlaceholder() {
     guard let data = placeholderData else {
       placeholderPaths = []
       placeholderID = UUID()
       return
     }
-    
+
     do {
       let decodedPaths = try JSONDecoder().decode([PathData].self, from: data)
       placeholderPaths = decodedPaths.map { pathData in
@@ -365,7 +366,7 @@ extension SharedCanvasView where TrailingHeader == EmptyView {
 
 #Preview("With Content - Clear Button Only") {
   let samplePaths = createSamplePaths()
-  
+
   StatefulPreviewWrapperForSharedCanvas(
     paths: samplePaths.0,
     pathMetadata: samplePaths.1,
@@ -395,7 +396,7 @@ extension SharedCanvasView where TrailingHeader == EmptyView {
 
 #Preview("With Undo/Redo Buttons") {
   let samplePaths = createSamplePaths()
-  
+
   StatefulPreviewWrapperWithUndo(
     paths: samplePaths.0,
     pathMetadata: samplePaths.1
@@ -438,7 +439,7 @@ extension SharedCanvasView where TrailingHeader == EmptyView {
 
 #Preview("With Undo/Redo Buttons and Save Button") {
   let samplePaths = createSamplePaths()
-  
+
   StatefulPreviewWrapperWithUndo(
     paths: samplePaths.0,
     pathMetadata: samplePaths.1
@@ -487,7 +488,7 @@ extension SharedCanvasView where TrailingHeader == EmptyView {
 
 #Preview("With Placeholder") {
   let placeholder = createPlaceholderData()
-  
+
   StatefulPreviewWrapperForSharedCanvas(
     paths: [Path](),
     pathMetadata: [PathMetadata](),
@@ -521,7 +522,7 @@ extension SharedCanvasView where TrailingHeader == EmptyView {
 private func createSamplePaths() -> ([Path], [PathMetadata]) {
   var paths: [Path] = []
   var metadata: [PathMetadata] = []
-  
+
   // Create a simple line path
   var path1 = Path()
   path1.move(to: CGPoint(x: 50, y: 50))
@@ -529,7 +530,7 @@ private func createSamplePaths() -> ([Path], [PathMetadata]) {
   path1.addLine(to: CGPoint(x: 100, y: 150))
   paths.append(path1)
   metadata.append(PathMetadata(isDot: false))
-  
+
   // Create a dot path
   var path2 = Path()
   let dotRadius = DRAWING_LINE_WIDTH / 2
@@ -542,14 +543,14 @@ private func createSamplePaths() -> ([Path], [PathMetadata]) {
     ))
   paths.append(path2)
   metadata.append(PathMetadata(isDot: true))
-  
+
   // Create another line path
   var path3 = Path()
   path3.move(to: CGPoint(x: 180, y: 180))
   path3.addLine(to: CGPoint(x: 220, y: 200))
   paths.append(path3)
   metadata.append(PathMetadata(isDot: false))
-  
+
   return (paths, metadata)
 }
 
@@ -578,7 +579,7 @@ private struct StatefulPreviewWrapperForSharedCanvas<Content: View>: View {
   @State private var currentPath: Path
   @State private var currentPathIsDot: Bool
   @State private var isDrawing: Bool
-  
+
   let content: (
     Binding<[Path]>,
     Binding<[PathMetadata]>,
@@ -586,7 +587,7 @@ private struct StatefulPreviewWrapperForSharedCanvas<Content: View>: View {
     Binding<Bool>,
     Binding<Bool>
   ) -> Content
-  
+
   init(
     paths: [Path],
     pathMetadata: [PathMetadata],
@@ -608,7 +609,7 @@ private struct StatefulPreviewWrapperForSharedCanvas<Content: View>: View {
     _isDrawing = State(wrappedValue: isDrawing)
     self.content = content
   }
-  
+
   var body: some View {
     content($paths, $pathMetadata, $currentPath, $currentPathIsDot, $isDrawing)
   }
@@ -622,7 +623,7 @@ private struct StatefulPreviewWrapperWithUndo<Content: View>: View {
   @State private var isDrawing: Bool = false
   @State private var undoStack: [([Path], [PathMetadata])] = []
   @State private var redoStack: [([Path], [PathMetadata])] = []
-  
+
   let content: (
     Binding<[Path]>,
     Binding<[PathMetadata]>,
@@ -632,7 +633,7 @@ private struct StatefulPreviewWrapperWithUndo<Content: View>: View {
     Binding<[([Path], [PathMetadata])]>,
     Binding<[([Path], [PathMetadata])]>
   ) -> Content
-  
+
   init(
     paths: [Path],
     pathMetadata: [PathMetadata],
@@ -652,7 +653,7 @@ private struct StatefulPreviewWrapperWithUndo<Content: View>: View {
     _undoStack = State(wrappedValue: [(paths, pathMetadata)])
     self.content = content
   }
-  
+
   var body: some View {
     content($paths, $pathMetadata, $currentPath, $currentPathIsDot, $isDrawing, $undoStack, $redoStack)
   }
