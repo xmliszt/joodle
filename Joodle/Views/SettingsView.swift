@@ -221,6 +221,15 @@ struct SettingsView: View {
           Text("Restore from local backup")
         }
       }
+      
+      
+      // MARK: Revisit onboarding flow
+      Section {
+        Button("Revisit Onboarding") {
+          showOnboarding = true
+        }
+      }
+      
 
       // MARK: - Feedback
       Section {

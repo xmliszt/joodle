@@ -108,7 +108,6 @@ class SubscriptionManager: ObservableObject {
         await storeManager.updatePurchasedProducts()
 
         // Sync our state with StoreKitManager
-        let wasSubscribed = self.isSubscribed
         self.isSubscribed = storeManager.hasActiveSubscription
         self.isInTrialPeriod = storeManager.isInTrialPeriod
         self.subscriptionExpirationDate = storeManager.subscriptionExpirationDate
