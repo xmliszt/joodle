@@ -14,11 +14,7 @@ struct DrawingEntryView: View {
           .frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 24)
         VStack(alignment: .leading, spacing: 0) {
-          Text("Whatever happened, draw it out.")
-            .font(.title3)
-            .foregroundColor(.primary)
-            .fontWeight(.semibold)
-          Text("This space is just for you.")
+          Text("Capture a moment of your day on the canvas below.")
             .font(.title3)
             .foregroundColor(.primary)
             .fontWeight(.semibold)
@@ -31,21 +27,17 @@ struct DrawingEntryView: View {
           placeholderData: PLACEHOLDER_DATA
         )
         .padding()
-        .padding(.top, 64)
       }
       .frame(maxWidth: .infinity)
       
       Spacer()
       
-      VStack (alignment: .center) {
-        Button {
+      OnboardingButtonView(
+        label: "Capture this moment",
+        onClick: {
           viewModel.completeStep(.drawingEntry)
-        } label: {
-          Text("Capture this moment")
-        }
-        .buttonStyle(OnboardingButtonStyle())
-        .disabled(viewModel.firstDoodleData?.isEmpty ?? true)
-      }
+        },
+        disabled: viewModel.firstDoodleData?.isEmpty ?? true)
     }
     .frame(maxWidth: .infinity)
     .navigationBarHidden(true)

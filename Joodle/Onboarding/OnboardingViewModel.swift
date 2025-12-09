@@ -59,6 +59,11 @@ class OnboardingViewModel: ObservableObject {
         }
     }
 
+    func goBack() {
+        guard !navigationPath.isEmpty else { return }
+        navigationPath.removeLast()
+    }
+
     private func finishOnboarding() {
         // Save flags to UserDefaults to hide onboarding on next launch
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")

@@ -34,11 +34,8 @@ struct OnboardingCompletionView: View {
 
             Spacer()
 
-            VStack(alignment: .center) {
-                Button("Unlock my Joodle") {
-                    viewModel.completeStep(.onboardingCompletion)
-                }
-                .buttonStyle(OnboardingButtonStyle())
+            OnboardingButtonView(label: "Unlock my Joodle") {
+              viewModel.completeStep(.onboardingCompletion)
             }
         }
         .padding(.horizontal)

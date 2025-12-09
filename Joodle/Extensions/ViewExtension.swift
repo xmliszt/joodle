@@ -84,7 +84,7 @@ extension View {
     }
   }
 
-  func circularGlassButton(tintColor: Color? = nil) -> some View {
+func circularGlassButton(tintColor: Color? = nil) -> some View {
     self.modifier(CircularGlassButtonStyle(tintColor: tintColor))
   }
 }

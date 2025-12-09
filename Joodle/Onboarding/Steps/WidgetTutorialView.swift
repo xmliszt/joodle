@@ -35,10 +35,9 @@ struct WidgetTutorialView: View {
 
             Spacer()
 
-            Button("Unlock my Joodle") {
-                viewModel.completeStep(.widgetTutorial)
+            OnboardingButtonView(label: "Unlock my Joodle") {
+              viewModel.completeStep(.widgetTutorial)
             }
-            .buttonStyle(OnboardingButtonStyle())
         }
         .padding(.horizontal)
         .navigationBarBackButtonHidden(true)
