@@ -50,7 +50,7 @@ struct SliderCTAButton: View {
 
   @Namespace private var thumbNamespace
 
-  private let thumbSize: CGFloat = 40
+  private let thumbSize: CGFloat = 60
   private let trackHeight: CGFloat = 56
   private var trackPadding: CGFloat {
     (trackHeight - thumbSize) / 2
@@ -65,6 +65,9 @@ struct SliderCTAButton: View {
         trackBackground
           .clipShape(Capsule())
 
+        // Green progress overlay on the left of thumb
+        progressOverlay(maxOffset: maxOffset, trackWidth: geometry.size.width)
+
         // Label
         trackLabel(maxWidth: geometry.size.width)
 
@@ -76,8 +79,27 @@ struct SliderCTAButton: View {
     .frame(height: trackHeight)
   }
 
-  // MARK: - Track Background
+  // MARK: - Progress Overlay
+  private func progressOverlay(maxOffset: CGFloat, trackWidth: CGFloat) -> some View {
+    let clampedOffset = min(max(dragOffset, 0), maxOffset)
+    let progressWidth = trackPadding + clampedOffset + thumbSize
 
+    return Capsule()
+      .fill(Color.green.opacity(0.2))
+      .frame(width: trackWidth, height: trackHeight)
+      .mask(
+        HStack(spacing: 0) {
+          RoundedRectangle(cornerRadius: thumbSize / 2, style: .circular)
+            .frame(width: max(progressWidth, 0))
+
+          Spacer(minLength: 0)
+        }
+        .frame(width: trackWidth)
+      )
+      .animation(.springFkingSatifying, value: dragOffset)
+  }
+
+  // MARK: - Track Background
   private var trackBackground: some View {
     ZStack {
       // Base gradient/color
@@ -95,8 +117,8 @@ struct SliderCTAButton: View {
       LinearGradient(
         stops: [
           .init(color: .clear, location: 0),
-          .init(color: .white.opacity(0.4), location: 0.4),
-          .init(color: .white.opacity(0.4), location: 0.6),
+          .init(color: .white.opacity(0.2), location: 0.4),
+          .init(color: .white.opacity(0.2), location: 0.6),
           .init(color: .clear, location: 1.0)
         ],
         startPoint: .leading,
@@ -190,27 +212,31 @@ struct SliderCTAButton: View {
   }
 
   private func handleThumbTap() {
-    if allowModeToggle && !isLoading {
-      withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-        isSuperMode.toggle()
-      }
+    guard !isLoading else { return }
+    guard allowModeToggle else { return }
 
+    withAnimation(.springFkingSatifying) {
+      isSuperMode.toggle()
     }
   }
 
   private func thumbDragGesture(maxOffset: CGFloat) -> some Gesture {
     DragGesture()
       .onChanged { value in
+        guard !isLoading else { return }
         isDragging = true
         dragOffset = value.translation.width
       }
       .onEnded { _ in
         isDragging = false
-        let threshold = maxOffset * 0.7
+        let threshold = maxOffset * 0.9
 
         if dragOffset >= threshold {
+          // Play haptic feedback on confirmation
+          Haptic.play(with: .medium)
+
           // Complete the slide
-          withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+          withAnimation(.springFkingSatifying) {
             dragOffset = maxOffset
           }
 
@@ -218,13 +244,13 @@ struct SliderCTAButton: View {
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             onSlideComplete()
             // Reset after action
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            withAnimation(.springFkingSatifying) {
               dragOffset = 0
             }
           }
         } else {
           // Snap back
-          withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+          withAnimation(.springFkingSatifying) {
             dragOffset = 0
           }
         }
@@ -247,7 +273,7 @@ struct SliderCTAButton: View {
 
   private var thumbIcon: some View {
     Image(systemName: isSuperMode ? "crown.fill" : "arrow.right")
-      .font(.system(size: 20, weight: .semibold))
+      .font(.system(size: 24, weight: .semibold))
       .foregroundColor(isSuperMode ? .white : .appBackground)
   }
 }
@@ -459,10 +485,10 @@ struct PaywallContentView: View {
       VStack(spacing: 4) {
         // Mode toggle hint (only when toggle is allowed)
         if configuration.showFreeVersionToggle {
-          Text("Tap the handle to switch")
+          Text("Tap the handle to switch to free version")
             .font(.caption2)
             .foregroundColor(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
 
         // Main CTA Slider
