@@ -30,7 +30,36 @@ struct JoodleApp: App {
   @State private var showLaunchScreen = true
 
   init() {
-    _modelContainer = State(initialValue: Self.createModelContainer())
+    let container = Self.createModelContainer()
+    _modelContainer = State(initialValue: container)
+
+    // Run dateString migration synchronously for existing entries
+    Self.runDateStringMigration(container: container)
+  }
+
+  /// Runs the dateString migration synchronously to populate dateString for existing entries
+  private static func runDateStringMigration(container: ModelContainer) {
+    let context = ModelContext(container)
+    let descriptor = FetchDescriptor<DayEntry>()
+
+    do {
+      let allEntries = try context.fetch(descriptor)
+      var migratedCount = 0
+
+      for entry in allEntries {
+        if entry.dateString.isEmpty {
+          entry.dateString = DayEntry.dateToString(entry.createdAt)
+          migratedCount += 1
+        }
+      }
+
+      if migratedCount > 0 {
+        try context.save()
+        print("DateStringMigration: Migrated \(migratedCount) entries on startup")
+      }
+    } catch {
+      print("DateStringMigration: Failed during startup: \(error)")
+    }
   }
 
   static func createModelContainer() -> ModelContainer {
@@ -89,7 +118,7 @@ struct JoodleApp: App {
               .id(containerKey)
           }
         }
-        
+
         if showLaunchScreen {
           LaunchScreenView()
             .onAppear {

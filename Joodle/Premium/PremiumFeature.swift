@@ -411,7 +411,7 @@ struct DoodleAccessChecker {
         // Sort entries by date (oldest first) and find the index
         let sortedEntries = allEntries
             .filter { $0.drawingData != nil }
-            .sorted { $0.createdAt < $1.createdAt }
+            .sorted { $0.dateString < $1.dateString }
 
         guard let index = sortedEntries.firstIndex(where: { $0.id == entry.id }) else {
             // Entry not found or has no drawing - allow editing (creating new)

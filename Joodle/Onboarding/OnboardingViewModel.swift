@@ -72,12 +72,11 @@ class OnboardingViewModel: ObservableObject {
 
         if let data = firstDoodleData, let context = modelContext {
             let today = Date()
-            let startOfDay = Calendar.current.startOfDay(for: today)
-            let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+            let todayDateString = DayEntry.dateToString(today)
 
-            // Check for existing entry to avoid duplicates
+            // Check for existing entry to avoid duplicates using timezone-agnostic dateString
             let predicate = #Predicate<DayEntry> { entry in
-                entry.createdAt >= startOfDay && entry.createdAt < endOfDay
+                entry.dateString == todayDateString
             }
             let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
 

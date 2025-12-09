@@ -228,7 +228,7 @@ struct DrawingCanvasView: View {
       // Editing existing - check if within first N doodles
       let entriesWithDrawings = allEntries
         .filter { $0.drawingData != nil }
-        .sorted { $0.createdAt < $1.createdAt }
+        .sorted { $0.dateString < $1.dateString }
 
       if let entry = entry,
          let index = entriesWithDrawings.firstIndex(where: { $0.id == entry.id }) {

@@ -121,9 +121,10 @@ class WidgetHelper {
 
     // Convert DayEntry to WidgetEntryData
     // Note: Drawing data is included to support widgets that display actual drawings
+    // Use displayDate which is timezone-agnostic (stable noon UTC)
     let widgetEntries = entries.map { entry in
       WidgetEntryData(
-        date: entry.createdAt,
+        date: entry.displayDate,
         hasText: !entry.body.isEmpty,
         hasDrawing: entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true),
         drawingData: entry.drawingData,

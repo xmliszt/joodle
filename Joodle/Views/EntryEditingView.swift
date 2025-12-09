@@ -101,7 +101,7 @@ struct EntryEditingView: View {
 
                   // Update entry if got new date
                   if let newDate = newValue {
-                    let candidates = entries.filter { Calendar.current.isDate($0.createdAt, inSameDayAs: newDate) }
+                    let candidates = entries.filter { $0.matches(date: newDate) }
                     // Prioritize entry with content
                     entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
 
@@ -213,7 +213,7 @@ struct EntryEditingView: View {
       .onAppear {
         // Load entry first
         guard let date else { return }
-        let candidates = entries.filter { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
+        let candidates = entries.filter { $0.matches(date: date) }
         // Prioritize entry with content
         entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
 
@@ -227,7 +227,7 @@ struct EntryEditingView: View {
         guard let date else { return }
         // If we don't have an entry yet, try to find one in the new entries
         if entry == nil {
-          let candidates = newEntries.filter { Calendar.current.isDate($0.createdAt, inSameDayAs: date) }
+          let candidates = newEntries.filter { $0.matches(date: date) }
           // Prioritize entry with content
           if let found = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first {
             entry = found

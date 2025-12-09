@@ -83,7 +83,7 @@ struct ContentView: View {
 
   private var currentHighlightedEntry: DayEntry? {
     if let itemDate = currentHighlightedItem?.date {
-      return entries.first(where: { Calendar.current.isDate($0.createdAt, inSameDayAs: itemDate) })
+      return entries.first(where: { $0.matches(date: itemDate) })
     }
     return nil
   }
@@ -271,7 +271,7 @@ struct ContentView: View {
       ) {
         DrawingCanvasView(
           date: selectedDateItem!.date,
-          entry: entries.first(where: { Calendar.current.isDate($0.createdAt, inSameDayAs: selectedDateItem!.date) }),
+          entry: entries.first(where: { $0.matches(date: selectedDateItem!.date) }),
           onDismiss: {
             showDrawingCanvas = false
           },
@@ -307,7 +307,7 @@ struct ContentView: View {
           content: {
             DrawingCanvasView(
               date: selectedDateItem!.date,
-              entry: entries.first(where: { Calendar.current.isDate($0.createdAt, inSameDayAs: selectedDateItem!.date) }),
+              entry: entries.first(where: { $0.matches(date: selectedDateItem!.date) }),
               onDismiss: {
                 showDrawingCanvas = false
               },
@@ -339,6 +339,8 @@ struct ContentView: View {
       Task {
         await subscriptionManager.updateSubscriptionStatus()
       }
+
+
       //
       //
       //            // Debug: print font family
@@ -557,7 +559,7 @@ struct ContentView: View {
   private func selectDateItem(item: DateItem, scrollProxy: ScrollViewProxy) {
     // Initialize editedText with the entry content for the selected date
     var entry = entries.first { entry in
-      Calendar.current.isDate(entry.createdAt, inSameDayAs: item.date)
+      entry.matches(date: item.date)
     }
 
     // Create new entry if there's text content

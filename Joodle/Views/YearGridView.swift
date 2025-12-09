@@ -142,34 +142,25 @@ struct YearGridView: View {
 
   /// Build a dictionary for O(1) entry lookups by date
   private func buildEntriesLookup() -> [String: DayEntry] {
-    let calendar = Calendar.current
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd"
-
     var lookup: [String: DayEntry] = [:]
     for entry in entries {
-      let dayStart = calendar.startOfDay(for: entry.createdAt)
-      let key = formatter.string(from: dayStart)
-      lookup[key] = entry
+      // Use the timezone-agnostic dateString directly as the key
+      lookup[entry.dateString] = entry
     }
     return lookup
   }
 
   /// Find the entry for a given date using pre-built lookup
   private func getEntryForDate(_ date: Date, from lookup: [String: DayEntry]) -> DayEntry? {
-    let calendar = Calendar.current
-    let dayStart = calendar.startOfDay(for: date)
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd"
-    let key = formatter.string(from: dayStart)
+    // Use the timezone-agnostic date string conversion
+    let key = DayEntry.dateToString(date)
     return lookup[key]
   }
 
   /// Find the entry for a given date (legacy method for backward compatibility)
   private func entryForDate(_ date: Date) -> DayEntry? {
-    let calendar = Calendar.current
     return entries.first { entry in
-      calendar.isDate(entry.createdAt, inSameDayAs: date)
+      entry.matches(date: date)
     }
   }
 
