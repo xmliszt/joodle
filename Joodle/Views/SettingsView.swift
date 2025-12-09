@@ -1,3 +1,4 @@
+import CoreHaptics
 import Observation
 import SwiftData
 import SwiftUI
@@ -129,10 +130,18 @@ struct SettingsView: View {
       }
 
       // MARK: - Interaction Preferences
-      Section("Interactions") {
-        Toggle("Haptic feedback", isOn: hapticBinding)
+      if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
+        Section {
+          Toggle(isOn: hapticBinding) {
+            Text("Haptic feedback")
+          }
+        } header: {
+          Text("Interactions")
+        } footer: {
+          Text("Haptic feedback also depends on your device's Vibration setting in Settings > Accessibility > Touch > Vibration")
+        }
       }
-
+      
       // MARK: - Subscription
       Section("Super Subscription") {
         if subscriptionManager.isSubscribed {
@@ -221,15 +230,14 @@ struct SettingsView: View {
           Text("Restore from local backup")
         }
       }
-      
-      
+
+
       // MARK: Revisit onboarding flow
       Section {
         Button("Revisit Onboarding") {
           showOnboarding = true
         }
       }
-      
 
       // MARK: - Feedback
       Section {
@@ -257,9 +265,6 @@ struct SettingsView: View {
       // MARK: - Developer Options (Only show in debug build)
       if AppEnvironment.isDebug {
         Section("Developer Options") {
-          Button("Revisit Onboarding") {
-            showOnboarding = true
-          }
           Button("Clear Today's Entries", role: .destructive) {
             clearTodaysEntries()
           }
@@ -275,7 +280,7 @@ struct SettingsView: View {
     .navigationBarBackButtonHidden()
     .toolbar {
       ToolbarItem(placement: .navigationBarLeading) {
-        Button("dismiss", systemImage: "smallcircle.filled.circle.fill") {
+        Button("dismiss", systemImage: "smallcircle.filled.circle") {
           dismiss()
         }.tint(Color.appPrimary)
       }
