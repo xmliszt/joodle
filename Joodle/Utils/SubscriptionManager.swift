@@ -20,6 +20,8 @@ class SubscriptionManager: ObservableObject {
             // Handle subscription state changes
             if oldValue && !isSubscribed {
                 handleSubscriptionLost()
+            } else if !oldValue && isSubscribed {
+                handleSubscriptionGained()
             }
         }
     }
@@ -112,15 +114,8 @@ class SubscriptionManager: ObservableObject {
         self.subscriptionExpirationDate = storeManager.subscriptionExpirationDate
         self.willAutoRenew = storeManager.willAutoRenew
 
-        // Check if subscription was lost
-        if wasSubscribed && !self.isSubscribed {
-            handleSubscriptionLost()
-        }
-
-        // Check if user just upgraded from free to subscribed
-        if !wasSubscribed && self.isSubscribed {
-            handleSubscriptionGained()
-        }
+        // Note: handleSubscriptionLost() and handleSubscriptionGained() are called
+        // automatically by the didSet observer on isSubscribed when the value changes
 
         print("📊 SubscriptionManager updated:")
         print("   isSubscribed: \(isSubscribed)")
@@ -199,10 +194,11 @@ class SubscriptionManager: ObservableObject {
     private func handleSubscriptionLost() {
         print("⚠️ Subscription lost - disabling premium features")
 
-        subscriptionJustExpired = true
+        // Track if we need to recreate the container (which destroys and recreates views)
+        let needsContainerRecreation = UserPreferences.shared.isCloudSyncEnabled
 
         // Disable iCloud sync if it was enabled
-        if UserPreferences.shared.isCloudSyncEnabled {
+        if needsContainerRecreation {
             UserPreferences.shared.isCloudSyncEnabled = false
 
             // Notify the app to recreate ModelContainer without cloud sync
@@ -222,6 +218,17 @@ class SubscriptionManager: ObservableObject {
             name: .subscriptionDidExpire,
             object: nil
         )
+
+        // Set the expired flag after a delay if container recreation is needed
+        // This allows the view hierarchy to be recreated before showing the alert
+        // Otherwise the alert would be dismissed when the view is destroyed
+        if needsContainerRecreation {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.subscriptionJustExpired = true
+            }
+        } else {
+            subscriptionJustExpired = true
+        }
     }
 
     /// Check and disable iCloud sync if user doesn't have active subscription
