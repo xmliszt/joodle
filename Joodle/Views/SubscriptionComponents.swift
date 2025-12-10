@@ -91,9 +91,20 @@ struct PricingCard: View {
                 }
               }
 
-              Text("Billed \(product.id.contains("yearly") ? "yearly" : "monthly") at \(product.displayPrice)")
-                .font(.caption)
-                .foregroundColor(.secondary)
+              HStack(spacing: 4) {
+                Text("Billed \(product.id.contains("yearly") ? "yearly" : "monthly") at \(product.displayPrice)")
+                  .font(.caption)
+                  .foregroundColor(.secondary)
+
+                if let trialText = trialPeriodText {
+                  Text("•")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                  Text("\(trialText) free trial")
+                    .font(.caption)
+                    .foregroundColor(.accent)
+                }
+              }
             }
             Spacer()
           }
@@ -136,5 +147,31 @@ struct PricingCard: View {
       .currency(code: product.priceFormatStyle.currencyCode)
       .locale(product.priceFormatStyle.locale)
     )
+  }
+
+  /// Returns the formatted trial period text for this product (e.g., "7-day", "1-month", "3-month")
+  private var trialPeriodText: String? {
+    guard let subscription = product.subscription,
+          let introOffer = subscription.introductoryOffer else {
+      return nil
+    }
+
+    return formatTrialPeriod(introOffer.period)
+  }
+
+  /// Formats a subscription period into a user-friendly string
+  private func formatTrialPeriod(_ period: Product.SubscriptionPeriod) -> String {
+    switch period.unit {
+    case .day:
+      return period.value == 1 ? "1-day" : "\(period.value)-day"
+    case .week:
+      return period.value == 1 ? "7-day" : "\(period.value * 7)-day"
+    case .month:
+      return period.value == 1 ? "1-month" : "\(period.value)-month"
+    case .year:
+      return period.value == 1 ? "1-year" : "\(period.value)-year"
+    @unknown default:
+      return "free"
+    }
   }
 }

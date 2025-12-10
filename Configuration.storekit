@@ -9,7 +9,7 @@
       }
     ]
   },
-  "identifier" : "D318ED94",
+  "identifier" : "6E112E1A",
   "nonRenewingSubscriptions" : [
 
   ],
@@ -24,9 +24,9 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 786796508.68434501,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
+    "_shouldSetupSyncOnLoad" : true,
     "_storefront" : "USA",
     "_storeKitErrors" : [
 
@@ -34,73 +34,7 @@
     "_timeRate" : 0
   },
   "subscriptionGroups" : [
-    {
-      "id" : "21852566",
-      "localizations" : [
 
-      ],
-      "name" : "Joodle Super",
-      "subscriptions" : [
-        {
-          "adHocOffers" : [
-
-          ],
-          "codeOffers" : [
-
-          ],
-          "displayPrice" : "3.99",
-          "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "6756226596",
-          "introductoryOffer" : {
-            "internalID" : "E6EC5C80",
-            "numberOfPeriods" : 1,
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P1W"
-          },
-          "localizations" : [
-
-          ],
-          "productID" : "dev.liyuxuan.joodle.super.monthly",
-          "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Super Monthly",
-          "subscriptionGroupID" : "21852566",
-          "type" : "RecurringSubscription",
-          "winbackOffers" : [
-
-          ]
-        },
-        {
-          "adHocOffers" : [
-
-          ],
-          "codeOffers" : [
-
-          ],
-          "displayPrice" : "28.49",
-          "familyShareable" : false,
-          "groupNumber" : 2,
-          "internalID" : "6756226848",
-          "introductoryOffer" : {
-            "internalID" : "DC8F0DC5",
-            "numberOfPeriods" : 1,
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P1W"
-          },
-          "localizations" : [
-
-          ],
-          "productID" : "dev.liyuxuan.joodle.super.yearly",
-          "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Super Yearly",
-          "subscriptionGroupID" : "21852566",
-          "type" : "RecurringSubscription",
-          "winbackOffers" : [
-
-          ]
-        }
-      ]
-    }
   ],
   "version" : {
     "major" : 4,

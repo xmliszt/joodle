@@ -18,7 +18,6 @@ struct StandalonePaywallView: View {
         NavigationStack {
             ZStack {
                 PaywallContentView(configuration: PaywallConfiguration(
-                    showFreeVersionToggle: false,
                     useOnboardingStyle: false,
                     onPurchaseComplete: {
                         Task {

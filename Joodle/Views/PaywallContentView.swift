@@ -12,9 +12,6 @@ import StoreKit
 
 /// Configuration for PaywallContentView behavior and appearance
 struct PaywallConfiguration {
-  /// Whether to show the mode toggle on the slider thumb
-  var showFreeVersionToggle: Bool = false
-
   /// Whether to use onboarding-style buttons
   var useOnboardingStyle: Bool = false
 
@@ -40,6 +37,9 @@ struct SliderCTAButton: View {
 
   /// Whether the button is in a loading state
   let isLoading: Bool
+
+  /// Optional trial period text to display (e.g., "7-Day", "1-Month", "3-Month")
+  let trialPeriodText: String?
 
   /// Called when the user completes the slide action
   let onSlideComplete: () -> Void
@@ -157,7 +157,7 @@ struct SliderCTAButton: View {
         ProgressView()
           .progressViewStyle(CircularProgressViewStyle())
       } else {
-        Text(isSuperMode ? "Start 7-Day Free Trial" : "Continue for Free")
+        Text(isSuperMode ? trialButtonText : "Continue for Free")
           .font(.headline)
           .foregroundColor(isSuperMode ? .appTextPrimary : .appTextSecondary)
       }
@@ -165,6 +165,13 @@ struct SliderCTAButton: View {
     .frame(maxWidth: maxWidth)
     .opacity(isDragging ? 0.5 : 0.8)
     .animation(.easeInOut, value: isDragging)
+  }
+
+  private var trialButtonText: String {
+    if let trialText = trialPeriodText {
+      return "Start \(trialText) Free Trial"
+    }
+    return "Start Free Trial"
   }
 
   private func startShimmerAnimation() {
@@ -484,14 +491,6 @@ struct PaywallContentView: View {
   private var ctaSection: some View {
     VStack(spacing: 16) {
       VStack(spacing: 4) {
-        // Mode toggle hint (only when toggle is allowed)
-        if configuration.showFreeVersionToggle {
-          Text("Tap the handle to switch to free version")
-            .font(.caption2)
-            .foregroundColor(.secondary)
-            .frame(maxWidth: .infinity, alignment: .center)
-        }
-
         // Main CTA Slider
         mainCTAButton
 
@@ -514,22 +513,40 @@ struct PaywallContentView: View {
 
   @ViewBuilder
   private var mainCTAButton: some View {
-    if configuration.showFreeVersionToggle {
-      // Slider with mode toggle
-      SliderCTAButton(
-        isSuperMode: $useSuperMode,
-        allowModeToggle: true,
-        isLoading: isPurchasing,
-        onSlideComplete: handleSlideComplete
-      )
-    } else {
-      // Slider without mode toggle (Super mode only)
-      SliderCTAButton(
-        isSuperMode: .constant(true),
-        allowModeToggle: false,
-        isLoading: isPurchasing,
-        onSlideComplete: handleSlideComplete
-      )
+    SliderCTAButton(
+      isSuperMode: .constant(true),
+      allowModeToggle: false,
+      isLoading: isPurchasing,
+      trialPeriodText: selectedTrialPeriodText,
+      onSlideComplete: handleSlideComplete
+    )
+  }
+
+  /// Returns the formatted trial period text for the currently selected product
+  private var selectedTrialPeriodText: String? {
+    guard let selectedID = selectedProductID,
+          let product = storeManager.products.first(where: { $0.id == selectedID }),
+          let subscription = product.subscription,
+          let introOffer = subscription.introductoryOffer else {
+      return nil
+    }
+
+    return formatTrialPeriod(introOffer.period)
+  }
+
+  /// Formats a subscription period into a user-friendly string (e.g., "7-Day", "1-Month", "3-Month")
+  private func formatTrialPeriod(_ period: Product.SubscriptionPeriod) -> String {
+    switch period.unit {
+    case .day:
+      return period.value == 1 ? "1-Day" : "\(period.value)-Day"
+    case .week:
+      return period.value == 1 ? "7-Day" : "\(period.value * 7)-Day"
+    case .month:
+      return period.value == 1 ? "1-Month" : "\(period.value)-Month"
+    case .year:
+      return period.value == 1 ? "1-Year" : "\(period.value)-Year"
+    @unknown default:
+      return nil ?? "Free"
     }
   }
 
@@ -666,14 +683,12 @@ struct PaywallContentView: View {
 
 #Preview("Default Style") {
   PaywallContentView(configuration: PaywallConfiguration(
-    showFreeVersionToggle: false,
     useOnboardingStyle: false
   ))
 }
 
 #Preview("Onboarding Style with Toggle") {
   PaywallContentView(configuration: PaywallConfiguration(
-    showFreeVersionToggle: true,
     useOnboardingStyle: true
   ))
 }
@@ -684,6 +699,7 @@ struct PaywallContentView: View {
       isSuperMode: .constant(true),
       allowModeToggle: true,
       isLoading: false,
+      trialPeriodText: "3-Month",
       onSlideComplete: {}
     )
     .padding(.horizontal, 24)
@@ -692,6 +708,7 @@ struct PaywallContentView: View {
       isSuperMode: .constant(false),
       allowModeToggle: true,
       isLoading: false,
+      trialPeriodText: nil,
       onSlideComplete: {}
     )
     .padding(.horizontal, 24)

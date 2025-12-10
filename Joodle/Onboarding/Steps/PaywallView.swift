@@ -12,13 +12,9 @@ struct PaywallView: View {
     @ObservedObject var viewModel: OnboardingViewModel
     @StateObject private var storeManager = StoreKitManager.shared
 
-    // Control whether to show the "Skip Super" toggle
-    var showFreeVersionToggle: Bool = true
-
     var body: some View {
         ZStack {
             PaywallContentView(configuration: PaywallConfiguration(
-                showFreeVersionToggle: showFreeVersionToggle,
                 useOnboardingStyle: true,
                 onPurchaseComplete: {
                     viewModel.isPremium = true
@@ -34,11 +30,25 @@ struct PaywallView: View {
                 }
             ))
         }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                viewModel.isPremium = false
+                viewModel.completeStep(.paywall)
+            } label: {
+                Text("Skip")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+            }
+            .padding(.top, 8)
+            .padding(.trailing, 8)
+        }
         .navigationBarBackButtonHidden(true)
     }
 }
 
 #Preview {
-    PaywallView(viewModel: OnboardingViewModel(), showFreeVersionToggle: true)
+    PaywallView(viewModel: OnboardingViewModel())
         .environment(\.locale, Locale(identifier: "ja_JP"))
 }
