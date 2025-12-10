@@ -289,6 +289,7 @@ struct PaywallContentView: View {
   @State private var selectedProductID: String?
   @State private var isPurchasing = false
   @State private var showError = false
+  @State private var errorMessage: String?
   @State private var useSuperMode = true
 
   var body: some View {
@@ -311,11 +312,14 @@ struct PaywallContentView: View {
         legalLinksSection
       }
     }
-    .alert("Error", isPresented: $showError) {
+    .alert("Purchase Failed", isPresented: $showError) {
+      Button("Submit Feedback") {
+        openFeedback()
+      }
       Button("OK", role: .cancel) {}
     } message: {
-      if let error = storeManager.errorMessage {
-        Text(error)
+      if let error = errorMessage {
+        Text("\(error)\n\nIf this issue persists, please submit feedback to help us fix it.")
       }
     }
     .onAppear {
@@ -325,9 +329,6 @@ struct PaywallContentView: View {
       if selectedProductID == nil, !newProducts.isEmpty {
         selectedProductID = storeManager.yearlyProduct?.id
       }
-    }
-    .onChange(of: storeManager.errorMessage) { _, newValue in
-      showError = newValue != nil
     }
   }
 
@@ -607,9 +608,49 @@ struct PaywallContentView: View {
         }
       } catch {
         debugLogger.logPurchaseFailed(productID: product.id, error: error)
+
+        // Show user-friendly error message
+        if let storeKitError = error as? StoreKitError {
+          switch storeKitError {
+          case .userCancelled:
+            // Don't show error for user cancellation
+            break
+          case .networkError:
+            errorMessage = "Network error. Please check your internet connection and try again."
+            showError = true
+          case .systemError:
+            errorMessage = "A system error occurred. Please try again later."
+            showError = true
+          case .notAvailableInStorefront:
+            errorMessage = "This product is not available in your region."
+            showError = true
+          case .notEntitled:
+            errorMessage = "You are not entitled to this product."
+            showError = true
+          default:
+            errorMessage = "An unexpected error occurred: \(error.localizedDescription)"
+            showError = true
+          }
+        } else {
+          errorMessage = "Purchase failed: \(error.localizedDescription)"
+          showError = true
+        }
       }
 
       isPurchasing = false
+    }
+  }
+
+  private func openFeedback() {
+    guard let url = AppEnvironment.feedbackURL else { return }
+
+    if UIApplication.shared.canOpenURL(url) {
+      UIApplication.shared.open(url)
+    } else {
+      // Fallback: If TestFlight URL doesn't work, try opening App Store
+      if let appStoreURL = AppEnvironment.appStoreReviewURL {
+        UIApplication.shared.open(appStoreURL)
+      }
     }
   }
 
