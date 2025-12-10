@@ -24,9 +24,9 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 787075161.22041094,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
-    "_shouldSetupSyncOnLoad" : true,
     "_storefront" : "USA",
     "_storeKitErrors" : [
 
@@ -34,7 +34,81 @@
     "_timeRate" : 0
   },
   "subscriptionGroups" : [
+    {
+      "id" : "21852566",
+      "localizations" : [
 
+      ],
+      "name" : "Joodle Super",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "3.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6756226596",
+          "introductoryOffer" : {
+            "internalID" : "E2D0B827",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1M"
+          },
+          "localizations" : [
+            {
+              "description" : "Unlimited doodles, widgets, iCloud sync. 1 week free",
+              "displayName" : "Joodle Super Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "dev.liyuxuan.joodle.super.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Super Monthly",
+          "subscriptionGroupID" : "21852566",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "28.49",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6756226848",
+          "introductoryOffer" : {
+            "internalID" : "F93DEB60",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3M"
+          },
+          "localizations" : [
+            {
+              "description" : "Unlimited doodles, widgets, iCloud sync. 1 week free",
+              "displayName" : "Joodle Super Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "dev.liyuxuan.joodle.super.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Super Yearly",
+          "subscriptionGroupID" : "21852566",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
   ],
   "version" : {
     "major" : 4,

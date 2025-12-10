@@ -263,8 +263,49 @@ struct EntryEditingView: View {
 
       // Header with date and edit button
       VStack {
-        HStack {
-          VStack(alignment: .leading) {
+        ZStack {
+          // Left side - Share button
+          HStack {
+            if #available(iOS 26.0, *) {
+              GlassEffectContainer(spacing: 8) {
+                HStack(spacing: 8) {
+                  if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
+                      && !isTextFieldFocused && showButtons
+                  {
+                    Button {
+                      showShareSheet = true
+                    } label: {
+                      Image(systemName: "square.and.arrow.up")
+                    }
+                    .circularGlassButton()
+                    .transition(.opacity)
+                  }
+                }
+              }
+              .animation(.springFkingSatifying, value: isTextFieldFocused)
+              .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
+            } else {
+              HStack(spacing: 8) {
+                if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
+                    && !isTextFieldFocused && showButtons
+                {
+                  Button {
+                    showShareSheet = true
+                  } label: {
+                    Image(systemName: "square.and.arrow.up")
+                  }
+                  .circularGlassButton()
+                  .transition(.opacity)
+                }
+              }
+              .animation(.springFkingSatifying, value: isTextFieldFocused)
+              .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
+            }
+            Spacer()
+          }
+
+          // Center - Date and weekday/countdown
+          VStack(alignment: .center) {
             if let date {
               Text(date, style: .date)
                 .font(.headline)
@@ -283,10 +324,52 @@ struct EntryEditingView: View {
             }
           }
 
-          Spacer()
+          // Right side - Confirm, Delete, Drawing buttons
+          HStack {
+            Spacer()
+            if #available(iOS 26.0, *) {
+              GlassEffectContainer(spacing: 8) {
+                HStack(spacing: 8) {
+                  // Confirm button
+                  if isTextFieldFocused {
+                    Button {
+                      confirmAndDismiss()
+                    } label: {
+                      Image(systemName: "checkmark")
+                    }
+                    .circularGlassButton()
+                    .transition(.opacity.animation(.springFkingSatifying))
+                  }
 
-          if #available(iOS 26.0, *) {
-            GlassEffectContainer(spacing: 8) {
+                  // Delete entry button
+                  if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
+                      && !isTextFieldFocused && showButtons
+                  {
+                    Button {
+                      showDeleteConfirmation = true
+                    } label: {
+                      Image(systemName: "trash")
+                    }
+                    .circularGlassButton(tintColor: .red)
+                    .transition(.opacity)
+                  }
+
+                  // Drawing canvas button
+                  if !isTextFieldFocused && showButtons {
+                    Button {
+                      self.onOpenDrawingCanvas?()
+                    } label: {
+                      Image(systemName: "scribble")
+                    }
+                    .circularGlassButton()
+                    .transition(.opacity)
+                  }
+                }
+              }
+              .animation(.springFkingSatifying, value: isTextFieldFocused)
+              .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
+            } else {
+              // Fallback on earlier versions
               HStack(spacing: 8) {
                 // Confirm button
                 if isTextFieldFocused {
@@ -297,19 +380,6 @@ struct EntryEditingView: View {
                   }
                   .circularGlassButton()
                   .transition(.opacity.animation(.springFkingSatifying))
-                }
-
-                // Share button
-                if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
-                    && !isTextFieldFocused && showButtons
-                {
-                  Button {
-                    showShareSheet = true
-                  } label: {
-                    Image(systemName: "square.and.arrow.up")
-                  }
-                  .circularGlassButton()
-                  .transition(.opacity)
                 }
 
                 // Delete entry button
@@ -336,62 +406,9 @@ struct EntryEditingView: View {
                   .transition(.opacity)
                 }
               }
+              .animation(.springFkingSatifying, value: isTextFieldFocused)
+              .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
             }
-            .animation(.springFkingSatifying, value: isTextFieldFocused)
-            .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
-          } else {
-            // Fallback on earlier versions
-            HStack(spacing: 8) {
-              // Confirm button
-              if isTextFieldFocused {
-                Button {
-                  confirmAndDismiss()
-                } label: {
-                  Image(systemName: "checkmark")
-                }
-                .circularGlassButton()
-                .transition(.opacity.animation(.springFkingSatifying))
-              }
-
-              // Share button
-              if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
-                  && !isTextFieldFocused && showButtons
-              {
-                Button {
-                  showShareSheet = true
-                } label: {
-                  Image(systemName: "square.and.arrow.up")
-                }
-                .circularGlassButton()
-                .transition(.opacity)
-              }
-
-              // Delete entry button
-              if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
-                  && !isTextFieldFocused && showButtons
-              {
-                Button {
-                  showDeleteConfirmation = true
-                } label: {
-                  Image(systemName: "trash")
-                }
-                .circularGlassButton(tintColor: .red)
-                .transition(.opacity)
-              }
-
-              // Drawing canvas button
-              if !isTextFieldFocused && showButtons {
-                Button {
-                  self.onOpenDrawingCanvas?()
-                } label: {
-                  Image(systemName: "scribble")
-                }
-                .circularGlassButton()
-                .transition(.opacity)
-              }
-            }
-            .animation(.springFkingSatifying, value: isTextFieldFocused)
-            .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
           }
         }
         .frame(height: 60, alignment: .top)
