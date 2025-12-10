@@ -84,13 +84,12 @@ struct ShareCardSelectorView: View {
                   previewColorScheme = previewColorScheme == .light ? .dark : .light
                 }
               } label: {
-                HStack(spacing: 8) {
-                  Image(systemName: previewColorScheme == .light ? "sun.max.fill" : "moon.stars.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                }
+                Image(systemName: previewColorScheme == .light ? "sun.max.fill" : "moon.stars.fill")
+                .fontWeight(.semibold)
                 .foregroundColor(.textColor)
               }
               .circularGlassButton(tintColor: .appPrimary)
+              
 
               Button {
                 shareCard()
@@ -120,12 +119,10 @@ struct ShareCardSelectorView: View {
                 previewColorScheme = previewColorScheme == .light ? .dark : .light
               }
             } label: {
-              HStack(spacing: 8) {
-                Image(systemName: previewColorScheme == .light ? "sun.max.fill" : "moon.stars.fill")
-                  .font(.system(size: 16, weight: .semibold))
-              }
+              Image(systemName: previewColorScheme == .light ? "sun.max.fill" : "moon.stars.fill")
+              .fontWeight(.semibold)
               .foregroundColor(.textColor)
-            }
+            }.circularGlassButton()
 
             Button {
               shareCard()
@@ -152,12 +149,12 @@ struct ShareCardSelectorView: View {
       .navigationTitle("Share your day")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .navigationBarTrailing) {
+        ToolbarItem(placement: .topBarTrailing) {
           Button {
             dismiss()
           } label: {
             Image(systemName: "xmark")
-              .foregroundColor(.secondaryTextColor.opacity(0.5))
+              .foregroundColor(.primary)
           }
         }
       }

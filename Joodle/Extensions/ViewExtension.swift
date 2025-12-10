@@ -30,8 +30,8 @@ struct CircularGlassButtonStyle: ViewModifier {
         .if(tintColor != nil) { view in
           view.foregroundColor(tintColor)
         }
-        .frame(width: 36, height: 36)
-        .background(.controlBackgroundColor)
+        .frame(width: 40, height: 40)
+        .background(.appSurface)
         .clipShape(Circle())
     }
   }
