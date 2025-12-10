@@ -278,8 +278,9 @@ struct ContentView: View {
           isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland,
           allEntries: allEntriesArray
         )
+        .padding(.top, 32)
         .disabled(selectedDateItem == nil)
-        .presentationDetents([.height(420)])
+        .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(UIDevice.screenCornerRadius)
       }

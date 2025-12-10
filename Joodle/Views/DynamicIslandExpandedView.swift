@@ -42,11 +42,9 @@ struct DynamicIslandExpandedView<Content: View>: View {
       VStack {
         // Visible content
         VStack {
-          // Safe Area on top so it doesn't get hidden by the island
+          // Safe area spacer to prevent content from going behind the Dynamic Island
           Color.black
-          // Add 10 just to buffer to make sure things don't go behind dynamic island
-          // Apparently the size of the island is not the same on preview vs on actual phone 😡
-            .frame(maxWidth: .infinity, maxHeight: UIDevice.dynamicIslandSize.height + 10)
+            .frame(maxWidth: .infinity, maxHeight: UIDevice.dynamicIslandSize.height)
 
           // The content
           content

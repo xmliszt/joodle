@@ -24,7 +24,7 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 787075161.22041094,
+    "_lastSynchronizedDate" : 787093231.85244799,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "USA",
@@ -53,14 +53,14 @@
           "groupNumber" : 1,
           "internalID" : "6756226596",
           "introductoryOffer" : {
-            "internalID" : "E2D0B827",
+            "internalID" : "E7A55370",
             "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P1M"
           },
           "localizations" : [
             {
-              "description" : "Unlimited doodles, widgets, iCloud sync. 1 week free",
+              "description" : "Unlimited doodles, widgets, iCloud sync",
               "displayName" : "Joodle Super Monthly",
               "locale" : "en_US"
             }
@@ -86,14 +86,14 @@
           "groupNumber" : 2,
           "internalID" : "6756226848",
           "introductoryOffer" : {
-            "internalID" : "F93DEB60",
+            "internalID" : "B198D33E",
             "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P3M"
           },
           "localizations" : [
             {
-              "description" : "Unlimited doodles, widgets, iCloud sync. 1 week free",
+              "description" : "Unlimited doodles, widgets, iCloud sync",
               "displayName" : "Joodle Super Yearly",
               "locale" : "en_US"
             }

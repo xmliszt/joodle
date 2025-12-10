@@ -112,6 +112,9 @@ struct JoodleApp: App {
                 setupColorSchemeObserver()
                 setupSyncObserver()
                 setupUbiquityObserver()
+                debugPrint(">>> Screen corner radius: \(UIDevice.screenCornerRadius)")
+                debugPrint(">>> Dynamic island size: \(UIDevice.dynamicIslandSize)")
+                debugPrint(">>> Dynamic island frame: \(UIDevice.dynamicIslandFrame)")
               }
               .onOpenURL { url in
                 handleWidgetURL(url)
