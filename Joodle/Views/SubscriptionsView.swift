@@ -14,6 +14,7 @@ struct SubscriptionsView: View {
   @StateObject private var storeManager = StoreKitManager.shared
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var currentProduct: Product?
+  @State private var subscriptionGroupID: String?
 
   var body: some View {
     ZStack {
@@ -63,6 +64,43 @@ struct SubscriptionsView: View {
           await storeManager.updatePurchasedProducts()
           await subscriptionManager.updateSubscriptionStatus()
           detectCurrentProduct()
+        }
+      }
+    }
+    .task {
+      // Get the subscription group ID from any subscription product
+      await loadSubscriptionGroupID()
+    }
+    .subscriptionStatusTask(for: subscriptionGroupID ?? "") { taskState in
+      // This fires whenever subscription status changes, regardless of how sheet is dismissed
+      guard subscriptionGroupID != nil else { return }
+
+      Task {
+        await storeManager.updatePurchasedProducts()
+        await subscriptionManager.updateSubscriptionStatus()
+        detectCurrentProduct()
+      }
+    }
+  }
+
+  // MARK: - Load Subscription Group ID
+
+  private func loadSubscriptionGroupID() async {
+    // Get the subscription group ID from the first subscription product
+    for product in storeManager.products {
+      if let subscription = product.subscription {
+        subscriptionGroupID = subscription.subscriptionGroupID
+        return
+      }
+    }
+
+    // If products aren't loaded yet, wait and try again
+    if storeManager.products.isEmpty {
+      await storeManager.loadProducts()
+      for product in storeManager.products {
+        if let subscription = product.subscription {
+          subscriptionGroupID = subscription.subscriptionGroupID
+          return
         }
       }
     }
