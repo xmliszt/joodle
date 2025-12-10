@@ -36,6 +36,9 @@ struct JoodleApp: App {
 
     // Run dateString migration synchronously for existing entries
     Self.runDateStringMigration(container: container)
+
+    // Run legacy thumbnail cleanup migration
+    Self.runLegacyThumbnailCleanup(container: container)
   }
 
   /// Runs the dateString migration synchronously to populate dateString for existing entries
@@ -60,6 +63,51 @@ struct JoodleApp: App {
       }
     } catch {
       print("DateStringMigration: Failed during startup: \(error)")
+    }
+  }
+
+  /// Cleans up legacy thumbnail data (20px and 1080px) to reclaim storage
+  private static func runLegacyThumbnailCleanup(container: ModelContainer) {
+    let context = ModelContext(container)
+    let cleanupKey = "hasCleanedLegacyThumbnails_v1"
+
+    // Only run once
+    guard !UserDefaults.standard.bool(forKey: cleanupKey) else {
+      return
+    }
+
+    let descriptor = FetchDescriptor<DayEntry>()
+
+    do {
+      let allEntries = try context.fetch(descriptor)
+      var cleanedCount = 0
+
+      for entry in allEntries {
+        var needsSave = false
+
+        if entry.drawingThumbnail20 != nil {
+          entry.drawingThumbnail20 = nil
+          needsSave = true
+        }
+
+        if entry.drawingThumbnail1080 != nil {
+          entry.drawingThumbnail1080 = nil
+          needsSave = true
+        }
+
+        if needsSave {
+          cleanedCount += 1
+        }
+      }
+
+      if cleanedCount > 0 {
+        try context.save()
+        print("LegacyThumbnailCleanup: Cleaned up \(cleanedCount) entries on startup")
+      }
+
+      UserDefaults.standard.set(true, forKey: cleanupKey)
+    } catch {
+      print("LegacyThumbnailCleanup: Failed during startup: \(error)")
     }
   }
 

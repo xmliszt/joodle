@@ -406,9 +406,7 @@ struct DrawingCanvasView: View {
     if paths.isEmpty {
       // No paths means no drawing data
       entryToSave.drawingData = nil
-      entryToSave.drawingThumbnail20 = nil
       entryToSave.drawingThumbnail200 = nil
-      entryToSave.drawingThumbnail1080 = nil
     } else {
       // Convert paths to serializable data
       let pathsData = paths.enumerated().map { (index, path) in
@@ -422,14 +420,12 @@ struct DrawingCanvasView: View {
 
         // Generate thumbnails asynchronously
         Task {
-          let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
+          let thumbnail = await DrawingThumbnailGenerator.shared.generateThumbnail(from: data, size: 200)
 
           await MainActor.run {
-            entryToSave.drawingThumbnail20 = thumbnails.0
-            entryToSave.drawingThumbnail200 = thumbnails.1
-            entryToSave.drawingThumbnail1080 = thumbnails.2
+            entryToSave.drawingThumbnail200 = thumbnail
 
-            // Save again with thumbnails
+            // Save again with thumbnail
             try? modelContext.save()
           }
         }
@@ -460,9 +456,7 @@ struct DrawingCanvasView: View {
     // Also clear from store
     if let existingEntry = entry {
       existingEntry.drawingData = nil
-      existingEntry.drawingThumbnail20 = nil
       existingEntry.drawingThumbnail200 = nil
-      existingEntry.drawingThumbnail1080 = nil
       try? modelContext.save()
     }
   }

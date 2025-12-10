@@ -128,7 +128,7 @@ class WidgetHelper {
         hasText: !entry.body.isEmpty,
         hasDrawing: entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true),
         drawingData: entry.drawingData,
-        thumbnail: entry.drawingThumbnail20,
+        thumbnail: entry.drawingThumbnail200,
         body: entry.body.isEmpty ? nil : entry.body
       )
     }

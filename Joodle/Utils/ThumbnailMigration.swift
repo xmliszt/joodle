@@ -13,6 +13,8 @@ import SwiftUI
 class ThumbnailMigration {
   static let shared = ThumbnailMigration()
 
+  private static let legacyThumbnailCleanupKey = "hasCleanedLegacyThumbnails_v1"
+
   private init() {}
 
   /// Migrate all entries that have drawing data but no thumbnails
@@ -29,16 +31,14 @@ class ThumbnailMigration {
         // Only process entries with drawing data but missing thumbnails
         if let drawingData = entry.drawingData,
           !drawingData.isEmpty,
-          entry.drawingThumbnail20 == nil
+          entry.drawingThumbnail200 == nil
         {
-          // Generate thumbnails
-          let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(
-            from: drawingData)
+          // Generate thumbnail
+          let thumbnail = await DrawingThumbnailGenerator.shared.generateThumbnail(
+            from: drawingData, size: 200)
 
-          // Update entry with thumbnails
-          entry.drawingThumbnail20 = thumbnails.0
-          entry.drawingThumbnail200 = thumbnails.1
-          entry.drawingThumbnail1080 = thumbnails.2
+          // Update entry with thumbnail
+          entry.drawingThumbnail200 = thumbnail
 
           migratedCount += 1
 
@@ -61,6 +61,63 @@ class ThumbnailMigration {
     }
   }
 
+  /// Clean up legacy thumbnail data (20px and 1080px) to reclaim storage
+  /// This only runs once per device
+  /// - Parameter modelContext: The SwiftData model context
+  /// - Returns: Number of entries cleaned up
+  func cleanupLegacyThumbnails(modelContext: ModelContext) async -> Int {
+    // Only run this cleanup once
+    guard !UserDefaults.standard.bool(forKey: Self.legacyThumbnailCleanupKey) else {
+      return 0
+    }
+
+    let descriptor = FetchDescriptor<DayEntry>()
+
+    do {
+      let allEntries = try modelContext.fetch(descriptor)
+      var cleanedCount = 0
+
+      for entry in allEntries {
+        var needsSave = false
+
+        // Clear legacy 20px thumbnail
+        if entry.drawingThumbnail20 != nil {
+          entry.drawingThumbnail20 = nil
+          needsSave = true
+        }
+
+        // Clear legacy 1080px thumbnail
+        if entry.drawingThumbnail1080 != nil {
+          entry.drawingThumbnail1080 = nil
+          needsSave = true
+        }
+
+        if needsSave {
+          cleanedCount += 1
+
+          // Save periodically to avoid memory buildup
+          if cleanedCount % 10 == 0 {
+            try? modelContext.save()
+          }
+        }
+      }
+
+      // Final save
+      if cleanedCount > 0 {
+        try? modelContext.save()
+        print("ThumbnailMigration: Cleaned up legacy thumbnails from \(cleanedCount) entries")
+      }
+
+      // Mark cleanup as complete
+      UserDefaults.standard.set(true, forKey: Self.legacyThumbnailCleanupKey)
+
+      return cleanedCount
+    } catch {
+      print("Failed to cleanup legacy thumbnails: \(error)")
+      return 0
+    }
+  }
+
   /// Check if migration is needed
   /// - Parameter modelContext: The SwiftData model context
   /// - Returns: Number of entries that need migration
@@ -72,7 +129,7 @@ class ThumbnailMigration {
       let needsMigration = allEntries.filter { entry in
         if let drawingData = entry.drawingData,
           !drawingData.isEmpty,
-          entry.drawingThumbnail20 == nil
+          entry.drawingThumbnail200 == nil
         {
           return true
         }
@@ -94,11 +151,9 @@ class ThumbnailMigration {
       return
     }
 
-    let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: drawingData)
+    let thumbnail = await DrawingThumbnailGenerator.shared.generateThumbnail(from: drawingData, size: 200)
 
-    entry.drawingThumbnail20 = thumbnails.0
-    entry.drawingThumbnail200 = thumbnails.1
-    entry.drawingThumbnail1080 = thumbnails.2
+    entry.drawingThumbnail200 = thumbnail
 
     try? modelContext.save()
   }

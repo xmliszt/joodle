@@ -14,21 +14,17 @@ class DrawingThumbnailGenerator {
 
   private init() {}
 
-  /// Generate thumbnails at multiple sizes from drawing data
+  /// Generate thumbnail from drawing data
   /// - Parameter drawingData: The raw drawing path data
-  /// - Returns: Tuple of (20px, 200px, 1080px) thumbnail data
-  func generateThumbnails(from drawingData: Data) async -> (Data?, Data?, Data?) {
+  /// - Returns: 200px thumbnail data for grid and detail views
+  func generateThumbnail(from drawingData: Data) async -> Data? {
     // Decode the drawing data
     guard let pathsData = decodeDrawingData(drawingData) else {
-      return (nil, nil, nil)
+      return nil
     }
 
-    // Generate thumbnails at different sizes
-    let thumbnail20 = await generateThumbnail(from: pathsData, size: 20)
-    let thumbnail200 = await generateThumbnail(from: pathsData, size: 200)
-    let thumbnail1080 = await generateThumbnail(from: pathsData, size: 1080)
-
-    return (thumbnail20, thumbnail200, thumbnail1080)
+    // Generate 200px thumbnail (works for all display sizes)
+    return await generateThumbnail(from: pathsData, size: 200)
   }
 
   /// Generate a single thumbnail at specified size
@@ -57,17 +53,8 @@ class DrawingThumbnailGenerator {
       return nil
     }
 
-    // Compress to PNG with optimization
-    if size <= 20 {
-      // Use lower quality for tiny thumbnails
-      return uiImage.pngData()
-    } else if size <= 200 {
-      // Medium quality for medium thumbnails
-      return uiImage.pngData()
-    } else {
-      // High quality for large thumbnails
-      return uiImage.pngData()
-    }
+    // Compress to PNG
+    return uiImage.pngData()
   }
 
   /// Decode drawing data from JSON

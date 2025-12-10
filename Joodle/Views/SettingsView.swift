@@ -371,9 +371,7 @@ struct SettingsView: View {
           createdAt: entry.createdAt,
           dateString: entry.dateString,
           drawingData: entry.drawingData,
-          drawingThumbnail20: entry.drawingThumbnail20,
-          drawingThumbnail200: entry.drawingThumbnail200,
-          drawingThumbnail1080: entry.drawingThumbnail1080
+          drawingThumbnail200: entry.drawingThumbnail200
         )
       }
       let data = try JSONEncoder().encode(dtos)
@@ -408,9 +406,7 @@ struct SettingsView: View {
             createdAt: dto.createdAt,
             drawingData: dto.drawingData
           )
-          newEntry.drawingThumbnail20 = dto.drawingThumbnail20
           newEntry.drawingThumbnail200 = dto.drawingThumbnail200
-          newEntry.drawingThumbnail1080 = dto.drawingThumbnail1080
           modelContext.insert(newEntry)
           count += 1
         }
@@ -446,9 +442,42 @@ struct DayEntryDTO: Codable {
   let createdAt: Date
   let dateString: String?  // Optional for backward compatibility with old exports
   let drawingData: Data?
-  let drawingThumbnail20: Data?
   let drawingThumbnail200: Data?
-  let drawingThumbnail1080: Data?
+
+  // Support importing old exports that had all three thumbnail sizes
+  enum CodingKeys: String, CodingKey {
+    case body, createdAt, dateString, drawingData
+    case drawingThumbnail200
+    case drawingThumbnail20  // Legacy, ignored on import
+    case drawingThumbnail1080  // Legacy, ignored on import
+  }
+
+  init(body: String, createdAt: Date, dateString: String?, drawingData: Data?, drawingThumbnail200: Data?) {
+    self.body = body
+    self.createdAt = createdAt
+    self.dateString = dateString
+    self.drawingData = drawingData
+    self.drawingThumbnail200 = drawingThumbnail200
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    body = try container.decode(String.self, forKey: .body)
+    createdAt = try container.decode(Date.self, forKey: .createdAt)
+    dateString = try container.decodeIfPresent(String.self, forKey: .dateString)
+    drawingData = try container.decodeIfPresent(Data.self, forKey: .drawingData)
+    drawingThumbnail200 = try container.decodeIfPresent(Data.self, forKey: .drawingThumbnail200)
+    // Legacy fields are decoded but ignored
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(body, forKey: .body)
+    try container.encode(createdAt, forKey: .createdAt)
+    try container.encodeIfPresent(dateString, forKey: .dateString)
+    try container.encodeIfPresent(drawingData, forKey: .drawingData)
+    try container.encodeIfPresent(drawingThumbnail200, forKey: .drawingThumbnail200)
+  }
 }
 
 struct JSONDocument: FileDocument {
