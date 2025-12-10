@@ -25,6 +25,7 @@ struct JoodleApp: App {
   @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
   @State private var colorScheme: ColorScheme? = UserPreferences.shared.preferredColorScheme
   @State private var selectedDateFromWidget: Date?
+  @State private var showPaywallFromWidget = false
   @State private var containerKey = UUID()
   @State private var modelContainer: ModelContainer
   @State private var showLaunchScreen = true
@@ -115,6 +116,10 @@ struct JoodleApp: App {
               .onOpenURL { url in
                 handleWidgetURL(url)
               }
+              .sheet(isPresented: $showPaywallFromWidget) {
+                StandalonePaywallView()
+                  .presentationDetents([.large])
+              }
               .id(containerKey)
           }
         }
@@ -144,9 +149,16 @@ struct JoodleApp: App {
   }
 
   private func handleWidgetURL(_ url: URL) {
+    guard url.scheme == "joodle" else { return }
+
+    // Handle URL scheme: joodle://paywall
+    if url.host == "paywall" {
+      showPaywallFromWidget = true
+      return
+    }
+
     // Handle URL scheme: joodle://date/{timestamp}
-    guard url.scheme == "joodle",
-          url.host == "date",
+    guard url.host == "date",
           let timestamp = url.pathComponents.last,
           let timeInterval = TimeInterval(timestamp) else {
       return

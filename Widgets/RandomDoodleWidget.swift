@@ -125,6 +125,7 @@ struct RandomDoodleWidgetView: View {
     // Check subscription status first
     if !entry.isSubscribed {
       WidgetLockedView(family: family)
+        .widgetURL(URL(string: "joodle://paywall"))
         .containerBackground(for: .widget) {
           Color(UIColor.systemBackground)
         }

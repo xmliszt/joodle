@@ -349,6 +349,7 @@ struct AnniversaryWidgetView: View {
     // Check subscription status first
     if !entry.isSubscribed {
       AnniversaryWidgetLockedView(family: family)
+        .widgetURL(URL(string: "joodle://paywall"))
         .containerBackground(for: .widget) {
           Color(UIColor.systemBackground)
         }
