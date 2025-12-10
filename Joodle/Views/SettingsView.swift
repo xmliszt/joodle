@@ -141,7 +141,7 @@ struct SettingsView: View {
           Text("Haptic feedback also depends on your device's Vibration setting in Settings > Accessibility > Touch > Vibration")
         }
       }
-      
+
       // MARK: - Subscription
       Section("Super Subscription") {
         if subscriptionManager.isSubscribed {
@@ -280,7 +280,7 @@ struct SettingsView: View {
     .navigationBarBackButtonHidden()
     .toolbar {
       ToolbarItem(placement: .navigationBarLeading) {
-        Button("dismiss", systemImage: "smallcircle.filled.circle") {
+        Button("dismiss", systemImage: "arrow.left") {
           dismiss()
         }.tint(Color.appPrimary)
       }
