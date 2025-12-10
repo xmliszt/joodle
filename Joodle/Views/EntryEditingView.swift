@@ -196,7 +196,7 @@ struct EntryEditingView: View {
           }
           .frame(maxWidth: .infinity, alignment: .leading)
           // Offset the header part
-          .padding(.top, 40)
+          .padding(.vertical, 40)
         }
         .scrollDismissesKeyboard(.never)
 
