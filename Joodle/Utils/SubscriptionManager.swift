@@ -280,7 +280,7 @@ class SubscriptionManager: ObservableObject {
 
     private func formatExpirationDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateStyle = .abbreviated
+        formatter.dateStyle = .medium
         formatter.timeStyle = .short
         formatter.timeZone = TimeZone.current
         let timeZoneAbbreviation = formatter.timeZone.abbreviation() ?? ""

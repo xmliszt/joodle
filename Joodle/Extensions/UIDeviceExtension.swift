@@ -40,14 +40,13 @@ extension UIDevice {
     let size = dynamicIslandSize
     let screenWidth = UIScreen.main.bounds.width
     let x = (screenWidth - size.width) / 2
-    var y = (UIDevice.topSafeAreaInset - size.height) / 2 - 0.5  // Consistent across all Dynamic Island devices
-    // Make it slightly smaller
-    let width = size.width - 4
-    let height = size.height - 4
+    var y = (UIDevice.topSafeAreaInset - size.height) / 2 + 1 // Consistent across all Dynamic Island devices
+    let width = size.width
+    let height = size.height
 
     // iPhone Air - lower position
     if UIDevice.modelName == "iPhone Air" || UIDevice.modelName == "Simulator iPhone Air" {
-      y += 5
+      y += 3
     }
 
     return CGRect(x: x, y: y, width: width, height: height)
