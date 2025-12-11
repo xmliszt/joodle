@@ -62,6 +62,14 @@ class SubscriptionManager: ObservableObject {
             name: UIApplication.didBecomeActiveNotification,
             object: nil
         )
+
+        // Listen for app entering background to update widget status
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillResignActive),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
     }
 
     deinit {
@@ -146,6 +154,12 @@ class SubscriptionManager: ObservableObject {
         Task {
             await updateSubscriptionStatus()
         }
+    }
+
+    @objc private func appWillResignActive() {
+        // Update widget subscription status when app goes to background
+        // This ensures widget has fresh data even if the app isn't opened for a while
+        WidgetHelper.shared.updateSubscriptionStatus()
     }
 
     // MARK: - Subscription State Change Handling

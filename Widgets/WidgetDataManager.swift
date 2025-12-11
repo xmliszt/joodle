@@ -72,9 +72,21 @@ struct WidgetDataManager {
 
     do {
       let status = try JSONDecoder().decode(WidgetSubscriptionStatus.self, from: data)
-      // If status is valid and user is subscribed, return true
-      // If status is stale (over 1 hour old), default to false for safety
-      return status.isValid && status.isSubscribed
+
+      // If not marked as subscribed, return false immediately
+      guard status.isSubscribed else {
+        return false
+      }
+
+      // If we have an expiration date, use it to determine validity
+      // This handles the case where user cancelled but still has active trial/subscription
+      if let expirationDate = status.expirationDate {
+        return Date() < expirationDate
+      }
+
+      // No expiration date but marked as subscribed - trust the cached status if recent
+      // Fall back to validity check only when there's no expiration date
+      return status.isValid
     } catch {
       print("Failed to decode subscription status: \(error)")
       return false

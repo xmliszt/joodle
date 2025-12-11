@@ -324,6 +324,9 @@ class StoreKitManager: ObservableObject {
 
                     await self.updatePurchasedProducts()
 
+                    // Notify SubscriptionManager to sync state and update widget
+                    await SubscriptionManager.shared.updateSubscriptionStatus()
+
                     await transaction.finish()
                 } catch {
                     debugPrint("Transaction verification failed: \(error)")
