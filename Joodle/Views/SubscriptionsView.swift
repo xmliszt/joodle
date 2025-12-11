@@ -198,13 +198,13 @@ struct SubscriptionsView: View {
       .padding(.horizontal, 20)
 
       if subscriptionManager.isInTrialPeriod && subscriptionManager.willAutoRenew {
-        Text("Your free trial will automatically convert to a paid subscription on \(subscriptionManager.subscriptionExpirationDate?.formatted(date: .long, time: .omitted) ?? "the expiration date"). Cancel anytime before then to avoid charges.")
+        Text("Your free trial will automatically convert to a paid subscription on \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "the expiration date"). Cancel anytime before then to avoid charges.")
           .font(.caption2)
           .foregroundColor(.secondary)
           .multilineTextAlignment(.leading)
           .padding(.horizontal, 32)
       } else if !subscriptionManager.willAutoRenew {
-        Text("You'll continue to have access to Joodle Super until \(subscriptionManager.subscriptionExpirationDate?.formatted(date: .long, time: .omitted) ?? "your subscription expires"). After that, you'll lose access to all premium features. Re-subscribe to continue enjoying Joodle Super after your current period ends.")
+        Text("You'll continue to have access to Joodle Super until \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "your subscription expires"). After that, you'll lose access to all premium features. Re-subscribe to continue enjoying Joodle Super after your current period ends.")
           .font(.caption2)
           .foregroundColor(.secondary)
           .multilineTextAlignment(.leading)
@@ -243,6 +243,16 @@ struct SubscriptionsView: View {
       }
     }
     currentProduct = nil
+  }
+
+  private func formatExpirationDate(_ date: Date?) -> String? {
+    guard let date = date else { return nil }
+    let formatter = DateFormatter()
+    formatter.dateStyle = .long
+    formatter.timeStyle = .short
+    formatter.timeZone = TimeZone.current
+    let timeZoneAbbreviation = formatter.timeZone.abbreviation() ?? ""
+    return "\(formatter.string(from: date)) (\(timeZoneAbbreviation))"
   }
 
   private func openSubscriptionManagement() {

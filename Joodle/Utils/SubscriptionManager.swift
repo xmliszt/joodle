@@ -269,13 +269,22 @@ class SubscriptionManager: ObservableObject {
                 } else if daysLeft == 1 {
                     return "Subscription expires tomorrow"
                 }
-                return "Subscription ends \(expiration.formatted(date: .abbreviated, time: .omitted))"
+                return "Subscription ends \(formatExpirationDate(expiration))"
             } else {
                 return "Subscription will not renew"
             }
         }
 
         return nil
+    }
+
+    private func formatExpirationDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .abbreviated
+        formatter.timeStyle = .short
+        formatter.timeZone = TimeZone.current
+        let timeZoneAbbreviation = formatter.timeZone.abbreviation() ?? ""
+        return "\(formatter.string(from: date)) (\(timeZoneAbbreviation))"
     }
 
     var shouldShowRenewalWarning: Bool {
