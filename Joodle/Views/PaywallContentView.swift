@@ -171,7 +171,7 @@ struct SliderCTAButton: View {
     if let trialText = trialPeriodText {
       return "Start \(trialText) Free Trial"
     }
-    return "Start Free Trial"
+    return "Subscribe"
   }
 
   private func startShimmerAnimation() {
@@ -467,6 +467,7 @@ struct PaywallContentView: View {
           product: yearly,
           isSelected: selectedProductID == yearly.id,
           badge: savingsBadgeText(),
+          isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
           onSelect: {
             selectedProductID = yearly.id
           }
@@ -478,6 +479,7 @@ struct PaywallContentView: View {
           product: monthly,
           isSelected: selectedProductID == monthly.id,
           badge: nil,
+          isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
           onSelect: {
             selectedProductID = monthly.id
           }
@@ -523,7 +525,13 @@ struct PaywallContentView: View {
   }
 
   /// Returns the formatted trial period text for the currently selected product
+  /// Returns nil if user is not eligible for introductory offer (e.g., already used free trial)
   private var selectedTrialPeriodText: String? {
+    // Check if user is eligible for intro offer (hasn't used trial before)
+    guard storeManager.isEligibleForIntroOffer else {
+      return nil
+    }
+
     guard let selectedID = selectedProductID,
           let product = storeManager.products.first(where: { $0.id == selectedID }),
           let subscription = product.subscription,

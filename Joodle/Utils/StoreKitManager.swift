@@ -21,6 +21,7 @@ class StoreKitManager: ObservableObject {
     @Published var isInTrialPeriod = false
     @Published var subscriptionExpirationDate: Date?
     @Published var willAutoRenew = true
+    @Published var isEligibleForIntroOffer = true
 
     private let productIDs: [String] = [
         "dev.liyuxuan.joodle.super.monthly",
@@ -230,6 +231,13 @@ class StoreKitManager: ObservableObject {
         var expirationDate: Date?
         var inTrial = false
         var autoRenew = true
+        var eligibleForIntro = true
+
+        // Check intro offer eligibility using any subscription product
+        if let subscriptionProduct = products.first(where: { $0.subscription != nil }),
+           let subscription = subscriptionProduct.subscription {
+            eligibleForIntro = await subscription.isEligibleForIntroOffer
+        }
 
         for await result in Transaction.currentEntitlements {
             do {
@@ -275,12 +283,14 @@ class StoreKitManager: ObservableObject {
         self.isInTrialPeriod = inTrial
         self.subscriptionExpirationDate = expirationDate
         self.willAutoRenew = autoRenew
+        self.isEligibleForIntroOffer = eligibleForIntro
 
         print("📊 Subscription Status:")
         print("   Active: \(!purchasedIDs.isEmpty)")
         print("   Trial: \(inTrial)")
         print("   Expiration: \(expirationDate?.formatted() ?? "N/A")")
         print("   Auto-Renew: \(autoRenew)")
+        print("   Eligible for Intro Offer: \(eligibleForIntro)")
 
         // Log subscription status to debug logger
         let statusDetails = "Active: \(!purchasedIDs.isEmpty), Trial: \(inTrial), Auto-Renew: \(autoRenew)"
@@ -360,14 +370,6 @@ class StoreKitManager: ObservableObject {
             raiseOnUnderflow: false,
             raiseOnDivideByZero: false
         )).intValue
-
-        print("💵 Savings Calculation:")
-        print("   Monthly: \(monthly.displayPrice) (\(monthly.price))")
-        print("   Yearly: \(yearly.displayPrice) (\(yearly.price))")
-        print("   Monthly x12: \(monthlyYearlyCost)")
-        print("   Savings: \(savings)")
-        print("   Percentage Decimal: \(percentageDecimal)")
-        print("   Percentage: \(percentageInt)%")
 
         return percentageInt
     }

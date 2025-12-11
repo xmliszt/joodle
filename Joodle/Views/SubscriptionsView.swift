@@ -165,6 +165,7 @@ struct SubscriptionsView: View {
         product: product,
         isSelected: true,
         badge: subscriptionManager.isInTrialPeriod ? "FREE TRIAL" : nil,
+        isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
         onSelect: {}
       )
       .padding(.horizontal, 20)

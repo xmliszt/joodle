@@ -44,6 +44,7 @@ struct PricingCard: View {
   let product: Product
   let isSelected: Bool
   let badge: String?
+  let isEligibleForIntroOffer: Bool
   let onSelect: () -> Void
 
   var body: some View {
@@ -150,7 +151,13 @@ struct PricingCard: View {
   }
 
   /// Returns the formatted trial period text for this product (e.g., "7-day", "1-month", "3-month")
+  /// Returns nil if user is not eligible for introductory offer (e.g., already used free trial)
   private var trialPeriodText: String? {
+    // Check if user is eligible for intro offer (hasn't used trial before)
+    guard isEligibleForIntroOffer else {
+      return nil
+    }
+
     guard let subscription = product.subscription,
           let introOffer = subscription.introductoryOffer else {
       return nil

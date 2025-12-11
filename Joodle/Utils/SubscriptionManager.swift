@@ -115,12 +115,6 @@ class SubscriptionManager: ObservableObject {
 
         // Note: handleSubscriptionLost() and handleSubscriptionGained() are called
         // automatically by the didSet observer on isSubscribed when the value changes
-
-        print("📊 SubscriptionManager updated:")
-        print("   isSubscribed: \(isSubscribed)")
-        print("   isInTrialPeriod: \(isInTrialPeriod)")
-        print("   expirationDate: \(subscriptionExpirationDate?.formatted() ?? "nil")")
-        print("   willAutoRenew: \(willAutoRenew)")
     }
 
     // MARK: - Expiration Monitoring
@@ -157,8 +151,6 @@ class SubscriptionManager: ObservableObject {
     // MARK: - Subscription State Change Handling
 
     private func handleSubscriptionGained() {
-        print("🎉 Subscription gained - enabling premium features")
-
         // Auto-enable iCloud sync when user upgrades
         if !UserPreferences.shared.isCloudSyncEnabled {
             // Check if system requirements are met for iCloud sync
