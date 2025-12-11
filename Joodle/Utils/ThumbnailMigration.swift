@@ -13,7 +13,8 @@ import SwiftUI
 class ThumbnailMigration {
   static let shared = ThumbnailMigration()
 
-  private static let legacyThumbnailCleanupKey = "hasCleanedLegacyThumbnails_v1"
+  private static let legacyThumbnailCleanupKey = "hasCleanedLegacy1080Thumbnails_v1"
+  private static let dualThumbnailRegenerationKey = "hasRegeneratedDualThumbnails_v1"
 
   private init() {}
 
@@ -31,14 +32,15 @@ class ThumbnailMigration {
         // Only process entries with drawing data but missing thumbnails
         if let drawingData = entry.drawingData,
           !drawingData.isEmpty,
-          entry.drawingThumbnail200 == nil
+          entry.drawingThumbnail20 == nil || entry.drawingThumbnail200 == nil
         {
-          // Generate thumbnail
-          let thumbnail = await DrawingThumbnailGenerator.shared.generateThumbnail(
-            from: drawingData, size: 200)
+          // Generate both thumbnails
+          let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(
+            from: drawingData)
 
-          // Update entry with thumbnail
-          entry.drawingThumbnail200 = thumbnail
+          // Update entry with thumbnails
+          entry.drawingThumbnail20 = thumbnails.0
+          entry.drawingThumbnail200 = thumbnails.1
 
           migratedCount += 1
 
@@ -61,7 +63,7 @@ class ThumbnailMigration {
     }
   }
 
-  /// Clean up legacy thumbnail data (20px and 1080px) to reclaim storage
+  /// Clean up legacy 1080px thumbnail data to reclaim storage
   /// This only runs once per device
   /// - Parameter modelContext: The SwiftData model context
   /// - Returns: Number of entries cleaned up
@@ -78,21 +80,9 @@ class ThumbnailMigration {
       var cleanedCount = 0
 
       for entry in allEntries {
-        var needsSave = false
-
-        // Clear legacy 20px thumbnail
-        if entry.drawingThumbnail20 != nil {
-          entry.drawingThumbnail20 = nil
-          needsSave = true
-        }
-
-        // Clear legacy 1080px thumbnail
+        // Clear legacy 1080px thumbnail only
         if entry.drawingThumbnail1080 != nil {
           entry.drawingThumbnail1080 = nil
-          needsSave = true
-        }
-
-        if needsSave {
           cleanedCount += 1
 
           // Save periodically to avoid memory buildup
@@ -105,7 +95,7 @@ class ThumbnailMigration {
       // Final save
       if cleanedCount > 0 {
         try? modelContext.save()
-        print("ThumbnailMigration: Cleaned up legacy thumbnails from \(cleanedCount) entries")
+        print("ThumbnailMigration: Cleaned up legacy 1080px thumbnails from \(cleanedCount) entries")
       }
 
       // Mark cleanup as complete
@@ -129,7 +119,7 @@ class ThumbnailMigration {
       let needsMigration = allEntries.filter { entry in
         if let drawingData = entry.drawingData,
           !drawingData.isEmpty,
-          entry.drawingThumbnail200 == nil
+          entry.drawingThumbnail20 == nil || entry.drawingThumbnail200 == nil
         {
           return true
         }
@@ -151,10 +141,60 @@ class ThumbnailMigration {
       return
     }
 
-    let thumbnail = await DrawingThumbnailGenerator.shared.generateThumbnail(from: drawingData, size: 200)
+    let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: drawingData)
 
-    entry.drawingThumbnail200 = thumbnail
+    entry.drawingThumbnail20 = thumbnails.0
+    entry.drawingThumbnail200 = thumbnails.1
 
     try? modelContext.save()
+  }
+
+  /// Regenerate all thumbnails with dual sizes (20px with thicker strokes, 200px normal)
+  /// This only runs once per device when updating to the dual thumbnail version
+  /// - Parameter modelContext: The SwiftData model context
+  /// - Returns: Number of entries regenerated
+  func regenerateAllThumbnailsWithDualSizes(modelContext: ModelContext) async -> Int {
+    // Only run this regeneration once
+    guard !UserDefaults.standard.bool(forKey: Self.dualThumbnailRegenerationKey) else {
+      return 0
+    }
+
+    let descriptor = FetchDescriptor<DayEntry>()
+
+    do {
+      let allEntries = try modelContext.fetch(descriptor)
+      var regeneratedCount = 0
+
+      for entry in allEntries {
+        // Regenerate thumbnails for any entry with drawing data
+        if let drawingData = entry.drawingData, !drawingData.isEmpty {
+          let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(
+            from: drawingData)
+
+          entry.drawingThumbnail20 = thumbnails.0
+          entry.drawingThumbnail200 = thumbnails.1
+          regeneratedCount += 1
+
+          // Save periodically to avoid memory buildup
+          if regeneratedCount % 10 == 0 {
+            try? modelContext.save()
+          }
+        }
+      }
+
+      // Final save
+      if regeneratedCount > 0 {
+        try? modelContext.save()
+        print("ThumbnailMigration: Regenerated \(regeneratedCount) entries with dual thumbnails (20px + 200px)")
+      }
+
+      // Mark regeneration as complete
+      UserDefaults.standard.set(true, forKey: Self.dualThumbnailRegenerationKey)
+
+      return regeneratedCount
+    } catch {
+      print("Failed to regenerate thumbnails: \(error)")
+      return 0
+    }
   }
 }

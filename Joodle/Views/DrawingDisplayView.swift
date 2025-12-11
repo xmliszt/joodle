@@ -111,6 +111,12 @@ struct DrawingDisplayView: View {
         isVisible = true
       }
     }
+    .onChange(of: entry?.drawingThumbnail20) { _, _ in
+      // Reload thumbnail when it's updated
+      if useThumbnail {
+        loadDrawingData()
+      }
+    }
     .onChange(of: entry?.drawingThumbnail200) { _, _ in
       // Reload thumbnail when it's updated
       if useThumbnail {
@@ -127,8 +133,13 @@ struct DrawingDisplayView: View {
     }
 
     if useThumbnail {
-      // Use 200px thumbnail for all display sizes
-      let thumbnailData = entry?.drawingThumbnail200
+      // Select appropriate thumbnail based on display size
+      let thumbnailData: Data?
+      if displaySize <= 20 {
+        thumbnailData = entry?.drawingThumbnail20
+      } else {
+        thumbnailData = entry?.drawingThumbnail200
+      }
 
       if let thumbnailData = thumbnailData {
         thumbnailImage = UIImage(data: thumbnailData)

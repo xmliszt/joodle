@@ -24,13 +24,13 @@ final class DayEntry {
 
   var drawingData: Data?
 
-  // Pre-rendered thumbnail for optimized display
+  // Pre-rendered thumbnails for optimized display
+  var drawingThumbnail20: Data?   // 20px with thicker strokes for year grid minimized mode & widgets
   var drawingThumbnail200: Data?  // 200px for grid and detail views
 
-  // MARK: - Legacy thumbnails (kept for migration cleanup, will be removed in future version)
-  // These properties exist only to allow the migration to nil them out and reclaim storage
-  // DO NOT USE - they are deprecated and will be removed
-  var drawingThumbnail20: Data?
+  // MARK: - Legacy thumbnail (kept for migration cleanup, will be removed in future version)
+  // This property exists only to allow the migration to nil it out and reclaim storage
+  // DO NOT USE - it is deprecated and will be removed
   var drawingThumbnail1080: Data?
 
   /// Creates a new DayEntry for a specific date
@@ -44,6 +44,7 @@ final class DayEntry {
     // Store as noon UTC to avoid any edge-case timezone issues with the legacy Date field
     self.createdAt = Self.stringToDate(self.dateString) ?? date
     self.drawingData = drawingData
+    self.drawingThumbnail20 = nil
     self.drawingThumbnail200 = nil
   }
 

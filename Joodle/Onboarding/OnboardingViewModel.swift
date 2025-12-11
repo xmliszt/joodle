@@ -99,8 +99,9 @@ class OnboardingViewModel: ObservableObject {
 
                 // Generate thumbnails
                 Task {
-                    let thumbnail = await DrawingThumbnailGenerator.shared.generateThumbnail(from: data, size: 200)
-                    entryToUpdate.drawingThumbnail200 = thumbnail
+                    let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
+                    entryToUpdate.drawingThumbnail20 = thumbnails.0
+                    entryToUpdate.drawingThumbnail200 = thumbnails.1
                     try? context.save()
                 }
             } catch {

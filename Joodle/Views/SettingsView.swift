@@ -371,6 +371,7 @@ struct SettingsView: View {
           createdAt: entry.createdAt,
           dateString: entry.dateString,
           drawingData: entry.drawingData,
+          drawingThumbnail20: entry.drawingThumbnail20,
           drawingThumbnail200: entry.drawingThumbnail200
         )
       }
@@ -406,6 +407,7 @@ struct SettingsView: View {
             createdAt: dto.createdAt,
             drawingData: dto.drawingData
           )
+          newEntry.drawingThumbnail20 = dto.drawingThumbnail20
           newEntry.drawingThumbnail200 = dto.drawingThumbnail200
           modelContext.insert(newEntry)
           count += 1
@@ -442,21 +444,23 @@ struct DayEntryDTO: Codable {
   let createdAt: Date
   let dateString: String?  // Optional for backward compatibility with old exports
   let drawingData: Data?
+  let drawingThumbnail20: Data?
   let drawingThumbnail200: Data?
 
   // Support importing old exports that had all three thumbnail sizes
   enum CodingKeys: String, CodingKey {
     case body, createdAt, dateString, drawingData
+    case drawingThumbnail20
     case drawingThumbnail200
-    case drawingThumbnail20  // Legacy, ignored on import
     case drawingThumbnail1080  // Legacy, ignored on import
   }
 
-  init(body: String, createdAt: Date, dateString: String?, drawingData: Data?, drawingThumbnail200: Data?) {
+  init(body: String, createdAt: Date, dateString: String?, drawingData: Data?, drawingThumbnail20: Data?, drawingThumbnail200: Data?) {
     self.body = body
     self.createdAt = createdAt
     self.dateString = dateString
     self.drawingData = drawingData
+    self.drawingThumbnail20 = drawingThumbnail20
     self.drawingThumbnail200 = drawingThumbnail200
   }
 
@@ -466,8 +470,9 @@ struct DayEntryDTO: Codable {
     createdAt = try container.decode(Date.self, forKey: .createdAt)
     dateString = try container.decodeIfPresent(String.self, forKey: .dateString)
     drawingData = try container.decodeIfPresent(Data.self, forKey: .drawingData)
+    drawingThumbnail20 = try container.decodeIfPresent(Data.self, forKey: .drawingThumbnail20)
     drawingThumbnail200 = try container.decodeIfPresent(Data.self, forKey: .drawingThumbnail200)
-    // Legacy fields are decoded but ignored
+    // Legacy 1080 field is decoded but ignored
   }
 
   func encode(to encoder: Encoder) throws {
@@ -476,6 +481,7 @@ struct DayEntryDTO: Codable {
     try container.encode(createdAt, forKey: .createdAt)
     try container.encodeIfPresent(dateString, forKey: .dateString)
     try container.encodeIfPresent(drawingData, forKey: .drawingData)
+    try container.encodeIfPresent(drawingThumbnail20, forKey: .drawingThumbnail20)
     try container.encodeIfPresent(drawingThumbnail200, forKey: .drawingThumbnail200)
   }
 }

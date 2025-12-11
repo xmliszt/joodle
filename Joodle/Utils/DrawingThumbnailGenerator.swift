@@ -8,23 +8,30 @@
 import SwiftUI
 import UIKit
 
+/// Multiplier for stroke width in small thumbnails (20px) to ensure visibility when displayed at tiny sizes
+private let SMALL_THUMBNAIL_STROKE_MULTIPLIER: CGFloat = 3.0
+
 @MainActor
 class DrawingThumbnailGenerator {
   static let shared = DrawingThumbnailGenerator()
 
   private init() {}
 
-  /// Generate thumbnail from drawing data
+  /// Generate both thumbnails (20px and 200px) from drawing data
   /// - Parameter drawingData: The raw drawing path data
-  /// - Returns: 200px thumbnail data for grid and detail views
-  func generateThumbnail(from drawingData: Data) async -> Data? {
+  /// - Returns: Tuple of (20px thumbnail, 200px thumbnail) data
+  func generateThumbnails(from drawingData: Data) async -> (Data?, Data?) {
     // Decode the drawing data
     guard let pathsData = decodeDrawingData(drawingData) else {
-      return nil
+      return (nil, nil)
     }
 
-    // Generate 200px thumbnail (works for all display sizes)
-    return await generateThumbnail(from: pathsData, size: 200)
+    // Generate 20px thumbnail with thicker strokes for visibility
+    let thumbnail20 = await generateThumbnail(from: pathsData, size: 20, useThickerStrokes: true)
+    // Generate 200px thumbnail with normal strokes
+    let thumbnail200 = await generateThumbnail(from: pathsData, size: 200, useThickerStrokes: false)
+
+    return (thumbnail20, thumbnail200)
   }
 
   /// Generate a single thumbnail at specified size
@@ -37,13 +44,15 @@ class DrawingThumbnailGenerator {
       return nil
     }
 
-    return await generateThumbnail(from: pathsData, size: size)
+    // Use thicker strokes for small thumbnails (<=20px)
+    let useThickerStrokes = size <= 20
+    return await generateThumbnail(from: pathsData, size: size, useThickerStrokes: useThickerStrokes)
   }
 
   /// Generate thumbnail from decoded path data
-  private func generateThumbnail(from pathsData: [PathData], size: CGFloat) async -> Data? {
+  private func generateThumbnail(from pathsData: [PathData], size: CGFloat, useThickerStrokes: Bool) async -> Data? {
     // Create the drawing view
-    let drawingView = ThumbnailDrawingView(pathsData: pathsData, size: size)
+    let drawingView = ThumbnailDrawingView(pathsData: pathsData, size: size, useThickerStrokes: useThickerStrokes)
 
     // Render to image
     let renderer = ImageRenderer(content: drawingView)
@@ -74,25 +83,34 @@ class DrawingThumbnailGenerator {
 private struct ThumbnailDrawingView: View {
   let pathsData: [PathData]
   let size: CGFloat
+  let useThickerStrokes: Bool
 
   var body: some View {
     Canvas { context, canvasSize in
       // Scale factor to fit CANVAS_SIZE into thumbnail size
       let scale = size / CANVAS_SIZE
+      let strokeMultiplier: CGFloat = useThickerStrokes ? SMALL_THUMBNAIL_STROKE_MULTIPLIER : 1.0
 
       for pathData in pathsData {
-        let path = createPath(from: pathData)
-
-        // Apply scaling transform
-        var scaledPath = path
-        scaledPath = scaledPath.applying(CGAffineTransform(scaleX: scale, y: scale))
-
         if pathData.isDot {
-          // Fill dots
-          context.fill(scaledPath, with: .color(.appPrimary))
+          // Fill dots with appropriate size
+          guard let center = pathData.points.first else { continue }
+          let dotRadius = (DRAWING_LINE_WIDTH / 2) * scale * strokeMultiplier
+          let scaledCenter = CGPoint(x: center.x * scale, y: center.y * scale)
+          let dotPath = Path(ellipseIn: CGRect(
+            x: scaledCenter.x - dotRadius,
+            y: scaledCenter.y - dotRadius,
+            width: dotRadius * 2,
+            height: dotRadius * 2
+          ))
+          context.fill(dotPath, with: .color(.appPrimary))
         } else {
-          // Stroke lines with scaled width
-          let lineWidth = DRAWING_LINE_WIDTH * scale
+          // Create and scale the line path
+          let path = createLinePath(from: pathData)
+          let scaledPath = path.applying(CGAffineTransform(scaleX: scale, y: scale))
+
+          // Stroke lines with appropriate width
+          let lineWidth = DRAWING_LINE_WIDTH * scale * strokeMultiplier
           context.stroke(
             scaledPath,
             with: .color(.appPrimary),
@@ -109,30 +127,15 @@ private struct ThumbnailDrawingView: View {
     .background(Color.clear)
   }
 
-  /// Create a Path from PathData
-  private func createPath(from pathData: PathData) -> Path {
+  /// Create a line Path from PathData (not for dots)
+  private func createLinePath(from pathData: PathData) -> Path {
     var path = Path()
 
-    if pathData.isDot && !pathData.points.isEmpty {
-      // Create dot as ellipse
-      let center = pathData.points[0]
-      let dotRadius = DRAWING_LINE_WIDTH / 2
-      path.addEllipse(
-        in: CGRect(
-          x: center.x - dotRadius,
-          y: center.y - dotRadius,
-          width: dotRadius * 2,
-          height: dotRadius * 2
-        )
-      )
-    } else {
-      // Create line path
-      for (index, point) in pathData.points.enumerated() {
-        if index == 0 {
-          path.move(to: point)
-        } else {
-          path.addLine(to: point)
-        }
+    for (index, point) in pathData.points.enumerated() {
+      if index == 0 {
+        path.move(to: point)
+      } else {
+        path.addLine(to: point)
       }
     }
 

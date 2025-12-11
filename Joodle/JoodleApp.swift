@@ -39,6 +39,9 @@ struct JoodleApp: App {
 
     // Run legacy thumbnail cleanup migration
     Self.runLegacyThumbnailCleanup(container: container)
+
+    // Regenerate thumbnails with dual sizes (runs async in background)
+    Self.runDualThumbnailRegeneration(container: container)
   }
 
   /// Runs the dateString migration synchronously to populate dateString for existing entries
@@ -66,10 +69,10 @@ struct JoodleApp: App {
     }
   }
 
-  /// Cleans up legacy thumbnail data (20px and 1080px) to reclaim storage
+  /// Cleans up legacy 1080px thumbnail data to reclaim storage
   private static func runLegacyThumbnailCleanup(container: ModelContainer) {
     let context = ModelContext(container)
-    let cleanupKey = "hasCleanedLegacyThumbnails_v1"
+    let cleanupKey = "hasCleanedLegacy1080Thumbnails_v1"
 
     // Only run once
     guard !UserDefaults.standard.bool(forKey: cleanupKey) else {
@@ -83,31 +86,66 @@ struct JoodleApp: App {
       var cleanedCount = 0
 
       for entry in allEntries {
-        var needsSave = false
-
-        if entry.drawingThumbnail20 != nil {
-          entry.drawingThumbnail20 = nil
-          needsSave = true
-        }
-
+        // Only clear legacy 1080px thumbnail
         if entry.drawingThumbnail1080 != nil {
           entry.drawingThumbnail1080 = nil
-          needsSave = true
-        }
-
-        if needsSave {
           cleanedCount += 1
         }
       }
 
       if cleanedCount > 0 {
         try context.save()
-        print("LegacyThumbnailCleanup: Cleaned up \(cleanedCount) entries on startup")
+        print("LegacyThumbnailCleanup: Cleaned up \(cleanedCount) entries with 1080px thumbnails on startup")
       }
 
       UserDefaults.standard.set(true, forKey: cleanupKey)
     } catch {
       print("LegacyThumbnailCleanup: Failed during startup: \(error)")
+    }
+  }
+
+  /// Regenerates all thumbnails with dual sizes (20px thicker strokes + 200px normal)
+  private static func runDualThumbnailRegeneration(container: ModelContainer) {
+    let regenerationKey = "hasRegeneratedDualThumbnails_v1"
+
+    // Only run once
+    guard !UserDefaults.standard.bool(forKey: regenerationKey) else {
+      return
+    }
+
+    // Run asynchronously to not block app startup
+    Task { @MainActor in
+      let context = ModelContext(container)
+      let descriptor = FetchDescriptor<DayEntry>()
+
+      do {
+        let allEntries = try context.fetch(descriptor)
+        var regeneratedCount = 0
+
+        for entry in allEntries {
+          if let drawingData = entry.drawingData, !drawingData.isEmpty {
+            let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(
+              from: drawingData)
+            entry.drawingThumbnail20 = thumbnails.0
+            entry.drawingThumbnail200 = thumbnails.1
+            regeneratedCount += 1
+
+            // Save periodically to avoid memory buildup
+            if regeneratedCount % 10 == 0 {
+              try? context.save()
+            }
+          }
+        }
+
+        if regeneratedCount > 0 {
+          try context.save()
+          print("DualThumbnailRegeneration: Regenerated \(regeneratedCount) entries with 20px + 200px thumbnails on startup")
+        }
+
+        UserDefaults.standard.set(true, forKey: regenerationKey)
+      } catch {
+        print("DualThumbnailRegeneration: Failed during startup: \(error)")
+      }
     }
   }
 
