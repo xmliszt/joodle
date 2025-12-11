@@ -45,9 +45,6 @@ extension UIDevice {
     let width = size.width - 4
     let height = size.height - 4
 
-    debugPrint(">>> Device model: \(UIDevice.modelName)")
-    debugPrint(">>> Safe area top: \(UIDevice.topSafeAreaInset)")
-    debugPrint(">>> Y: \(y)")
     // iPhone Air - lower position
     if UIDevice.modelName == "iPhone Air" || UIDevice.modelName == "Simulator iPhone Air" {
       y += 5

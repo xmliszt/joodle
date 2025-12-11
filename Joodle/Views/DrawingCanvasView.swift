@@ -163,28 +163,28 @@ struct DrawingCanvasView: View {
     VStack(spacing: 16) {
       Image(systemName: "lock.fill")
         .font(.system(size: 40))
-        .foregroundColor(.white)
+        .foregroundColor(.appTextPrimary)
 
       switch accessState {
       case .limitReached:
         Text("You've reached your free doodle limit")
           .font(.headline)
-          .foregroundColor(.white)
+          .foregroundColor(.appTextPrimary)
           .multilineTextAlignment(.center)
 
         Text("Upgrade to Joodle Super for unlimited doodles")
           .font(.subheadline)
-          .foregroundColor(.white.opacity(0.8))
+          .foregroundColor(.appTextPrimary.opacity(0.8))
           .multilineTextAlignment(.center)
 
       case .editingLocked(let reason):
         Text("Editing Locked")
           .font(.headline)
-          .foregroundColor(.white)
+          .foregroundColor(.appTextPrimary)
 
         Text(reason)
           .font(.subheadline)
-          .foregroundColor(.white.opacity(0.8))
+          .foregroundColor(.appTextPrimary.opacity(0.8))
           .multilineTextAlignment(.center)
 
       default:
@@ -199,7 +199,7 @@ struct DrawingCanvasView: View {
           Text("Upgrade")
         }
         .font(.headline)
-        .foregroundColor(.black)
+        .foregroundColor(.white)
         .padding(.horizontal, 24)
         .padding(.vertical, 12)
         .background(.accent)
@@ -208,8 +208,8 @@ struct DrawingCanvasView: View {
     }
     .padding(32)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(.black)
-    .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+    .background(.ultraThinMaterial.quaternary)
+    .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius - UIDevice.dynamicIslandFrame.origin.y - 36, style: .continuous))
   }
 
   // MARK: - Access Check
@@ -235,7 +235,7 @@ struct DrawingCanvasView: View {
         if subscriptionManager.canEditDoodle(atIndex: index) {
           accessState = .canEdit
         } else {
-          accessState = .editingLocked(reason: "Free accounts can only edit their first \(SubscriptionManager.freeDoodlesAllowed) doodles. This doodle is #\(index + 1).")
+          accessState = .editingLocked(reason: "Free account can only edit the first \(SubscriptionManager.freeDoodlesAllowed) doodles. This doodle is #\(index + 1).")
         }
       } else {
         accessState = .canEdit
