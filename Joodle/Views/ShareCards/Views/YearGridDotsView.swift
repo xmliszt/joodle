@@ -78,6 +78,7 @@ struct YearGridDotsView: View {
   let year: Int
   let percentage: Double
   let entries: [ShareCardDayEntry]
+  var showWatermark: Bool = true
 
   // Base dimensions for 1080x1080 card
   private let baseDotSize: CGFloat = 26
@@ -188,6 +189,11 @@ struct YearGridDotsView: View {
         }
         .padding(.top, topPadding)
         .padding(.bottom, bottomPadding)
+
+        // Watermark - bottom right corner
+        if showWatermark {
+          MushroomWatermarkView(scale: scale)
+        }
       }
       .frame(width: size.width, height: size.height)
     }

@@ -5,6 +5,7 @@ struct MinimalView: View {
   let entry: DayEntry?
   let date: Date
   let highResDrawing: UIImage?
+  var showWatermark: Bool = true
 
   var body: some View {
     GeometryReader { geometry in
@@ -33,6 +34,11 @@ struct MinimalView: View {
           )
           .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
         }
+
+        // Watermark - bottom right corner
+        if showWatermark {
+          MushroomWatermarkView(scale: scale)
+        }
       }
       .frame(width: size.width, height: size.height)
     }
@@ -49,6 +55,22 @@ struct MinimalView: View {
     ),
     date: Date(),
     highResDrawing: nil
+  )
+  .frame(width: 300, height: 300)
+  // add border
+  .border(Color.black)
+}
+
+#Preview("Without Watermark") {
+  MinimalView(
+    entry: DayEntry(
+      body: "",
+      createdAt: Date(),
+      drawingData: createMockDrawingData()
+    ),
+    date: Date(),
+    highResDrawing: nil,
+    showWatermark: false
   )
   .frame(width: 300, height: 300)
   // add border

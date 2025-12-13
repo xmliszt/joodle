@@ -179,7 +179,7 @@ struct SettingsView: View {
                   .frame(maxWidth: .infinity, alignment: .leading)
               } else {
                 // Active subscription with no issues
-                Text("You have full access to all premium features")
+                Text("You have full access to all features")
                   .font(.subheadline)
                   .foregroundColor(.secondary)
                   .frame(maxWidth: .infinity, alignment: .leading)
@@ -307,14 +307,6 @@ struct SettingsView: View {
     .background(NavigationGestureEnabler())
     .navigationTitle("Settings")
     .navigationBarTitleDisplayMode(.inline)
-    .navigationBarBackButtonHidden()
-    .toolbar {
-      ToolbarItem(placement: .navigationBarLeading) {
-        Button("dismiss", systemImage: "arrow.left") {
-          dismiss()
-        }.tint(Color.appPrimary)
-      }
-    }
     .preferredColorScheme(userPreferences.preferredColorScheme)
     .onChange(of: userPreferences.preferredColorScheme) { _, _ in
       // Force view refresh when color scheme changes

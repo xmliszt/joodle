@@ -119,7 +119,7 @@ struct SubscriptionsView: View {
         Text("Joodle Super")
           .font(.system(size: 28, weight: .bold))
 
-        Text("You have full access to all premium features. Thank you for your support!")
+        Text("You have full access to all features. Thank you for your support!")
           .font(.subheadline)
           .foregroundColor(.secondary)
           .multilineTextAlignment(.center)

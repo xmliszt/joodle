@@ -5,6 +5,7 @@ struct DetailedView: View {
   let entry: DayEntry?
   let date: Date
   let highResDrawing: UIImage?
+  var showWatermark: Bool = true
 
   private var dateString: String {
     let formatter = DateFormatter()
@@ -78,6 +79,11 @@ struct DetailedView: View {
           .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
           .padding(.leading, outerPadding)
           .padding(.top, outerPadding)
+        }
+
+        // Watermark - bottom LEFT corner
+        if showWatermark {
+          MushroomWatermarkView(scale: scale, alignment: .bottomLeading)
         }
       }
     }
@@ -214,6 +220,22 @@ class ExclusionTextUIView: UIView {
     ),
     date: Date(),
     highResDrawing: nil
+  )
+  .frame(width: 300, height: 150)
+  .clipShape(RoundedRectangle(cornerRadius: 30))
+  .shadow(color: .black.opacity(0.1), radius: 25, x: 0, y: 8)
+}
+
+#Preview("Without Watermark") {
+  DetailedView(
+    entry: DayEntry(
+      body: "Today was amazing! I learned so much and felt really productive.",
+      createdAt: Date(),
+      drawingData: createMockDrawingData()
+    ),
+    date: Date(),
+    highResDrawing: nil,
+    showWatermark: false
   )
   .frame(width: 300, height: 150)
   .clipShape(RoundedRectangle(cornerRadius: 30))

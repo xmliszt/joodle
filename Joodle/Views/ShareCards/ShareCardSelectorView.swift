@@ -26,13 +26,21 @@ struct ShareCardSelectorView: View {
   @State private var shareItem: ShareItem?
   @State private var previewColorScheme: ColorScheme = (UserPreferences.shared.preferredColorScheme ?? .light)
 
-  // Cache rendered preview images for each style and color scheme
-  @State private var renderedPreviews: [ShareCardStyle: [ColorScheme: UIImage]] = [:]
+  // Watermark toggle - only available for Joodle Super users
+  @State private var showWatermark: Bool = true
+
+  // Cache rendered preview images for each style, color scheme, and watermark setting
+  @State private var renderedPreviews: [ShareCardStyle: [ColorScheme: [Bool: UIImage]]] = [:]
   @State private var renderingStyles: Set<ShareCardStyle> = []
 
   // Year grid data (loaded when in yearGrid mode)
   @State private var yearEntries: [ShareCardDayEntry] = []
   @State private var yearPercentage: Double = 0.0
+
+  /// Check if user is a Joodle Super subscriber
+  private var isJoodleSuper: Bool {
+    SubscriptionManager.shared.isSubscribed
+  }
 
   private var availableStyles: [ShareCardStyle] {
     switch mode {
@@ -93,6 +101,28 @@ struct ShareCardSelectorView: View {
                   .fill(selectedStyle == style ? Color.appPrimary : Color.secondaryTextColor.opacity(0.3))
                   .frame(width: 8, height: 8)
                   .animation(.springFkingSatifying, value: selectedStyle)
+              }
+            }
+
+            // Watermark toggle - only visible for Joodle Super users
+            if isJoodleSuper {
+              Toggle(isOn: $showWatermark) {
+                HStack(spacing: 8) {
+                  Image("MushroomIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 32, height: 32)
+                  Text("Show Watermark")
+                    .font(.system(size: 15))
+                }
+              }
+              .toggleStyle(SwitchToggleStyle(tint: .appPrimary))
+              .padding(.horizontal, 40)
+              .onChange(of: showWatermark) { _, _ in
+                // Clear cached previews when watermark setting changes
+                renderedPreviews.removeAll()
+                // Re-render current preview
+                renderPreview(for: selectedStyle)
               }
             }
           }
@@ -208,10 +238,20 @@ struct ShareCardSelectorView: View {
     yearEntries = ShareCardRenderer.shared.loadEntriesForYear(year, from: modelContext)
   }
 
+  /// Determines whether watermark should be shown based on subscription status
+  /// Non-subscribers always see watermark, subscribers can toggle it off
+  private var shouldShowWatermark: Bool {
+    if isJoodleSuper {
+      return showWatermark
+    } else {
+      return true // Non-subscribers always have watermark
+    }
+  }
+
   @ViewBuilder
   private func cardPreview(style: ShareCardStyle) -> some View {
     ZStack {
-      if let previewImage = renderedPreviews[style]?[previewColorScheme] {
+      if let previewImage = renderedPreviews[style]?[previewColorScheme]?[shouldShowWatermark] {
         // Show the actual rendered export image
         Image(uiImage: previewImage)
           .resizable()
@@ -246,11 +286,13 @@ struct ShareCardSelectorView: View {
 
   private func renderPreview(for style: ShareCardStyle) {
     // Skip if already rendered or currently rendering
-    guard renderedPreviews[style]?[previewColorScheme] == nil, !renderingStyles.contains(style) else {
+    guard renderedPreviews[style]?[previewColorScheme]?[shouldShowWatermark] == nil, !renderingStyles.contains(style) else {
       return
     }
 
     renderingStyles.insert(style)
+
+    let watermarkSetting = shouldShowWatermark
 
     Task { @MainActor in
       let image: UIImage?
@@ -261,7 +303,8 @@ struct ShareCardSelectorView: View {
           style: style,
           entry: entry,
           date: date,
-          colorScheme: previewColorScheme
+          colorScheme: previewColorScheme,
+          showWatermark: watermarkSetting
         )
       case .yearGrid(let year):
         image = ShareCardRenderer.shared.renderYearGridCard(
@@ -269,7 +312,8 @@ struct ShareCardSelectorView: View {
           year: year,
           percentage: yearPercentage,
           entries: yearEntries,
-          colorScheme: previewColorScheme
+          colorScheme: previewColorScheme,
+          showWatermark: watermarkSetting
         )
       }
 
@@ -277,15 +321,20 @@ struct ShareCardSelectorView: View {
         if renderedPreviews[style] == nil {
           renderedPreviews[style] = [:]
         }
-        renderedPreviews[style]?[previewColorScheme] = image
+        if renderedPreviews[style]?[previewColorScheme] == nil {
+          renderedPreviews[style]?[previewColorScheme] = [:]
+        }
+        renderedPreviews[style]?[previewColorScheme]?[watermarkSetting] = image
       }
       renderingStyles.remove(style)
     }
   }
 
   private func shareCard() {
+    let watermarkSetting = shouldShowWatermark
+
     // If we already have the rendered preview, use it directly
-    if let cachedImage = renderedPreviews[selectedStyle]?[previewColorScheme] {
+    if let cachedImage = renderedPreviews[selectedStyle]?[previewColorScheme]?[watermarkSetting] {
       shareItem = ShareItem(image: cachedImage)
       return
     }
@@ -302,7 +351,8 @@ struct ShareCardSelectorView: View {
           style: selectedStyle,
           entry: entry,
           date: date,
-          colorScheme: previewColorScheme
+          colorScheme: previewColorScheme,
+          showWatermark: watermarkSetting
         )
       case .yearGrid(let year):
         image = ShareCardRenderer.shared.renderYearGridCard(
@@ -310,7 +360,8 @@ struct ShareCardSelectorView: View {
           year: year,
           percentage: yearPercentage,
           entries: yearEntries,
-          colorScheme: previewColorScheme
+          colorScheme: previewColorScheme,
+          showWatermark: watermarkSetting
         )
       }
 

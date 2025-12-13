@@ -5,6 +5,7 @@ struct AnniversaryView: View {
   let entry: DayEntry?
   let date: Date
   let highResDrawing: UIImage?
+  var showWatermark: Bool = true
 
   private var countdownString: String {
     return CountdownHelper.countdownText(from: Date(), to: date)
@@ -58,6 +59,11 @@ struct AnniversaryView: View {
         .padding(.top, 30 * scale)
         .padding(.bottom, 100 * scale)
         .padding(.horizontal, 80 * scale)
+
+        // Watermark - bottom right corner
+        if showWatermark {
+          MushroomWatermarkView(scale: scale)
+        }
       }
       .frame(width: size.width, height: size.height)
     }
@@ -74,6 +80,22 @@ struct AnniversaryView: View {
     ),
     date: Date().addingTimeInterval(86400 * 5), // 5 days later
     highResDrawing: nil
+  )
+  .frame(width: 300, height: 300)
+  // add border
+  .border(Color.black)
+}
+
+#Preview("Without Watermark") {
+  AnniversaryView(
+    entry: DayEntry(
+      body: "Birthday",
+      createdAt: Date(),
+      drawingData: createMockDrawingData()
+    ),
+    date: Date().addingTimeInterval(86400 * 5), // 5 days later
+    highResDrawing: nil,
+    showWatermark: false
   )
   .frame(width: 300, height: 300)
   // add border

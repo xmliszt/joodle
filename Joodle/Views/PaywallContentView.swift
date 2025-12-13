@@ -379,12 +379,11 @@ struct PaywallContentView: View {
         subtitle: "Sync across all your devices"
       )
 
-      // TODO: Unhide when share templates feature is ready
-      // FeatureRow(
-      //     icon: "square.and.arrow.up.fill",
-      //     title: "More share templates",
-      //     subtitle: "Beautiful templates for sharing"
-      // )
+       FeatureRow(
+           icon: "square.and.arrow.up.fill",
+           title: "Sharing without watermark",
+           subtitle: "Remove watermark when sharing"
+       )
     }
     .padding()
   }

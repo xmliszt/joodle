@@ -289,6 +289,8 @@ struct ContentView: View {
       .navigationDestination(isPresented: $navigateToSettings) {
         SettingsView()
       }
+      .navigationTitle("Home")
+      .toolbar(.hidden, for: .navigationBar)
       .onChange(of: navigateToSettings) { _, newValue in
         // If setting presented, hide dynamic island view
         if newValue == true {

@@ -104,12 +104,14 @@ class ShareCardRenderer {
   ///   - entry: The day entry containing the content
   ///   - date: The date for the entry
   ///   - colorScheme: The color scheme to use for rendering
+  ///   - showWatermark: Whether to show the watermark (default: true)
   /// - Returns: A UIImage representation of the card
   func renderCard(
     style: ShareCardStyle,
     entry: DayEntry?,
     date: Date,
-    colorScheme: ColorScheme
+    colorScheme: ColorScheme,
+    showWatermark: Bool = true
   ) -> UIImage? {
     // Pre-render drawing at high resolution if present
     var highResDrawing: UIImage?
@@ -135,7 +137,8 @@ class ShareCardRenderer {
         style: style,
         entry: entry,
         date: date,
-        highResDrawing: highResDrawing
+        highResDrawing: highResDrawing,
+        showWatermark: showWatermark
       )
       .frame(width: style.cardSize.width, height: style.cardSize.height)
       .clipShape(RoundedRectangle(cornerRadius: 80))
@@ -155,13 +158,15 @@ class ShareCardRenderer {
   ///   - percentage: The year progress percentage
   ///   - entries: The entries for the year
   ///   - colorScheme: The color scheme to use for rendering
+  ///   - showWatermark: Whether to show the watermark (default: true)
   /// - Returns: A UIImage representation of the card
   func renderYearGridCard(
     style: ShareCardStyle,
     year: Int,
     percentage: Double,
     entries: [ShareCardDayEntry],
-    colorScheme: ColorScheme
+    colorScheme: ColorScheme,
+    showWatermark: Bool = true
   ) -> UIImage? {
     guard style.isYearGridStyle else {
       return nil
@@ -181,7 +186,8 @@ class ShareCardRenderer {
         style: style,
         year: year,
         percentage: percentage,
-        entries: entries
+        entries: entries,
+        showWatermark: showWatermark
       )
       .frame(width: style.cardSize.width, height: style.cardSize.height)
       .clipShape(RoundedRectangle(cornerRadius: 80))
@@ -200,17 +206,18 @@ class ShareCardRenderer {
     style: ShareCardStyle,
     entry: DayEntry?,
     date: Date,
-    highResDrawing: UIImage?
+    highResDrawing: UIImage?,
+    showWatermark: Bool
   ) -> some View {
     switch style {
     case .minimal:
-      MinimalView(entry: entry, date: date, highResDrawing: highResDrawing)
+      MinimalView(entry: entry, date: date, highResDrawing: highResDrawing, showWatermark: showWatermark)
     case .excerpt:
-      ExcerptView(entry: entry, date: date, highResDrawing: highResDrawing)
+      ExcerptView(entry: entry, date: date, highResDrawing: highResDrawing, showWatermark: showWatermark)
     case .detailed:
-      DetailedView(entry: entry, date: date, highResDrawing: highResDrawing)
+      DetailedView(entry: entry, date: date, highResDrawing: highResDrawing, showWatermark: showWatermark)
     case .anniversary:
-      AnniversaryView(entry: entry, date: date, highResDrawing: highResDrawing)
+      AnniversaryView(entry: entry, date: date, highResDrawing: highResDrawing, showWatermark: showWatermark)
     case .yearGridDots, .yearGridDoodles:
       // Year grid styles should use renderYearGridCard instead
       EmptyView()
@@ -223,13 +230,14 @@ class ShareCardRenderer {
     style: ShareCardStyle,
     year: Int,
     percentage: Double,
-    entries: [ShareCardDayEntry]
+    entries: [ShareCardDayEntry],
+    showWatermark: Bool
   ) -> some View {
     switch style {
     case .yearGridDots:
-      YearGridDotsView(year: year, percentage: percentage, entries: entries)
+      YearGridDotsView(year: year, percentage: percentage, entries: entries, showWatermark: showWatermark)
     case .yearGridDoodles:
-      YearGridDoodlesView(year: year, percentage: percentage, entries: entries)
+      YearGridDoodlesView(year: year, percentage: percentage, entries: entries, showWatermark: showWatermark)
     default:
       EmptyView()
     }

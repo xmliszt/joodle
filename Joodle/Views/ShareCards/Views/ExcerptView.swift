@@ -5,6 +5,7 @@ struct ExcerptView: View {
   let entry: DayEntry?
   let date: Date
   let highResDrawing: UIImage?
+  var showWatermark: Bool = true
 
   private var dateString: String {
     let formatter = DateFormatter()
@@ -61,6 +62,11 @@ struct ExcerptView: View {
         .padding(.top, 30 * scale)
         .padding(.bottom, 100 * scale)
         .padding(.horizontal, 80 * scale)
+
+        // Watermark - bottom right corner
+        if showWatermark {
+          MushroomWatermarkView(scale: scale)
+        }
       }
       .frame(width: size.width, height: size.height)
     }
@@ -75,7 +81,7 @@ struct ExcerptView: View {
       createdAt: Date(),
       drawingData: createMockDrawingData()
     ),
-    date: Date(), 
+    date: Date(),
     highResDrawing: nil
   )
   .frame(width: 300, height: 300)
@@ -106,6 +112,22 @@ struct ExcerptView: View {
     ),
     date: Date(),
     highResDrawing: nil
+  )
+  .frame(width: 300, height: 300)
+  // add border
+  .border(Color.black)
+}
+
+#Preview("Without Watermark") {
+  ExcerptView(
+    entry: DayEntry(
+      body: "Today was amazing!",
+      createdAt: Date(),
+      drawingData: createMockDrawingData()
+    ),
+    date: Date(),
+    highResDrawing: nil,
+    showWatermark: false
   )
   .frame(width: 300, height: 300)
   // add border

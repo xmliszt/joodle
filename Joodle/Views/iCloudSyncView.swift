@@ -554,7 +554,7 @@ struct TroubleshootingView: View {
 
           TroubleshootingStep(
             number: "6",
-            title: "Toggle Sync Off/On",
+            title: "Toggle Sync Off / On",
             description: "Try disabling iCloud sync, waiting 10 seconds, then re-enabling it. This recreates the sync connection."
           )
         }
