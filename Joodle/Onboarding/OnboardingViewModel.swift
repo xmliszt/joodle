@@ -30,10 +30,16 @@ class OnboardingViewModel: ObservableObject {
     // This is checked by JoodleApp after onboarding dismisses
     @Published var needsRestartAfterOnboarding: Bool = false
 
+    // Track if this is a revisit (user already completed onboarding before)
+    let isRevisitingOnboarding: Bool
+
     var modelContext: ModelContext?
     private var cancellables = Set<AnyCancellable>()
 
     init() {
+        // Check if this is a revisit (onboarding was already completed)
+        self.isRevisitingOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+
         // Monitor subscription status changes
         SubscriptionManager.shared.$isSubscribed
             .assign(to: &$isPremium)
@@ -133,6 +139,44 @@ class OnboardingViewModel: ObservableObject {
 
         do {
             let existingEntries = try context.fetch(descriptor)
+
+            // If this is a revisit onboarding, check doodle limits
+            if isRevisitingOnboarding {
+                let allEntriesDescriptor = FetchDescriptor<DayEntry>()
+                let allEntries = try context.fetch(allEntriesDescriptor)
+
+                if existingEntries.isEmpty {
+                    // User is trying to create a NEW entry via revisit onboarding
+                    // Check if they're within their doodle limit
+                    let currentDoodleCount = SubscriptionManager.shared.totalDoodleCount(from: allEntries)
+
+                    if !SubscriptionManager.shared.canCreateDoodle(currentTotalCount: currentDoodleCount) {
+                        print("OnboardingViewModel: Doodle limit reached, skipping save during revisit onboarding")
+                        return
+                    }
+                } else if let existingEntry = existingEntries.first {
+                    // User is trying to EDIT an existing entry via revisit onboarding
+                    // Check if this doodle is within the editable range for free users
+                    let entriesWithDrawings = allEntries
+                        .filter { $0.drawingData != nil }
+                        .sorted { $0.dateString < $1.dateString }
+
+                    if let index = entriesWithDrawings.firstIndex(where: { $0.id == existingEntry.id }) {
+                        if !SubscriptionManager.shared.canEditDoodle(atIndex: index) {
+                            print("OnboardingViewModel: Doodle #\(index + 1) is locked, skipping edit during revisit onboarding")
+                            return
+                        }
+                    } else if existingEntry.drawingData == nil {
+                        // Entry exists but has no drawing yet - treat as new doodle creation
+                        let currentDoodleCount = SubscriptionManager.shared.totalDoodleCount(from: allEntries)
+                        if !SubscriptionManager.shared.canCreateDoodle(currentTotalCount: currentDoodleCount) {
+                            print("OnboardingViewModel: Doodle limit reached, skipping save during revisit onboarding")
+                            return
+                        }
+                    }
+                }
+            }
+
             let entryToUpdate: DayEntry
 
             if let existing = existingEntries.first {
@@ -162,8 +206,17 @@ class OnboardingViewModel: ObservableObject {
         }
     }
 
-    /// Enable iCloud sync if user opted in during onboarding
+    /// Update iCloud sync preference based on user's choice during onboarding
     private func enableCloudSyncIfRequested() {
+        // During revisit onboarding, user can disable iCloud sync
+        if !userWantsCloudSync && isRevisitingOnboarding && UserPreferences.shared.isCloudSyncEnabled {
+            print("OnboardingViewModel: User opted to disable iCloud sync during revisit onboarding")
+
+            // Use CloudSyncManager to properly disable sync
+            CloudSyncManager.shared.disableSync()
+            return
+        }
+
         // Only enable if user explicitly opted in
         guard userWantsCloudSync else {
             print("OnboardingViewModel: User did not opt in for iCloud sync")

@@ -68,38 +68,6 @@ struct iCloudSyncView: View {
         }
       }
 
-      // MARK: - Sync Progress Indicator
-      if syncManager.isSyncing {
-        Section {
-          HStack(spacing: 12) {
-            ProgressView()
-              .scaleEffect(0.9)
-
-            VStack(alignment: .leading, spacing: 4) {
-              Text(syncManager.isInitialSync ? "Restoring Your Data" : "Syncing")
-                .font(.headline)
-
-              Text(syncManager.syncProgress)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-          }
-          .padding(.vertical, 8)
-        } header: {
-          if syncManager.isInitialSync {
-            Text("Welcome Back!")
-          }
-        } footer: {
-          if syncManager.isInitialSync {
-            Text("Your doodles are being restored from iCloud. This may take a few moments depending on how much data you have.")
-              .font(.caption)
-              .foregroundStyle(.secondary)
-          }
-        }
-      }
-
       // MARK: - Premium Feature Banner
       if !subscriptionManager.hasICloudSync {
         Section {

@@ -11,7 +11,16 @@ import SwiftUI
 /// Only shown to subscribers after paywall
 struct iCloudConfigView: View {
     @ObservedObject var viewModel: OnboardingViewModel
-    @State private var enableSync: Bool = true
+    @State private var enableSync: Bool
+
+    init(viewModel: OnboardingViewModel) {
+        self.viewModel = viewModel
+        // During revisit onboarding, initialize toggle based on current preference
+        // During first onboarding, default to true
+        self._enableSync = State(initialValue: viewModel.isRevisitingOnboarding
+            ? UserPreferences.shared.isCloudSyncEnabled
+            : true)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,7 +38,7 @@ struct iCloudConfigView: View {
                     .animation(.springFkingSatifying, value: enableSync)
             }
             .padding(.bottom, 32)
-          
+
 
             // Title
             Text("Sync to iCloud")
