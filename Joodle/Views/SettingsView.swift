@@ -280,6 +280,13 @@ struct SettingsView: View {
           Button("Generate Placeholder") {
             showPlaceholderGenerator = true
           }
+          Button("Clear iCloud KVS (Sync History)", role: .destructive) {
+            let cloudStore = NSUbiquitousKeyValueStore.default
+            cloudStore.removeObject(forKey: "is_cloud_sync_enabled_backup")
+            cloudStore.removeObject(forKey: "cloud_sync_was_enabled")
+            cloudStore.synchronize()
+            print("DEBUG: iCloud KVS sync history cleared!")
+          }
         }
       }
     }

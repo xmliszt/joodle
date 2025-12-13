@@ -114,6 +114,7 @@ struct JoodleApp: App {
   @State private var showPaywallFromWidget = false
   @State private var showLaunchScreen = true
   @State private var hasSetupObservers = false
+  @State private var showPendingRestartAlert = false
 
   /// Use the singleton container - never recreate during app lifecycle
   private let modelContainer = ModelContainerManager.shared.container
@@ -262,6 +263,12 @@ struct JoodleApp: App {
             .environment(\.userPreferences, UserPreferences.shared)
             .preferredColorScheme(colorScheme)
             .font(.system(size: 17))
+            .onChange(of: hasCompletedOnboarding) { _, completed in
+              if completed {
+                // Check if restart is pending for iCloud sync
+                checkPendingRestartAfterOnboarding()
+              }
+            }
         } else {
           NavigationStack {
             ContentView(selectedDateFromWidget: $selectedDateFromWidget)
@@ -284,6 +291,25 @@ struct JoodleApp: App {
               .sheet(isPresented: $showPaywallFromWidget) {
                 StandalonePaywallView()
                   .presentationDetents([.large])
+              }
+              .alert("Enable iCloud Sync", isPresented: $showPendingRestartAlert) {
+                Button("Later", role: .cancel) {
+                  // Clear the flag - user can enable later in settings
+                  UserDefaults.standard.removeObject(forKey: "pending_icloud_sync_restart")
+                }
+                Button("Restart Now") {
+                  UserDefaults.standard.removeObject(forKey: "pending_icloud_sync_restart")
+                  // Small delay to ensure data is saved
+                  DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    exit(0)
+                  }
+                }
+              } message: {
+                Text("To start syncing your doodles to iCloud, Joodle needs to restart.\n\nYour doodle has been saved and will sync after restart.")
+              }
+              .onAppear {
+                // Check for pending restart when main content appears
+                checkPendingRestartAfterOnboarding()
               }
           }
         }
@@ -309,6 +335,16 @@ struct JoodleApp: App {
       queue: .main
     ) { [self] _ in
       colorScheme = UserPreferences.shared.preferredColorScheme
+    }
+  }
+
+  /// Check if a restart is pending after onboarding for iCloud sync
+  private func checkPendingRestartAfterOnboarding() {
+    if UserDefaults.standard.bool(forKey: "pending_icloud_sync_restart") {
+      // Small delay to let the UI settle after onboarding dismisses
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        showPendingRestartAlert = true
+      }
     }
   }
 

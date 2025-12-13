@@ -14,6 +14,7 @@ struct iCloudSyncView: View {
   @Environment(\.preferencesSyncManager) private var prefsSync
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var showEnableAlert = false
+  @State private var showEnableWithRestartAlert = false
   @State private var showDisableAlert = false
   @State private var showSystemSettingsAlert = false
   @State private var showPaywall = false
@@ -119,31 +120,6 @@ struct iCloudSyncView: View {
         }
       }
 
-      // MARK: - Restart Required Banner
-      if ModelContainerManager.shared.needsRestartForSyncChange {
-        Section {
-          VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
-              Image(systemName: "arrow.clockwise.circle.fill")
-                .foregroundStyle(.orange)
-                .font(.title2)
-
-              VStack(alignment: .leading, spacing: 4) {
-                Text("Restart Required")
-                  .font(.headline)
-                  .foregroundStyle(.primary)
-
-                Text("Your sync preference has been updated. Please restart the app for the changes to take effect.")
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-                  .fixedSize(horizontal: false, vertical: true)
-              }
-            }
-          }
-          .padding(.vertical, 8)
-        }
-      }
-
       // MARK: - Main Toggle Section
       Section {
         Toggle(isOn: Binding(
@@ -155,10 +131,15 @@ struct iCloudSyncView: View {
                 showPaywall = true
               } else if !syncManager.systemCloudEnabled {
                 showSystemSettingsAlert = true
+              } else if ModelContainerManager.shared.needsRestartForSyncChange {
+                // Restart is required - show special alert
+                showEnableWithRestartAlert = true
               } else {
                 showEnableAlert = true
               }
             } else {
+              // No restart needed to disable - sync just stops on next app launch
+              // The CloudKit container stays active but we save the preference
               showDisableAlert = true
             }
           }
@@ -326,24 +307,23 @@ struct iCloudSyncView: View {
     .navigationBarTitleDisplayMode(.inline)
     .alert("Enable iCloud Sync", isPresented: $showEnableAlert) {
       Button("Cancel", role: .cancel) { }
-      if #available(iOS 26.0, *) {
-        Button("Enable", role: .confirm) {
-          _ = syncManager.enableSync()
-          // Note: Restart required for CloudKit changes to take effect
-        }
-      } else {
-        // Fallback on earlier versions
-        Button("Enable") {
-          _ = syncManager.enableSync()
-          // Note: Restart required for CloudKit changes to take effect
+      Button("Enable") {
+        _ = syncManager.enableSync()
+      }
+    } message: {
+      Text("This will sync your journal entries and preferences with iCloud, making them available across all your devices.\n\nRequires internet connection and active iCloud account.")
+    }
+    .alert("Enable iCloud Sync", isPresented: $showEnableWithRestartAlert) {
+      Button("Cancel", role: .cancel) { }
+      Button("Enable & Restart Joodle") {
+        _ = syncManager.enableSync()
+        // Auto-close the app after a short delay to allow preference to save
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+          exit(0)
         }
       }
     } message: {
-      if ModelContainerManager.shared.needsRestartForSyncChange {
-        Text("This will sync your journal entries and preferences with iCloud.\n\n⚠️ You will need to restart the app for sync to begin.")
-      } else {
-        Text("This will sync your journal entries and preferences with iCloud, making them available across all your devices.\n\nRequires internet connection and active iCloud account.")
-      }
+      Text("To enable iCloud sync, Joodle needs to close and restart.\n\nYour data is safe and will sync to iCloud when you reopen the app.")
     }
     .alert("How to enable iCloud Sync for Joodle?", isPresented: $showSystemSettingsAlert) {
       Button("Cancel", role: .cancel) { }
@@ -358,10 +338,9 @@ struct iCloudSyncView: View {
       Button("Disable", role: .destructive) {
         userPreferences.isCloudSyncEnabled = false
         syncManager.disableSync()
-        // Note: Restart required for CloudKit changes to take effect
       }
     } message: {
-      Text("Your data will remain on this device and in iCloud, but will stop syncing with other devices.\n\n⚠️ You will need to restart the app for this change to take effect.")
+      Text("Your data will remain on this device and in iCloud, but will stop syncing with other devices.")
     }
     .onAppear {
       syncManager.checkCloudAvailability()

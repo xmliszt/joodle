@@ -19,6 +19,8 @@ struct OnboardingFlowView: View {
                         ValuePropView(viewModel: viewModel)
                     case .paywall:
                         PaywallView(viewModel: viewModel)
+                    case .icloudConfig:
+                        iCloudConfigView(viewModel: viewModel)
                     case .widgetTutorial:
                         WidgetTutorialView(viewModel: viewModel)
                     case .onboardingCompletion:

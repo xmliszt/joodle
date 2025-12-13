@@ -34,7 +34,6 @@ struct ContentView: View {
   @State private var yearGridViewSize: CGSize = .zero
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
-  @State private var showRestartBanner: Bool = false
 
   @State private var selectedYear = Calendar.current.component(.year, from: Date())
   @State private var navigateToSettings = false
@@ -327,16 +326,6 @@ struct ContentView: View {
         .id("DynamicIslandExpandedView-\(selectedDateItem?.id ?? "none")")
       }
     }
-    // Restart required banner overlay
-    .overlay(alignment: .top) {
-      if showRestartBanner {
-        RestartRequiredBanner(onDismiss: {
-          showRestartBanner = false
-        })
-        .transition(.move(edge: .top).combined(with: .opacity))
-        .zIndex(100)
-      }
-    }
     .alert("Subscription Ended", isPresented: $subscriptionManager.subscriptionJustExpired) {
       Button("OK") {
         subscriptionManager.acknowledgeExpiry()
@@ -351,14 +340,6 @@ struct ContentView: View {
       // Refresh subscription status
       Task {
         await subscriptionManager.updateSubscriptionStatus()
-      }
-
-      // Check if restart is needed for iCloud sync
-      // Use ModelContainerManager directly as it's the source of truth
-      if ModelContainerManager.shared.needsRestartForSyncChange {
-        withAnimation(.easeInOut(duration: 0.3)) {
-          showRestartBanner = true
-        }
       }
 
       //

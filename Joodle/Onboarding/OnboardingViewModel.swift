@@ -7,7 +7,7 @@ enum OnboardingStep: Hashable, CaseIterable {
     case drawingEntry      // The greeting + drawing
     case valueProposition  // Confetti + Explanation
     case paywall           // Subscription choice
-    // case icloudConfig   // Skipped for V1
+    case icloudConfig      // iCloud sync configuration (only for subscribers)
     case widgetTutorial    // Final welcome (hidden for now)
     case onboardingCompletion // Completion step
 }
@@ -22,6 +22,13 @@ class OnboardingViewModel: ObservableObject {
     @Published var firstDoodleData: Data?
     @Published var isPremium: Bool = false
     @Published var shouldDismiss = false
+
+    // iCloud sync preference set during onboarding
+    @Published var userWantsCloudSync: Bool = false
+
+    // Flag to indicate restart is needed after onboarding completes
+    // This is checked by JoodleApp after onboarding dismisses
+    @Published var needsRestartAfterOnboarding: Bool = false
 
     var modelContext: ModelContext?
     private var cancellables = Set<AnyCancellable>()
@@ -41,13 +48,25 @@ class OnboardingViewModel: ObservableObject {
         case .valueProposition:
             // Skip paywall and finish immediately if user already has an active subscription
             if StoreKitManager.shared.hasActiveSubscription {
-                finishOnboarding()
+                // User is already subscribed, show iCloud config
+                navigationPath.append(OnboardingStep.icloudConfig)
             } else {
                 navigationPath.append(OnboardingStep.paywall)
             }
 
         case .paywall:
-            // Skip widget tutorial (not ready), go straight to completion
+            // After paywall, check if user subscribed
+            if isPremium || StoreKitManager.shared.hasActiveSubscription {
+                // User subscribed, show iCloud config
+                navigationPath.append(OnboardingStep.icloudConfig)
+            } else {
+                // User skipped subscription, go to completion
+                navigationPath.append(OnboardingStep.onboardingCompletion)
+            }
+
+        case .icloudConfig:
+            // After iCloud config, always go to completion
+            // Restart check will happen after onboarding completes
             navigationPath.append(OnboardingStep.onboardingCompletion)
 
         case .widgetTutorial:
@@ -57,6 +76,12 @@ class OnboardingViewModel: ObservableObject {
         case .onboardingCompletion:
             finishOnboarding()
         }
+    }
+
+    /// Called when user decides to skip iCloud sync setup
+    func skipCloudSync() {
+        userWantsCloudSync = false
+        navigationPath.append(OnboardingStep.onboardingCompletion)
     }
 
     func goBack() {
@@ -77,16 +102,21 @@ class OnboardingViewModel: ObservableObject {
         // This ensures the drawing is never lost, regardless of sync state
         saveOnboardingDrawing()
 
-        // Auto-enable iCloud sync preference if user has subscription
-        // Note: If the container wasn't created with sync enabled, user will see
-        // a "restart required" banner in ContentView
-        autoEnableCloudSyncIfEligible()
+        // Enable iCloud sync if user opted in during onboarding
+        enableCloudSyncIfRequested()
+
+        // Check if restart is needed for iCloud sync to take effect
+        if userWantsCloudSync && ModelContainerManager.shared.needsRestartForSyncChange {
+            needsRestartAfterOnboarding = true
+            // Save flag so JoodleApp knows to show restart alert
+            UserDefaults.standard.set(true, forKey: "pending_icloud_sync_restart")
+        }
 
         shouldDismiss = true
     }
 
     /// Save the onboarding drawing to the database immediately
-    private func saveOnboardingDrawing() {
+    func saveOnboardingDrawing() {
         guard let data = firstDoodleData, !data.isEmpty, let context = modelContext else {
             print("OnboardingViewModel: No drawing data to save or no context")
             return
@@ -132,12 +162,17 @@ class OnboardingViewModel: ObservableObject {
         }
     }
 
-    /// Auto-enable iCloud sync preference when user finishes onboarding with an active subscription
-    /// The actual sync will start after app restart if container was created without CloudKit
-    private func autoEnableCloudSyncIfEligible() {
+    /// Enable iCloud sync if user opted in during onboarding
+    private func enableCloudSyncIfRequested() {
+        // Only enable if user explicitly opted in
+        guard userWantsCloudSync else {
+            print("OnboardingViewModel: User did not opt in for iCloud sync")
+            return
+        }
+
         // Check if user has active subscription
         guard isPremium || StoreKitManager.shared.hasActiveSubscription else {
-            print("OnboardingViewModel: iCloud sync not auto-enabled - no active subscription")
+            print("OnboardingViewModel: iCloud sync not enabled - no active subscription")
             return
         }
 
@@ -150,13 +185,13 @@ class OnboardingViewModel: ObservableObject {
         // Check system requirements
         let syncManager = CloudSyncManager.shared
         guard syncManager.isCloudAvailable && syncManager.systemCloudEnabled else {
-            print("OnboardingViewModel: iCloud sync not auto-enabled - system requirements not met")
+            print("OnboardingViewModel: iCloud sync not enabled - system requirements not met")
             print("   isCloudAvailable: \(syncManager.isCloudAvailable)")
             print("   systemCloudEnabled: \(syncManager.systemCloudEnabled)")
             return
         }
 
-        print("OnboardingViewModel: Auto-enabling iCloud sync preference")
+        print("OnboardingViewModel: Enabling iCloud sync preference")
 
         // Enable the sync preference
         UserPreferences.shared.isCloudSyncEnabled = true
@@ -173,5 +208,23 @@ class OnboardingViewModel: ObservableObject {
         } else {
             print("OnboardingViewModel: Container already configured for sync, no restart needed")
         }
+    }
+
+    /// Check if iCloud sync can be enabled (system requirements met)
+    var canEnableCloudSync: Bool {
+        let syncManager = CloudSyncManager.shared
+        return syncManager.isCloudAvailable && syncManager.systemCloudEnabled
+    }
+
+    /// Reason why iCloud sync cannot be enabled
+    var cloudSyncBlockedReason: String? {
+        let syncManager = CloudSyncManager.shared
+        if !syncManager.systemCloudEnabled {
+            return "iCloud is disabled in Settings"
+        }
+        if !syncManager.isCloudAvailable {
+            return "No iCloud account found"
+        }
+        return nil
     }
 }
