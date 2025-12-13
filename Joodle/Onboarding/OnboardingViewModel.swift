@@ -9,6 +9,7 @@ enum OnboardingStep: Hashable, CaseIterable {
     case featureIntroEditEntry     // Feature intro: Edit Joodle and note
     case featureIntroYearSwitching // Feature intro: Year switching and countdown
     case featureIntroViewModes     // Feature intro: Regular vs minimized view
+    case featureIntroScrubbing     // Feature intro: How to scrub through days
     case featureIntroSharing       // Feature intro: Sharing year and days
     case featureIntroWidgets       // Feature intro: Widgets
     case paywall                   // Subscription choice
@@ -92,6 +93,9 @@ class OnboardingViewModel: ObservableObject {
             navigationPath.append(OnboardingStep.featureIntroViewModes)
 
         case .featureIntroViewModes:
+            navigationPath.append(OnboardingStep.featureIntroScrubbing)
+          
+        case .featureIntroScrubbing:
             navigationPath.append(OnboardingStep.featureIntroSharing)
 
         case .featureIntroSharing:

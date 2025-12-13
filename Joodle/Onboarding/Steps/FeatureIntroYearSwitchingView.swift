@@ -11,20 +11,19 @@ struct FeatureIntroYearSwitchingView: View {
 
     var body: some View {
         FeatureIntroStepView(
-            title: "Plan ahead",
-            description: "Tap the year to switch and add future events to countdown",
+            title: "Plan your anniversaries",
+            description: "Tap the year to switch and add future entries to countdown to your special days.",
             screenshots: [
                 ScreenshotItem(
                     image: Image("Onboarding/Entry"),
-                    dot: TapDot(x: 150, y: 250)
+                    dots: [TapDot(x: 100, y: 164)]
                 ),
                 ScreenshotItem(
                     image: Image("Onboarding/Countdown1"),
-                    dot: TapDot(x: 170, y: 325)
+                    dots: [TapDot(x: 128, y: 230)]
                 ),
                 ScreenshotItem(
-                    image: Image("Onboarding/Countdown2"),
-                    dots: []
+                    image: Image("Onboarding/Countdown2")
                 )
             ],
             buttonLabel: "Next",

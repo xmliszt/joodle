@@ -17,8 +17,8 @@ struct FeatureIntroEditEntryView: View {
                 ScreenshotItem(
                     image: Image("Onboarding/Entry"),
                     dots: [
-                      TapDot(x: 675, y: 880),
-                      TapDot(x: 160, y: 940)
+                      TapDot(x: 518, y: 747),
+                      TapDot(x: 105, y: 805)
                     ]
                 )
             ],

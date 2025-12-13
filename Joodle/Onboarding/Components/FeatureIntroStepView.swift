@@ -17,7 +17,7 @@ struct FeatureIntroStepView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            VStack(spacing: 16) {
+            VStack(spacing: 32) {
                 // Title at the top
                 Text(title)
                     .font(.title2.bold())
@@ -69,8 +69,7 @@ struct FeatureIntroStepView: View {
         description: "Select any day to create or edit the Joodle, and add a note",
         screenshots: [
             ScreenshotItem(
-                image: Image("Onboarding/Regular"),
-                dot: TapDot(x: 400, y: 741)
+                image: Image("Onboarding/Regular")
             )
         ],
         buttonLabel: "Next",
@@ -85,8 +84,7 @@ struct FeatureIntroStepView: View {
         description: "Tap here to switch between regular and year-at-a-glance view",
         screenshots: [
             ScreenshotItem(
-                image: Image("Onboarding/Regular"),
-                dot: TapDot(x: 700, y: 80)
+                image: Image("Onboarding/Regular")
             ),
             ScreenshotItem(
                 image: Image("Onboarding/Minimized")
@@ -121,12 +119,10 @@ struct FeatureIntroStepView: View {
         description: "Share your entire year from the minimized view, or share individual days from the entry sheet",
         screenshots: [
             ScreenshotItem(
-                image: Image("Onboarding/SharingYear"),
-                dot: TapDot(x: 700, y: 80)
+                image: Image("Onboarding/SharingYear")
             ),
             ScreenshotItem(
-                image: Image("Onboarding/SharingDay"),
-                dot: TapDot(x: 100, y: 400)
+                image: Image("Onboarding/SharingDay")
             )
         ],
         buttonLabel: "Next",

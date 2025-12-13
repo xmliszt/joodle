@@ -252,6 +252,21 @@ struct SettingsView: View {
       }
 
 
+      // MARK: - Tutorials
+      Section("Tutorials") {
+        ForEach(TutorialDefinitions.allTutorials) { tutorial in
+          NavigationLink {
+            TutorialView(
+              title: tutorial.title,
+              screenshots: tutorial.screenshots,
+              description: tutorial.description
+            )
+          } label: {
+            Label(tutorial.title, systemImage: tutorial.icon)
+          }
+        }
+      }
+
       // MARK: Revisit onboarding flow
       Section {
         Button("Revisit Onboarding") {
@@ -984,10 +999,6 @@ struct AppStatsView: View {
   }
 }
 
-#Preview {
-  AppStatsView()
-}
-
 struct JSONDocument: FileDocument {
   static var readableContentTypes: [UTType] { [.json] }
   var data: Data
@@ -1013,4 +1024,8 @@ struct JSONDocument: FileDocument {
     SettingsView()
       .environment(\.userPreferences, UserPreferences.shared)
   }
+}
+
+#Preview("App Stats") {
+  AppStatsView()
 }

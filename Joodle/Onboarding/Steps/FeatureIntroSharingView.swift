@@ -15,19 +15,17 @@ struct FeatureIntroSharingView: View {
             description: "Share your entire year or individual day with friends",
             screenshots: [
                 ScreenshotItem(
-                    image: Image("Onboarding/Sharing"),
+                    image: Image("Onboarding/Share"),
                     dots: [
-                      TapDot(x: 583, y: 255),
-                      TapDot(x: 126, y: 880)
+                      TapDot(x: 446, y: 164),
+                      TapDot(x: 82, y: 747)
                     ]
                 ),
                 ScreenshotItem(
-                    image: Image("Onboarding/SharingDay"),
-                    dots: []
+                    image: Image("Onboarding/ShareDay")
                 ),
                 ScreenshotItem(
-                    image: Image("Onboarding/SharingYear"),
-                    dots: []
+                    image: Image("Onboarding/ShareYear")
                 )
             ],
             buttonLabel: "Next",

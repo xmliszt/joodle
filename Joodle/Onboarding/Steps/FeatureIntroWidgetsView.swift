@@ -15,20 +15,20 @@ struct FeatureIntroWidgetsView: View {
             description: "Add Joodle to your home screen, lock screen, or even in StandBy mode",
             screenshots: [
                 ScreenshotItem(
-                    image: Image("Onboarding/WidgetsHomeScreen1")
+                    image: Image("Onboarding/WidgetHomeScreen1")
                 ),
                 ScreenshotItem(
-                    image: Image("Onboarding/WidgetsHomeScreen2")
+                    image: Image("Onboarding/WidgetHomeScreen2")
                 ),
                 ScreenshotItem(
-                    image: Image("Onboarding/WidgetsLockScreen")
+                    image: Image("Onboarding/WidgetLockScreen")
                 ),
                 ScreenshotItem(
-                    image: Image("Onboarding/WidgetsStandby1"),
+                    image: Image("Onboarding/WidgetStandby1"),
                     orientation: .landscape
                 ),
                 ScreenshotItem(
-                    image: Image("Onboarding/WidgetsStandby2"),
+                    image: Image("Onboarding/WidgetStandby2"),
                     orientation: .landscape
                 )
             ],

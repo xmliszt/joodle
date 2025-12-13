@@ -23,6 +23,8 @@ struct OnboardingFlowView: View {
                         FeatureIntroYearSwitchingView(viewModel: viewModel)
                     case .featureIntroViewModes:
                         FeatureIntroViewModesView(viewModel: viewModel)
+                    case .featureIntroScrubbing:
+                        FeatureIntroScrubView(viewModel: viewModel)
                     case .featureIntroSharing:
                         FeatureIntroSharingView(viewModel: viewModel)
                     case .featureIntroWidgets:

@@ -9,27 +9,27 @@ import SwiftUI
 
 /// Orientation of the screenshot for aspect ratio calculation
 enum ScreenshotOrientation {
-    case portrait   // 800 × 1482
-    case landscape  // 1482 × 800 (for standby screenshots)
+    case portrait   // 600 × 1238
+    case landscape  // 1238 × 600 (for standby screenshots)
 
     var aspectRatio: CGFloat {
         switch self {
-        case .portrait: return 9.0 / 19.5
-        case .landscape: return 19.5 / 9.0
+        case .portrait: return 600.0 / 1238.0
+        case .landscape: return 1238.0 / 600.0
         }
     }
 
     var originalWidth: CGFloat {
         switch self {
-        case .portrait: return 800
-        case .landscape: return 1482
+        case .portrait: return 600
+        case .landscape: return 1238
         }
     }
 
     var originalHeight: CGFloat {
         switch self {
-        case .portrait: return 1482
-        case .landscape: return 800
+        case .portrait: return 1238
+        case .landscape: return 600
         }
     }
 }
@@ -58,13 +58,6 @@ struct ScreenshotItem: Identifiable {
         self.dots = dots
         self.orientation = orientation
     }
-
-    /// Convenience initializer with a single dot
-    init(image: Image, dot: TapDot, orientation: ScreenshotOrientation = .portrait) {
-        self.image = image
-        self.dots = [dot]
-        self.orientation = orientation
-    }
 }
 
 // MARK: - Single Screenshot View
@@ -76,6 +69,9 @@ struct SingleScreenshotView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
+                // System background for transparent PNG screenshots
+                Color(uiColor: .systemBackground)
+
                 item.image
                     .resizable()
                     .scaledToFill()
@@ -93,7 +89,7 @@ struct SingleScreenshotView: View {
             }
         }
         .aspectRatio(item.orientation.aspectRatio, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
     }
 }
 
@@ -131,7 +127,7 @@ struct ScreenshotCarouselView: View {
         } else if screenshots.count == 1 {
             SingleScreenshotView(item: screenshots[0])
         } else {
-            VStack(spacing: 0) {
+            VStack(spacing: 16) {
                 TabView(selection: $currentIndex) {
                     ForEach(Array(screenshots.enumerated()), id: \.element.id) { index, item in
                         SingleScreenshotView(item: item)
@@ -154,7 +150,7 @@ struct ScreenshotCarouselView: View {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
             image: Image("Onboarding/Regular"),
-            dot: TapDot(x: 400, y: 200)
+            dots: [TapDot(x: 300, y: 167)]
         )
     ])
     .padding(.horizontal, 24)
@@ -166,7 +162,7 @@ struct ScreenshotCarouselView: View {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
             image: Image("Onboarding/Regular"),
-            dot: TapDot(x: 700, y: 80)
+            dots: [TapDot(x: 525, y: 67)]
         ),
         ScreenshotItem(
             image: Image("Onboarding/Minimized")
@@ -212,8 +208,8 @@ struct ScreenshotCarouselView: View {
         ScreenshotItem(
             image: Image("Onboarding/Sharing"),
             dots: [
-                TapDot(x: 700, y: 80),
-                TapDot(x: 100, y: 80)
+                TapDot(x: 525, y: 67),
+                TapDot(x: 75, y: 67)
             ]
         )
     ])
