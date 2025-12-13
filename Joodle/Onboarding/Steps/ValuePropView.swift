@@ -68,20 +68,21 @@ struct ValuePropView: View {
               Text("Welcome back!")
                 .font(.title2.bold())
 
-              Text("Now retrieve your memories, and watch your collection grow over the years.")
-                .font(.body)
+              Text("Your memories are still here, quietly waiting for you. Take a moment to rediscover the Joodles you once created, each one carrying a piece of your story. Retrieve your memories, and continue building your collection — watching it grow, not just over days, but over the years.")
+                .font(.mansalva(size: 16))
                 .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-                .lineSpacing(4)
+                .foregroundColor(.appTextSecondary)
+                .lineSpacing(1)
             } else {
               // Standard messaging for new users
               Text("You created your first Joodle!")
                 .font(.title2.bold())
 
-              Text("Track your year and collect precious moments from your fingertips. Your memories stay private.")
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
+              Text("Imagine seeing a year of your life in a single glance. Small doodles, each holding a moment worth remembering. Joodle was made to gently bring you back to those moments. With a few strokes from your fingertips, you capture what matters and slowly build a personal collection of memories. Always private. Always yours.")
+              .font(.mansalva(size: 16))
+              .multilineTextAlignment(.center)
+              .foregroundColor(.appTextSecondary)
+              .lineSpacing(1)
             }
           }.padding(.horizontal)
 
@@ -89,7 +90,7 @@ struct ValuePropView: View {
 
         Spacer()
 
-        OnboardingButtonView(label: hasActiveSubscription ? "Retrieve my memories" : "Let's keep going") {
+        OnboardingButtonView(label: hasActiveSubscription ? "Retrieve my memories" : "How to use Joodle?") {
           viewModel.completeStep(.valueProposition)
         }
       }
