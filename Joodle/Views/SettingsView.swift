@@ -50,6 +50,7 @@ struct SettingsView: View {
   @State private var showPlaceholderGenerator = false
   @State private var showPaywall = false
   @State private var showSubscriptions = false
+  @State private var showAppStats = false
 
   /// Check if restart is needed for sync to work
   private var needsRestartForSync: Bool {
@@ -284,6 +285,9 @@ struct SettingsView: View {
       // MARK: - Developer Options (Only show in debug build)
       if AppEnvironment.isDebug {
         Section("Developer Options") {
+          Button("App Stats") {
+            showAppStats = true
+          }
           Button("Clear Today's Entries", role: .destructive) {
             clearTodaysEntries()
           }
@@ -321,6 +325,9 @@ struct SettingsView: View {
     }
     .sheet(isPresented: $showPlaceholderGenerator) {
       PlaceholderGeneratorView()
+    }
+    .sheet(isPresented: $showAppStats) {
+      AppStatsView()
     }
     .sheet(isPresented: $showPaywall) {
       StandalonePaywallView()
@@ -510,6 +517,246 @@ struct DayEntryDTO: Codable {
     try container.encodeIfPresent(drawingThumbnail20, forKey: .drawingThumbnail20)
     try container.encodeIfPresent(drawingThumbnail200, forKey: .drawingThumbnail200)
   }
+}
+
+// MARK: - App Stats View (Developer Tool)
+struct AppStatsView: View {
+  @Environment(\.modelContext) private var modelContext
+  @Environment(\.cloudSyncManager) private var cloudSyncManager
+  @Environment(\.dismiss) private var dismiss
+  @StateObject private var subscriptionManager = SubscriptionManager.shared
+
+  @State private var totalEntries: Int = 0
+  @State private var duplicateCount: Int = 0
+  @State private var duplicateDetails: [String: Int] = [:]
+  @State private var isCleaningDuplicates = false
+  @State private var cleanupResult: String?
+
+  var body: some View {
+    NavigationStack {
+      List {
+        // MARK: - Entry Stats
+        Section("Entry Statistics") {
+          HStack {
+            Text("Total Entries")
+            Spacer()
+            Text("\(totalEntries)")
+              .foregroundStyle(.secondary)
+          }
+
+          HStack {
+            Text("Dates with Duplicates")
+            Spacer()
+            Text("\(duplicateCount)")
+              .foregroundStyle(duplicateCount > 0 ? .red : .green)
+          }
+
+          if !duplicateDetails.isEmpty {
+            DisclosureGroup("Duplicate Details") {
+              ForEach(duplicateDetails.sorted(by: { $0.key > $1.key }), id: \.key) { dateString, count in
+                HStack {
+                  Text(dateString)
+                    .font(.caption)
+                  Spacer()
+                  Text("\(count) entries")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+              }
+            }
+          }
+
+          if duplicateCount > 0 {
+            Button(role: .destructive) {
+              clearDuplicates()
+            } label: {
+              HStack {
+                if isCleaningDuplicates {
+                  ProgressView()
+                    .scaleEffect(0.8)
+                }
+                Text("Clear Duplicate Entries")
+              }
+            }
+            .disabled(isCleaningDuplicates)
+          }
+
+          if let result = cleanupResult {
+            Text(result)
+              .font(.caption)
+              .foregroundStyle(.green)
+          }
+        }
+
+        // MARK: - Subscription Status
+        Section("Subscription Status") {
+          HStack {
+            Text("Is Subscribed")
+            Spacer()
+            Text(subscriptionManager.isSubscribed ? "Yes" : "No")
+              .foregroundStyle(subscriptionManager.isSubscribed ? .green : .secondary)
+          }
+
+          HStack {
+            Text("In Trial Period")
+            Spacer()
+            Text(subscriptionManager.isInTrialPeriod ? "Yes" : "No")
+              .foregroundStyle(subscriptionManager.isInTrialPeriod ? .blue : .secondary)
+          }
+
+          HStack {
+            Text("Will Auto Renew")
+            Spacer()
+            Text(subscriptionManager.willAutoRenew ? "Yes" : "No")
+              .foregroundStyle(.secondary)
+          }
+
+          if let expirationDate = subscriptionManager.subscriptionExpirationDate {
+            HStack {
+              Text("Expiration Date")
+              Spacer()
+              Text(expirationDate, style: .date)
+                .foregroundStyle(.secondary)
+            }
+          }
+
+          HStack {
+            Text("Has iCloud Sync Feature")
+            Spacer()
+            Text(subscriptionManager.hasICloudSync ? "Yes" : "No")
+              .foregroundStyle(subscriptionManager.hasICloudSync ? .green : .secondary)
+          }
+        }
+
+        // MARK: - iCloud Sync Status
+        Section("iCloud Sync Status") {
+          HStack {
+            Text("System iCloud Enabled")
+            Spacer()
+            Text(cloudSyncManager.isSystemCloudEnabled ? "Yes" : "No")
+              .foregroundStyle(cloudSyncManager.isSystemCloudEnabled ? .green : .red)
+          }
+
+          HStack {
+            Text("CloudKit Available")
+            Spacer()
+            Text(cloudSyncManager.isCloudAvailable ? "Yes" : "No")
+              .foregroundStyle(cloudSyncManager.isCloudAvailable ? .green : .red)
+          }
+
+          HStack {
+            Text("Is Currently Syncing")
+            Spacer()
+            if cloudSyncManager.isSyncing {
+              HStack(spacing: 4) {
+                ProgressView()
+                  .scaleEffect(0.7)
+                Text("Yes")
+                  .foregroundStyle(.blue)
+              }
+            } else {
+              Text("No")
+                .foregroundStyle(.secondary)
+            }
+          }
+
+          if !cloudSyncManager.syncProgress.isEmpty {
+            HStack {
+              Text("Sync Progress")
+              Spacer()
+              Text(cloudSyncManager.syncProgress)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+          }
+
+          HStack {
+            Text("Has Sync Error")
+            Spacer()
+            Text(cloudSyncManager.hasError ? "Yes" : "No")
+              .foregroundStyle(cloudSyncManager.hasError ? .red : .green)
+          }
+
+          if let errorMessage = cloudSyncManager.errorMessage {
+            VStack(alignment: .leading, spacing: 4) {
+              Text("Error Message")
+                .font(.caption)
+              Text(errorMessage)
+                .font(.caption)
+                .foregroundStyle(.red)
+            }
+          }
+
+          if let lastImport = cloudSyncManager.lastObservedImport {
+            HStack {
+              Text("Last Import")
+              Spacer()
+              Text(lastImport, style: .relative)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+          }
+
+          if let lastExport = cloudSyncManager.lastObservedExport {
+            HStack {
+              Text("Last Export")
+              Spacer()
+              Text(lastExport, style: .relative)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+          }
+        }
+      }
+      .navigationTitle("App Stats")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button("Done") {
+            dismiss()
+          }
+        }
+      }
+      .onAppear {
+        loadStats()
+      }
+    }
+  }
+
+  private func loadStats() {
+    // Fetch total entries
+    let descriptor = FetchDescriptor<DayEntry>()
+    do {
+      let entries = try modelContext.fetch(descriptor)
+      totalEntries = entries.count
+    } catch {
+      print("Failed to fetch entries: \(error)")
+    }
+
+    // Check for duplicates
+    duplicateCount = DuplicateEntryCleanup.shared.checkDuplicateCount(modelContext: modelContext)
+    duplicateDetails = DuplicateEntryCleanup.shared.getDuplicateDetails(modelContext: modelContext)
+  }
+
+  private func clearDuplicates() {
+    isCleaningDuplicates = true
+    cleanupResult = nil
+
+    // Reset the cleanup flag to allow re-running
+    DuplicateEntryCleanup.shared.resetCleanupFlag()
+
+    let result = DuplicateEntryCleanup.shared.cleanupDuplicates(modelContext: modelContext)
+
+    cleanupResult = "Merged: \(result.merged), Deleted: \(result.deleted)"
+    isCleaningDuplicates = false
+
+    // Reload stats
+    loadStats()
+  }
+}
+
+#Preview {
+  AppStatsView()
 }
 
 struct JSONDocument: FileDocument {
