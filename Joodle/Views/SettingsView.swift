@@ -51,6 +51,11 @@ struct SettingsView: View {
   @State private var showPaywall = false
   @State private var showSubscriptions = false
 
+  /// Check if restart is needed for sync to work
+  private var needsRestartForSync: Bool {
+    userPreferences.isCloudSyncEnabled && ModelContainerManager.shared.needsRestartForSyncChange
+  }
+
   // Import/Export State
   @State private var showFileExporter = false
   @State private var showFileImporter = false
@@ -211,6 +216,11 @@ struct SettingsView: View {
             // Show premium badge if not subscribed
             if !subscriptionManager.hasICloudSync {
               PremiumFeatureBadge()
+            } else if needsRestartForSync {
+              // Show restart required warning
+              Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+                .font(.caption)
             } else if cloudSyncManager.isSyncing && subscriptionManager.hasICloudSync {
               // Show syncing indicator
               HStack(spacing: 6) {

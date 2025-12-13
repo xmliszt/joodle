@@ -19,8 +19,55 @@ struct iCloudSyncView: View {
   @State private var showSystemSettingsAlert = false
   @State private var showPaywall = false
 
+  /// Check if restart is needed for sync to work
+  /// This happens when user enabled sync during onboarding but chose "Later" for restart
+  private var needsRestartForSync: Bool {
+    userPreferences.isCloudSyncEnabled && ModelContainerManager.shared.needsRestartForSyncChange
+  }
+
   var body: some View {
     List {
+      // MARK: - Restart Required Banner
+      if needsRestartForSync {
+        Section {
+          VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+              Image(systemName: "arrow.clockwise.circle.fill")
+                .foregroundStyle(.white)
+                .font(.title2)
+
+              VStack(alignment: .leading, spacing: 4) {
+                Text("Restart Required")
+                  .font(.headline)
+                  .foregroundStyle(.white)
+
+                Text("iCloud Sync is enabled but requires a restart to start working. Your data will sync after you restart the app.")
+                  .font(.caption)
+                  .foregroundStyle(.white.opacity(0.9))
+                  .fixedSize(horizontal: false, vertical: true)
+              }
+            }
+
+            Button {
+              // Close the app to trigger restart
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                exit(0)
+              }
+            } label: {
+              Text("Restart Now")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.accent)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 32))
+            }
+          }
+          .padding(.vertical, 8)
+          .listRowBackground(Color.accent)
+        }
+      }
+
       // MARK: - Sync Progress Indicator
       if syncManager.isSyncing {
         Section {
@@ -190,13 +237,18 @@ struct iCloudSyncView: View {
         Section {
           // iCloud Status
           HStack {
-            Label("iCloud", systemImage: syncManager.isCloudAvailable ? "icloud" : "icloud.slash")
+            Label("iCloud", systemImage: needsRestartForSync ? "icloud.slash" : (syncManager.isCloudAvailable ? "icloud" : "icloud.slash"))
               .foregroundStyle(.primary)
 
             Spacer()
 
             HStack(spacing: 4) {
-              if syncManager.isCloudAvailable {
+              if needsRestartForSync {
+                Text("Restart Required")
+                  .foregroundStyle(.orange)
+                Image(systemName: "exclamationmark.triangle.fill")
+                  .foregroundStyle(.orange)
+              } else if syncManager.isCloudAvailable {
                 Text("Available")
                   .foregroundStyle(.secondary)
                 Image(systemName: "checkmark.circle.fill")
@@ -285,9 +337,16 @@ struct iCloudSyncView: View {
         // MARK: - Advanced
         Section {
           NavigationLink {
-            SyncActivityDetailView()
+            SyncActivityDetailView(needsRestartForSync: needsRestartForSync)
           } label: {
-            Label("Sync Activity Details", systemImage: "chart.line.uptrend.xyaxis").foregroundStyle(.primary)
+            HStack {
+              Label("Sync Activity Details", systemImage: "chart.line.uptrend.xyaxis").foregroundStyle(.primary)
+              if needsRestartForSync {
+                Spacer()
+                Image(systemName: "exclamationmark.triangle.fill")
+                  .foregroundStyle(.orange)
+              }
+            }
           }
 
           NavigationLink {
@@ -344,6 +403,8 @@ struct iCloudSyncView: View {
     }
     .onAppear {
       syncManager.checkCloudAvailability()
+      // Clear the pending restart flag since user can see the banner here
+      UserDefaults.standard.removeObject(forKey: "pending_icloud_sync_restart")
     }
   }
 }
@@ -351,9 +412,51 @@ struct iCloudSyncView: View {
 // MARK: - Sync Activity Detail View
 struct SyncActivityDetailView: View {
   @Environment(\.cloudSyncManager) private var syncManager
+  @Environment(\.userPreferences) private var userPreferences
+  var needsRestartForSync: Bool = false
 
   var body: some View {
     List {
+      // MARK: - Restart Required Banner
+      if needsRestartForSync {
+        Section {
+          VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+              Image(systemName: "arrow.clockwise.circle.fill")
+                .foregroundStyle(.white)
+                .font(.title2)
+
+              VStack(alignment: .leading, spacing: 4) {
+                Text("Restart Required")
+                  .font(.headline)
+                  .foregroundStyle(.white)
+
+                Text("iCloud Sync is enabled but requires a restart to start working. Sync activity will appear after you restart.")
+                  .font(.caption)
+                  .foregroundStyle(.white.opacity(0.9))
+                  .fixedSize(horizontal: false, vertical: true)
+              }
+            }
+
+            Button {
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                exit(0)
+              }
+            } label: {
+              Text("Restart Now")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.accent)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 32))
+            }
+          }
+          .padding(.vertical, 8)
+          .listRowBackground(Color.accent)
+        }
+      }
+
       Section("What Gets Synced") {
         VStack(alignment: .leading, spacing: 12) {
           HStack(spacing: 8) {
