@@ -58,7 +58,7 @@ struct ContentView: View {
 
   // MARK: Computed
 
-  /// All entries (for doodle limit calculation)
+  /// All entries (for Joodle limit calculation)
   private var allEntriesArray: [DayEntry] {
     return Array(entries)
   }
@@ -333,7 +333,7 @@ struct ContentView: View {
         subscriptionManager.acknowledgeExpiry()
       }
     } message: {
-      Text("Your Joodle Super subscription has ended. Some features are now limited, including iCloud sync and unlimited doodles.")
+      Text("Your Joodle Super subscription has ended. Some features are now limited, including iCloud sync and unlimited Joodles.")
     }
     .onAppear {
       // Sync widget data when app launches

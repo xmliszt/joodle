@@ -13,7 +13,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   case detailed = "Detailed"
   case anniversary = "Anniversary"
   case yearGridDots = "Year Grid"
-  case yearGridDoodles = "Year Doodles"
+  case yearGridJoodles = "Year Joodles"
 
   var id: String { rawValue }
 
@@ -30,7 +30,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return "square"
     case .yearGridDots:
       return "square.grid.3x3"
-    case .yearGridDoodles:
+    case .yearGridJoodles:
       return "square.grid.3x3.fill"
     }
   }
@@ -38,24 +38,24 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   var description: String {
     switch self {
     case .minimal:
-      return "Doodle only"
+      return "Joodle only"
     case .excerpt:
-      return "Doodle & snippet"
+      return "Joodle & snippet"
     case .detailed:
-      return "Doodle & more text"
+      return "Joodle & more text"
     case .anniversary:
-      return "Doodle and countdown"
+      return "Joodle and countdown"
     case .yearGridDots:
       return "Year progress with dots"
-    case .yearGridDoodles:
-      return "Year progress with doodles"
+    case .yearGridJoodles:
+      return "Year progress with Joodles"
     }
   }
 
   /// Whether this style requires year data instead of single day entry
   var isYearGridStyle: Bool {
     switch self {
-    case .yearGridDots, .yearGridDoodles:
+    case .yearGridDots, .yearGridJoodles:
       return true
     default:
       return false
@@ -69,7 +69,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
 
   /// Styles for year grid sharing
   static var yearGridStyles: [ShareCardStyle] {
-    [.yearGridDots, .yearGridDoodles]
+    [.yearGridDots, .yearGridJoodles]
   }
 
   /// Size for the actual share card, this is the dimension of the image saved.
@@ -85,7 +85,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return CGSize(width: 1080, height: 1080)
     case .yearGridDots:
       return CGSize(width: 1080, height: 1080)
-    case .yearGridDoodles:
+    case .yearGridJoodles:
       return CGSize(width: 1080, height: 1080)
     }
   }
@@ -103,7 +103,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return CGSize(width: 300, height: 300)
     case .yearGridDots:
       return CGSize(width: 300, height: 300)
-    case .yearGridDoodles:
+    case .yearGridJoodles:
       return CGSize(width: 300, height: 300)
     }
   }

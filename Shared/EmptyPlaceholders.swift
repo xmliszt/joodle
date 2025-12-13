@@ -12,7 +12,7 @@ let EMPTY_PLACEHOLDERS: [String] = [
   "Anything fun today?",
   "Unleash the scribble 🌀",
   "Start the chaos 😈",
-  "No doodles? Tragic.",
+  "No Joodles? Tragic.",
   "Draw before thinking 🤪",
   "One line = therapy",
   "Your canvas is lonely 🥺",

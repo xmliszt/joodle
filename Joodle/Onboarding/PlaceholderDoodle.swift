@@ -1,5 +1,5 @@
 //
-//  PlaceholderDoodle.swift
+//  PlaceholderJoodle.swift
 //  Joodle
 //
 //  Created by Li Yuxuan on 6/12/25.

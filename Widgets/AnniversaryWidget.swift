@@ -416,9 +416,9 @@ struct SmallAnniversaryView: View {
     VStack(spacing: 0) {
       VStack {
         Spacer()
-        // Doodle or text content
+        // Joodle or text content
         if anniversaryData.hasDrawing, let drawingData = anniversaryData.drawingData {
-          AnniversaryDoodleView(drawingData: drawingData)
+          AnniversaryJoodleView(drawingData: drawingData)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if anniversaryData.hasText, let text = anniversaryData.text {
           Text(text)
@@ -468,9 +468,9 @@ struct MediumAnniversaryView: View {
 
       // Main content area
       HStack(spacing: 12) {
-        // Left side: Doodle or placeholder
+        // Left side: Joodle or placeholder
         if anniversaryData.hasDrawing, let drawingData = anniversaryData.drawingData {
-          AnniversaryDoodleView(drawingData: drawingData)
+          AnniversaryJoodleView(drawingData: drawingData)
             .frame(width: 80, height: 80)
             .padding(10)
         } else {
@@ -512,9 +512,9 @@ struct LargeAnniversaryView: View {
     VStack(spacing: 8) {
       VStack {
         Spacer()
-        // Doodle or text content
+        // Joodle or text content
         if anniversaryData.hasDrawing, let drawingData = anniversaryData.drawingData {
-          AnniversaryDoodleView(drawingData: drawingData)
+          AnniversaryJoodleView(drawingData: drawingData)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if anniversaryData.hasText, let text = anniversaryData.text {
           Text(text)
@@ -538,9 +538,9 @@ struct LargeAnniversaryView: View {
   }
 }
 
-// MARK: - Doodle View
+// MARK: - Joodle View
 
-struct AnniversaryDoodleView: View {
+struct AnniversaryJoodleView: View {
   let drawingData: Data
 
   var body: some View {

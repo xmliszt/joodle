@@ -535,7 +535,7 @@ final class CloudSyncManager {
   /// Detailed sync status message for UI display
   var syncStatusMessage: String {
     if !SubscriptionManager.shared.hasICloudSync {
-      return "iCloud Sync is a Joodle Super feature. Upgrade to sync your doodles across devices."
+      return "iCloud Sync is a Joodle Super feature. Upgrade to sync your Joodles across devices."
     } else if needsSystemSettingsChange {
       return "iCloud is disabled in iOS Settings. Enable it in \"Settings → [Your Name] → iCloud → Saved to iCloud -> Joodle\" to sync."
     } else if systemCloudEnabled && !appCloudEnabled {

@@ -347,7 +347,7 @@ struct PaywallContentView: View {
         .font(.system(size: 34, weight: .bold))
         .multilineTextAlignment(.center)
 
-      Text("Supercharge your creativity with unlimited doodles and more!")
+      Text("Supercharge your creativity with unlimited Joodles and more!")
         .font(.body)
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
@@ -363,7 +363,7 @@ struct PaywallContentView: View {
     VStack(alignment: .leading, spacing: 16) {
       FeatureRow(
         icon: "scribble.variable",
-        title: "Unlimited Doodles",
+        title: "Unlimited Joodles",
         subtitle: "Draw as many as you want, no limits"
       )
 

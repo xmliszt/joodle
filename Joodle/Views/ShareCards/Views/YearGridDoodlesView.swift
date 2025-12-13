@@ -1,5 +1,5 @@
 //
-//  YearGridDoodlesView.swift
+//  YearGridJoodlesView.swift
 //  Joodle
 //
 //  Created by Claude on 2025.
@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct YearGridDoodlesView: View {
-  private let cardStyle: ShareCardStyle = .yearGridDoodles
+struct YearGridJoodlesView: View {
+  private let cardStyle: ShareCardStyle = .yearGridJoodles
   let year: Int
   let percentage: Double
   let entries: [ShareCardDayEntry]
@@ -151,7 +151,7 @@ struct YearGridDoodlesView: View {
             size: dotSize,
             hasEntry: hasEntry,
             dotStyle: dotStyle,
-            thumbnail: dayEntry?.thumbnail // Doodles view shows thumbnails
+            thumbnail: dayEntry?.thumbnail // Joodles view shows thumbnails
           )
         }
 
@@ -180,9 +180,9 @@ struct YearGridDoodlesView: View {
 
 // MARK: - Preview Helpers
 
-/// Helper function to create mock year entries with doodle thumbnails for previews
-/// Uses PLACEHOLDER_DATA to generate realistic doodle thumbnails
-func createMockYearEntriesWithDoodles(year: Int, entryCount: Int) -> [ShareCardDayEntry] {
+/// Helper function to create mock year entries with Joodle thumbnails for previews
+/// Uses PLACEHOLDER_DATA to generate realistic Joodle thumbnails
+func createMockYearEntriesWithJoodles(year: Int, entryCount: Int) -> [ShareCardDayEntry] {
   let calendar = Calendar.current
   guard let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1)) else {
     return []
@@ -344,27 +344,27 @@ private func decodePreviewDrawingData(_ data: Data) -> [PreviewPathData]? {
 
 // MARK: - Previews
 
-#Preview("Year Grid Doodles - With Thumbnails") {
-  YearGridDoodlesView(
+#Preview("Year Grid Joodles - With Thumbnails") {
+  YearGridJoodlesView(
     year: 2025,
     percentage: 45.2,
-    entries: createMockYearEntriesWithDoodles(year: 2025, entryCount: 120)
+    entries: createMockYearEntriesWithJoodles(year: 2025, entryCount: 120)
   )
   .frame(width: 300, height: 300)
   .border(Color.gray)
 }
 
-#Preview("Year Grid Doodles - Full Size") {
-  YearGridDoodlesView(
+#Preview("Year Grid Joodles - Full Size") {
+  YearGridJoodlesView(
     year: 2025,
     percentage: 45.2,
-    entries: createMockYearEntriesWithDoodles(year: 2025, entryCount: 120)
+    entries: createMockYearEntriesWithJoodles(year: 2025, entryCount: 120)
   )
   .frame(width: 1080, height: 1080)
 }
 
-#Preview("Year Grid Doodles - Empty") {
-  YearGridDoodlesView(
+#Preview("Year Grid Joodles - Empty") {
+  YearGridJoodlesView(
     year: 2025,
     percentage: 0.0,
     entries: []

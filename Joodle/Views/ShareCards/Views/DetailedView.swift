@@ -62,7 +62,7 @@ struct DetailedView: View {
         .padding(.vertical, outerPadding)
         .padding(.trailing, 20 * scale)
 
-        // Doodle image overlay in top-left corner
+        // Joodle image overlay in top-left corner
         if hasDrawing {
           DrawingPreviewView(
             entry: entry,

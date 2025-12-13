@@ -2,7 +2,7 @@ import SwiftUI
 
 struct DrawingEntryView: View {
   @ObservedObject var viewModel: OnboardingViewModel
-  
+
   var body: some View {
     VStack {
       Spacer()
@@ -21,27 +21,27 @@ struct DrawingEntryView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 24)
-        
+
         OnboardingDrawingCanvas(
-          drawingData: $viewModel.firstDoodleData,
+          drawingData: $viewModel.firstJoodleData,
           placeholderData: PLACEHOLDER_DATA
         )
         .padding()
       }
       .frame(maxWidth: .infinity)
-      
+
       Spacer()
-      
+
       OnboardingButtonView(
         label: "Capture this moment",
         onClick: {
           viewModel.completeStep(.drawingEntry)
         },
-        disabled: viewModel.firstDoodleData?.isEmpty ?? true)
+        disabled: viewModel.firstJoodleData?.isEmpty ?? true)
     }
     .frame(maxWidth: .infinity)
     .navigationBarHidden(true)
-    
+
   }
 }
 

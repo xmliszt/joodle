@@ -78,7 +78,7 @@ struct iCloudSyncView: View {
                 .font(.title2)
 
               VStack(alignment: .leading, spacing: 4) {
-                Text("iCloud Sync is available with Joodle Super. Upgrade to sync your doodles across all your devices.")
+                Text("iCloud Sync is available with Joodle Super. Upgrade to sync your Joodles across all your devices.")
                   .font(.caption)
                   .foregroundStyle(.secondary)
                   .fixedSize(horizontal: false, vertical: true)

@@ -1,5 +1,5 @@
 //
-//  RandomDoodleWidget.swift
+//  RandomJoodleWidget.swift
 //  Widgets
 //
 //  Created by Widget Extension
@@ -8,31 +8,31 @@
 import SwiftUI
 import WidgetKit
 
-struct RandomDoodleProvider: TimelineProvider {
-  func placeholder(in context: Context) -> RandomDoodleEntry {
-    RandomDoodleEntry(date: Date(), doodle: nil, prompt: getRandomPrompt(), isSubscribed: true)
+struct RandomJoodleProvider: TimelineProvider {
+  func placeholder(in context: Context) -> RandomJoodleEntry {
+    RandomJoodleEntry(date: Date(), Joodle: nil, prompt: getRandomPrompt(), isSubscribed: true)
   }
 
-  func getSnapshot(in context: Context, completion: @escaping (RandomDoodleEntry) -> Void) {
+  func getSnapshot(in context: Context, completion: @escaping (RandomJoodleEntry) -> Void) {
     let isSubscribed = WidgetDataManager.shared.isSubscribed()
-    let entry = RandomDoodleEntry(
+    let entry = RandomJoodleEntry(
       date: Date(),
-      doodle: isSubscribed ? getRandomDoodle() : nil,
+      Joodle: isSubscribed ? getRandomJoodle() : nil,
       prompt: getRandomPrompt(),
       isSubscribed: isSubscribed
     )
     completion(entry)
   }
 
-  func getTimeline(in context: Context, completion: @escaping (Timeline<RandomDoodleEntry>) -> Void)
+  func getTimeline(in context: Context, completion: @escaping (Timeline<RandomJoodleEntry>) -> Void)
   {
     let currentDate = Date()
     let isSubscribed = WidgetDataManager.shared.isSubscribed()
-    let doodle = isSubscribed ? getRandomDoodle() : nil
+    let Joodle = isSubscribed ? getRandomJoodle() : nil
 
-    let entry = RandomDoodleEntry(
+    let entry = RandomJoodleEntry(
       date: currentDate,
-      doodle: doodle,
+      Joodle: Joodle,
       prompt: getRandomPrompt(),
       isSubscribed: isSubscribed
     )
@@ -55,7 +55,7 @@ struct RandomDoodleProvider: TimelineProvider {
     completion(timeline)
   }
 
-  private func getRandomDoodle() -> DoodleData? {
+  private func getRandomJoodle() -> JoodleData? {
     let entries = WidgetDataManager.shared.loadEntries()
 
     // Filter entries from the past year (365 days back) that have drawings
@@ -63,22 +63,22 @@ struct RandomDoodleProvider: TimelineProvider {
     let today = calendar.startOfDay(for: Date())
     let oneYearAgo = calendar.date(byAdding: .day, value: -365, to: today)!
 
-    let doodleEntries = entries.filter { entry in
+    let JoodleEntries = entries.filter { entry in
       let entryDate = calendar.startOfDay(for: entry.date)
       return entry.hasDrawing && entry.drawingData != nil && entryDate >= oneYearAgo
       && entryDate <= today
     }
 
-    guard !doodleEntries.isEmpty else {
+    guard !JoodleEntries.isEmpty else {
       return nil
     }
 
-    // Select a random doodle
-    guard let selectedEntry = doodleEntries.randomElement() else {
+    // Select a random Joodle
+    guard let selectedEntry = JoodleEntries.randomElement() else {
       return nil
     }
 
-    return DoodleData(
+    return JoodleData(
       date: selectedEntry.date,
       drawingData: selectedEntry.drawingData!
     )
@@ -89,14 +89,14 @@ struct RandomDoodleProvider: TimelineProvider {
   }
 }
 
-struct RandomDoodleEntry: TimelineEntry {
+struct RandomJoodleEntry: TimelineEntry {
   let date: Date
-  let doodle: DoodleData?
+  let Joodle: JoodleData?
   let prompt: String
   let isSubscribed: Bool
 }
 
-struct DoodleData {
+struct JoodleData {
   let date: Date
   let drawingData: Data
 }
@@ -117,8 +117,8 @@ struct PathData: Codable {
   }
 }
 
-struct RandomDoodleWidgetView: View {
-  var entry: RandomDoodleProvider.Entry
+struct RandomJoodleWidgetView: View {
+  var entry: RandomJoodleProvider.Entry
   @Environment(\.widgetFamily) var family
 
   var body: some View {
@@ -132,12 +132,12 @@ struct RandomDoodleWidgetView: View {
     } else {
       switch family {
       case .accessoryCircular:
-        LockScreenCircularView(doodle: entry.doodle, family: family)
+        LockScreenCircularView(Joodle: entry.Joodle, family: family)
       default:
-        if let doodle = entry.doodle {
-          DoodleView(drawingData: doodle.drawingData, family: family)
+        if let Joodle = entry.Joodle {
+          JoodleView(drawingData: Joodle.drawingData, family: family)
             .padding(family == .systemLarge ? 48 : 24)
-            .widgetURL(URL(string: "joodle://date/\(Int(doodle.date.timeIntervalSince1970))"))
+            .widgetURL(URL(string: "joodle://date/\(Int(Joodle.date.timeIntervalSince1970))"))
             .containerBackground(for: .widget) {
               Color(UIColor.systemBackground)
             }
@@ -189,16 +189,16 @@ struct WidgetLockedView: View {
 }
 
 struct LockScreenCircularView: View {
-  let doodle: DoodleData?
+  let Joodle: JoodleData?
   let family: WidgetFamily
 
   var body: some View {
-    if let doodle = doodle {
+    if let Joodle = Joodle {
       ZStack {
-        DoodleView(drawingData: doodle.drawingData, family: family)
+        JoodleView(drawingData: Joodle.drawingData, family: family)
           .padding(8)
       }
-      .widgetURL(URL(string: "joodle://date/\(Int(doodle.date.timeIntervalSince1970))"))
+      .widgetURL(URL(string: "joodle://date/\(Int(Joodle.date.timeIntervalSince1970))"))
       .containerBackground(for: .widget) {
         Color.clear
       }
@@ -220,7 +220,7 @@ struct LockScreenCircularView: View {
   }
 }
 
-struct DoodleView: View {
+struct JoodleView: View {
   let drawingData: Data
   let family: WidgetFamily
 
@@ -304,64 +304,64 @@ struct NotFoundView: View {
   }
 }
 
-struct RandomDoodleWidget: Widget {
-  let kind: String = "RandomDoodleWidget"
+struct RandomJoodleWidget: Widget {
+  let kind: String = "RandomJoodleWidget"
 
   var body: some WidgetConfiguration {
-    StaticConfiguration(kind: kind, provider: RandomDoodleProvider()) { entry in
-      RandomDoodleWidgetView(entry: entry)
+    StaticConfiguration(kind: kind, provider: RandomJoodleProvider()) { entry in
+      RandomJoodleWidgetView(entry: entry)
     }
-    .configurationDisplayName("Random Doodle")
-    .description("Random doodle from past year.")
+    .configurationDisplayName("Random Joodle")
+    .description("Random Joodle from past year.")
     .supportedFamilies([.systemSmall, .systemLarge, .accessoryCircular])
   }
 }
 
 #Preview(as: .systemSmall) {
-  RandomDoodleWidget()
+  RandomJoodleWidget()
 } timeline: {
-  // Preview with a doodle (subscribed)
+  // Preview with a Joodle (subscribed)
   let mockDrawingData = createMockDrawingData()
-  RandomDoodleEntry(
+  RandomJoodleEntry(
     date: Date(),
-    doodle: DoodleData(date: Date(), drawingData: mockDrawingData),
+    Joodle: JoodleData(date: Date(), drawingData: mockDrawingData),
     prompt: "Draw something",
     isSubscribed: true
   )
 
   // Preview without subscription (locked)
-  RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
+  RandomJoodleEntry(date: Date(), Joodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
 }
 
 #Preview(as: .systemLarge) {
-  RandomDoodleWidget()
+  RandomJoodleWidget()
 } timeline: {
-  // Preview with a doodle from 5 days ago (subscribed)
+  // Preview with a Joodle from 5 days ago (subscribed)
   let mockDrawingData = createMockDrawingData()
   let fiveDaysAgo = Calendar.current.date(byAdding: .day, value: -5, to: Date())!
-  RandomDoodleEntry(
+  RandomJoodleEntry(
     date: Date(),
-    doodle: DoodleData(date: fiveDaysAgo, drawingData: mockDrawingData),
+    Joodle: JoodleData(date: fiveDaysAgo, drawingData: mockDrawingData),
     prompt: "Draw something",
     isSubscribed: true
   )
 
   // Preview without subscription (locked)
-  RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
+  RandomJoodleEntry(date: Date(), Joodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
 }
 
 #Preview(as: .accessoryCircular) {
-  RandomDoodleWidget()
+  RandomJoodleWidget()
 } timeline: {
-  // Preview with a doodle (subscribed)
+  // Preview with a Joodle (subscribed)
   let mockDrawingData = createMockDrawingData()
-  RandomDoodleEntry(
+  RandomJoodleEntry(
     date: Date(),
-    doodle: DoodleData(date: Date(), drawingData: mockDrawingData),
+    Joodle: JoodleData(date: Date(), drawingData: mockDrawingData),
     prompt: "Draw something",
     isSubscribed: true
   )
 
   // Preview without subscription (locked)
-  RandomDoodleEntry(date: Date(), doodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
+  RandomJoodleEntry(date: Date(), Joodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
 }

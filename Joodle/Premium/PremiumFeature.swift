@@ -14,7 +14,7 @@ import Combine
 /// All premium features in Joodle.
 /// Add new features here - they will automatically be gated.
 enum PremiumFeature: String, CaseIterable, Identifiable {
-    case unlimitedDoodles
+    case unlimitedJoodles
     case widgets  // Free users have NO widget access
     case iCloudSync
     case allShareTemplates
@@ -25,8 +25,8 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
 
     var name: String {
         switch self {
-        case .unlimitedDoodles:
-            return "Unlimited Doodles"
+        case .unlimitedJoodles:
+            return "Unlimited Joodles"
         case .widgets:
             return "All Widgets"
         case .iCloudSync:
@@ -38,12 +38,12 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
 
     var description: String {
         switch self {
-        case .unlimitedDoodles:
+        case .unlimitedJoodles:
             return "Draw as much as you want, no limits"
         case .widgets:
             return "Access to all Joodle widgets"
         case .iCloudSync:
-            return "Sync your doodles across all devices"
+            return "Sync your Joodles across all devices"
         case .allShareTemplates:
             return "Beautiful templates for sharing"
         }
@@ -51,7 +51,7 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
-        case .unlimitedDoodles:
+        case .unlimitedJoodles:
             return "scribble.variable"
         case .widgets:
             return "square.grid.3x3.fill"
@@ -65,8 +65,8 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
     /// Free tier limits for features that have limits
     var freeLimit: Int? {
         switch self {
-        case .unlimitedDoodles:
-            return SubscriptionManager.freeDoodlesAllowed
+        case .unlimitedJoodles:
+            return SubscriptionManager.freeJoodlesAllowed
         default:
             return nil
         }
@@ -119,29 +119,29 @@ final class PremiumAccessController: ObservableObject {
         return isSubscribed
     }
 
-    /// Check if user can create a new doodle based on current total count
-    func canCreateDoodle(currentTotalCount: Int) -> Bool {
+    /// Check if user can create a new Joodle based on current total count
+    func canCreateJoodle(currentTotalCount: Int) -> Bool {
         if isSubscribed {
             return true
         }
-        return currentTotalCount < (PremiumFeature.unlimitedDoodles.freeLimit ?? SubscriptionManager.freeDoodlesAllowed)
+        return currentTotalCount < (PremiumFeature.unlimitedJoodles.freeLimit ?? SubscriptionManager.freeJoodlesAllowed)
     }
 
-    /// Check if user can edit a specific doodle (by index in total order)
-    func canEditDoodle(atIndex index: Int) -> Bool {
+    /// Check if user can edit a specific Joodle (by index in total order)
+    func canEditJoodle(atIndex index: Int) -> Bool {
         if isSubscribed {
             return true
         }
-        // Free users can only edit their first N doodles
-        return index < (PremiumFeature.unlimitedDoodles.freeLimit ?? SubscriptionManager.freeDoodlesAllowed)
+        // Free users can only edit their first N Joodles
+        return index < (PremiumFeature.unlimitedJoodles.freeLimit ?? SubscriptionManager.freeJoodlesAllowed)
     }
 
-    /// Get remaining doodles for free users
-    func remainingDoodles(currentTotalCount: Int) -> Int {
+    /// Get remaining Joodles for free users
+    func remainingJoodles(currentTotalCount: Int) -> Int {
         if isSubscribed {
             return Int.max
         }
-        let limit = PremiumFeature.unlimitedDoodles.freeLimit ?? SubscriptionManager.freeDoodlesAllowed
+        let limit = PremiumFeature.unlimitedJoodles.freeLimit ?? SubscriptionManager.freeJoodlesAllowed
         return max(0, limit - currentTotalCount)
     }
 
@@ -324,21 +324,21 @@ struct PremiumGatedButton<Label: View>: View {
     }
 }
 
-/// View showing remaining doodles for free users
-struct RemainingDoodlesIndicator: View {
+/// View showing remaining Joodles for free users
+struct RemainingJoodlesIndicator: View {
     let currentCount: Int
     @ObservedObject private var accessController = PremiumAccessController.shared
 
     var body: some View {
         if !accessController.isSubscribed {
-            let remaining = accessController.remainingDoodles(currentTotalCount: currentCount)
+            let remaining = accessController.remainingJoodles(currentTotalCount: currentCount)
 
             HStack(spacing: 4) {
                 Image(systemName: remaining > 0 ? "scribble" : "lock.fill")
                     .font(.caption)
 
                 if remaining > 0 {
-                    Text("\(remaining) doodles left")
+                    Text("\(remaining) Joodles left")
                         .font(.caption)
                 } else {
                     Text("Limit reached")
@@ -391,16 +391,16 @@ extension View {
     }
 }
 
-// MARK: - Doodle Access Helper
+// MARK: - Joodle Access Helper
 
-/// Helper to check doodle access based on entry index
+/// Helper to check Joodle access based on entry index
 @MainActor
-struct DoodleAccessChecker {
-    /// Check if a doodle can be edited based on its position in the total list
+struct JoodleAccessChecker {
+    /// Check if a Joodle can be edited based on its position in the total list
     static func canEdit(entry: DayEntry, allEntries: [DayEntry]) -> Bool {
         let accessController = PremiumAccessController.shared
 
-        // Subscribed users can edit any doodle
+        // Subscribed users can edit any Joodle
         if accessController.isSubscribed {
             return true
         }
@@ -415,7 +415,7 @@ struct DoodleAccessChecker {
             return true
         }
 
-        return accessController.canEditDoodle(atIndex: index)
+        return accessController.canEditJoodle(atIndex: index)
     }
 
     /// Get all entries that have drawings
@@ -425,8 +425,8 @@ struct DoodleAccessChecker {
         }
     }
 
-    /// Count total doodles across all entries
-    static func totalDoodleCount(from entries: [DayEntry]) -> Int {
+    /// Count total Joodles across all entries
+    static func totalJoodleCount(from entries: [DayEntry]) -> Int {
         return entriesWithDrawings(from: entries).count
     }
 }
@@ -440,9 +440,9 @@ struct DoodleAccessChecker {
             .background(Color.blue)
             .withPremiumBadge(.iCloudSync)
 
-        RemainingDoodlesIndicator(currentCount: 55)
+        RemainingJoodlesIndicator(currentCount: 55)
 
-        RemainingDoodlesIndicator(currentCount: 60)
+        RemainingJoodlesIndicator(currentCount: 60)
 
         PremiumFeatureBadge()
     }

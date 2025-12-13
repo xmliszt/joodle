@@ -47,7 +47,7 @@ struct iCloudConfigView: View {
                 .padding(.bottom, 12)
 
             // Description
-            Text("Keep your doodles synced across all your devices with iCloud.")
+            Text("Keep your Joodles synced across all your devices with iCloud.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

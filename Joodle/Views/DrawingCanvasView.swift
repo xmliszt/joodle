@@ -8,9 +8,9 @@
 import SwiftData
 import SwiftUI
 
-// MARK: - Doodle Access State
+// MARK: - Joodle Access State
 
-enum DoodleAccessState {
+enum JoodleAccessState {
   case canCreate
   case canEdit
   case limitReached
@@ -30,7 +30,7 @@ struct DrawingCanvasView: View {
   /// But that doesn't make it visible yet as controlled by DynamicIslandExpandedView
   let isShowing: Bool
 
-  /// All entries for doodle limit calculation
+  /// All entries for Joodle limit calculation
   let allEntries: [DayEntry]
 
   @State private var currentPath = Path()
@@ -40,7 +40,7 @@ struct DrawingCanvasView: View {
   @State private var showClearConfirmation = false
   @State private var isDrawing = false
   @State private var showPaywall = false
-  @State private var accessState: DoodleAccessState = .canCreate
+  @State private var accessState: JoodleAccessState = .canCreate
 
   // Undo/Redo state management
   @State private var undoStack: [([Path], [PathMetadata])] = []
@@ -59,9 +59,9 @@ struct DrawingCanvasView: View {
   var body: some View {
     ZStack {
       VStack(spacing: 16) {
-        // Show remaining doodles indicator for free users
+        // Show remaining Joodles indicator for free users
         if !subscriptionManager.isSubscribed {
-          remainingDoodlesHeader
+          remainingJoodlesHeader
         }
 
         SharedCanvasView(
@@ -123,16 +123,16 @@ struct DrawingCanvasView: View {
 
   // MARK: - Access Control UI
 
-  private var remainingDoodlesHeader: some View {
-    let totalCount = subscriptionManager.totalDoodleCount(from: allEntries)
-    let remaining = subscriptionManager.remainingDoodles(currentTotalCount: totalCount)
+  private var remainingJoodlesHeader: some View {
+    let totalCount = subscriptionManager.totalJoodleCount(from: allEntries)
+    let remaining = subscriptionManager.remainingJoodles(currentTotalCount: totalCount)
 
     return HStack(spacing: 6) {
       Image(systemName: remaining > 0 ? "scribble" : "lock.fill")
         .font(.caption)
 
       if remaining > 0 {
-        Text("\(remaining) doodles left")
+        Text("\(remaining) Joodles left")
           .font(.caption)
       } else {
         Text("Limit reached")
@@ -167,12 +167,12 @@ struct DrawingCanvasView: View {
 
       switch accessState {
       case .limitReached:
-        Text("You've reached your free doodle limit")
+        Text("You've reached your free Joodle limit")
           .font(.headline)
           .foregroundColor(.appTextPrimary)
           .multilineTextAlignment(.center)
 
-        Text("Upgrade to Joodle Super for unlimited doodles")
+        Text("Upgrade to Joodle Super for unlimited Joodles")
           .font(.subheadline)
           .foregroundColor(.appTextPrimary.opacity(0.8))
           .multilineTextAlignment(.center)
@@ -221,29 +221,29 @@ struct DrawingCanvasView: View {
       return
     }
 
-    // Check if this is an existing doodle (editing) or new doodle (creating)
+    // Check if this is an existing Joodle (editing) or new Joodle (creating)
     let hasExistingDrawing = entry?.drawingData != nil
 
     if hasExistingDrawing {
-      // Editing existing - check if within first N doodles
+      // Editing existing - check if within first N Joodles
       let entriesWithDrawings = allEntries
         .filter { $0.drawingData != nil }
         .sorted { $0.dateString < $1.dateString }
 
       if let entry = entry,
          let index = entriesWithDrawings.firstIndex(where: { $0.id == entry.id }) {
-        if subscriptionManager.canEditDoodle(atIndex: index) {
+        if subscriptionManager.canEditJoodle(atIndex: index) {
           accessState = .canEdit
         } else {
-          accessState = .editingLocked(reason: "Free account can only edit the first \(SubscriptionManager.freeDoodlesAllowed) doodles. This doodle is #\(index + 1).")
+          accessState = .editingLocked(reason: "Free account can only edit the first \(SubscriptionManager.freeJoodlesAllowed) Joodles. This Joodle is #\(index + 1).")
         }
       } else {
         accessState = .canEdit
       }
     } else {
       // Creating new - check limit
-      let totalCount = subscriptionManager.totalDoodleCount(from: allEntries)
-      if subscriptionManager.canCreateDoodle(currentTotalCount: totalCount) {
+      let totalCount = subscriptionManager.totalJoodleCount(from: allEntries)
+      if subscriptionManager.canCreateJoodle(currentTotalCount: totalCount) {
         accessState = .canCreate
       } else {
         accessState = .limitReached

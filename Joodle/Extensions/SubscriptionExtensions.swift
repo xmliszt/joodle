@@ -52,7 +52,7 @@ struct SubscriptionPromptView: View {
                         .font(.title.bold())
                         .multilineTextAlignment(.center)
 
-                    Text("Unlock unlimited doodles, all widgets, iCloud sync, and more!")
+                    Text("Unlock unlimited Joodles, all widgets, iCloud sync, and more!")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -140,8 +140,8 @@ struct FeatureGate {
         let manager = SubscriptionManager.shared
 
         switch feature {
-        case .unlimitedDoodles:
-            if !manager.hasUnlimitedDoodles {
+        case .unlimitedJoodles:
+            if !manager.hasUnlimitedJoodles {
                 showPaywall()
                 return false
             }
@@ -169,7 +169,7 @@ struct FeatureGate {
     }
 
     enum Feature {
-        case unlimitedDoodles
+        case unlimitedJoodles
         case allWidgets
         case iCloudSync
         case allShareTemplates

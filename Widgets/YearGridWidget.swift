@@ -117,7 +117,7 @@ struct WidgetDayEntry {
 
 struct YearGridWidgetView: View {
   var entry: YearGridProvider.Entry
-  var showDoodles: Bool
+  var showJoodles: Bool
   @Environment(\.widgetFamily) var widgetFamily
 
   private var dotSize: CGFloat {
@@ -254,7 +254,7 @@ struct YearGridWidgetView: View {
             size: dotSize,
             withEntry: hasEntry,
             dotStyle: dotStyle,
-            thumbnail: showDoodles ? dayEntry?.thumbnail : nil
+            thumbnail: showJoodles ? dayEntry?.thumbnail : nil
           )
           .frame(width: dotSize, height: dotSize)
         }
@@ -365,7 +365,7 @@ struct YearGridWidget: Widget {
 
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
-      YearGridWidgetView(entry: entry, showDoodles: false)
+      YearGridWidgetView(entry: entry, showJoodles: false)
         .containerBackground(for: .widget) {
           Color(UIColor.systemBackground)
         }
@@ -376,18 +376,18 @@ struct YearGridWidget: Widget {
   }
 }
 
-struct YearGridDoodleWidget: Widget {
-  let kind: String = "YearGridDoodleWidget"
+struct YearGridJoodleWidget: Widget {
+  let kind: String = "YearGridJoodleWidget"
 
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
-      YearGridWidgetView(entry: entry, showDoodles: true)
+      YearGridWidgetView(entry: entry, showJoodles: true)
         .containerBackground(for: .widget) {
           Color(UIColor.systemBackground)
         }
     }
-    .configurationDisplayName("Year Progress (Doodles)")
-    .description("View your year progress with your doodles.")
+    .configurationDisplayName("Year Progress (Joodles)")
+    .description("View your year progress with your Joodles.")
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }
@@ -529,8 +529,8 @@ struct YearGridDoodleWidget: Widget {
   YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries, isSubscribed: true)
 }
 
-#Preview("Doodles", as: .systemMedium) {
-  YearGridDoodleWidget()
+#Preview("Joodles", as: .systemMedium) {
+  YearGridJoodleWidget()
 } timeline: {
   // Create mock entries for preview
   let calendar = Calendar.current

@@ -76,7 +76,7 @@ class SubscriptionManager: ObservableObject {
 
     // MARK: - Subscription Features
 
-    var hasUnlimitedDoodles: Bool {
+    var hasUnlimitedJoodles: Bool {
         isSubscribed
     }
 
@@ -92,11 +92,11 @@ class SubscriptionManager: ObservableObject {
         isSubscribed
     }
 
-    // Free plan limits - maximum total doodles allowed for free users
-    nonisolated static let freeDoodlesAllowed = 30
+    // Free plan limits - maximum total Joodles allowed for free users
+    nonisolated static let freeJoodlesAllowed = 30
 
-    var maxDoodlesAllowed: Int {
-        isSubscribed ? Int.max : Self.freeDoodlesAllowed
+    var maxJoodlesAllowed: Int {
+        isSubscribed ? Int.max : Self.freeJoodlesAllowed
     }
 
     // MARK: - Update Status
@@ -374,37 +374,37 @@ class SubscriptionManager: ObservableObject {
     // MARK: - Drawing Protection for Initial Sync
 
     /// Check if today has a drawing in the current local database and protect it
-    // MARK: - Doodle Limit Helpers
+    // MARK: - Joodle Limit Helpers
 
-    /// Check if user can create a new doodle based on their plan
-    func canCreateDoodle(currentTotalCount: Int) -> Bool {
-        if hasUnlimitedDoodles {
+    /// Check if user can create a new Joodle based on their plan
+    func canCreateJoodle(currentTotalCount: Int) -> Bool {
+        if hasUnlimitedJoodles {
             return true
         }
-        return currentTotalCount < maxDoodlesAllowed
+        return currentTotalCount < maxJoodlesAllowed
     }
 
-    /// Get remaining doodles for free users
-    func remainingDoodles(currentTotalCount: Int) -> Int {
-        if hasUnlimitedDoodles {
+    /// Get remaining Joodles for free users
+    func remainingJoodles(currentTotalCount: Int) -> Int {
+        if hasUnlimitedJoodles {
             return Int.max
         }
-        return max(0, maxDoodlesAllowed - currentTotalCount)
+        return max(0, maxJoodlesAllowed - currentTotalCount)
     }
 
-    /// Get total count of doodles across all entries
-    func totalDoodleCount(from entries: [DayEntry]) -> Int {
+    /// Get total count of Joodles across all entries
+    func totalJoodleCount(from entries: [DayEntry]) -> Int {
         return entries.filter { entry in
             entry.drawingData != nil
         }.count
     }
 
-    /// Check if a specific doodle can be edited (by its index, 0-based)
-    func canEditDoodle(atIndex index: Int) -> Bool {
-        if hasUnlimitedDoodles {
+    /// Check if a specific Joodle can be edited (by its index, 0-based)
+    func canEditJoodle(atIndex index: Int) -> Bool {
+        if hasUnlimitedJoodles {
             return true
         }
-        // Free users can only edit their first N doodles
-        return index < maxDoodlesAllowed
+        // Free users can only edit their first N Joodles
+        return index < maxJoodlesAllowed
     }
 }

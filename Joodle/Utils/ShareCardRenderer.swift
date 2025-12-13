@@ -218,7 +218,7 @@ class ShareCardRenderer {
       DetailedView(entry: entry, date: date, highResDrawing: highResDrawing, showWatermark: showWatermark)
     case .anniversary:
       AnniversaryView(entry: entry, date: date, highResDrawing: highResDrawing, showWatermark: showWatermark)
-    case .yearGridDots, .yearGridDoodles:
+    case .yearGridDots, .yearGridJoodles:
       // Year grid styles should use renderYearGridCard instead
       EmptyView()
     }
@@ -236,8 +236,8 @@ class ShareCardRenderer {
     switch style {
     case .yearGridDots:
       YearGridDotsView(year: year, percentage: percentage, entries: entries, showWatermark: showWatermark)
-    case .yearGridDoodles:
-      YearGridDoodlesView(year: year, percentage: percentage, entries: entries, showWatermark: showWatermark)
+    case .yearGridJoodles:
+      YearGridJoodlesView(year: year, percentage: percentage, entries: entries, showWatermark: showWatermark)
     default:
       EmptyView()
     }

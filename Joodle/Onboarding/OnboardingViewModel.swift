@@ -4,12 +4,16 @@ import Combine
 
 // 1. The Steps: Easy to reorder or add new ones here.
 enum OnboardingStep: Hashable, CaseIterable {
-    case drawingEntry      // The greeting + drawing
-    case valueProposition  // Confetti + Explanation
-    case paywall           // Subscription choice
-    case icloudConfig      // iCloud sync configuration (only for subscribers)
-    case widgetTutorial    // Final welcome (hidden for now)
-    case onboardingCompletion // Completion step
+    case drawingEntry              // The greeting + drawing
+    case valueProposition          // Confetti + Explanation
+    case featureIntroEditEntry     // Feature intro: Edit Joodle and note
+    case featureIntroYearSwitching // Feature intro: Year switching and countdown
+    case featureIntroViewModes     // Feature intro: Regular vs minimized view
+    case featureIntroSharing       // Feature intro: Sharing year and days
+    case featureIntroWidgets       // Feature intro: Widgets
+    case paywall                   // Subscription choice
+    case icloudConfig              // iCloud sync configuration (only for subscribers)
+    case onboardingCompletion      // Completion step
 }
 
 // 2. The Brain: Manages data and navigation logic
@@ -19,7 +23,7 @@ class OnboardingViewModel: ObservableObject {
 
     // Data collected during onboarding
     // We store the raw JSON data representing [PathData]
-    @Published var firstDoodleData: Data?
+    @Published var firstJoodleData: Data?
     @Published var isPremium: Bool = false
     @Published var shouldDismiss = false
 
@@ -33,6 +37,11 @@ class OnboardingViewModel: ObservableObject {
     // Track if this is a revisit (user already completed onboarding before)
     let isRevisitingOnboarding: Bool
 
+    /// Return user: Someone who reinstalled the app but already has an active subscription
+    /// (subscription synced from App Store). They've already seen feature intros before.
+    /// This is different from `isRevisitingOnboarding` which is when user clicks "revisit" from Settings.
+    let isReturnUser: Bool
+
     var modelContext: ModelContext?
     private var cancellables = Set<AnyCancellable>()
 
@@ -40,19 +49,56 @@ class OnboardingViewModel: ObservableObject {
         // Check if this is a revisit (onboarding was already completed)
         self.isRevisitingOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
 
+        // Return user: Has active subscription but hasn't completed onboarding on this device
+        // This means they reinstalled the app and their subscription synced from App Store
+        self.isReturnUser = !self.isRevisitingOnboarding && StoreKitManager.shared.hasActiveSubscription
+
         // Monitor subscription status changes
         SubscriptionManager.shared.$isSubscribed
             .assign(to: &$isPremium)
     }
 
+    /// Whether to show feature introduction steps
+    /// Show for: first-time users, revisiting users from Settings
+    /// Skip for: return users (reinstall with existing subscription)
+    var shouldShowFeatureIntro: Bool {
+        !isReturnUser
+    }
+
     // Actions
     func completeStep(_ step: OnboardingStep) {
+        // Play haptic feedback on step transition
+        Haptic.play(with: .light)
+
         switch step {
         case .drawingEntry:
             navigationPath.append(OnboardingStep.valueProposition)
 
         case .valueProposition:
-            // Skip paywall and finish immediately if user already has an active subscription
+            // After confirming first Joodle, decide next step based on user type
+            if shouldShowFeatureIntro {
+                // First-time user or revisiting from Settings: show feature intros
+                navigationPath.append(OnboardingStep.featureIntroEditEntry)
+            } else {
+                // Return user (reinstall with subscription): skip feature intros
+                // Go directly to iCloud config since they already have subscription
+                navigationPath.append(OnboardingStep.icloudConfig)
+            }
+
+        case .featureIntroEditEntry:
+            navigationPath.append(OnboardingStep.featureIntroYearSwitching)
+
+        case .featureIntroYearSwitching:
+            navigationPath.append(OnboardingStep.featureIntroViewModes)
+
+        case .featureIntroViewModes:
+            navigationPath.append(OnboardingStep.featureIntroSharing)
+
+        case .featureIntroSharing:
+            navigationPath.append(OnboardingStep.featureIntroWidgets)
+
+        case .featureIntroWidgets:
+            // After all feature intros, proceed to paywall or iCloud config
             if StoreKitManager.shared.hasActiveSubscription {
                 // User is already subscribed, show iCloud config
                 navigationPath.append(OnboardingStep.icloudConfig)
@@ -75,10 +121,6 @@ class OnboardingViewModel: ObservableObject {
             // Restart check will happen after onboarding completes
             navigationPath.append(OnboardingStep.onboardingCompletion)
 
-        case .widgetTutorial:
-            // Widget tutorial is currently hidden, but if somehow reached, go to completion
-            navigationPath.append(OnboardingStep.onboardingCompletion)
-
         case .onboardingCompletion:
             finishOnboarding()
         }
@@ -86,12 +128,14 @@ class OnboardingViewModel: ObservableObject {
 
     /// Called when user decides to skip iCloud sync setup
     func skipCloudSync() {
+        Haptic.play(with: .light)
         userWantsCloudSync = false
         navigationPath.append(OnboardingStep.onboardingCompletion)
     }
 
     func goBack() {
         guard !navigationPath.isEmpty else { return }
+        Haptic.play(with: .light)
         navigationPath.removeLast()
     }
 
@@ -123,7 +167,7 @@ class OnboardingViewModel: ObservableObject {
 
     /// Save the onboarding drawing to the database immediately
     func saveOnboardingDrawing() {
-        guard let data = firstDoodleData, !data.isEmpty, let context = modelContext else {
+        guard let data = firstJoodleData, !data.isEmpty, let context = modelContext else {
             print("OnboardingViewModel: No drawing data to save or no context")
             return
         }
@@ -133,33 +177,33 @@ class OnboardingViewModel: ObservableObject {
 
         // Use findOrCreate to get the single entry for this date (merges duplicates if any)
         let entryToUpdate = DayEntry.findOrCreate(for: today, in: context)
-        let isNewDoodle = entryToUpdate.drawingData == nil || entryToUpdate.drawingData?.isEmpty == true
+        let isNewJoodle = entryToUpdate.drawingData == nil || entryToUpdate.drawingData?.isEmpty == true
 
-        // If this is a revisit onboarding, check doodle limits
+        // If this is a revisit onboarding, check Joodle limits
         if isRevisitingOnboarding {
             let allEntriesDescriptor = FetchDescriptor<DayEntry>()
             do {
                 let allEntries = try context.fetch(allEntriesDescriptor)
 
-                if isNewDoodle {
-                    // User is trying to create a NEW doodle via revisit onboarding
-                    // Check if they're within their doodle limit
-                    let currentDoodleCount = SubscriptionManager.shared.totalDoodleCount(from: allEntries)
+                if isNewJoodle {
+                    // User is trying to create a NEW Joodle via revisit onboarding
+                    // Check if they're within their Joodle limit
+                    let currentJoodleCount = SubscriptionManager.shared.totalJoodleCount(from: allEntries)
 
-                    if !SubscriptionManager.shared.canCreateDoodle(currentTotalCount: currentDoodleCount) {
-                        print("OnboardingViewModel: Doodle limit reached, skipping save during revisit onboarding")
+                    if !SubscriptionManager.shared.canCreateJoodle(currentTotalCount: currentJoodleCount) {
+                        print("OnboardingViewModel: Joodle limit reached, skipping save during revisit onboarding")
                         return
                     }
                 } else {
                     // User is trying to EDIT an existing entry via revisit onboarding
-                    // Check if this doodle is within the editable range for free users
+                    // Check if this Joodle is within the editable range for free users
                     let entriesWithDrawings = allEntries
                         .filter { $0.drawingData != nil }
                         .sorted { $0.dateString < $1.dateString }
 
                     if let index = entriesWithDrawings.firstIndex(where: { $0.id == entryToUpdate.id }) {
-                        if !SubscriptionManager.shared.canEditDoodle(atIndex: index) {
-                            print("OnboardingViewModel: Doodle #\(index + 1) is locked, skipping edit during revisit onboarding")
+                        if !SubscriptionManager.shared.canEditJoodle(atIndex: index) {
+                            print("OnboardingViewModel: Joodle #\(index + 1) is locked, skipping edit during revisit onboarding")
                             return
                         }
                     }
@@ -171,7 +215,7 @@ class OnboardingViewModel: ObservableObject {
 
         // Update the entry with drawing data
         entryToUpdate.drawingData = data
-        print("OnboardingViewModel: \(isNewDoodle ? "Creating new" : "Updating existing") entry for \(todayDateString)")
+        print("OnboardingViewModel: \(isNewJoodle ? "Creating new" : "Updating existing") entry for \(todayDateString)")
 
         // Save immediately
         do {

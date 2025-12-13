@@ -343,7 +343,7 @@ struct JoodleApp: App {
                   }
                 }
               } message: {
-                Text("To start syncing your doodles to iCloud, Joodle needs to restart.\n\nYour doodle has been saved and will sync after restart.")
+                Text("To start syncing your Joodles to iCloud, Joodle needs to restart.\n\nYour Joodle has been saved and will sync after restart.")
               }
               .onAppear {
                 // Check for pending restart when main content appears
