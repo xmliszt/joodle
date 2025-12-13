@@ -393,72 +393,61 @@ struct DrawingCanvasView: View {
   }
 
   private func saveDrawingToStore() {
-    // Derive entry to save, checking database for existing entry to avoid duplicates
-    let entryToSave: DayEntry = {
-      if let entry { return entry }
-
-      // Check database for existing entry with same dateString
-      let dateString = DayEntry.dateToString(date)
-      let predicate = #Predicate<DayEntry> { entry in
-        entry.dateString == dateString
-      }
-      let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
-
-      do {
-        let existingEntries = try modelContext.fetch(descriptor)
-        // Prioritize entry with content (drawing or text)
-        if let existing = existingEntries.first(where: {
-          ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty
-        }) ?? existingEntries.first {
-          return existing
-        }
-      } catch {
-        print("DrawingCanvasView: Failed to fetch existing entry: \(error)")
-      }
-
-      // Create new entry only if none exists for this date
-      let newEntry = DayEntry(body: "", createdAt: date, drawingData: nil)
-      modelContext.insert(newEntry)
-      return newEntry
-    }()
-
-    // Update existing entry
-    if paths.isEmpty {
-      // No paths means no drawing data
-      entryToSave.drawingData = nil
-      entryToSave.drawingThumbnail20 = nil
-      entryToSave.drawingThumbnail200 = nil
-    } else {
-      // Convert paths to serializable data
-      let pathsData = paths.enumerated().map { (index, path) in
-        let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
-        return PathData(points: path.extractPoints(), isDot: isDot)
-      }
-
-      do {
-        let data = try JSONEncoder().encode(pathsData)
-        entryToSave.drawingData = data
-
-        // Generate thumbnails asynchronously
-        Task {
-          let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
-
-          await MainActor.run {
-            entryToSave.drawingThumbnail20 = thumbnails.0
-            entryToSave.drawingThumbnail200 = thumbnails.1
-
-            // Save again with thumbnails
-            try? modelContext.save()
-          }
-        }
-      } catch {
-        print("Failed to save drawing data: \(error)")
-      }
+    // If no paths and no existing entry, don't create an empty entry
+    if paths.isEmpty && entry == nil {
+      return
     }
 
-    // Save the context to persist changes
+    // If we have an existing entry but paths is empty, clear the drawing data
+    // If entry becomes empty (no text either), delete it entirely
+    if paths.isEmpty {
+      if let existingEntry = entry {
+        existingEntry.drawingData = nil
+        existingEntry.drawingThumbnail20 = nil
+        existingEntry.drawingThumbnail200 = nil
+
+        // If entry is now empty (no text either), delete it
+        if existingEntry.body.isEmpty {
+          existingEntry.deleteAllForSameDate(in: modelContext)
+        } else {
+          try? modelContext.save()
+        }
+      }
+      return
+    }
+
+    // We have paths to save - use findOrCreate to get the single entry for this date
+    let entryToSave: DayEntry = entry ?? DayEntry.findOrCreate(for: date, in: modelContext)
+
+    // Convert paths to serializable data
+    let pathsData = paths.enumerated().map { (index, path) in
+      let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
+      return PathData(points: path.extractPoints(), isDot: isDot)
+    }
+
+    do {
+      let data = try JSONEncoder().encode(pathsData)
+      entryToSave.drawingData = data
+
+      // Generate thumbnails asynchronously
+      Task {
+        let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
+
+        await MainActor.run {
+          entryToSave.drawingThumbnail20 = thumbnails.0
+          entryToSave.drawingThumbnail200 = thumbnails.1
+
+          // Save again with thumbnails
+          try? modelContext.save()
+        }
+      }
+    } catch {
+      print("Failed to save drawing data: \(error)")
+    }
+
     try? modelContext.save()
   }
+
 
   private func clearDrawing() {
     // Save current state to undo stack before clearing
@@ -480,7 +469,13 @@ struct DrawingCanvasView: View {
       existingEntry.drawingData = nil
       existingEntry.drawingThumbnail20 = nil
       existingEntry.drawingThumbnail200 = nil
-      try? modelContext.save()
+
+      // If entry is now empty (no text either), delete it entirely
+      if existingEntry.body.isEmpty {
+        existingEntry.deleteAllForSameDate(in: modelContext)
+      } else {
+        try? modelContext.save()
+      }
     }
   }
 

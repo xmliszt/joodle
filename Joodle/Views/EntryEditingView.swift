@@ -461,50 +461,38 @@ struct EntryEditingView: View {
   private func deleteEntry() {
     guard let entry else { return }
 
-    // Delete the entry from context
-    modelContext.delete(entry)
+    // Delete ALL entries for this date (handles duplicates)
+    entry.deleteAllForSameDate(in: modelContext)
     textContent = ""
     self.entry = nil
-
-    // Save the context to persist changes
-    try? modelContext.save()
   }
 
   private func saveNote(text: String, for date: Date) {
-    if let entry {
-      // Update existing entry
-      entry.body = text
-    } else {
-      // Check database for existing entry with same dateString to avoid duplicates
-      let dateString = DayEntry.dateToString(date)
-      let predicate = #Predicate<DayEntry> { e in
-        e.dateString == dateString
-      }
-      let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
-
-      do {
-        let existingEntries = try modelContext.fetch(descriptor)
-        // Prioritize entry with content (drawing or text)
-        if let existing = existingEntries.first(where: {
-          ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty
-        }) ?? existingEntries.first {
-          existing.body = text
-          // Update local state to track this entry
-          self.entry = existing
-        } else {
-          // Create new entry only if none exists for this date
-          let newEntry = DayEntry(body: text, createdAt: date)
-          modelContext.insert(newEntry)
-          self.entry = newEntry
-        }
-      } catch {
-        print("EntryEditingView: Failed to fetch existing entry: \(error)")
-        // Fallback: create new entry
-        let newEntry = DayEntry(body: text, createdAt: date)
-        modelContext.insert(newEntry)
-        self.entry = newEntry
-      }
+    // If text is empty and no existing entry, don't create an empty entry
+    if text.isEmpty && entry == nil {
+      return
     }
+
+    // If we have an existing entry, update it
+    if let existingEntry = entry {
+      existingEntry.body = text
+
+      // If entry is now empty (no text and no drawing), delete it entirely
+      let hasDrawing = existingEntry.drawingData != nil && !existingEntry.drawingData!.isEmpty
+      if text.isEmpty && !hasDrawing {
+        existingEntry.deleteAllForSameDate(in: modelContext)
+        self.entry = nil
+        return
+      }
+
+      try? modelContext.save()
+      return
+    }
+
+    // We have text to save - use findOrCreate to get the single entry for this date
+    let entryToUpdate = DayEntry.findOrCreate(for: date, in: modelContext)
+    entryToUpdate.body = text
+    self.entry = entryToUpdate
 
     // Save the context to persist changes
     try? modelContext.save()

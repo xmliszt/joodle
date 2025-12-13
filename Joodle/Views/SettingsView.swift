@@ -424,31 +424,46 @@ struct SettingsView: View {
       let data = try Data(contentsOf: url)
       let dtos = try JSONDecoder().decode([DayEntryDTO].self, from: data)
 
-      var count = 0
+      var importedCount = 0
+      var mergedCount = 0
+      var skippedCount = 0
       for dto in dtos {
-        // Check for duplicates based on same day using timezone-agnostic dateString
-        let dateString = DayEntry.dateToString(dto.createdAt)
+        // Skip empty entries (no text and no drawing)
+        let dtoHasContent = !dto.body.isEmpty || (dto.drawingData != nil && !dto.drawingData!.isEmpty)
+        if !dtoHasContent {
+          skippedCount += 1
+          continue
+        }
 
-        let descriptor = FetchDescriptor<DayEntry>(predicate: #Predicate<DayEntry> { entry in
-          entry.dateString == dateString
-        })
+        // Use findOrCreate to get or create the single entry for this date
+        let entry = DayEntry.findOrCreate(for: dto.createdAt, in: modelContext)
 
-        let existing = try modelContext.fetch(descriptor)
-        if existing.isEmpty {
-          let newEntry = DayEntry(
-            body: dto.body,
-            createdAt: dto.createdAt,
-            drawingData: dto.drawingData
-          )
-          newEntry.drawingThumbnail20 = dto.drawingThumbnail20
-          newEntry.drawingThumbnail200 = dto.drawingThumbnail200
-          modelContext.insert(newEntry)
-          count += 1
+        let hadContent = !entry.body.isEmpty || (entry.drawingData != nil && !entry.drawingData!.isEmpty)
+
+        // Merge imported data into existing entry
+        if entry.body.isEmpty && !dto.body.isEmpty {
+          entry.body = dto.body
+        } else if !entry.body.isEmpty && !dto.body.isEmpty && entry.body != dto.body {
+          // Both have text - append imported text
+          entry.body = entry.body + "\n\n---\n\n" + dto.body
+        }
+
+        // Import drawing if entry doesn't have one
+        if (entry.drawingData == nil || entry.drawingData?.isEmpty == true) && dto.drawingData != nil {
+          entry.drawingData = dto.drawingData
+          entry.drawingThumbnail20 = dto.drawingThumbnail20
+          entry.drawingThumbnail200 = dto.drawingThumbnail200
+        }
+
+        if hadContent {
+          mergedCount += 1
+        } else {
+          importedCount += 1
         }
       }
 
       try modelContext.save()
-      importMessage = "Successfully imported \(count) entries."
+      importMessage = "Imported \(importedCount) new entries\(skippedCount > 0 ? ", skipped \(skippedCount) empty" : "")"
       showImportAlert = true
     } catch {
       importMessage = "Import failed: \(error.localizedDescription)"
@@ -527,10 +542,19 @@ struct AppStatsView: View {
   @StateObject private var subscriptionManager = SubscriptionManager.shared
 
   @State private var totalEntries: Int = 0
+  @State private var uniqueDateCount: Int = 0
   @State private var duplicateCount: Int = 0
   @State private var duplicateDetails: [String: Int] = [:]
   @State private var isCleaningDuplicates = false
+  @State private var isCleaningEmpty = false
   @State private var cleanupResult: String?
+
+  // Debug info
+  @State private var entriesByYear: [Int: Int] = [:]
+  @State private var entriesWithDrawing: Int = 0
+  @State private var entriesWithText: Int = 0
+  @State private var entriesEmpty: Int = 0
+  @State private var entriesWithEmptyDateString: Int = 0
 
   var body: some View {
     NavigationStack {
@@ -545,10 +569,23 @@ struct AppStatsView: View {
           }
 
           HStack {
+            Text("Unique Dates")
+            Spacer()
+            Text("\(uniqueDateCount)")
+              .foregroundStyle(.secondary)
+          }
+
+          HStack {
             Text("Dates with Duplicates")
             Spacer()
             Text("\(duplicateCount)")
               .foregroundStyle(duplicateCount > 0 ? .red : .green)
+          }
+
+          if totalEntries != uniqueDateCount {
+            Text("⚠️ Entry count (\(totalEntries)) differs from unique dates (\(uniqueDateCount)) - duplicates exist!")
+              .font(.caption)
+              .foregroundStyle(.orange)
           }
 
           if !duplicateDetails.isEmpty {
@@ -585,6 +622,71 @@ struct AppStatsView: View {
             Text(result)
               .font(.caption)
               .foregroundStyle(.green)
+          }
+
+          Button("Print Debug Info to Console") {
+            printDetailedDebugInfo()
+          }
+        }
+
+        // MARK: - Debug Breakdown
+        Section("Entry Breakdown") {
+          HStack {
+            Text("With Drawing")
+            Spacer()
+            Text("\(entriesWithDrawing)")
+              .foregroundStyle(.secondary)
+          }
+
+          HStack {
+            Text("With Text Only")
+            Spacer()
+            Text("\(entriesWithText)")
+              .foregroundStyle(.secondary)
+          }
+
+          HStack {
+            Text("Empty (no content)")
+            Spacer()
+            Text("\(entriesEmpty)")
+              .foregroundStyle(entriesEmpty > 0 ? .orange : .secondary)
+          }
+
+          if entriesEmpty > 0 {
+            Button(role: .destructive) {
+              deleteEmptyEntries()
+            } label: {
+              HStack {
+                if isCleaningEmpty {
+                  ProgressView()
+                    .scaleEffect(0.8)
+                }
+                Text("Delete \(entriesEmpty) Empty Entries")
+              }
+            }
+            .disabled(isCleaningEmpty)
+          }
+
+          HStack {
+            Text("Empty dateString")
+            Spacer()
+            Text("\(entriesWithEmptyDateString)")
+              .foregroundStyle(entriesWithEmptyDateString > 0 ? .red : .secondary)
+          }
+
+          if !entriesByYear.isEmpty {
+            DisclosureGroup("Entries by Year") {
+              ForEach(entriesByYear.sorted(by: { $0.key > $1.key }), id: \.key) { year, count in
+                HStack {
+                  Text("\(year)")
+                    .font(.caption)
+                  Spacer()
+                  Text("\(count) entries")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+              }
+            }
           }
         }
 
@@ -724,33 +826,168 @@ struct AppStatsView: View {
   }
 
   private func loadStats() {
-    // Fetch total entries
-    let descriptor = FetchDescriptor<DayEntry>()
-    do {
-      let entries = try modelContext.fetch(descriptor)
-      totalEntries = entries.count
-    } catch {
-      print("Failed to fetch entries: \(error)")
-    }
+    // Fetch total entries and unique date count
+    totalEntries = DuplicateEntryCleanup.shared.getTotalEntryCount(modelContext: modelContext)
+    uniqueDateCount = DuplicateEntryCleanup.shared.getUniqueDateCount(modelContext: modelContext)
 
     // Check for duplicates
     duplicateCount = DuplicateEntryCleanup.shared.checkDuplicateCount(modelContext: modelContext)
     duplicateDetails = DuplicateEntryCleanup.shared.getDuplicateDetails(modelContext: modelContext)
+
+    // Load debug breakdown
+    loadDebugBreakdown()
+  }
+
+  private func loadDebugBreakdown() {
+    let descriptor = FetchDescriptor<DayEntry>()
+    do {
+      let allEntries = try modelContext.fetch(descriptor)
+
+      var byYear: [Int: Int] = [:]
+      var withDrawing = 0
+      var withText = 0
+      var empty = 0
+      var emptyDateString = 0
+
+      for entry in allEntries {
+        // Count by year
+        let year = entry.year
+        byYear[year, default: 0] += 1
+
+        // Count by content type
+        let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
+        let hasText = !entry.body.isEmpty
+
+        if hasDrawing {
+          withDrawing += 1
+        }
+        if hasText && !hasDrawing {
+          withText += 1
+        }
+        if !hasDrawing && !hasText {
+          empty += 1
+        }
+        if entry.dateString.isEmpty {
+          emptyDateString += 1
+        }
+      }
+
+      entriesByYear = byYear
+      entriesWithDrawing = withDrawing
+      entriesWithText = withText
+      entriesEmpty = empty
+      entriesWithEmptyDateString = emptyDateString
+
+    } catch {
+      print("Failed to load debug breakdown: \(error)")
+    }
+  }
+
+  private func printDetailedDebugInfo() {
+    let descriptor = FetchDescriptor<DayEntry>()
+    do {
+      let allEntries = try modelContext.fetch(descriptor)
+
+      print("========== DETAILED ENTRY DEBUG ==========")
+      print("Total entries in database: \(allEntries.count)")
+      print("")
+
+      // Group by dateString
+      var byDateString: [String: [DayEntry]] = [:]
+      for entry in allEntries {
+        let key = entry.dateString.isEmpty ? "(empty)" : entry.dateString
+        byDateString[key, default: []].append(entry)
+      }
+
+      print("Unique dateStrings: \(byDateString.count)")
+      print("")
+
+      // Print entries sorted by dateString
+      for (dateString, entries) in byDateString.sorted(by: { $0.key > $1.key }) {
+        let hasDrawing = entries.first?.drawingData != nil && !(entries.first?.drawingData?.isEmpty ?? true)
+        let hasText = !(entries.first?.body.isEmpty ?? true)
+        let contentType = hasDrawing ? "🎨" : (hasText ? "📝" : "⬜️")
+
+        if entries.count > 1 {
+          print("⚠️ DUPLICATE: \(dateString) - \(entries.count) entries \(contentType)")
+          for (idx, entry) in entries.enumerated() {
+            print("   [\(idx)] createdAt: \(entry.createdAt), body: \(entry.body.prefix(20))..., hasDrawing: \(entry.drawingData != nil)")
+          }
+        } else {
+          print("\(contentType) \(dateString) - createdAt: \(entries.first?.createdAt ?? Date())")
+        }
+      }
+
+      print("")
+      print("========== YEAR BREAKDOWN ==========")
+      var yearCounts: [Int: Int] = [:]
+      for entry in allEntries {
+        yearCounts[entry.year, default: 0] += 1
+      }
+      for (year, count) in yearCounts.sorted(by: { $0.key > $1.key }) {
+        print("\(year): \(count) entries")
+      }
+
+      print("")
+      print("========== CONTENT BREAKDOWN ==========")
+      let withDrawing = allEntries.filter { $0.drawingData != nil && !$0.drawingData!.isEmpty }.count
+      let withTextOnly = allEntries.filter { ($0.drawingData == nil || $0.drawingData!.isEmpty) && !$0.body.isEmpty }.count
+      let empty = allEntries.filter { ($0.drawingData == nil || $0.drawingData!.isEmpty) && $0.body.isEmpty }.count
+      print("With drawing: \(withDrawing)")
+      print("With text only: \(withTextOnly)")
+      print("Empty: \(empty)")
+
+      print("")
+      print("========== END DEBUG ==========")
+
+    } catch {
+      print("Failed to print debug info: \(error)")
+    }
   }
 
   private func clearDuplicates() {
     isCleaningDuplicates = true
     cleanupResult = nil
 
-    // Reset the cleanup flag to allow re-running
-    DuplicateEntryCleanup.shared.resetCleanupFlag()
-
-    let result = DuplicateEntryCleanup.shared.cleanupDuplicates(modelContext: modelContext)
+    // Use forceCleanupDuplicates to run regardless of previous cleanup flag
+    let result = DuplicateEntryCleanup.shared.forceCleanupDuplicates(modelContext: modelContext, markAsCompleted: false)
 
     cleanupResult = "Merged: \(result.merged), Deleted: \(result.deleted)"
     isCleaningDuplicates = false
 
     // Reload stats
+    loadStats()
+  }
+
+  private func deleteEmptyEntries() {
+    isCleaningEmpty = true
+
+    let descriptor = FetchDescriptor<DayEntry>()
+    do {
+      let allEntries = try modelContext.fetch(descriptor)
+      var deletedCount = 0
+
+      for entry in allEntries {
+        let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
+        let hasText = !entry.body.isEmpty
+
+        if !hasDrawing && !hasText {
+          modelContext.delete(entry)
+          deletedCount += 1
+        }
+      }
+
+      if deletedCount > 0 {
+        try modelContext.save()
+        print("Deleted \(deletedCount) empty entries")
+        cleanupResult = "Deleted \(deletedCount) empty entries"
+      }
+    } catch {
+      print("Failed to delete empty entries: \(error)")
+      cleanupResult = "Failed: \(error.localizedDescription)"
+    }
+
+    isCleaningEmpty = false
     loadStats()
   }
 }

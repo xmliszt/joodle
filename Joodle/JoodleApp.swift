@@ -132,6 +132,9 @@ struct JoodleApp: App {
     // Run duplicate entry cleanup migration
     Self.runDuplicateEntryCleanup(container: container)
 
+    // Run empty entry cleanup (entries with no text and no drawing)
+    Self.runEmptyEntryCleanup(container: container)
+
     // Run legacy thumbnail cleanup migration
     Self.runLegacyThumbnailCleanup(container: container)
 
@@ -140,12 +143,47 @@ struct JoodleApp: App {
   }
 
   /// Cleans up duplicate entries (same dateString) by merging content and deleting duplicates
+  /// This runs on EVERY app launch to ensure no duplicates exist (handles iCloud sync conflicts)
   private static func runDuplicateEntryCleanup(container: ModelContainer) {
     Task { @MainActor in
       let context = ModelContext(container)
-      let result = DuplicateEntryCleanup.shared.cleanupDuplicates(modelContext: context)
+      // Use forceCleanupDuplicates to always run regardless of previous cleanup flag
+      // This ensures duplicates created by iCloud sync conflicts are cleaned up
+      let result = DuplicateEntryCleanup.shared.forceCleanupDuplicates(modelContext: context, markAsCompleted: false)
       if result.merged > 0 || result.deleted > 0 {
         print("DuplicateEntryCleanup: Completed - merged \(result.merged), deleted \(result.deleted)")
+      }
+    }
+  }
+
+  /// Deletes entries that have no content (no text and no drawing)
+  /// These serve no purpose and waste storage space
+  /// This runs on EVERY app launch to clean up any accidentally created empty entries
+  private static func runEmptyEntryCleanup(container: ModelContainer) {
+    Task { @MainActor in
+      let context = ModelContext(container)
+      let descriptor = FetchDescriptor<DayEntry>()
+
+      do {
+        let allEntries = try context.fetch(descriptor)
+        var deletedCount = 0
+
+        for entry in allEntries {
+          let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
+          let hasText = !entry.body.isEmpty
+
+          if !hasDrawing && !hasText {
+            context.delete(entry)
+            deletedCount += 1
+          }
+        }
+
+        if deletedCount > 0 {
+          try context.save()
+          print("EmptyEntryCleanup: Deleted \(deletedCount) empty entries")
+        }
+      } catch {
+        print("EmptyEntryCleanup: Failed - \(error)")
       }
     }
   }

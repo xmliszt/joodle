@@ -558,30 +558,8 @@ struct ContentView: View {
   }
 
   private func selectDateItem(item: DateItem, scrollProxy: ScrollViewProxy) {
-    // Check database for existing entry with same dateString to avoid creating duplicates
-    let dateString = DayEntry.dateToString(item.date)
-    let predicate = #Predicate<DayEntry> { entry in
-      entry.dateString == dateString
-    }
-    let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
-
-    do {
-      let existingEntries = try modelContext.fetch(descriptor)
-      // Prioritize entry with content (drawing or text)
-      var entry = existingEntries.first(where: {
-        ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty
-      }) ?? existingEntries.first
-
-      // Create new entry only if none exists for this date
-      if entry == nil {
-        entry = DayEntry(body: "", createdAt: item.date)
-        modelContext.insert(entry!)
-        try? modelContext.save()
-      }
-    } catch {
-      print("ContentView: Failed to fetch entries for date selection: \(error)")
-    }
-
+    // Don't create entry here - only create when user actually saves content
+    // This prevents empty entries from being created just by selecting a date
     selectedDateItem = item
     scrollToRelevantDate(itemId: item.id, scrollProxy: scrollProxy)
   }

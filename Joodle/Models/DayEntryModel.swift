@@ -143,4 +143,135 @@ final class DayEntry {
   func matches(date: Date) -> Bool {
     return dateString == Self.dateToString(date)
   }
+
+  // MARK: - Find or Create Entry
+
+  /// Finds an existing entry for the given date, or creates a new one if none exists.
+  /// This is the preferred method to get/create entries to avoid duplicates.
+  /// If multiple entries exist for the same date, they will be merged and duplicates deleted.
+  /// - Parameters:
+  ///   - date: The date to find or create an entry for
+  ///   - modelContext: The SwiftData model context
+  /// - Returns: The single entry for this date (existing or newly created)
+  @MainActor
+  static func findOrCreate(for date: Date, in modelContext: ModelContext) -> DayEntry {
+    let targetDateString = dateToString(date)
+    let predicate = #Predicate<DayEntry> { entry in
+      entry.dateString == targetDateString
+    }
+    let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+
+    do {
+      let existingEntries = try modelContext.fetch(descriptor)
+
+      if existingEntries.isEmpty {
+        // No entry exists - create new one
+        let newEntry = DayEntry(body: "", createdAt: date)
+        modelContext.insert(newEntry)
+        try? modelContext.save()
+        return newEntry
+      } else if existingEntries.count == 1 {
+        // Exactly one entry - return it
+        return existingEntries[0]
+      } else {
+        // Multiple entries exist - merge and return the primary one
+        return mergeAndCleanup(entries: existingEntries, in: modelContext)
+      }
+    } catch {
+      print("DayEntry.findOrCreate: Failed to fetch entries: \(error)")
+      // Fallback: create new entry
+      let newEntry = DayEntry(body: "", createdAt: date)
+      modelContext.insert(newEntry)
+      try? modelContext.save()
+      return newEntry
+    }
+  }
+
+  /// Merges multiple entries for the same date into one, deleting duplicates
+  /// - Parameters:
+  ///   - entries: Array of entries to merge (must have same dateString)
+  ///   - modelContext: The SwiftData model context
+  /// - Returns: The merged primary entry
+  @MainActor
+  private static func mergeAndCleanup(entries: [DayEntry], in modelContext: ModelContext) -> DayEntry {
+    // Sort by content priority: drawing > text > empty
+    let sortedEntries = entries.sorted { entry1, entry2 in
+      contentScore(entry1) > contentScore(entry2)
+    }
+
+    guard let primaryEntry = sortedEntries.first else {
+      fatalError("mergeAndCleanup called with empty array")
+    }
+
+    let duplicates = Array(sortedEntries.dropFirst())
+
+    // Merge content from duplicates into primary entry
+    for duplicate in duplicates {
+      // Merge text if primary is empty but duplicate has text
+      if primaryEntry.body.isEmpty && !duplicate.body.isEmpty {
+        primaryEntry.body = duplicate.body
+      } else if !primaryEntry.body.isEmpty && !duplicate.body.isEmpty && primaryEntry.body != duplicate.body {
+        // Both have different text - combine them
+        primaryEntry.body = primaryEntry.body + "\n\n---\n\n" + duplicate.body
+      }
+
+      // Merge drawing if primary doesn't have one
+      if (primaryEntry.drawingData == nil || primaryEntry.drawingData?.isEmpty == true) &&
+         (duplicate.drawingData != nil && duplicate.drawingData?.isEmpty == false) {
+        primaryEntry.drawingData = duplicate.drawingData
+        primaryEntry.drawingThumbnail20 = duplicate.drawingThumbnail20
+        primaryEntry.drawingThumbnail200 = duplicate.drawingThumbnail200
+      }
+
+      // Delete the duplicate
+      modelContext.delete(duplicate)
+    }
+
+    if !duplicates.isEmpty {
+      try? modelContext.save()
+      print("DayEntry.mergeAndCleanup: Merged \(duplicates.count) duplicate(s) for \(primaryEntry.dateString)")
+    }
+
+    return primaryEntry
+  }
+
+  /// Calculate content priority score for an entry
+  private static func contentScore(_ entry: DayEntry) -> Int {
+    var score = 0
+    if let drawingData = entry.drawingData, !drawingData.isEmpty {
+      score += 100
+    }
+    if !entry.body.isEmpty {
+      score += 50 + min(entry.body.count, 50)
+    }
+    if entry.drawingThumbnail20 != nil { score += 10 }
+    if entry.drawingThumbnail200 != nil { score += 10 }
+    return score
+  }
+
+  /// Deletes this entry and ALL other entries for the same date
+  /// Use this when user explicitly wants to delete/clear a day's entry
+  /// - Parameter modelContext: The SwiftData model context
+  @MainActor
+  func deleteAllForSameDate(in modelContext: ModelContext) {
+    let targetDateString = self.dateString
+    let predicate = #Predicate<DayEntry> { entry in
+      entry.dateString == targetDateString
+    }
+    let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+
+    do {
+      let allEntriesForDate = try modelContext.fetch(descriptor)
+      for entry in allEntriesForDate {
+        modelContext.delete(entry)
+      }
+      try modelContext.save()
+      print("DayEntry.deleteAllForSameDate: Deleted \(allEntriesForDate.count) entry(ies) for \(targetDateString)")
+    } catch {
+      print("DayEntry.deleteAllForSameDate: Failed to delete entries: \(error)")
+      // At minimum, delete this entry
+      modelContext.delete(self)
+      try? modelContext.save()
+    }
+  }
 }

@@ -32,15 +32,26 @@ class DuplicateEntryCleanup {
       return (0, 0)
     }
 
+    return forceCleanupDuplicates(modelContext: modelContext, markAsCompleted: true)
+  }
+
+  /// Force cleanup duplicates regardless of whether it was already performed
+  /// Used for manual cleanup from developer tools
+  /// - Parameters:
+  ///   - modelContext: The SwiftData model context
+  ///   - markAsCompleted: Whether to mark the cleanup as completed in UserDefaults
+  /// - Returns: A tuple with (mergedCount, deletedCount)
+  func forceCleanupDuplicates(modelContext: ModelContext, markAsCompleted: Bool = false) -> (merged: Int, deleted: Int) {
     let descriptor = FetchDescriptor<DayEntry>()
 
     do {
       let allEntries = try modelContext.fetch(descriptor)
 
-      // Group entries by dateString
+      // Group entries by their effective dateString
+      // For entries with empty dateString, derive it from createdAt
       var entriesByDate: [String: [DayEntry]] = [:]
       for entry in allEntries {
-        let key = entry.dateString
+        let key = effectiveDateString(for: entry)
         if entriesByDate[key] == nil {
           entriesByDate[key] = []
         }
@@ -67,6 +78,11 @@ class DuplicateEntryCleanup {
         guard let primaryEntry = sortedEntries.first else { continue }
         let duplicates = Array(sortedEntries.dropFirst())
 
+        // Ensure primary entry has the correct dateString
+        if primaryEntry.dateString.isEmpty {
+          primaryEntry.dateString = dateString
+        }
+
         // Merge content from duplicates into primary entry
         for duplicate in duplicates {
           let didMerge = mergeContent(from: duplicate, into: primaryEntry)
@@ -85,8 +101,10 @@ class DuplicateEntryCleanup {
         print("DuplicateEntryCleanup: Merged content \(mergedCount) times, deleted \(deletedCount) duplicate entries")
       }
 
-      // Mark as completed
-      UserDefaults.standard.set(true, forKey: Self.cleanupKey)
+      // Mark as completed if requested
+      if markAsCompleted {
+        UserDefaults.standard.set(true, forKey: Self.cleanupKey)
+      }
 
       return (mergedCount, deletedCount)
 
@@ -94,6 +112,16 @@ class DuplicateEntryCleanup {
       print("DuplicateEntryCleanup: Failed to clean up duplicates: \(error)")
       return (0, 0)
     }
+  }
+
+  /// Get the effective dateString for an entry
+  /// If dateString is empty, derive it from createdAt
+  private func effectiveDateString(for entry: DayEntry) -> String {
+    if !entry.dateString.isEmpty {
+      return entry.dateString
+    }
+    // Derive from createdAt for legacy entries
+    return DayEntry.dateToString(entry.createdAt)
   }
 
   /// Calculate a score for entry content priority
@@ -173,10 +201,11 @@ class DuplicateEntryCleanup {
     do {
       let allEntries = try modelContext.fetch(descriptor)
 
-      // Group entries by dateString
+      // Group entries by effective dateString (handles empty dateString)
       var entriesByDate: [String: Int] = [:]
       for entry in allEntries {
-        entriesByDate[entry.dateString, default: 0] += 1
+        let key = effectiveDateString(for: entry)
+        entriesByDate[key, default: 0] += 1
       }
 
       // Count dates with more than one entry
@@ -198,10 +227,11 @@ class DuplicateEntryCleanup {
     do {
       let allEntries = try modelContext.fetch(descriptor)
 
-      // Group entries by dateString
+      // Group entries by effective dateString (handles empty dateString)
       var entriesByDate: [String: Int] = [:]
       for entry in allEntries {
-        entriesByDate[entry.dateString, default: 0] += 1
+        let key = effectiveDateString(for: entry)
+        entriesByDate[key, default: 0] += 1
       }
 
       // Return only dates with duplicates
@@ -210,6 +240,38 @@ class DuplicateEntryCleanup {
     } catch {
       print("DuplicateEntryCleanup: Failed to get duplicate details: \(error)")
       return [:]
+    }
+  }
+
+  /// Get total entry count (for stats)
+  /// - Parameter modelContext: The SwiftData model context
+  /// - Returns: Total number of entries
+  func getTotalEntryCount(modelContext: ModelContext) -> Int {
+    let descriptor = FetchDescriptor<DayEntry>()
+    do {
+      let allEntries = try modelContext.fetch(descriptor)
+      return allEntries.count
+    } catch {
+      print("DuplicateEntryCleanup: Failed to get total entry count: \(error)")
+      return 0
+    }
+  }
+
+  /// Get count of unique dates (entries after deduplication)
+  /// - Parameter modelContext: The SwiftData model context
+  /// - Returns: Number of unique dates with entries
+  func getUniqueDateCount(modelContext: ModelContext) -> Int {
+    let descriptor = FetchDescriptor<DayEntry>()
+    do {
+      let allEntries = try modelContext.fetch(descriptor)
+      var uniqueDates = Set<String>()
+      for entry in allEntries {
+        uniqueDates.insert(effectiveDateString(for: entry))
+      }
+      return uniqueDates.count
+    } catch {
+      print("DuplicateEntryCleanup: Failed to get unique date count: \(error)")
+      return 0
     }
   }
 

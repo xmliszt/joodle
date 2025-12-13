@@ -131,22 +131,18 @@ class OnboardingViewModel: ObservableObject {
         let today = Date()
         let todayDateString = DayEntry.dateToString(today)
 
-        // Check for existing entry to avoid duplicates using timezone-agnostic dateString
-        let predicate = #Predicate<DayEntry> { entry in
-            entry.dateString == todayDateString
-        }
-        let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+        // Use findOrCreate to get the single entry for this date (merges duplicates if any)
+        let entryToUpdate = DayEntry.findOrCreate(for: today, in: context)
+        let isNewDoodle = entryToUpdate.drawingData == nil || entryToUpdate.drawingData?.isEmpty == true
 
-        do {
-            let existingEntries = try context.fetch(descriptor)
-
-            // If this is a revisit onboarding, check doodle limits
-            if isRevisitingOnboarding {
-                let allEntriesDescriptor = FetchDescriptor<DayEntry>()
+        // If this is a revisit onboarding, check doodle limits
+        if isRevisitingOnboarding {
+            let allEntriesDescriptor = FetchDescriptor<DayEntry>()
+            do {
                 let allEntries = try context.fetch(allEntriesDescriptor)
 
-                if existingEntries.isEmpty {
-                    // User is trying to create a NEW entry via revisit onboarding
+                if isNewDoodle {
+                    // User is trying to create a NEW doodle via revisit onboarding
                     // Check if they're within their doodle limit
                     let currentDoodleCount = SubscriptionManager.shared.totalDoodleCount(from: allEntries)
 
@@ -154,55 +150,44 @@ class OnboardingViewModel: ObservableObject {
                         print("OnboardingViewModel: Doodle limit reached, skipping save during revisit onboarding")
                         return
                     }
-                } else if let existingEntry = existingEntries.first {
+                } else {
                     // User is trying to EDIT an existing entry via revisit onboarding
                     // Check if this doodle is within the editable range for free users
                     let entriesWithDrawings = allEntries
                         .filter { $0.drawingData != nil }
                         .sorted { $0.dateString < $1.dateString }
 
-                    if let index = entriesWithDrawings.firstIndex(where: { $0.id == existingEntry.id }) {
+                    if let index = entriesWithDrawings.firstIndex(where: { $0.id == entryToUpdate.id }) {
                         if !SubscriptionManager.shared.canEditDoodle(atIndex: index) {
                             print("OnboardingViewModel: Doodle #\(index + 1) is locked, skipping edit during revisit onboarding")
                             return
                         }
-                    } else if existingEntry.drawingData == nil {
-                        // Entry exists but has no drawing yet - treat as new doodle creation
-                        let currentDoodleCount = SubscriptionManager.shared.totalDoodleCount(from: allEntries)
-                        if !SubscriptionManager.shared.canCreateDoodle(currentTotalCount: currentDoodleCount) {
-                            print("OnboardingViewModel: Doodle limit reached, skipping save during revisit onboarding")
-                            return
-                        }
                     }
                 }
+            } catch {
+                print("OnboardingViewModel: Failed to fetch entries for limit check: \(error)")
             }
+        }
 
-            let entryToUpdate: DayEntry
+        // Update the entry with drawing data
+        entryToUpdate.drawingData = data
+        print("OnboardingViewModel: \(isNewDoodle ? "Creating new" : "Updating existing") entry for \(todayDateString)")
 
-            if let existing = existingEntries.first {
-                print("OnboardingViewModel: Updating existing entry for \(todayDateString)")
-                entryToUpdate = existing
-                entryToUpdate.drawingData = data
-            } else {
-                print("OnboardingViewModel: Creating new entry for \(todayDateString)")
-                entryToUpdate = DayEntry(body: "", createdAt: today, drawingData: data)
-                context.insert(entryToUpdate)
-            }
-
-            // Save immediately
+        // Save immediately
+        do {
             try context.save()
             print("OnboardingViewModel: Drawing saved successfully for \(todayDateString)")
-
-            // Generate thumbnails asynchronously
-            Task {
-                let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
-                entryToUpdate.drawingThumbnail20 = thumbnails.0
-                entryToUpdate.drawingThumbnail200 = thumbnails.1
-                try? context.save()
-                print("OnboardingViewModel: Thumbnails generated and saved")
-            }
         } catch {
             print("OnboardingViewModel: Failed to save drawing: \(error)")
+        }
+
+        // Generate thumbnails asynchronously
+        Task {
+            let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
+            entryToUpdate.drawingThumbnail20 = thumbnails.0
+            entryToUpdate.drawingThumbnail200 = thumbnails.1
+            try? context.save()
+            print("OnboardingViewModel: Thumbnails generated and saved")
         }
     }
 
