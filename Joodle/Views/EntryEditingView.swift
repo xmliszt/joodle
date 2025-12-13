@@ -105,8 +105,8 @@ struct EntryEditingView: View {
                     // Prioritize entry with content
                     entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
 
-                    guard let entry else { return }
-                    textContent = entry.body
+                    // Always update textContent - clear it if no entry exists
+                    textContent = entry?.body ?? ""
                   }
                 }
                 .onChange(of: isTextFieldFocused) { _, newValue in
@@ -225,17 +225,24 @@ struct EntryEditingView: View {
       }
       .onChange(of: entries) { _, newEntries in
         guard let date else { return }
-        // If we don't have an entry yet, try to find one in the new entries
-        if entry == nil {
-          let candidates = newEntries.filter { $0.matches(date: date) }
-          // Prioritize entry with content
-          if let found = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first {
-            entry = found
-            // Only update textContent if user hasn't typed anything yet
-            if textContent.isEmpty {
-              textContent = found.body
-            }
+        // Always refresh entry from the latest entries array
+        // This handles the case where an entry is created/updated externally (e.g., from drawing canvas)
+        let candidates = newEntries.filter { $0.matches(date: date) }
+        // Prioritize entry with content
+        let found = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
+
+        // Only update if we found a different entry or entry was nil
+        if found?.id != entry?.id {
+          entry = found
+          // Update textContent only if user is not currently editing
+          // This prevents overwriting what user is typing
+          if !isTextFieldFocused {
+            textContent = found?.body ?? ""
           }
+        } else if let found = found {
+          // Same entry but data might have changed (e.g., drawing added)
+          // Update the reference to get latest data
+          entry = found
         }
       }
       .onChange(of: entry) { _, _ in
