@@ -211,6 +211,15 @@ struct SettingsView: View {
             // Show premium badge if not subscribed
             if !subscriptionManager.hasICloudSync {
               PremiumFeatureBadge()
+            } else if cloudSyncManager.isSyncing && subscriptionManager.hasICloudSync {
+              // Show syncing indicator
+              HStack(spacing: 6) {
+                Text("Syncing")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                ProgressView()
+                  .scaleEffect(0.6)
+              }
             } else if !cloudSyncManager.canSync {
               Image(systemName: "xmark.circle.fill")
                 .foregroundStyle(.red)

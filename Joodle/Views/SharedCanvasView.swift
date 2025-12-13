@@ -48,6 +48,10 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   var placeholderData: Data? = nil
   var buttonsConfig: CanvasButtonsConfig? = nil
 
+  /// Track the maximum distance from start point during a gesture to detect dots vs strokes
+  @State private var maxDistanceFromStart: CGFloat = 0
+  @State private var gestureStartPoint: CGPoint = .zero
+
   /// Callback when a stroke is finished (finger lifted or moved out of bounds)
   var onCommitStroke: () -> Void
 
@@ -220,9 +224,17 @@ struct SharedCanvasView<TrailingHeader: View>: View {
                   isDrawing = true
                   currentPathIsDot = false
                   currentPath.move(to: point)
+                  // Track start point and reset max distance
+                  gestureStartPoint = point
+                  maxDistanceFromStart = 0
                 } else {
                   // Continue current stroke
                   currentPath.addLine(to: point)
+                  // Update max distance from start point
+                  let dx = point.x - gestureStartPoint.x
+                  let dy = point.y - gestureStartPoint.y
+                  let distance = sqrt(dx * dx + dy * dy)
+                  maxDistanceFromStart = max(maxDistanceFromStart, distance)
                 }
               } else {
                 // Point is out of bounds
@@ -233,10 +245,12 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               }
             }
             .onEnded { value in
-              let translation = value.translation
-              let isTap = abs(translation.width) < 1 && abs(translation.height) < 1
+              // Use max distance traveled to determine if this was a tap (dot) or stroke
+              // This correctly handles cases where user draws a path returning to start
+              let tapThreshold: CGFloat = 3.0
+              let isTap = maxDistanceFromStart < tapThreshold
 
-              // Check if this was a single tap (minimal movement)
+              // Check if this was a single tap (minimal movement throughout gesture)
               if isTap {
                 // Create a small circle for the dot
                 let point = value.location
@@ -260,6 +274,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               // Reset drawing state
               isDrawing = false
               currentPathIsDot = false
+              maxDistanceFromStart = 0
             }
         )
       }

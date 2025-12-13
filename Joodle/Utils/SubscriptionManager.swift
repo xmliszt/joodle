@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 import StoreKit
+import SwiftData
 
 @MainActor
 class SubscriptionManager: ObservableObject {
@@ -45,11 +46,7 @@ class SubscriptionManager: ObservableObject {
 
             // Check iCloud sync status on launch - disable if not subscribed
             await checkAndDisableCloudSyncIfNeeded()
-
-            // Update widget subscription status
-            await MainActor.run {
-                WidgetHelper.shared.updateSubscriptionStatus()
-            }
+            // Note: Widget subscription status is now updated inside updateSubscriptionStatus()
         }
 
         // Set up periodic expiration check
@@ -123,6 +120,10 @@ class SubscriptionManager: ObservableObject {
 
         // Note: handleSubscriptionLost() and handleSubscriptionGained() are called
         // automatically by the didSet observer on isSubscribed when the value changes
+
+        // Always update widget subscription status after StoreKit refresh
+        // This ensures widgets have the latest subscription state
+        WidgetHelper.shared.updateSubscriptionStatus()
     }
 
     // MARK: - Expiration Monitoring
@@ -165,20 +166,32 @@ class SubscriptionManager: ObservableObject {
     // MARK: - Subscription State Change Handling
 
     private func handleSubscriptionGained() {
-        // Auto-enable iCloud sync when user upgrades
+        // Auto-enable iCloud sync when user upgrades or restores subscription
         if !UserPreferences.shared.isCloudSyncEnabled {
             // Check if system requirements are met for iCloud sync
             let syncManager = CloudSyncManager.shared
 
             if syncManager.isCloudAvailable && syncManager.systemCloudEnabled {
-                print("   Auto-enabling iCloud sync for new subscriber")
+                // Check if this is a reinstall with existing iCloud data
+                let cloudStore = NSUbiquitousKeyValueStore.default
+                cloudStore.synchronize()
+                let hadSyncEnabled = cloudStore.bool(forKey: "is_cloud_sync_enabled_backup") ||
+                                     cloudStore.bool(forKey: "cloud_sync_was_enabled")
+
+                print("   Auto-enabling iCloud sync for subscriber")
+                if hadSyncEnabled {
+                    print("   Detected previous sync history")
+                }
+
                 UserPreferences.shared.isCloudSyncEnabled = true
 
-                // Notify the app to recreate ModelContainer with cloud sync
-                NotificationCenter.default.post(
-                    name: NSNotification.Name("CloudSyncPreferenceChanged"),
-                    object: nil
-                )
+                // Save sync state to iCloud KVS for future reinstall recovery
+                cloudStore.set(true, forKey: "is_cloud_sync_enabled_backup")
+                cloudStore.set(true, forKey: "cloud_sync_was_enabled")
+                cloudStore.synchronize()
+
+                // Note: Container was already created at app launch
+                // ModelContainerManager.needsRestartForSyncChange will be checked by UI
             } else {
                 print("   iCloud sync not auto-enabled: system requirements not met")
                 print("   isCloudAvailable: \(syncManager.isCloudAvailable)")
@@ -206,13 +219,16 @@ class SubscriptionManager: ObservableObject {
         if needsContainerRecreation {
             UserPreferences.shared.isCloudSyncEnabled = false
 
-            // Notify the app to recreate ModelContainer without cloud sync
-            NotificationCenter.default.post(
-                name: NSNotification.Name("CloudSyncPreferenceChanged"),
-                object: nil
-            )
+            // Also clear the iCloud KVS sync state so reinstall won't auto-enable
+            // without a valid subscription
+            let cloudStore = NSUbiquitousKeyValueStore.default
+            cloudStore.set(false, forKey: "is_cloud_sync_enabled_backup")
+            cloudStore.set(false, forKey: "cloud_sync_was_enabled")
+            cloudStore.synchronize()
 
-            print("   iCloud sync disabled")
+            // Note: ModelContainerManager.needsRestartForSyncChange will be checked by UI
+
+            print("   iCloud sync disabled and cloud state cleared")
         }
 
         // Update widget subscription status
@@ -246,11 +262,14 @@ class SubscriptionManager: ObservableObject {
             await MainActor.run {
                 UserPreferences.shared.isCloudSyncEnabled = false
 
-                // Notify the app to recreate ModelContainer without cloud sync
-                NotificationCenter.default.post(
-                    name: NSNotification.Name("CloudSyncPreferenceChanged"),
-                    object: nil
-                )
+                // Also clear the iCloud KVS sync state so reinstall won't auto-enable
+                // without a valid subscription
+                let cloudStore = NSUbiquitousKeyValueStore.default
+                cloudStore.set(false, forKey: "is_cloud_sync_enabled_backup")
+                cloudStore.set(false, forKey: "cloud_sync_was_enabled")
+                cloudStore.synchronize()
+
+                // Note: ModelContainerManager.needsRestartForSyncChange will be checked by UI
             }
         }
     }
@@ -352,6 +371,9 @@ class SubscriptionManager: ObservableObject {
         WidgetHelper.shared.updateSubscriptionStatus()
     }
 
+    // MARK: - Drawing Protection for Initial Sync
+
+    /// Check if today has a drawing in the current local database and protect it
     // MARK: - Doodle Limit Helpers
 
     /// Check if user can create a new doodle based on their plan

@@ -73,40 +73,105 @@ class OnboardingViewModel: ObservableObject {
             SubscriptionManager.shared.grantSubscription()
         }
 
+        // Always save the drawing immediately to local database
+        // This ensures the drawing is never lost, regardless of sync state
+        saveOnboardingDrawing()
+
+        // Auto-enable iCloud sync preference if user has subscription
+        // Note: If the container wasn't created with sync enabled, user will see
+        // a "restart required" banner in ContentView
+        autoEnableCloudSyncIfEligible()
+
         shouldDismiss = true
+    }
 
-        if let data = firstDoodleData, let context = modelContext {
-            let today = Date()
-            let todayDateString = DayEntry.dateToString(today)
+    /// Save the onboarding drawing to the database immediately
+    private func saveOnboardingDrawing() {
+        guard let data = firstDoodleData, !data.isEmpty, let context = modelContext else {
+            print("OnboardingViewModel: No drawing data to save or no context")
+            return
+        }
 
-            // Check for existing entry to avoid duplicates using timezone-agnostic dateString
-            let predicate = #Predicate<DayEntry> { entry in
-                entry.dateString == todayDateString
-            }
-            let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+        let today = Date()
+        let todayDateString = DayEntry.dateToString(today)
 
+        // Check for existing entry to avoid duplicates using timezone-agnostic dateString
+        let predicate = #Predicate<DayEntry> { entry in
+            entry.dateString == todayDateString
+        }
+        let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+
+        do {
+            let existingEntries = try context.fetch(descriptor)
             let entryToUpdate: DayEntry
 
-            do {
-                let existingEntries = try context.fetch(descriptor)
-                if let existing = existingEntries.first {
-                    entryToUpdate = existing
-                    entryToUpdate.drawingData = data
-                } else {
-                    entryToUpdate = DayEntry(body: "", createdAt: today, drawingData: data)
-                    context.insert(entryToUpdate)
-                }
-
-                // Generate thumbnails
-                Task {
-                    let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
-                    entryToUpdate.drawingThumbnail20 = thumbnails.0
-                    entryToUpdate.drawingThumbnail200 = thumbnails.1
-                    try? context.save()
-                }
-            } catch {
-                print("Failed to fetch/save entry: \(error)")
+            if let existing = existingEntries.first {
+                print("OnboardingViewModel: Updating existing entry for \(todayDateString)")
+                entryToUpdate = existing
+                entryToUpdate.drawingData = data
+            } else {
+                print("OnboardingViewModel: Creating new entry for \(todayDateString)")
+                entryToUpdate = DayEntry(body: "", createdAt: today, drawingData: data)
+                context.insert(entryToUpdate)
             }
+
+            // Save immediately
+            try context.save()
+            print("OnboardingViewModel: Drawing saved successfully for \(todayDateString)")
+
+            // Generate thumbnails asynchronously
+            Task {
+                let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
+                entryToUpdate.drawingThumbnail20 = thumbnails.0
+                entryToUpdate.drawingThumbnail200 = thumbnails.1
+                try? context.save()
+                print("OnboardingViewModel: Thumbnails generated and saved")
+            }
+        } catch {
+            print("OnboardingViewModel: Failed to save drawing: \(error)")
+        }
+    }
+
+    /// Auto-enable iCloud sync preference when user finishes onboarding with an active subscription
+    /// The actual sync will start after app restart if container was created without CloudKit
+    private func autoEnableCloudSyncIfEligible() {
+        // Check if user has active subscription
+        guard isPremium || StoreKitManager.shared.hasActiveSubscription else {
+            print("OnboardingViewModel: iCloud sync not auto-enabled - no active subscription")
+            return
+        }
+
+        // Check if iCloud sync is already enabled
+        guard !UserPreferences.shared.isCloudSyncEnabled else {
+            print("OnboardingViewModel: iCloud sync already enabled")
+            return
+        }
+
+        // Check system requirements
+        let syncManager = CloudSyncManager.shared
+        guard syncManager.isCloudAvailable && syncManager.systemCloudEnabled else {
+            print("OnboardingViewModel: iCloud sync not auto-enabled - system requirements not met")
+            print("   isCloudAvailable: \(syncManager.isCloudAvailable)")
+            print("   systemCloudEnabled: \(syncManager.systemCloudEnabled)")
+            return
+        }
+
+        print("OnboardingViewModel: Auto-enabling iCloud sync preference")
+
+        // Enable the sync preference
+        UserPreferences.shared.isCloudSyncEnabled = true
+
+        // Save sync state to iCloud KVS for future reinstall recovery
+        let cloudStore = NSUbiquitousKeyValueStore.default
+        cloudStore.set(true, forKey: "is_cloud_sync_enabled_backup")
+        cloudStore.set(true, forKey: "cloud_sync_was_enabled")
+        cloudStore.synchronize()
+
+        // Check if container was created with different sync state
+        if ModelContainerManager.shared.needsRestartForSyncChange {
+            print("OnboardingViewModel: Container needs restart for sync to take effect")
+        } else {
+            print("OnboardingViewModel: Container already configured for sync, no restart needed")
         }
     }
 }

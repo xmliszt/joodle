@@ -393,10 +393,30 @@ struct DrawingCanvasView: View {
   }
 
   private func saveDrawingToStore() {
-    // Derive entry to save, if not exists, create a new entry.
+    // Derive entry to save, checking database for existing entry to avoid duplicates
     let entryToSave: DayEntry = {
       if let entry { return entry }
-      // Create new entry
+
+      // Check database for existing entry with same dateString
+      let dateString = DayEntry.dateToString(date)
+      let predicate = #Predicate<DayEntry> { entry in
+        entry.dateString == dateString
+      }
+      let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+
+      do {
+        let existingEntries = try modelContext.fetch(descriptor)
+        // Prioritize entry with content (drawing or text)
+        if let existing = existingEntries.first(where: {
+          ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty
+        }) ?? existingEntries.first {
+          return existing
+        }
+      } catch {
+        print("DrawingCanvasView: Failed to fetch existing entry: \(error)")
+      }
+
+      // Create new entry only if none exists for this date
       let newEntry = DayEntry(body: "", createdAt: date, drawingData: nil)
       modelContext.insert(newEntry)
       return newEntry

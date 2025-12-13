@@ -13,6 +13,7 @@ struct ContentView: View {
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.userPreferences) private var userPreferences
+  @Environment(\.cloudSyncManager) private var cloudSyncManager
 
   @Query private var entries: [DayEntry]
   @StateObject private var subscriptionManager = SubscriptionManager.shared
@@ -33,6 +34,7 @@ struct ContentView: View {
   @State private var yearGridViewSize: CGSize = .zero
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
+  @State private var showRestartBanner: Bool = false
 
   @State private var selectedYear = Calendar.current.component(.year, from: Date())
   @State private var navigateToSettings = false
@@ -325,6 +327,16 @@ struct ContentView: View {
         .id("DynamicIslandExpandedView-\(selectedDateItem?.id ?? "none")")
       }
     }
+    // Restart required banner overlay
+    .overlay(alignment: .top) {
+      if showRestartBanner {
+        RestartRequiredBanner(onDismiss: {
+          showRestartBanner = false
+        })
+        .transition(.move(edge: .top).combined(with: .opacity))
+        .zIndex(100)
+      }
+    }
     .alert("Subscription Ended", isPresented: $subscriptionManager.subscriptionJustExpired) {
       Button("OK") {
         subscriptionManager.acknowledgeExpiry()
@@ -341,6 +353,13 @@ struct ContentView: View {
         await subscriptionManager.updateSubscriptionStatus()
       }
 
+      // Check if restart is needed for iCloud sync
+      // Use ModelContainerManager directly as it's the source of truth
+      if ModelContainerManager.shared.needsRestartForSyncChange {
+        withAnimation(.easeInOut(duration: 0.3)) {
+          showRestartBanner = true
+        }
+      }
 
       //
       //
@@ -558,16 +577,28 @@ struct ContentView: View {
   }
 
   private func selectDateItem(item: DateItem, scrollProxy: ScrollViewProxy) {
-    // Initialize editedText with the entry content for the selected date
-    var entry = entries.first { entry in
-      entry.matches(date: item.date)
+    // Check database for existing entry with same dateString to avoid creating duplicates
+    let dateString = DayEntry.dateToString(item.date)
+    let predicate = #Predicate<DayEntry> { entry in
+      entry.dateString == dateString
     }
+    let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
 
-    // Create new entry if there's text content
-    if entry == nil {
-      entry = DayEntry(body: "", createdAt: item.date)
-      modelContext.insert(entry!)
-      try? modelContext.save()
+    do {
+      let existingEntries = try modelContext.fetch(descriptor)
+      // Prioritize entry with content (drawing or text)
+      var entry = existingEntries.first(where: {
+        ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty
+      }) ?? existingEntries.first
+
+      // Create new entry only if none exists for this date
+      if entry == nil {
+        entry = DayEntry(body: "", createdAt: item.date)
+        modelContext.insert(entry!)
+        try? modelContext.save()
+      }
+    } catch {
+      print("ContentView: Failed to fetch entries for date selection: \(error)")
     }
 
     selectedDateItem = item

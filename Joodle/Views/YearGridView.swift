@@ -141,11 +141,35 @@ struct YearGridView: View {
   }
 
   /// Build a dictionary for O(1) entry lookups by date
+  /// When there are duplicate entries for the same date, prioritize entries with content
   private func buildEntriesLookup() -> [String: DayEntry] {
     var lookup: [String: DayEntry] = [:]
     for entry in entries {
       // Use the timezone-agnostic dateString directly as the key
-      lookup[entry.dateString] = entry
+      let key = entry.dateString
+
+      // Check if we already have an entry for this date
+      if let existing = lookup[key] {
+        // Prioritize entry with drawing data
+        let existingHasDrawing = existing.drawingData != nil && !(existing.drawingData?.isEmpty ?? true)
+        let newHasDrawing = entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true)
+
+        if newHasDrawing && !existingHasDrawing {
+          // New entry has drawing, existing doesn't - use new
+          lookup[key] = entry
+        } else if !existingHasDrawing && !newHasDrawing {
+          // Neither has drawing - prioritize one with text
+          let existingHasText = !existing.body.isEmpty
+          let newHasText = !entry.body.isEmpty
+          if newHasText && !existingHasText {
+            lookup[key] = entry
+          }
+        }
+        // Otherwise keep existing (it already has drawing or both have same content type)
+      } else {
+        // No existing entry for this date
+        lookup[key] = entry
+      }
     }
     return lookup
   }

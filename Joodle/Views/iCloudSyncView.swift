@@ -20,6 +20,38 @@ struct iCloudSyncView: View {
 
   var body: some View {
     List {
+      // MARK: - Sync Progress Indicator
+      if syncManager.isSyncing {
+        Section {
+          HStack(spacing: 12) {
+            ProgressView()
+              .scaleEffect(0.9)
+
+            VStack(alignment: .leading, spacing: 4) {
+              Text(syncManager.isInitialSync ? "Restoring Your Data" : "Syncing")
+                .font(.headline)
+
+              Text(syncManager.syncProgress)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+          }
+          .padding(.vertical, 8)
+        } header: {
+          if syncManager.isInitialSync {
+            Text("Welcome Back!")
+          }
+        } footer: {
+          if syncManager.isInitialSync {
+            Text("Your doodles are being restored from iCloud. This may take a few moments depending on how much data you have.")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        }
+      }
+
       // MARK: - Premium Feature Banner
       if !subscriptionManager.hasICloudSync {
         Section {
@@ -82,6 +114,31 @@ struct iCloudSyncView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.accent)
+          }
+          .padding(.vertical, 8)
+        }
+      }
+
+      // MARK: - Restart Required Banner
+      if ModelContainerManager.shared.needsRestartForSyncChange {
+        Section {
+          VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+              Image(systemName: "arrow.clockwise.circle.fill")
+                .foregroundStyle(.orange)
+                .font(.title2)
+
+              VStack(alignment: .leading, spacing: 4) {
+                Text("Restart Required")
+                  .font(.headline)
+                  .foregroundStyle(.primary)
+
+                Text("Your sync preference has been updated. Please restart the app for the changes to take effect.")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                  .fixedSize(horizontal: false, vertical: true)
+              }
+            }
           }
           .padding(.vertical, 8)
         }
@@ -195,7 +252,12 @@ struct iCloudSyncView: View {
             Spacer()
 
             HStack(spacing: 4) {
-              if syncManager.canSync {
+              if syncManager.isSyncing {
+                Text("Syncing")
+                  .foregroundStyle(.secondary)
+                ProgressView()
+                  .scaleEffect(0.7)
+              } else if syncManager.canSync {
                 Text("Active")
                   .foregroundStyle(.secondary)
                 Image(systemName: "checkmark.circle.fill")
@@ -221,9 +283,19 @@ struct iCloudSyncView: View {
 
               Spacer()
 
-              Text(syncManager.syncActivityDescription)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+              if syncManager.isSyncing {
+                HStack(spacing: 6) {
+                  Text("Syncing now")
+                    .font(.caption)
+                    .foregroundStyle(.accent)
+                  ProgressView()
+                    .scaleEffect(0.6)
+                }
+              } else {
+                Text(syncManager.syncActivityDescription)
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+              }
             }
           }
         }
@@ -256,22 +328,22 @@ struct iCloudSyncView: View {
       Button("Cancel", role: .cancel) { }
       if #available(iOS 26.0, *) {
         Button("Enable", role: .confirm) {
-          if syncManager.enableSync() {
-            // Notify to recreate container
-            NotificationCenter.default.post(name: NSNotification.Name("CloudSyncPreferenceChanged"), object: nil)
-          }
+          _ = syncManager.enableSync()
+          // Note: Restart required for CloudKit changes to take effect
         }
       } else {
         // Fallback on earlier versions
         Button("Enable") {
-          if syncManager.enableSync() {
-            // Notify to recreate container
-            NotificationCenter.default.post(name: NSNotification.Name("CloudSyncPreferenceChanged"), object: nil)
-          }
+          _ = syncManager.enableSync()
+          // Note: Restart required for CloudKit changes to take effect
         }
       }
     } message: {
-      Text("This will sync your journal entries and preferences with iCloud, making them available across all your devices.\n\nRequires internet connection and active iCloud account.")
+      if ModelContainerManager.shared.needsRestartForSyncChange {
+        Text("This will sync your journal entries and preferences with iCloud.\n\n⚠️ You will need to restart the app for sync to begin.")
+      } else {
+        Text("This will sync your journal entries and preferences with iCloud, making them available across all your devices.\n\nRequires internet connection and active iCloud account.")
+      }
     }
     .alert("How to enable iCloud Sync for Joodle?", isPresented: $showSystemSettingsAlert) {
       Button("Cancel", role: .cancel) { }
@@ -286,11 +358,10 @@ struct iCloudSyncView: View {
       Button("Disable", role: .destructive) {
         userPreferences.isCloudSyncEnabled = false
         syncManager.disableSync()
-        // Notify to recreate container
-        NotificationCenter.default.post(name: NSNotification.Name("CloudSyncPreferenceChanged"), object: nil)
+        // Note: Restart required for CloudKit changes to take effect
       }
     } message: {
-      Text("Your data will remain on this device and in iCloud, but will stop syncing with other devices.")
+      Text("Your data will remain on this device and in iCloud, but will stop syncing with other devices.\n\n⚠️ You will need to restart the app for this change to take effect.")
     }
     .onAppear {
       syncManager.checkCloudAvailability()

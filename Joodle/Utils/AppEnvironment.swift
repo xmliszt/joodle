@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import StoreKit
 
 /// Utility for detecting the current app environment
 enum AppEnvironment {
@@ -28,10 +29,42 @@ enum AppEnvironment {
 
     /// Whether the app is running in TestFlight
     static var isTestFlight: Bool {
-        guard let receiptURL = Bundle.main.appStoreReceiptURL else {
-            return false
+        _isTestFlightCached
+    }
+
+    /// Cached TestFlight status (updated at startup via initialize())
+    private static var _isTestFlightCached: Bool = false
+
+    /// Initialize the environment detection - call this at app launch
+    static func initialize() {
+        Task {
+            await updateTestFlightStatus()
         }
-        return receiptURL.lastPathComponent == "sandboxReceipt"
+    }
+
+    /// Updates the TestFlight status using appropriate API for the iOS version
+    private static func updateTestFlightStatus() async {
+        if #available(iOS 18.0, *) {
+            // Use modern StoreKit API for iOS 18+
+            do {
+                let verification = try await AppTransaction.shared
+                if case .verified(let transaction) = verification {
+                    let environment = transaction.environment
+                    _isTestFlightCached = (environment == .xcode || environment == .sandbox)
+                }
+            } catch {
+                // Fallback: assume not TestFlight if we can't verify
+                print("AppEnvironment: Failed to verify app transaction: \(error)")
+                _isTestFlightCached = false
+            }
+        } else {
+            // Legacy method for iOS < 18
+            if let receiptURL = Bundle.main.appStoreReceiptURL {
+                _isTestFlightCached = receiptURL.lastPathComponent == "sandboxReceipt"
+            } else {
+                _isTestFlightCached = false
+            }
+        }
     }
 
     /// Whether the app is running in production (App Store)

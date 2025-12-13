@@ -5,6 +5,7 @@
 //  Created by Li Yuxuan on 10/8/25.
 //
 
+import CloudKit
 import SwiftData
 import SwiftUI
 import UIKit
@@ -19,6 +20,91 @@ class AppDelegate: NSObject, UIApplicationDelegate {
   }
 }
 
+/// Singleton manager for ModelContainer to prevent multiple CloudKit registrations
+/// CloudKit can only have ONE active sync handler per store - creating multiple containers
+/// causes "BUG IN CLIENT OF CLOUDKIT" errors due to duplicate handler registration
+final class ModelContainerManager {
+  static let shared = ModelContainerManager()
+
+  /// The single ModelContainer instance for the entire app lifecycle
+  let container: ModelContainer
+
+  /// Track whether sync was enabled when container was created
+  let wasCloudSyncEnabledAtLaunch: Bool
+
+  /// Track if this is a detected reinstall with cloud data
+  let isReinstallWithCloudData: Bool
+
+  private init() {
+    let systemCloudEnabled = FileManager.default.ubiquityIdentityToken != nil
+
+    // Check local preference first
+    let localSyncPreference = UserPreferences.shared.isCloudSyncEnabled
+
+    // Check iCloud KVS for reinstall detection (survives app deletion)
+    // This allows us to restore sync immediately for reinstalling users
+    let cloudStore = NSUbiquitousKeyValueStore.default
+    cloudStore.synchronize()
+    let cloudSyncBackup = cloudStore.bool(forKey: "is_cloud_sync_enabled_backup") ||
+                          cloudStore.bool(forKey: "cloud_sync_was_enabled")
+
+    // Determine if this is a reinstall scenario:
+    // - Local preference is OFF (fresh install/reinstall clears UserDefaults)
+    // - But iCloud KVS says sync WAS enabled (user had sync before)
+    // - And system iCloud is available
+    let isReinstall = !localSyncPreference && cloudSyncBackup && systemCloudEnabled
+    isReinstallWithCloudData = isReinstall
+
+    // Decide whether to enable CloudKit:
+    // 1. User's local preference says YES, OR
+    // 2. This is a reinstall with previous sync history
+    // AND system iCloud must be available
+    let shouldUseCloud = (localSyncPreference || isReinstall) && systemCloudEnabled
+    wasCloudSyncEnabledAtLaunch = shouldUseCloud
+
+    if isReinstall {
+      print("ModelContainerManager: Detected reinstall with iCloud data - enabling CloudKit sync")
+      // Restore the local preference to match what we're doing
+      UserPreferences.shared.isCloudSyncEnabled = true
+    }
+
+    // Create the container once with the determined configuration
+    container = Self.createContainer(shouldUseCloud: shouldUseCloud)
+
+    // Backup preference to iCloud if sync is enabled
+    if shouldUseCloud {
+      cloudStore.set(true, forKey: "is_cloud_sync_enabled_backup")
+      cloudStore.synchronize()
+    }
+
+    print("ModelContainerManager: Container created with CloudKit=\(shouldUseCloud), isReinstall=\(isReinstall)")
+  }
+
+  private static func createContainer(shouldUseCloud: Bool) -> ModelContainer {
+    let schema = Schema([DayEntry.self])
+
+    let config = ModelConfiguration(
+      schema: schema,
+      isStoredInMemoryOnly: false,
+      cloudKitDatabase: shouldUseCloud ? .private("iCloud.dev.liyuxuan.joodle") : .none
+    )
+
+    do {
+      return try ModelContainer(for: schema, configurations: [config])
+    } catch {
+      fatalError("Could not create ModelContainer: \(error)")
+    }
+  }
+
+  /// Check if sync preference has changed since app launch (requires restart)
+  var needsRestartForSyncChange: Bool {
+    let userWantsCloud = UserPreferences.shared.isCloudSyncEnabled
+    let systemCloudEnabled = FileManager.default.ubiquityIdentityToken != nil
+    let currentDesiredState = userWantsCloud && systemCloudEnabled
+    return currentDesiredState != wasCloudSyncEnabledAtLaunch
+  }
+}
+
 @main
 struct JoodleApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -26,22 +112,41 @@ struct JoodleApp: App {
   @State private var colorScheme: ColorScheme? = UserPreferences.shared.preferredColorScheme
   @State private var selectedDateFromWidget: Date?
   @State private var showPaywallFromWidget = false
-  @State private var containerKey = UUID()
-  @State private var modelContainer: ModelContainer
   @State private var showLaunchScreen = true
+  @State private var hasSetupObservers = false
+
+  /// Use the singleton container - never recreate during app lifecycle
+  private let modelContainer = ModelContainerManager.shared.container
 
   init() {
-    let container = Self.createModelContainer()
-    _modelContainer = State(initialValue: container)
+    // Initialize app environment detection (TestFlight vs App Store)
+    AppEnvironment.initialize()
+
+    // Run migrations using the singleton container
+    let container = ModelContainerManager.shared.container
 
     // Run dateString migration synchronously for existing entries
     Self.runDateStringMigration(container: container)
+
+    // Run duplicate entry cleanup migration
+    Self.runDuplicateEntryCleanup(container: container)
 
     // Run legacy thumbnail cleanup migration
     Self.runLegacyThumbnailCleanup(container: container)
 
     // Regenerate thumbnails with dual sizes (runs async in background)
     Self.runDualThumbnailRegeneration(container: container)
+  }
+
+  /// Cleans up duplicate entries (same dateString) by merging content and deleting duplicates
+  private static func runDuplicateEntryCleanup(container: ModelContainer) {
+    Task { @MainActor in
+      let context = ModelContext(container)
+      let result = DuplicateEntryCleanup.shared.cleanupDuplicates(modelContext: context)
+      if result.merged > 0 || result.deleted > 0 {
+        print("DuplicateEntryCleanup: Completed - merged \(result.merged), deleted \(result.deleted)")
+      }
+    }
   }
 
   /// Runs the dateString migration synchronously to populate dateString for existing entries
@@ -149,34 +254,6 @@ struct JoodleApp: App {
     }
   }
 
-  static func createModelContainer() -> ModelContainer {
-    // 1. Define schemas
-    let schema = Schema([
-      DayEntry.self
-    ])
-
-    // 2. Check BOTH user preference AND system availability
-    let userWantsCloud = UserPreferences.shared.isCloudSyncEnabled
-    let systemCloudEnabled = FileManager.default.ubiquityIdentityToken != nil
-
-    // Only enable cloud if BOTH user wants it AND system allows it
-    let shouldUseCloud = userWantsCloud && systemCloudEnabled
-
-    // 3. Configure for iCloud only if both conditions are met
-    let config = ModelConfiguration(
-      schema: schema,
-      isStoredInMemoryOnly: false,
-      cloudKitDatabase: shouldUseCloud ? .private("iCloud.dev.liyuxuan.joodle") : .none
-    )
-
-    // 4. Create the container
-    do {
-      return try ModelContainer(for: schema, configurations: [config])
-    } catch {
-      fatalError("Could not create ModelContainer: \(error)")
-    }
-  }
-
   var body: some Scene {
     WindowGroup {
       ZStack {
@@ -195,9 +272,11 @@ struct JoodleApp: App {
               .preferredColorScheme(colorScheme)
               .font(.system(size: 17))
               .onAppear {
-                setupColorSchemeObserver()
-                setupSyncObserver()
-                setupUbiquityObserver()
+                // Only setup observers once to prevent duplicate notifications
+                if !hasSetupObservers {
+                  setupColorSchemeObserver()
+                  hasSetupObservers = true
+                }
               }
               .onOpenURL { url in
                 handleWidgetURL(url)
@@ -206,7 +285,6 @@ struct JoodleApp: App {
                 StandalonePaywallView()
                   .presentationDetents([.large])
               }
-              .id(containerKey)
           }
         }
 
@@ -239,7 +317,17 @@ struct JoodleApp: App {
 
     // Handle URL scheme: joodle://paywall
     if url.host == "paywall" {
-      showPaywallFromWidget = true
+      // Check subscription status before showing paywall
+      // The StandalonePaywallView will also verify and dismiss if subscribed,
+      // but this prevents unnecessary sheet presentation when possible
+      Task {
+        await SubscriptionManager.shared.updateSubscriptionStatus()
+        await MainActor.run {
+          if !SubscriptionManager.shared.isSubscribed {
+            showPaywallFromWidget = true
+          }
+        }
+      }
       return
     }
 
@@ -252,41 +340,5 @@ struct JoodleApp: App {
 
     let date = Date(timeIntervalSince1970: timeInterval)
     selectedDateFromWidget = date
-  }
-
-  private func setupSyncObserver() {
-    NotificationCenter.default.addObserver(
-      forName: NSNotification.Name("CloudSyncPreferenceChanged"),
-      object: nil,
-      queue: .main
-    ) { [self] _ in
-      // Recreate the model container with new configuration
-      modelContainer = Self.createModelContainer()
-      containerKey = UUID()
-    }
-  }
-
-  private func setupUbiquityObserver() {
-    // Monitor system-level iCloud Documents & Data changes
-    NotificationCenter.default.addObserver(
-      forName: NSNotification.Name.NSUbiquityIdentityDidChange,
-      object: nil,
-      queue: .main
-    ) { [self] _ in
-      // Check if we need to recreate the container
-      let userWantsCloud = UserPreferences.shared.isCloudSyncEnabled
-      let systemCloudEnabled = FileManager.default.ubiquityIdentityToken != nil
-
-      // If there's a mismatch between what we're using and what's available, recreate
-      if userWantsCloud && !systemCloudEnabled {
-        // System cloud was disabled but user preference is still on
-        // CloudSyncManager will handle updating the preference
-        // We just need to recreate the container after that happens
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
-          modelContainer = Self.createModelContainer()
-          containerKey = UUID()
-        }
-      }
-    }
   }
 }

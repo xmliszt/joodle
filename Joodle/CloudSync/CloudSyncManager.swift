@@ -14,6 +14,81 @@ import Observation
 import SwiftData
 import SwiftUI
 
+// MARK: - iCloud Sync State Persistence
+/// Helper to persist sync state to iCloud KVS so it survives app deletion/reinstall
+/// Uses consistent keys across the app:
+/// - "is_cloud_sync_enabled_backup" (primary key)
+/// - "cloud_sync_was_enabled" (secondary key for redundancy)
+enum CloudSyncStatePersistence {
+  private static let cloudStore = NSUbiquitousKeyValueStore.default
+  // Use the same keys as JoodleApp and PreferencesSyncManager for consistency
+  private static let primaryKey = "is_cloud_sync_enabled_backup"
+  private static let secondaryKey = "cloud_sync_was_enabled"
+  private static let lastSyncTimestampKey = "cloud_sync_enabled_timestamp"
+
+  /// Check if iCloud previously had sync enabled (survives app reinstall)
+  /// Checks both primary and secondary keys for redundancy
+  static func wasCloudSyncPreviouslyEnabled() -> Bool {
+    // Force a sync to get the latest values from iCloud
+    cloudStore.synchronize()
+    return cloudStore.bool(forKey: primaryKey) || cloudStore.bool(forKey: secondaryKey)
+  }
+
+  /// Check if there's any indication of previous sync activity
+  static func hasPreviousSyncHistory() -> Bool {
+    cloudStore.synchronize()
+    // Check if we have a timestamp from previous sync
+    return cloudStore.object(forKey: lastSyncTimestampKey) != nil
+  }
+
+  /// Get the timestamp of last sync activity
+  static func getLastSyncTimestamp() -> Date? {
+    cloudStore.synchronize()
+    let timestamp = cloudStore.double(forKey: lastSyncTimestampKey)
+    guard timestamp > 0 else { return nil }
+    return Date(timeIntervalSince1970: timestamp)
+  }
+
+  /// Save sync enabled state to iCloud KVS (writes to both keys for redundancy)
+  static func saveSyncEnabled(_ enabled: Bool) {
+    cloudStore.set(enabled, forKey: primaryKey)
+    cloudStore.set(enabled, forKey: secondaryKey)
+    if enabled {
+      cloudStore.set(Date().timeIntervalSince1970, forKey: lastSyncTimestampKey)
+    }
+    cloudStore.synchronize()
+  }
+
+  /// Check if this is a fresh install with existing iCloud data
+  /// Returns true if iCloud says sync was enabled but local preference is off
+  static func isReinstallWithCloudData() -> Bool {
+    let localSyncEnabled = UserPreferences.shared.isCloudSyncEnabled
+    let cloudSyncWasEnabled = wasCloudSyncPreviouslyEnabled()
+    let hasUbiquityToken = FileManager.default.ubiquityIdentityToken != nil
+
+    // Fresh install scenario: local says no, but iCloud says yes
+    return !localSyncEnabled && cloudSyncWasEnabled && hasUbiquityToken
+  }
+
+  /// Restore sync state from iCloud to local preferences
+  /// Call this BEFORE creating ModelContainer on fresh install
+  static func restoreSyncStateIfNeeded() -> Bool {
+    guard isReinstallWithCloudData() else { return false }
+
+    // Check if user still has subscription (can't restore without it)
+    // Note: SubscriptionManager may not be fully initialized yet, so we check entitlement directly
+    // For now, we'll restore the preference and let the sync manager validate subscription later
+
+    print("CloudSyncStatePersistence: Detected reinstall with existing iCloud sync data")
+    print("CloudSyncStatePersistence: Restoring sync state from iCloud")
+
+    // Restore the local preference
+    UserPreferences.shared.isCloudSyncEnabled = true
+
+    return true
+  }
+}
+
 @MainActor
 @Observable
 final class CloudSyncManager {
@@ -32,6 +107,22 @@ final class CloudSyncManager {
   var lastObservedImport: Date?
   var lastObservedExport: Date?
   var isObservingSyncActivity = false
+
+  // Sync progress tracking for UI indication
+  private var _isSyncing = false
+
+  /// Whether sync is actively in progress - only returns true if user has valid subscription
+  var isSyncing: Bool {
+    get { _isSyncing && SubscriptionManager.shared.hasICloudSync }
+    set { _isSyncing = newValue }
+  }
+  var syncProgress: String = ""
+  var isInitialSync = false  // True when syncing for the first time after reinstall
+  var initialSyncImportCompleted = false  // True after first import completes during initial sync
+
+  // Timeout for sync status (clear if no events received)
+  private var syncTimeoutTask: Task<Void, Never>?
+  private let syncTimeoutSeconds: Double = 30.0  // Clear sync indicator after 30 seconds of no activity
 
   // MARK: - Private Properties
   private let userPreferences = UserPreferences.shared
@@ -120,15 +211,9 @@ final class CloudSyncManager {
     if userPreferences.isCloudSyncEnabled {
       userPreferences.isCloudSyncEnabled = false
 
-      // Notify the app to recreate the ModelContainer
-      NotificationCenter.default.post(
-        name: NSNotification.Name("CloudSyncPreferenceChanged"),
-        object: nil
-      )
-
-      // Update UI state
+      // Update UI state - restart will be needed
       hasError = true
-      errorMessage = "iCloud was disabled in Settings. Switched to local storage."
+      errorMessage = "iCloud was disabled in Settings. Please restart the app."
     }
   }
 
@@ -206,8 +291,16 @@ final class CloudSyncManager {
   }
 
   private func handleCloudKitEvent(_ notification: Notification) {
-    // Only process if sync is enabled
+    // Only process if sync is enabled AND user has active subscription
     guard userPreferences.isCloudSyncEnabled else { return }
+    guard SubscriptionManager.shared.hasICloudSync else {
+      // User doesn't have subscription - clear any sync status and return
+      if isSyncing {
+        isSyncing = false
+        syncProgress = ""
+      }
+      return
+    }
 
     // Extract the event from notification
     guard let userInfo = notification.userInfo,
@@ -215,8 +308,22 @@ final class CloudSyncManager {
       return
     }
 
-    // Only track completed events
-    guard event.endDate != nil else {
+    // Track in-progress events
+    if event.endDate == nil {
+      // Event is in progress
+      isSyncing = true
+      switch event.type {
+      case .import:
+        syncProgress = isInitialSync ? "Restoring data from iCloud..." : "Downloading from iCloud..."
+      case .export:
+        syncProgress = "Uploading to iCloud..."
+      case .setup:
+        syncProgress = "Setting up iCloud sync..."
+      @unknown default:
+        syncProgress = "Syncing..."
+      }
+      // Reset timeout when we receive an in-progress event
+      resetSyncTimeout()
       return
     }
 
@@ -226,15 +333,28 @@ final class CloudSyncManager {
       // Data came down from CloudKit
       lastObservedImport = event.endDate
       isObservingSyncActivity = false
+      isSyncing = false
+      syncProgress = "Import complete"
+
+      // Handle initial sync completion
+      if isInitialSync {
+        initialSyncImportCompleted = true
+        syncProgress = "Data restored from iCloud"
+        isInitialSync = false
+      }
 
     case .export:
       // Data went up to CloudKit
       lastObservedExport = event.endDate
       isObservingSyncActivity = false
+      isSyncing = false
+      syncProgress = "Export complete"
 
     case .setup:
       // Initial CloudKit setup
       isObservingSyncActivity = false
+      isSyncing = false
+      syncProgress = "Setup complete"
 
     @unknown default:
       break
@@ -270,12 +390,27 @@ final class CloudSyncManager {
 
     userPreferences.isCloudSyncEnabled = true
 
+    // Persist sync state to iCloud KVS (survives app reinstall)
+    CloudSyncStatePersistence.saveSyncEnabled(true)
+    preferencesSyncManager.saveSyncEnabledToCloud()
+
     // Perform initial sync of preferences
     // Note: SwiftData sync happens automatically, we can't control it
     preferencesSyncManager.performInitialSync()
 
+    // Check if container was created with different sync state
+    // CloudKit can only have ONE active sync handler per store
+    if ModelContainerManager.shared.needsRestartForSyncChange {
+      // Container needs restart but preference is saved
+      hasError = false
+      errorMessage = nil
+      return true
+    }
+
     // Indicate we're expecting sync activity
     isObservingSyncActivity = true
+    isSyncing = true
+    syncProgress = "Starting sync..."
     return true
   }
 
@@ -307,8 +442,47 @@ final class CloudSyncManager {
   func disableSync() {
     userPreferences.isCloudSyncEnabled = false
 
+    // Persist sync state to iCloud KVS (so reinstall knows sync is disabled)
+    CloudSyncStatePersistence.saveSyncEnabled(false)
+    preferencesSyncManager.clearSyncEnabledFromCloud()
+
+    // Reset sync status
+    isSyncing = false
+    syncProgress = ""
+    isInitialSync = false
+
     // Note: We don't remove data from iCloud when disabling,
     // just stop syncing. Data remains in cloud if user re-enables.
+  }
+
+
+
+  /// Reset the sync timeout timer - called when sync activity is detected
+  private func resetSyncTimeout() {
+    // Cancel existing timeout
+    syncTimeoutTask?.cancel()
+
+    // Start new timeout
+    syncTimeoutTask = Task { @MainActor in
+      try? await Task.sleep(for: .seconds(syncTimeoutSeconds))
+
+      // If we're still marked as syncing after timeout, clear it
+      // This handles cases where we miss the completion event
+      if !Task.isCancelled && isSyncing {
+        isSyncing = false
+        isInitialSync = false
+        syncProgress = ""
+        print("CloudSyncManager: Sync timeout - clearing sync indicator")
+      }
+    }
+  }
+
+  /// Clear the sync status immediately (e.g., when user navigates away)
+  func clearSyncStatus() {
+    syncTimeoutTask?.cancel()
+    isSyncing = false
+    syncProgress = ""
+    // Don't clear isInitialSync here - it should persist until actual sync completes
   }
 
   // MARK: - Reset
@@ -387,7 +561,9 @@ final class CloudSyncManager {
   }
 
   var syncActivityDescription: String {
-    if isObservingSyncActivity {
+    if isSyncing {
+      return syncProgress.isEmpty ? "Syncing..." : syncProgress
+    } else if isObservingSyncActivity {
       return "Sync may be in progress"
     } else if let lastSync = lastObservedSync {
       let formatter = RelativeDateTimeFormatter()

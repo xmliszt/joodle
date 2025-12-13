@@ -475,9 +475,35 @@ struct EntryEditingView: View {
       // Update existing entry
       entry.body = text
     } else {
-      // Create new entry if there's text content
-      let newEntry = DayEntry(body: text, createdAt: date)
-      modelContext.insert(newEntry)
+      // Check database for existing entry with same dateString to avoid duplicates
+      let dateString = DayEntry.dateToString(date)
+      let predicate = #Predicate<DayEntry> { e in
+        e.dateString == dateString
+      }
+      let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+
+      do {
+        let existingEntries = try modelContext.fetch(descriptor)
+        // Prioritize entry with content (drawing or text)
+        if let existing = existingEntries.first(where: {
+          ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty
+        }) ?? existingEntries.first {
+          existing.body = text
+          // Update local state to track this entry
+          self.entry = existing
+        } else {
+          // Create new entry only if none exists for this date
+          let newEntry = DayEntry(body: text, createdAt: date)
+          modelContext.insert(newEntry)
+          self.entry = newEntry
+        }
+      } catch {
+        print("EntryEditingView: Failed to fetch existing entry: \(error)")
+        // Fallback: create new entry
+        let newEntry = DayEntry(body: text, createdAt: date)
+        modelContext.insert(newEntry)
+        self.entry = newEntry
+      }
     }
 
     // Save the context to persist changes

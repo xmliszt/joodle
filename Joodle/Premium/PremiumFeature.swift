@@ -159,10 +159,7 @@ final class PremiumAccessController: ObservableObject {
         // Disable iCloud sync if it was enabled
         if UserPreferences.shared.isCloudSyncEnabled {
             UserPreferences.shared.isCloudSyncEnabled = false
-            NotificationCenter.default.post(
-                name: NSNotification.Name("CloudSyncPreferenceChanged"),
-                object: nil
-            )
+            // Note: ModelContainerManager.needsRestartForSyncChange will be checked by UI
         }
     }
 
