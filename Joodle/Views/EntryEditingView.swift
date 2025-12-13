@@ -319,14 +319,14 @@ struct EntryEditingView: View {
                 .foregroundColor(.textColor)
             }
             HStack(spacing: 8) {
-              Text(weekdayLabel)
-                .font(.subheadline)
-                .foregroundColor(isToday ? .appPrimary : .secondaryTextColor)
-
               if let countdown = countdownText {
                 Text(countdown)
                   .font(.subheadline)
                   .foregroundColor(.appPrimary.opacity(0.7))
+              } else {
+                Text(weekdayLabel)
+                  .font(.subheadline)
+                  .foregroundColor(isToday ? .appPrimary : .secondaryTextColor)
               }
             }
           }
