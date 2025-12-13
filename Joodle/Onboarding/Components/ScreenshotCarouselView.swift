@@ -89,7 +89,6 @@ struct SingleScreenshotView: View {
             }
         }
         .aspectRatio(item.orientation.aspectRatio, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
     }
 }
 
@@ -132,11 +131,11 @@ struct ScreenshotCarouselView: View {
                     ForEach(Array(screenshots.enumerated()), id: \.element.id) { index, item in
                         SingleScreenshotView(item: item)
                             .tag(index)
-                            .padding(.horizontal, 4)
+                            .padding(.horizontal, 16)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-
+                
                 // Custom page indicators
                 PageIndicatorView(totalPages: screenshots.count, currentPage: currentIndex)
             }
@@ -176,7 +175,7 @@ struct ScreenshotCarouselView: View {
 #Preview("Landscape Screenshot (Standby)") {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
-            image: Image("Onboarding/WidgetsStandby1"),
+            image: Image("Onboarding/WidgetStandby1"),
             orientation: .landscape
         )
     ])
@@ -188,17 +187,16 @@ struct ScreenshotCarouselView: View {
 #Preview("Mixed Orientations") {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
-            image: Image("Onboarding/WidgetsHomeScreen1")
+            image: Image("Onboarding/WidgetHomeScreen1")
         ),
         ScreenshotItem(
-            image: Image("Onboarding/WidgetsLockScreen")
+            image: Image("Onboarding/WidgetLockScreen")
         ),
         ScreenshotItem(
-            image: Image("Onboarding/WidgetsStandby1"),
+            image: Image("Onboarding/WidgetStandby1"),
             orientation: .landscape
         )
     ])
-    .padding(.horizontal, 24)
     .frame(maxHeight: .infinity)
     .background(Color(uiColor: .systemBackground))
 }

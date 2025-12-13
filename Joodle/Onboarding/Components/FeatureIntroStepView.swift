@@ -27,7 +27,6 @@ struct FeatureIntroStepView: View {
 
                 // Screenshot carousel - takes available space
                 ScreenshotCarouselView(screenshots: screenshots)
-                    .padding(.horizontal, 24)
 
                 // Description below screenshots
                 Text(description)

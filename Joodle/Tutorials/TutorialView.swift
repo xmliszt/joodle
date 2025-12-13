@@ -31,7 +31,6 @@ struct TutorialView: View {
         VStack(spacing: 16) {
             // Screenshot carousel - takes available space
             ScreenshotCarouselView(screenshots: screenshots)
-                .padding(.horizontal, 24)
                 .padding(.top, 16)
 
             // Description below screenshots (if provided)
