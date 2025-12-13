@@ -10,9 +10,12 @@ import SwiftUI
 struct HeaderButtonsView: View {
   // External bindings for integration with HeaderView
   let viewMode: ViewMode
+  let currentYear: Int
   let onToggleViewMode: () -> Void
   let onSettingsAction: () -> Void
   @Namespace private var namespace
+
+  @State private var showingShareSheet = false
 
   private let spacing: CGFloat = 8
 
@@ -27,6 +30,13 @@ struct HeaderButtonsView: View {
             }
             .circularGlassButton()
             .glassEffectID("setting", in: namespace)
+
+            // Share Button - only visible when in year mode
+            Button(action: { showingShareSheet = true }) {
+              Image(systemName: "square.and.arrow.up")
+            }
+            .circularGlassButton()
+            .glassEffectID("share", in: namespace)
           }
 
           // Main Toggle Button (Right) - changes icon based on viewMode
@@ -38,12 +48,22 @@ struct HeaderButtonsView: View {
         }
       }
       .animation(.springFkingSatifying, value: viewMode)
+      .sheet(isPresented: $showingShareSheet) {
+        ShareCardSelectorView(year: currentYear)
+      }
     } else {
       HStack(spacing: spacing) {
         // Settings Button (Left) - only visible when in year mode
         if viewMode == .year {
           Button(action: onSettingsAction) {
             Image(systemName: "gearshape")
+          }
+          .circularGlassButton()
+          .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
+
+          // Share Button - only visible when in year mode
+          Button(action: { showingShareSheet = true }) {
+            Image(systemName: "square.and.arrow.up")
           }
           .circularGlassButton()
           .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
@@ -56,6 +76,9 @@ struct HeaderButtonsView: View {
         .circularGlassButton()
       }
       .animation(.springFkingSatifying, value: viewMode)
+      .sheet(isPresented: $showingShareSheet) {
+        ShareCardSelectorView(year: currentYear)
+      }
     }
 
   }
@@ -67,6 +90,7 @@ struct HeaderButtonsView: View {
   VStack(spacing: 20) {
     HeaderButtonsView(
       viewMode: viewMode,
+      currentYear: 2025,
       onToggleViewMode: {
         viewMode = viewMode == .now ? .year : .now
       },

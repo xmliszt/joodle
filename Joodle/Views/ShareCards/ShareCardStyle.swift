@@ -12,6 +12,8 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   case excerpt = "Excerpt"
   case detailed = "Detailed"
   case anniversary = "Anniversary"
+  case yearGridDots = "Year Grid"
+  case yearGridDoodles = "Year Doodles"
 
   var id: String { rawValue }
 
@@ -26,6 +28,10 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return "square"
     case .anniversary:
       return "square"
+    case .yearGridDots:
+      return "square.grid.3x3"
+    case .yearGridDoodles:
+      return "square.grid.3x3.fill"
     }
   }
 
@@ -36,10 +42,34 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     case .excerpt:
       return "Doodle & snippet"
     case .detailed:
-      return "Doodle & note"
+      return "Doodle & more text"
     case .anniversary:
       return "Doodle and countdown"
+    case .yearGridDots:
+      return "Year progress with dots"
+    case .yearGridDoodles:
+      return "Year progress with doodles"
     }
+  }
+
+  /// Whether this style requires year data instead of single day entry
+  var isYearGridStyle: Bool {
+    switch self {
+    case .yearGridDots, .yearGridDoodles:
+      return true
+    default:
+      return false
+    }
+  }
+
+  /// Styles for single day entry sharing
+  static var entryStyles: [ShareCardStyle] {
+    [.minimal, .excerpt, .detailed, .anniversary]
+  }
+
+  /// Styles for year grid sharing
+  static var yearGridStyles: [ShareCardStyle] {
+    [.yearGridDots, .yearGridDoodles]
   }
 
   /// Size for the actual share card, this is the dimension of the image saved.
@@ -52,6 +82,10 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     case .detailed:
       return CGSize(width: 1080, height: 1080)
     case .anniversary:
+      return CGSize(width: 1080, height: 1080)
+    case .yearGridDots:
+      return CGSize(width: 1080, height: 1080)
+    case .yearGridDoodles:
       return CGSize(width: 1080, height: 1080)
     }
   }
@@ -66,6 +100,10 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     case .detailed:
       return CGSize(width: 300, height: 300)
     case .anniversary:
+      return CGSize(width: 300, height: 300)
+    case .yearGridDots:
+      return CGSize(width: 300, height: 300)
+    case .yearGridDoodles:
       return CGSize(width: 300, height: 300)
     }
   }

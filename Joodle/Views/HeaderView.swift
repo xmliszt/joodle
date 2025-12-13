@@ -82,6 +82,7 @@ struct HeaderView: View {
         // buttons
         HeaderButtonsView(
           viewMode: viewMode,
+          currentYear: selectedYear,
           onToggleViewMode: onToggleViewMode,
           onSettingsAction: onSettingsAction
         )

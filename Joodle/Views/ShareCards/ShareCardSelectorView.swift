@@ -6,13 +6,20 @@
 //
 
 import SwiftUI
+import SwiftData
 import Photos
 
+/// Mode for the share card selector
+enum ShareCardMode {
+  case entry(entry: DayEntry?, date: Date)
+  case yearGrid(year: Int)
+}
+
 struct ShareCardSelectorView: View {
-  let entry: DayEntry?
-  let date: Date
+  let mode: ShareCardMode
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.modelContext) private var modelContext
 
   @State private var selectedStyle: ShareCardStyle = .minimal
   @State private var isSharing = false
@@ -23,12 +30,30 @@ struct ShareCardSelectorView: View {
   @State private var renderedPreviews: [ShareCardStyle: [ColorScheme: UIImage]] = [:]
   @State private var renderingStyles: Set<ShareCardStyle> = []
 
+  // Year grid data (loaded when in yearGrid mode)
+  @State private var yearEntries: [ShareCardDayEntry] = []
+  @State private var yearPercentage: Double = 0.0
+
   private var availableStyles: [ShareCardStyle] {
-    let isFuture = Calendar.current.startOfDay(for: date) > Calendar.current.startOfDay(for: Date())
-    if isFuture {
-      return ShareCardStyle.allCases
-    } else {
-      return ShareCardStyle.allCases.filter { $0 != .anniversary }
+    switch mode {
+    case .entry(_, let date):
+      let isFuture = Calendar.current.startOfDay(for: date) > Calendar.current.startOfDay(for: Date())
+      if isFuture {
+        return ShareCardStyle.entryStyles
+      } else {
+        return ShareCardStyle.entryStyles.filter { $0 != .anniversary }
+      }
+    case .yearGrid:
+      return ShareCardStyle.yearGridStyles
+    }
+  }
+
+  private var navigationTitle: String {
+    switch mode {
+    case .entry:
+      return "Share Your Day"
+    case .yearGrid(let year):
+      return "Share Year \(year)"
     }
   }
 
@@ -89,7 +114,7 @@ struct ShareCardSelectorView: View {
                 .foregroundColor(.textColor)
               }
               .circularGlassButton(tintColor: .appPrimary)
-              
+
 
               Button {
                 shareCard()
@@ -146,7 +171,7 @@ struct ShareCardSelectorView: View {
         }
       }
       .background(Color.backgroundColor)
-      .navigationTitle("Share your day")
+      .navigationTitle(navigationTitle)
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
@@ -161,7 +186,26 @@ struct ShareCardSelectorView: View {
       .sheet(item: $shareItem) { item in
         ShareSheet(items: [item.image])
       }
+      .onAppear {
+        setupInitialState()
+      }
     }
+  }
+
+  private func setupInitialState() {
+    // Set initial selected style based on mode
+    switch mode {
+    case .entry:
+      selectedStyle = .minimal
+    case .yearGrid(let year):
+      selectedStyle = .yearGridDots
+      loadYearData(for: year)
+    }
+  }
+
+  private func loadYearData(for year: Int) {
+    yearPercentage = ShareCardRenderer.shared.calculateYearProgress(for: year)
+    yearEntries = ShareCardRenderer.shared.loadEntriesForYear(year, from: modelContext)
   }
 
   @ViewBuilder
@@ -179,9 +223,14 @@ struct ShareCardSelectorView: View {
           Color.backgroundColor
             .frame(width: style.previewSize.width, height: style.previewSize.height)
 
-          Text("Rendering preview...")
-            .font(.system(size: 15))
-            .foregroundColor(.secondaryTextColor)
+          ProgressView()
+            .progressViewStyle(CircularProgressViewStyle())
+        }
+      } else {
+        // Show placeholder before rendering starts
+        ZStack {
+          Color.backgroundColor
+            .frame(width: style.previewSize.width, height: style.previewSize.height)
         }
       }
     }
@@ -204,12 +253,25 @@ struct ShareCardSelectorView: View {
     renderingStyles.insert(style)
 
     Task { @MainActor in
-      let image = ShareCardRenderer.shared.renderCard(
-        style: style,
-        entry: entry,
-        date: date,
-        colorScheme: previewColorScheme
-      )
+      let image: UIImage?
+
+      switch mode {
+      case .entry(let entry, let date):
+        image = ShareCardRenderer.shared.renderCard(
+          style: style,
+          entry: entry,
+          date: date,
+          colorScheme: previewColorScheme
+        )
+      case .yearGrid(let year):
+        image = ShareCardRenderer.shared.renderYearGridCard(
+          style: style,
+          year: year,
+          percentage: yearPercentage,
+          entries: yearEntries,
+          colorScheme: previewColorScheme
+        )
+      }
 
       if let image = image {
         if renderedPreviews[style] == nil {
@@ -232,18 +294,45 @@ struct ShareCardSelectorView: View {
     isSharing = true
 
     Task { @MainActor in
-      let image = ShareCardRenderer.shared.renderCard(
-        style: selectedStyle,
-        entry: entry,
-        date: date,
-        colorScheme: previewColorScheme
-      )
+      let image: UIImage?
+
+      switch mode {
+      case .entry(let entry, let date):
+        image = ShareCardRenderer.shared.renderCard(
+          style: selectedStyle,
+          entry: entry,
+          date: date,
+          colorScheme: previewColorScheme
+        )
+      case .yearGrid(let year):
+        image = ShareCardRenderer.shared.renderYearGridCard(
+          style: selectedStyle,
+          year: year,
+          percentage: yearPercentage,
+          entries: yearEntries,
+          colorScheme: previewColorScheme
+        )
+      }
 
       isSharing = false
       if let image = image {
         shareItem = ShareItem(image: image)
       }
     }
+  }
+}
+
+// MARK: - Convenience initializers
+
+extension ShareCardSelectorView {
+  /// Initialize for sharing a single day entry
+  init(entry: DayEntry?, date: Date) {
+    self.mode = .entry(entry: entry, date: date)
+  }
+
+  /// Initialize for sharing year grid
+  init(year: Int) {
+    self.mode = .yearGrid(year: year)
   }
 }
 
@@ -287,7 +376,7 @@ struct ShareSheet: UIViewControllerRepresentable {
   func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
-#Preview {
+#Preview("Entry Mode") {
   ShareCardSelectorView(
     entry: DayEntry(
       body: "Today was an incredible day filled with new experiences and wonderful moments!",
@@ -296,4 +385,8 @@ struct ShareSheet: UIViewControllerRepresentable {
     ),
     date: Date()
   )
+}
+
+#Preview("Year Grid Mode") {
+  ShareCardSelectorView(year: 2025)
 }
