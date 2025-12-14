@@ -117,12 +117,15 @@ struct ShareCardSelectorView: View {
               .frame(width: 44, height: 44)
             Text("Show Watermark")
               .font(.system(size: 14))
+            if !isJoodleSuper && !SubscriptionManager.shared.hasWatermarkRemoval {
+              PremiumFeatureBadge()
+            }
           }
         }
         // Not super user cannot edit
         .disabled(!isJoodleSuper)
         .toggleStyle(SwitchToggleStyle(tint: .appPrimary))
-        .padding(.horizontal, 70)
+        .padding(.horizontal, 32)
         .onChange(of: showWatermark) { _, _ in
           // Clear cached previews when watermark setting changes
           renderedPreviews.removeAll()

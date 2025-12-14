@@ -91,6 +91,10 @@ class SubscriptionManager: ObservableObject {
     var hasAllShareTemplates: Bool {
         isSubscribed
     }
+  
+    var hasWatermarkRemoval: Bool {
+        isSubscribed
+    }
 
     // Free plan limits - maximum total Joodles allowed for free users
     nonisolated static let freeJoodlesAllowed = 30
