@@ -171,7 +171,7 @@ struct SliderCTAButton: View {
     if let trialText = trialPeriodText {
       return "Start \(trialText) Free Trial"
     }
-    return "Subscribe"
+    return "Subscribe to Joodle Super"
   }
 
   private func startShimmerAnimation() {

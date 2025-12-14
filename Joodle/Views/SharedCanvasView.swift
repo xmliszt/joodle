@@ -89,42 +89,50 @@ struct SharedCanvasView<TrailingHeader: View>: View {
       if let config = buttonsConfig {
         HStack() {
           // Clear button
-          Button(action: {
-            if let showConfirmation = config.showClearConfirmation {
-              showConfirmation.wrappedValue = true
-            } else {
-              config.onClear()
+          if config.canClear {
+            Button(action: {
+              if let showConfirmation = config.showClearConfirmation {
+                showConfirmation.wrappedValue = true
+              } else {
+                config.onClear()
+              }
+            }) {
+              Image(systemName: "trash")
             }
-          }) {
-            Image(systemName: "trash")
+            .circularGlassButton(tintColor: .red)
+            .disabled(!config.canClear)
+            .opacity(config.canClear ? 1.0 : 0.5)
+          } else {
+            Spacer()
           }
-          .circularGlassButton(tintColor: .red)
-          .disabled(!config.canClear)
-          .opacity(config.canClear ? 1.0 : 0.5)
 
           Spacer()
 
           // Undo/Redo buttons
-          HStack(spacing: 8) {
-            // Undo button
-            if let onUndo = config.onUndo {
-              Button(action: onUndo) {
-                Image(systemName: "arrow.uturn.backward")
+          if config.canUndo || config.canRedo {
+            HStack(spacing: 8) {
+              // Undo button
+              if let onUndo = config.onUndo {
+                Button(action: onUndo) {
+                  Image(systemName: "arrow.uturn.backward")
+                }
+                .circularGlassButton(tintColor: .appTextSecondary)
+                .disabled(!config.canUndo)
+                .opacity(config.canUndo ? 1.0 : 0.3)
               }
-              .circularGlassButton(tintColor: .appTextSecondary)
-              .disabled(!config.canUndo)
-              .opacity(config.canUndo ? 1.0 : 0.3)
-            }
-
-            // Redo button
-            if let onRedo = config.onRedo {
-              Button(action: onRedo) {
-                Image(systemName: "arrow.uturn.forward")
+              
+              // Redo button
+              if let onRedo = config.onRedo {
+                Button(action: onRedo) {
+                  Image(systemName: "arrow.uturn.forward")
+                }
+                .circularGlassButton(tintColor: .appTextSecondary)
+                .disabled(!config.canRedo)
+                .opacity(config.canRedo ? 1.0 : 0.3)
               }
-              .circularGlassButton(tintColor: .appTextSecondary)
-              .disabled(!config.canRedo)
-              .opacity(config.canRedo ? 1.0 : 0.3)
             }
+          } else {
+            Spacer()
           }
 
           // Trailing content (e.g. Save button)
@@ -134,7 +142,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           }
 
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, minHeight: 32)
         .padding(.horizontal, 12)
       }
 

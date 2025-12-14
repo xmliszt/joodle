@@ -103,32 +103,34 @@ struct ShareCardSelectorView: View {
                   .animation(.springFkingSatifying, value: selectedStyle)
               }
             }
-
-            // Watermark toggle - only visible for Joodle Super users
-            if isJoodleSuper {
-              Toggle(isOn: $showWatermark) {
-                HStack(spacing: 8) {
-                  Image("MushroomIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 32, height: 32)
-                  Text("Show Watermark")
-                    .font(.system(size: 15))
-                }
-              }
-              .toggleStyle(SwitchToggleStyle(tint: .appPrimary))
-              .padding(.horizontal, 40)
-              .onChange(of: showWatermark) { _, _ in
-                // Clear cached previews when watermark setting changes
-                renderedPreviews.removeAll()
-                // Re-render current preview
-                renderPreview(for: selectedStyle)
-              }
-            }
           }
         }
 
         Spacer().frame(maxHeight: .infinity)
+        
+        // Watermark toggle - only visible for Joodle Super users
+        Toggle(isOn: $showWatermark) {
+          HStack(spacing: 8) {
+            Image("MushroomIcon")
+              .resizable()
+              .scaledToFit()
+              .frame(width: 44, height: 44)
+            Text("Show Watermark")
+              .font(.system(size: 14))
+          }
+        }
+        // Not super user cannot edit
+        .disabled(!isJoodleSuper)
+        .toggleStyle(SwitchToggleStyle(tint: .appPrimary))
+        .padding(.horizontal, 70)
+        .onChange(of: showWatermark) { _, _ in
+          // Clear cached previews when watermark setting changes
+          renderedPreviews.removeAll()
+          // Re-render current preview
+          renderPreview(for: selectedStyle)
+        }
+        
+        Spacer().frame(height: 16)
 
         // Action buttons
         if #available(iOS 26.0, *) {
