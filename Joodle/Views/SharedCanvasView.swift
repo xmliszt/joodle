@@ -151,11 +151,11 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           if paths.isEmpty && currentPath.isEmpty && !placeholderPaths.isEmpty {
             for (path, isDot) in placeholderPaths {
               if isDot {
-                context.fill(path, with: .color(.gray.opacity(0.5)))
+                context.fill(path, with: .color(.gray.opacity(0.2)))
               } else {
                 context.stroke(
                   path,
-                  with: .color(.gray.opacity(0.5)),
+                  with: .color(.gray.opacity(0.2)),
                   style: StrokeStyle(
                     lineWidth: DRAWING_LINE_WIDTH,
                     lineCap: .round,

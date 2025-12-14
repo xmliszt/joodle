@@ -9,21 +9,27 @@ struct OnboardingCompletionView: View {
             Spacer()
 
             VStack(spacing: 48) {
-                Image(systemName: "checkmark.seal.fill")
+                Image("MushroomIcon")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 80, height: 80)
+                    .frame(width: 200, height: 200)
                     .foregroundStyle(.accent)
-                    .symbolEffect(.bounce, value: animate)
+                    .scaleEffect(animate ? 1.0 : 0.6)
+                    .opacity(animate ? 1.0 : 0.0)
+                    .blur(radius: animate ? 0 : 6)
+                    .transition(.scale.combined(with: .opacity))
+                    .animation(.bouncy, value: animate)
                     .onAppear {
-                        animate = true
+                        withAnimation {
+                            animate = true
+                        }
                     }
 
                 VStack(spacing: 16) {
                     Text("You're all set!")
                         .font(.largeTitle.bold())
 
-                    Text("Now unlock your Joodle and draw freely to collect memories and see your collection grow over the years.")
+                    Text("Open your Joodle and let your fingertips capture the moments that matter. Each stroke adds a memory, building a collection that grows with you.")
                         .font(.body)
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
@@ -34,7 +40,7 @@ struct OnboardingCompletionView: View {
 
             Spacer()
 
-            OnboardingButtonView(label: "Unlock my Joodle") {
+            OnboardingButtonView(label: "Let’s Joodle!") {
               viewModel.completeStep(.onboardingCompletion)
             }
         }

@@ -36,34 +36,28 @@ class OnboardingViewModel: ObservableObject {
     @Published var needsRestartAfterOnboarding: Bool = false
 
     // Track if this is a revisit (user already completed onboarding before)
-    let isRevisitingOnboarding: Bool
-
-    /// Return user: Someone who reinstalled the app but already has an active subscription
-    /// (subscription synced from App Store). They've already seen feature intros before.
-    /// This is different from `isRevisitingOnboarding` which is when user clicks "revisit" from Settings.
-    let isReturnUser: Bool
-
-    var modelContext: ModelContext?
-    private var cancellables = Set<AnyCancellable>()
-
-    init() {
-        // Check if this is a revisit (onboarding was already completed)
-        self.isRevisitingOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
-
-        // Return user: Has active subscription but hasn't completed onboarding on this device
-        // This means they reinstalled the app and their subscription synced from App Store
-        self.isReturnUser = !self.isRevisitingOnboarding && StoreKitManager.shared.hasActiveSubscription
-
-        // Monitor subscription status changes
-        SubscriptionManager.shared.$isSubscribed
-            .assign(to: &$isPremium)
+    var isRevisitingOnboarding: Bool {
+      UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
     }
-
+  
+    var isReturnUser: Bool {
+      !self.isRevisitingOnboarding && StoreKitManager.shared.hasActiveSubscription
+    }
+  
     /// Whether to show feature introduction steps
     /// Show for: first-time users, revisiting users from Settings
     /// Skip for: return users (reinstall with existing subscription)
     var shouldShowFeatureIntro: Bool {
         !isReturnUser
+    }
+  
+    var modelContext: ModelContext?
+    private var cancellables = Set<AnyCancellable>()
+  
+    init() {
+        // Monitor subscription status changes
+        SubscriptionManager.shared.$isSubscribed
+            .assign(to: &$isPremium)
     }
 
     // Actions

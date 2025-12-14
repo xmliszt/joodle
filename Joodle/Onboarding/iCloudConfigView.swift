@@ -29,7 +29,7 @@ struct iCloudConfigView: View {
             // Icon
             ZStack {
                 Circle()
-                .fill(Color.appBorder.opacity(0.2))
+                .fill(Color.appBorder.opacity(0.4))
                     .frame(width: 100, height: 100)
 
               Image(systemName: viewModel.canEnableCloudSync && enableSync ? "icloud.fill" : "icloud.dashed")
@@ -65,7 +65,7 @@ struct iCloudConfigView: View {
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 32)
-                          .fill(.appBorder.opacity(0.2))
+                          .fill(.appBorder.opacity(0.4))
                     )
                     .padding(.horizontal, 24)
                 }
@@ -78,11 +78,12 @@ struct iCloudConfigView: View {
                         Text(viewModel.cloudSyncBlockedReason ?? "iCloud is not available")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 32)
-                            .fill(.appBorder.opacity(0.2))
+                            .fill(.appBorder.opacity(0.4))
                     )
                     .padding(.horizontal, 24)
 

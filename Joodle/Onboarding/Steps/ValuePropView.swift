@@ -12,6 +12,15 @@ struct ValuePropView: View {
   private var hasActiveSubscription: Bool {
     StoreKitManager.shared.hasActiveSubscription
   }
+  
+  private var hasCompletedOnboarding: Bool {
+    UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+  }
+  
+  /// Is a return user (i.e. reinstalled Joodle and still have active subscription)
+  private var isReturnUser: Bool {
+    !hasCompletedOnboarding && StoreKitManager.shared.hasActiveSubscription
+  }
 
   var body: some View {
     ZStack(alignment: .topLeading) {
@@ -63,23 +72,23 @@ struct ValuePropView: View {
           }
 
           VStack(spacing: 16) {
-            if hasActiveSubscription {
+            if isReturnUser {
               // Combined messaging for returning subscribers
               Text("Welcome back!")
-                .font(.title2.bold())
+                .font(.title3.bold())
 
-              Text("Your memories are still here, quietly waiting for you. Take a moment to rediscover the Joodles you once created, each one carrying a piece of your story. Retrieve your memories, and continue building your collection — watching it grow, not just over days, but over the years.")
-                .font(.mansalva(size: 16))
+              Text("Your memories are still here, quietly waiting for you. Rediscover the Joodles you once created, each carrying a piece of your story. Continue building your collection and watch it grow, not just day by day, but over the years.")
+                .font(.mansalva(size: 14))
                 .multilineTextAlignment(.center)
                 .foregroundColor(.appTextSecondary)
                 .lineSpacing(1)
             } else {
               // Standard messaging for new users
               Text("You created your first Joodle!")
-                .font(.title2.bold())
+                .font(.title3.bold())
 
-              Text("Imagine seeing a year of your life in a single glance. Small doodles, each holding a moment worth remembering. Joodle was made to gently bring you back to those moments. With a few strokes from your fingertips, you capture what matters and slowly build a personal collection of memories. Always private. Always yours.")
-              .font(.mansalva(size: 16))
+              Text("Imagine seeing a year of your life in a single glance. Small Joodles, each holding a moment worth remembering. With a few strokes, capture what matters and build a personal collection of memories. Always private. Always yours.")
+              .font(.mansalva(size: 14))
               .multilineTextAlignment(.center)
               .foregroundColor(.appTextSecondary)
               .lineSpacing(1)
@@ -90,7 +99,7 @@ struct ValuePropView: View {
 
         Spacer()
 
-        OnboardingButtonView(label: hasActiveSubscription ? "Retrieve my memories" : "How to use Joodle?") {
+        OnboardingButtonView(label: isReturnUser ? "Unlock my memories" : "How to use Joodle?") {
           viewModel.completeStep(.valueProposition)
         }
       }
