@@ -140,6 +140,11 @@ struct JoodleApp: App {
 
     // Regenerate thumbnails with dual sizes (runs async in background)
     Self.runDualThumbnailRegeneration(container: container)
+
+    // DEBUG: Seed test entries for 2023 and 2024
+    #if DEBUG
+    DebugDataSeeder.shared.seedTestEntriesIfNeeded(container: container)
+    #endif
   }
 
   /// Cleans up duplicate entries (same dateString) by merging content and deleting duplicates
