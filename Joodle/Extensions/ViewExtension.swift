@@ -16,23 +16,24 @@ struct CircularGlassButtonStyle: ViewModifier {
       // iOS 26+: Use native glass background effect with circular shape
       content
         .font(.system(size: 18))
-        .if(tintColor != nil) { view in
-          view.foregroundColor(tintColor)
-        }
+        .foregroundStyle(tintColor ?? Color.primary)
         .frame(width: 40, height: 40)
         .padding(2)
         .glassEffect(.regular.interactive())
         .clipShape(Circle())
     } else {
       // Pre-iOS 26: Use custom circular background style
+      // Note: Using stable foregroundStyle instead of conditional modifier
+      // to prevent view identity issues that cause flickering during animations
+      // Also using drawingGroup() to render in a separate layer, preventing
+      // flickering when parent view animates (e.g., split view sliding up)
       content
         .font(.system(size: 18))
-        .if(tintColor != nil) { view in
-          view.foregroundColor(tintColor)
-        }
+        .foregroundStyle(tintColor ?? Color.primary)
         .frame(width: 40, height: 40)
         .background(.appSurface)
         .clipShape(Circle())
+        .drawingGroup()
     }
   }
 }
