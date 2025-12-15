@@ -121,6 +121,11 @@ struct RandomJoodleWidgetView: View {
   var entry: RandomJoodleProvider.Entry
   @Environment(\.widgetFamily) var family
 
+  /// Theme color loaded from shared preferences
+  private var themeColor: Color {
+    WidgetDataManager.shared.loadThemeColor()
+  }
+
   var body: some View {
     // Check subscription status first
     if !entry.isSubscribed {
@@ -132,10 +137,10 @@ struct RandomJoodleWidgetView: View {
     } else {
       switch family {
       case .accessoryCircular:
-        LockScreenCircularView(Joodle: entry.Joodle, family: family)
+        LockScreenCircularView(Joodle: entry.Joodle, family: family, themeColor: themeColor)
       default:
         if let Joodle = entry.Joodle {
-          JoodleView(drawingData: Joodle.drawingData, family: family)
+          JoodleView(drawingData: Joodle.drawingData, family: family, themeColor: themeColor)
             .padding(family == .systemLarge ? 48 : 24)
             .widgetURL(URL(string: "joodle://date/\(Int(Joodle.date.timeIntervalSince1970))"))
             .containerBackground(for: .widget) {
@@ -160,13 +165,17 @@ struct RandomJoodleWidgetView: View {
 struct WidgetLockedView: View {
   let family: WidgetFamily
 
+  private var themeColor: Color {
+    WidgetDataManager.shared.loadThemeColor()
+  }
+
   var body: some View {
     VStack(spacing: family == .systemLarge ? 16 : 8) {
       Image(systemName: "crown.fill")
         .font(.system(size: family == .systemLarge ? 40 : 24))
         .foregroundStyle(
           LinearGradient(
-            colors: [.yellow, .accent],
+            colors: [themeColor.opacity(0.5), themeColor],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
           )
@@ -191,11 +200,12 @@ struct WidgetLockedView: View {
 struct LockScreenCircularView: View {
   let Joodle: JoodleData?
   let family: WidgetFamily
+  let themeColor: Color
 
   var body: some View {
     if let Joodle = Joodle {
       ZStack {
-        JoodleView(drawingData: Joodle.drawingData, family: family)
+        JoodleView(drawingData: Joodle.drawingData, family: family, themeColor: themeColor)
           .padding(8)
       }
       .widgetURL(URL(string: "joodle://date/\(Int(Joodle.date.timeIntervalSince1970))"))
@@ -223,6 +233,7 @@ struct LockScreenCircularView: View {
 struct JoodleView: View {
   let drawingData: Data
   let family: WidgetFamily
+  let themeColor: Color
 
   var body: some View {
     Canvas { context, size in
@@ -249,7 +260,7 @@ struct JoodleView: View {
               height: dotRadius * 2
             )
           )
-          context.fill(scaledPath, with: .color(.accent))
+          context.fill(scaledPath, with: .color(themeColor))
         } else {
           // Draw line
           for (index, point) in pathData.points.enumerated() {
@@ -265,7 +276,7 @@ struct JoodleView: View {
           }
           context.stroke(
             scaledPath,
-            with: .color(.accent),
+            with: .color(themeColor),
             style: StrokeStyle(
               lineWidth: (family == .accessoryCircular ? 10.0 :5.0) * scale,
               lineCap: .round,

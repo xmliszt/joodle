@@ -43,10 +43,10 @@ struct DrawingDisplayView: View {
 
   private var foregroundColor: Color {
     if highlighted { return .appSecondary }
-    if accent { return .appPrimary }
+    if accent { return .appAccent }
 
     // Override base color if it is a present dot.
-    if dotStyle == .present { return .appPrimary }
+    if dotStyle == .present { return .appAccent }
     if dotStyle == .future { return .textColor.opacity(0.15) }
     return .textColor
   }

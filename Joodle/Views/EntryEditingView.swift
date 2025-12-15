@@ -322,11 +322,11 @@ struct EntryEditingView: View {
               if let countdown = countdownText {
                 Text(countdown)
                   .font(.subheadline)
-                  .foregroundColor(.appPrimary.opacity(0.7))
+                  .foregroundColor(.appAccent.opacity(0.7))
               } else {
                 Text(weekdayLabel)
                   .font(.subheadline)
-                  .foregroundColor(isToday ? .appPrimary : .secondaryTextColor)
+                  .foregroundColor(isToday ? .appAccent : .secondaryTextColor)
               }
             }
           }

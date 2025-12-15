@@ -14,17 +14,17 @@ struct PulsingDotView: View {
         ZStack {
             // Outer pulsing ring
             Circle()
-                .stroke(Color.accent.opacity(0.6), lineWidth: 1)
+                .stroke(Color.appAccent.opacity(0.6), lineWidth: 1)
                 .frame(width: size * 1.5, height: size * 1.5)
                 .scaleEffect(isPulsing ? 2.0 : 1.0)
                 .opacity(isPulsing ? 0 : 0.8)
 
             // Inner solid circle with border
             Circle()
-                .fill(Color.accent.opacity(0.15))
+                .fill(Color.appAccent.opacity(0.15))
                 .overlay(
                     Circle()
-                      .stroke(Color.accent.opacity(0.75), lineWidth: 1)
+                      .stroke(Color.appAccent.opacity(0.75), lineWidth: 1)
                 )
                 .frame(width: size, height: size)
         }

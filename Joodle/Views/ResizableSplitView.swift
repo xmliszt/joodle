@@ -58,7 +58,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
 
       ZStack {
         // Background color
-        Color.appPrimary
+        Color.appAccent
           .frame(maxWidth: .infinity, maxHeight: .infinity)
           .opacity(splitPosition == 1.0 ? 0.0 : 1.0)
 

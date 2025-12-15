@@ -13,7 +13,7 @@ struct OnboardingCompletionView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 200, height: 200)
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(.appAccent)
                     .scaleEffect(animate ? 1.0 : 0.6)
                     .opacity(animate ? 1.0 : 0.0)
                     .blur(radius: animate ? 0 : 6)

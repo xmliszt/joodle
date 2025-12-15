@@ -103,7 +103,7 @@ private struct ThumbnailDrawingView: View {
             width: dotRadius * 2,
             height: dotRadius * 2
           ))
-          context.fill(dotPath, with: .color(.appPrimary))
+          context.fill(dotPath, with: .color(.appAccent))
         } else {
           // Create and scale the line path
           let path = createLinePath(from: pathData)
@@ -113,7 +113,7 @@ private struct ThumbnailDrawingView: View {
           let lineWidth = DRAWING_LINE_WIDTH * scale * strokeMultiplier
           context.stroke(
             scaledPath,
-            with: .color(.appPrimary),
+            with: .color(.appAccent),
             style: StrokeStyle(
               lineWidth: max(lineWidth, 1.0),
               lineCap: .round,

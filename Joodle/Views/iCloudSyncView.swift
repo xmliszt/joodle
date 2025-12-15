@@ -56,7 +56,7 @@ struct iCloudSyncView: View {
             } label: {
               Text("Restart Now")
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.accent)
+                .foregroundStyle(.appAccent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .background(Color.white)
@@ -64,7 +64,7 @@ struct iCloudSyncView: View {
             }
           }
           .padding(.vertical, 8)
-          .listRowBackground(Color.accent)
+          .listRowBackground(Color.appAccent)
         }
       }
 
@@ -74,7 +74,7 @@ struct iCloudSyncView: View {
           VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
               Image(systemName: "crown.fill")
-                .foregroundStyle(.accent)
+                .foregroundStyle(.appAccent)
                 .font(.title2)
 
               VStack(alignment: .leading, spacing: 4) {
@@ -92,7 +92,7 @@ struct iCloudSyncView: View {
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.accent)
+            .tint(.appAccent)
           }
           .padding(.vertical, 8)
         }
@@ -104,7 +104,7 @@ struct iCloudSyncView: View {
           VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
               Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.accent)
+                .foregroundStyle(.appAccent)
                 .font(.title2)
 
               VStack(alignment: .leading, spacing: 4) {
@@ -129,7 +129,7 @@ struct iCloudSyncView: View {
               .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.accent)
+            .tint(.appAccent)
           }
           .padding(.vertical, 8)
         }
@@ -176,7 +176,7 @@ struct iCloudSyncView: View {
         if syncManager.needsSystemSettingsChange {
           Text("Joodle can't sync with iCloud because \"Saved to iCloud\" is disabled in system settings.")
             .font(.caption)
-            .foregroundStyle(.accent)
+            .foregroundStyle(.appAccent)
         } else if !syncManager.systemCloudEnabled {
           Text("\"Saved to iCloud\" is disabled. Enable it in Settings → [Your Name] → iCloud → Saved to iCloud → Joodle.")
             .font(.caption)
@@ -288,7 +288,7 @@ struct iCloudSyncView: View {
                 HStack(spacing: 6) {
                   Text("Syncing now")
                     .font(.caption)
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(.appAccent)
                   ProgressView()
                     .scaleEffect(0.6)
                 }
@@ -413,7 +413,7 @@ struct SyncActivityDetailView: View {
             } label: {
               Text("Restart Now")
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.accent)
+                .foregroundStyle(.appAccent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
                 .background(Color.white)
@@ -421,7 +421,7 @@ struct SyncActivityDetailView: View {
             }
           }
           .padding(.vertical, 8)
-          .listRowBackground(Color.accent)
+          .listRowBackground(Color.appAccent)
         }
       }
 
@@ -668,11 +668,11 @@ struct TroubleshootingStep: View {
       Text(number)
         .font(.title2)
         .fontWeight(.semibold)
-        .foregroundStyle(.accent)
+        .foregroundStyle(.appAccent)
         .frame(width: 32, height: 32)
         .background(
           Circle()
-            .fill(.accent.opacity(0.1))
+            .fill(.appAccent.opacity(0.1))
         )
 
       VStack(alignment: .leading, spacing: 4) {

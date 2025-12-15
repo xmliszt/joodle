@@ -15,6 +15,7 @@ enum Pref {
   static let preferredColorScheme = Key<ColorScheme?>(key: "preferred_color_scheme", default: nil)
   static let enableHaptic = Key(key: "enable_haptic", default: true)
   static let isCloudSyncEnabled = Key(key: "is_cloud_sync_enabled", default: false)
+  static let accentColor = Key(key: "accent_color", default: ThemeColor.defaultColor)
 
   // Add new preferences here - just specify the default!
   // static let newSetting = Key(default: "defaultValue")
@@ -36,6 +37,7 @@ enum Pref {
     preferredColorScheme.key,
     enableHaptic.key,
     isCloudSyncEnabled.key,
+    accentColor.key,
   ]
 }
 
@@ -82,6 +84,14 @@ final class UserPreferences {
   var isCloudSyncEnabled: Bool = Pref.isCloudSyncEnabled.defaultValue {
     didSet { _isCloudSyncEnabledWatcher = isCloudSyncEnabled }
   }
+  var accentColor: ThemeColor = Pref.accentColor.defaultValue {
+    didSet {
+      _accentColorWatcher = accentColor
+      syncToCloudIfEnabled()
+      // Notify the app to update the accent color
+      NotificationCenter.default.post(name: .didChangeAccentColor, object: nil)
+    }
+  }
 
   // MARK: - Step 4: Add private watchers that update UserDefaults when properties change
   private var _defaultViewModeWatcher: ViewMode {
@@ -124,6 +134,19 @@ final class UserPreferences {
     set { set(Pref.isCloudSyncEnabled, newValue) }
   }
 
+  private var _accentColorWatcher: ThemeColor {
+    get {
+      if let rawValue = defaults.string(forKey: Pref.accentColor.key),
+         let color = ThemeColor(rawValue: rawValue) {
+        return color
+      }
+      return Pref.accentColor.defaultValue
+    }
+    set {
+      defaults.set(newValue.rawValue, forKey: Pref.accentColor.key)
+    }
+  }
+
   // MARK: - Step 5: Add your property to load during initialization
   init() {
     // Load initial values from UserDefaults
@@ -131,6 +154,7 @@ final class UserPreferences {
     preferredColorScheme = _preferredColorSchemeWatcher
     enableHaptic = _enableHapticWatcher
     isCloudSyncEnabled = _isCloudSyncEnabledWatcher
+    accentColor = _accentColorWatcher
   }
 
   // MARK: - Reset Method (automatically uses all registered keys!)
@@ -144,6 +168,7 @@ final class UserPreferences {
     preferredColorScheme = Pref.preferredColorScheme.defaultValue
     enableHaptic = Pref.enableHaptic.defaultValue
     isCloudSyncEnabled = Pref.isCloudSyncEnabled.defaultValue
+    accentColor = Pref.accentColor.defaultValue
   }
 
   // MARK: - iCloud Sync Helper

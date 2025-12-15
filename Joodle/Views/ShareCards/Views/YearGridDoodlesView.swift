@@ -102,7 +102,7 @@ struct YearGridJoodlesView: View {
 
             Text(String(format: "%.1f%%", percentage))
               .font(.system(size: fontSize, weight: .semibold))
-              .foregroundColor(.appPrimary)
+              .foregroundColor(.appAccent)
           }
           .padding(.horizontal, horizontalPadding)
 
@@ -151,7 +151,7 @@ struct YearGridJoodlesView: View {
             size: dotSize,
             hasEntry: hasEntry,
             dotStyle: dotStyle,
-            thumbnail: dayEntry?.thumbnail // Joodles view shows thumbnails
+            drawingData: dayEntry?.drawingData // Render directly with current theme color
           )
         }
 
@@ -163,7 +163,7 @@ struct YearGridJoodlesView: View {
     }
   }
 
-  private func getDotStyle(for date: Date) -> ShareCardDotStyle {
+  private func getDotStyle(for date: Date) -> DoodleDotStyle {
     if date < todayStart {
       return .past
     } else if Calendar.current.isDate(date, inSameDayAs: todayStart) {
@@ -204,9 +204,6 @@ func createMockYearEntriesWithJoodles(year: Int, entryCount: Int) -> [ShareCardD
 
   let daysWithEntries = Set(validDays.shuffled().prefix(min(entryCount, validDays.count)))
 
-  // Generate a thumbnail from PLACEHOLDER_DATA synchronously for preview
-  let thumbnailData = generatePreviewThumbnail()
-
   for dayOffset in daysWithEntries {
     let date = calendar.date(byAdding: .day, value: dayOffset, to: startOfYear)!
     let dateString = DayEntry.dateToString(date)
@@ -214,133 +211,15 @@ func createMockYearEntriesWithJoodles(year: Int, entryCount: Int) -> [ShareCardD
       dateString: dateString,
       date: date,
       hasEntry: true,
-      thumbnail: thumbnailData
+      thumbnail: nil,
+      drawingData: PLACEHOLDER_DATA // Use raw drawing data for direct rendering
     ))
   }
 
   return entries
 }
 
-/// Generates a small thumbnail image from PLACEHOLDER_DATA for preview purposes
-private func generatePreviewThumbnail() -> Data? {
-  // Decode the placeholder drawing data
-  guard let pathsData = decodePreviewDrawingData(PLACEHOLDER_DATA) else {
-    return nil
-  }
 
-  let size: CGFloat = 20
-  let strokeMultiplier: CGFloat = 2.5 // Thicker strokes for small thumbnails
-
-  // Calculate bounds for scaling
-  var minX = CGFloat.infinity, minY = CGFloat.infinity
-  var maxX = -CGFloat.infinity, maxY = -CGFloat.infinity
-
-  for pathData in pathsData {
-    for point in pathData.points {
-      minX = min(minX, point.x)
-      minY = min(minY, point.y)
-      maxX = max(maxX, point.x)
-      maxY = max(maxY, point.y)
-    }
-  }
-
-  guard minX.isFinite && minY.isFinite && maxX.isFinite && maxY.isFinite else {
-    return nil
-  }
-
-  let drawingWidth = maxX - minX
-  let drawingHeight = maxY - minY
-  let maxDimension = max(drawingWidth, drawingHeight)
-
-  guard maxDimension > 0 else { return nil }
-
-  let scale = (size * 0.8) / maxDimension // 80% of size for padding
-  let offsetX = (size - drawingWidth * scale) / 2 - minX * scale
-  let offsetY = (size - drawingHeight * scale) / 2 - minY * scale
-
-  // Render the thumbnail
-  let format = UIGraphicsImageRendererFormat()
-  format.scale = 1.0
-  format.opaque = false
-
-  let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size), format: format)
-  let image = renderer.image { context in
-    let cgContext = context.cgContext
-
-    // Set drawing properties
-    cgContext.setLineCap(.round)
-    cgContext.setLineJoin(.round)
-    cgContext.setStrokeColor(UIColor(Color.appPrimary).cgColor)
-    cgContext.setFillColor(UIColor(Color.appPrimary).cgColor)
-
-    for pathData in pathsData {
-      if pathData.isDot, let center = pathData.points.first {
-        // Draw dot
-        let scaledX = center.x * scale + offsetX
-        let scaledY = center.y * scale + offsetY
-        let dotRadius = max(1.0, 2.0 * scale * strokeMultiplier)
-        cgContext.fillEllipse(in: CGRect(
-          x: scaledX - dotRadius,
-          y: scaledY - dotRadius,
-          width: dotRadius * 2,
-          height: dotRadius * 2
-        ))
-      } else if pathData.points.count >= 2 {
-        // Draw path
-        cgContext.setLineWidth(max(1.0, 4.0 * scale * strokeMultiplier))
-        cgContext.beginPath()
-
-        let firstPoint = pathData.points[0]
-        cgContext.move(to: CGPoint(
-          x: firstPoint.x * scale + offsetX,
-          y: firstPoint.y * scale + offsetY
-        ))
-
-        for i in 1..<pathData.points.count {
-          let point = pathData.points[i]
-          cgContext.addLine(to: CGPoint(
-            x: point.x * scale + offsetX,
-            y: point.y * scale + offsetY
-          ))
-        }
-
-        cgContext.strokePath()
-      }
-    }
-  }
-
-  return image.pngData()
-}
-
-/// Simple path data structure for preview thumbnail generation
-private struct PreviewPathData {
-  let points: [CGPoint]
-  var isDot: Bool { points.count == 1 }
-}
-
-/// Decodes drawing data for preview purposes
-private func decodePreviewDrawingData(_ data: Data) -> [PreviewPathData]? {
-  guard let json = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
-    return nil
-  }
-
-  var paths: [PreviewPathData] = []
-
-  for pathDict in json {
-    guard let pointsArray = pathDict["points"] as? [[Double]] else { continue }
-
-    let points = pointsArray.compactMap { coords -> CGPoint? in
-      guard coords.count >= 2 else { return nil }
-      return CGPoint(x: coords[0], y: coords[1])
-    }
-
-    if !points.isEmpty {
-      paths.append(PreviewPathData(points: points))
-    }
-  }
-
-  return paths.isEmpty ? nil : paths
-}
 
 // MARK: - Previews
 

@@ -34,7 +34,7 @@ struct iCloudConfigView: View {
 
               Image(systemName: viewModel.canEnableCloudSync && enableSync ? "icloud.fill" : "icloud.dashed")
                     .font(.system(size: 48))
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(.appAccent)
                     .animation(.springFkingSatifying, value: enableSync)
             }
             .padding(.bottom, 32)
@@ -61,7 +61,7 @@ struct iCloudConfigView: View {
                       Text("Enable iCloud Sync")
                           .font(.body)
                     }
-                    .toggleStyle(SwitchToggleStyle(tint: .accent))
+                    .toggleStyle(SwitchToggleStyle(tint: .appAccent))
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 32)

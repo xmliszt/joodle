@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 import WidgetKit
 
 // MARK: - Subscription Status for Widget
@@ -62,6 +63,7 @@ class WidgetHelper {
   private let appGroupIdentifier = "group.dev.liyuxuan.joodle"
   private let entriesKey = "widgetEntries"
   private let subscriptionKey = "widgetSubscriptionStatus"
+  private let themeColorKey = "widgetThemeColor"
 
   private init() {}
 
@@ -103,6 +105,35 @@ class WidgetHelper {
       print("Failed to decode subscription status: \(error)")
       return nil
     }
+  }
+
+  // MARK: - Theme Color
+
+  /// Update theme color for widget extension
+  @MainActor func updateThemeColor() {
+    guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
+      print("Failed to access shared UserDefaults for widget theme color")
+      return
+    }
+
+    let colorName = UserPreferences.shared.accentColor.rawValue
+    sharedDefaults.set(colorName, forKey: themeColorKey)
+    sharedDefaults.synchronize()
+
+    // Reload widgets to reflect theme color change
+    WidgetCenter.shared.reloadAllTimelines()
+  }
+
+  /// Load theme color for widget extension use
+  /// - Parameter sharedDefaults: The shared UserDefaults from App Group
+  /// - Returns: The Color to use for accent, defaults to asset catalog accent if not set
+  static func loadThemeColor(from sharedDefaults: UserDefaults) -> Color {
+    guard let colorName = sharedDefaults.string(forKey: "widgetThemeColor"),
+          let themeColor = ThemeColor(rawValue: colorName) else {
+      // Fallback to default theme color
+      return ThemeColor.defaultColor.color
+    }
+    return themeColor.color
   }
 
   /// Update widget data with current entries from SwiftData and reload widget timelines

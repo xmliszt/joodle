@@ -84,13 +84,14 @@ struct YearGridProvider: TimelineProvider {
 
   private func loadEntries() -> [WidgetDayEntry] {
     let widgetEntries = WidgetDataManager.shared.loadEntries()
-    // Only keep essential data to reduce memory usage
+
     return widgetEntries.map { entry in
       WidgetDayEntry(
         date: entry.date,
         hasText: entry.hasText,
         hasDrawing: entry.hasDrawing,
-        thumbnail: entry.thumbnail
+        thumbnail: entry.thumbnail,
+        drawingData: entry.drawingData
       )
     }
   }
@@ -109,6 +110,7 @@ struct WidgetDayEntry {
   let hasText: Bool
   let hasDrawing: Bool
   let thumbnail: Data?
+  let drawingData: Data?
 
   var hasEntry: Bool {
     return hasText || hasDrawing
@@ -171,6 +173,11 @@ struct YearGridWidgetView: View {
     Calendar.current.startOfDay(for: Date())
   }
 
+  /// Theme color loaded from shared preferences
+  private var themeColor: Color {
+    WidgetDataManager.shared.loadThemeColor()
+  }
+
   private var entriesByDateKey: [String: WidgetDayEntry] {
     let calendar = Calendar.current
     let formatter = DateFormatter()
@@ -211,7 +218,7 @@ struct YearGridWidgetView: View {
 
             Text(String(format: "%.1f%%", entry.percentage))
               .font(.system(size: 20))
-              .foregroundColor(.accent)
+              .foregroundColor(themeColor)
           }
           .padding(.horizontal, horizontalPadding)
 
@@ -250,11 +257,14 @@ struct YearGridWidgetView: View {
           let dayEntry = getEntryForDate(item.date)
           let hasEntry = dayEntry?.hasEntry ?? false
 
-          WidgetDotView(
+          DoodleRendererView(
             size: dotSize,
-            withEntry: hasEntry,
+            hasEntry: hasEntry,
             dotStyle: dotStyle,
-            thumbnail: showJoodles ? dayEntry?.thumbnail : nil
+            drawingData: showJoodles ? dayEntry?.drawingData : nil,
+            strokeColor: themeColor,
+            strokeMultiplier: 2.0,
+            renderScale: 2.0
           )
           .frame(width: dotSize, height: dotSize)
         }
@@ -267,7 +277,7 @@ struct YearGridWidgetView: View {
     }
   }
 
-  private func getDotStyle(for date: Date) -> WidgetDotStyle {
+  private func getDotStyle(for date: Date) -> DoodleDotStyle {
     if date < todayStart {
       return .past
     } else if Calendar.current.isDate(date, inSameDayAs: todayStart) {
@@ -291,46 +301,15 @@ struct WidgetDateItem: Identifiable {
   var date: Date
 }
 
-enum WidgetDotStyle {
-  case past
-  case present
-  case future
-}
-
-struct WidgetDotView: View {
-  let size: CGFloat
-  let withEntry: Bool
-  let dotStyle: WidgetDotStyle
-  var thumbnail: Data? = nil
-
-  private var dotColor: Color {
-    let baseColor: Color = withEntry ? .accent : .primary
-    return baseColor.opacity(dotStyle == .future ? 0.15 : 1)
-  }
-
-  var body: some View {
-    ZStack {
-      if let thumbnail = thumbnail, let uiImage = UIImage(data: thumbnail) {
-        Image(uiImage: uiImage)
-          .resizable()
-          .scaledToFill()
-          .frame(width: size * 2, height: size * 2)
-          .opacity(dotStyle == .future ? 0.15 : 1)
-      } else {
-        Circle()
-          .fill(dotColor)
-          .frame(width: size, height: size)
-      }
-    }
-    .frame(width: size, height: size)
-  }
-}
-
 // MARK: - Widget definitions
 // MARK: - Year Grid Widget Locked View (Premium Required)
 
 struct YearGridWidgetLockedView: View {
   let widgetFamily: WidgetFamily
+
+  private var themeColor: Color {
+    WidgetDataManager.shared.loadThemeColor()
+  }
 
   var body: some View {
     VStack(spacing: widgetFamily == .systemLarge ? 16 : 8) {
@@ -338,7 +317,7 @@ struct YearGridWidgetLockedView: View {
         .font(.system(size: widgetFamily == .systemLarge ? 40 : (widgetFamily == .systemMedium ? 28 : 24)))
         .foregroundStyle(
           LinearGradient(
-            colors: [.yellow, .accent],
+            colors: [themeColor.opacity(0.5), themeColor],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
           )
@@ -390,212 +369,4 @@ struct YearGridJoodleWidget: Widget {
     .description("View your year progress with your Joodles.")
     .supportedFamilies([.systemMedium, .systemLarge])
   }
-}
-
-// MARK: - Previews
-#Preview("Dots Only", as: .systemMedium) {
-  YearGridWidget()
-} timeline: {
-  // Create mock entries for preview
-  let calendar = Calendar.current
-  let currentYear = 2025
-  let startOfYear = calendar.date(from: DateComponents(year: currentYear, month: 1, day: 1))!
-
-  let mockEntries: [WidgetDayEntry] = [
-    // Text entries
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 5, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 12, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 23, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    // Drawing entries
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 18, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 30, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 45, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-    // Both text and drawing
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 52, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 67, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 89, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 100, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 125, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 150, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 180, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 200, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 234, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 267, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 290, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-  ]
-
-  YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries, isSubscribed: true)
-}
-
-#Preview(as: .systemLarge) {
-  YearGridWidget()
-} timeline: {
-  // Create mock entries for preview
-  let calendar = Calendar.current
-  let currentYear = 2025
-  let startOfYear = calendar.date(from: DateComponents(year: currentYear, month: 1, day: 1))!
-
-  let mockEntries: [WidgetDayEntry] = [
-    // Text entries
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 5, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 12, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 23, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    // Drawing entries
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 18, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 30, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 45, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-    // Both text and drawing
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 52, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 67, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 89, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 100, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 125, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 150, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 180, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 200, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 234, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 267, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 290, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: nil),
-  ]
-
-  YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries, isSubscribed: true)
-}
-
-#Preview("Joodles", as: .systemMedium) {
-  YearGridJoodleWidget()
-} timeline: {
-  // Create mock entries for preview
-  let calendar = Calendar.current
-  let currentYear = 2025
-  let startOfYear = calendar.date(from: DateComponents(year: currentYear, month: 1, day: 1))!
-
-  // Create mock thumbnail data (1x1 pixel red image)
-  let mockThumbnail = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==")
-
-  let mockEntries: [WidgetDayEntry] = [
-    // Text entries
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 5, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 12, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 23, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    // Drawing entries
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 18, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: mockThumbnail),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 30, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: mockThumbnail),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 45, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: mockThumbnail),
-    // Both text and drawing
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 52, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: mockThumbnail),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 67, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: mockThumbnail),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 89, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: mockThumbnail),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 100, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 125, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: mockThumbnail),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 150, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: mockThumbnail),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 180, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 200, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: mockThumbnail),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 234, to: startOfYear)!, hasText: true,
-      hasDrawing: true, thumbnail: mockThumbnail),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 267, to: startOfYear)!, hasText: true,
-      hasDrawing: false, thumbnail: nil),
-    WidgetDayEntry(
-      date: calendar.date(byAdding: .day, value: 290, to: startOfYear)!, hasText: false,
-      hasDrawing: true, thumbnail: mockThumbnail),
-  ]
-
-  YearGridEntry(date: Date(), year: 2025, percentage: 83.8, entries: mockEntries, isSubscribed: true)
 }

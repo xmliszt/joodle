@@ -120,7 +120,7 @@ struct DotPositionTweakerView: View {
         VStack(spacing: 8) {
             Text(lastTapCoordinate)
                 .font(.system(.headline, design: .monospaced))
-                .foregroundColor(.accent)
+                .foregroundColor(.appAccent)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(Color.secondary.opacity(0.15))
@@ -147,7 +147,7 @@ struct DotPositionTweakerView: View {
         VStack(spacing: 6) {
             Text(lastTapCoordinate)
                 .font(.system(.caption, design: .monospaced))
-                .foregroundColor(.accent)
+                .foregroundColor(.appAccent)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(Color.secondary.opacity(0.15))
@@ -243,7 +243,7 @@ struct DotPositionTweakerView: View {
                     Text("\(index + 1)")
                         .font(.caption.bold())
                         .frame(width: 32, height: 32)
-                        .background(index == currentIndex ? Color.accent : Color.secondary.opacity(0.2))
+                        .background(index == currentIndex ? Color.appAccent : Color.secondary.opacity(0.2))
                         .foregroundColor(index == currentIndex ? .white : .primary)
                         .clipShape(Circle())
                 }
@@ -267,7 +267,7 @@ struct DotPositionTweakerView: View {
                     Text("\(index + 1)")
                         .font(.caption2.bold())
                         .frame(width: 28, height: 28)
-                        .background(index == currentIndex ? Color.accent : Color.secondary.opacity(0.2))
+                        .background(index == currentIndex ? Color.appAccent : Color.secondary.opacity(0.2))
                         .foregroundColor(index == currentIndex ? .white : .primary)
                         .clipShape(Circle())
                 }

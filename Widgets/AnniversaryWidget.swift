@@ -378,13 +378,17 @@ struct AnniversaryWidgetView: View {
 struct AnniversaryWidgetLockedView: View {
   let family: WidgetFamily
 
+  private var themeColor: Color {
+    WidgetDataManager.shared.loadThemeColor()
+  }
+
   var body: some View {
-    VStack(spacing: family == .systemLarge ? 16 : 8) {
+    VStack(spacing: family == .systemLarge ? 16 : (family == .systemMedium ? 12 : 8)) {
       Image(systemName: "crown.fill")
         .font(.system(size: family == .systemLarge ? 40 : (family == .systemMedium ? 28 : 24)))
         .foregroundStyle(
           LinearGradient(
-            colors: [.yellow, .accent],
+            colors: [themeColor.opacity(0.5), themeColor],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
           )
@@ -543,6 +547,11 @@ struct LargeAnniversaryView: View {
 struct AnniversaryJoodleView: View {
   let drawingData: Data
 
+  /// Theme color loaded from shared preferences
+  private var themeColor: Color {
+    WidgetDataManager.shared.loadThemeColor()
+  }
+
   var body: some View {
     Canvas { context, size in
       let paths = decodePaths(from: drawingData)
@@ -589,7 +598,7 @@ struct AnniversaryJoodleView: View {
         }
         context.stroke(
           scaledPath,
-          with: .color(.accent),
+          with: .color(themeColor),
           style: StrokeStyle(
             lineWidth: 5.0 * scale,
             lineCap: .round,

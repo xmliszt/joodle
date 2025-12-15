@@ -46,6 +46,9 @@ class SubscriptionManager: ObservableObject {
 
             // Check iCloud sync status on launch - disable if not subscribed
             await checkAndDisableCloudSyncIfNeeded()
+
+            // Check premium theme color on launch - reset to default if not subscribed
+            await checkAndResetPremiumThemeColorIfNeeded()
             // Note: Widget subscription status is now updated inside updateSubscriptionStatus()
         }
 
@@ -91,7 +94,7 @@ class SubscriptionManager: ObservableObject {
     var hasAllShareTemplates: Bool {
         isSubscribed
     }
-  
+
     var hasWatermarkRemoval: Bool {
         isSubscribed
     }
@@ -216,6 +219,15 @@ class SubscriptionManager: ObservableObject {
     private func handleSubscriptionLost() {
         print("⚠️ Subscription lost - disabling premium features")
 
+        // Reset premium theme color to default if user was using a premium color
+        let currentColor = UserPreferences.shared.accentColor
+        if currentColor.isPremium {
+            print("   Resetting premium theme color '\(currentColor.displayName)' to default '\(ThemeColor.defaultColor.displayName)'")
+            UserPreferences.shared.accentColor = ThemeColor.defaultColor
+            // Update widgets with the new theme color
+            WidgetHelper.shared.updateThemeColor()
+        }
+
         // Track if we need to recreate the container (which destroys and recreates views)
         let needsContainerRecreation = UserPreferences.shared.isCloudSyncEnabled
 
@@ -253,6 +265,21 @@ class SubscriptionManager: ObservableObject {
             }
         } else {
             subscriptionJustExpired = true
+        }
+    }
+
+    /// Check and reset premium theme color if user doesn't have active subscription
+    /// Called on app launch to ensure premium colors are not used by non-subscribers
+    private func checkAndResetPremiumThemeColorIfNeeded() async {
+        let currentColor = UserPreferences.shared.accentColor
+        if currentColor.isPremium && !isSubscribed {
+            print("⚠️ Premium theme color '\(currentColor.displayName)' was selected but user is not subscribed - resetting to default")
+
+            await MainActor.run {
+                UserPreferences.shared.accentColor = ThemeColor.defaultColor
+                // Update widgets with the new theme color
+                WidgetHelper.shared.updateThemeColor()
+            }
         }
     }
 

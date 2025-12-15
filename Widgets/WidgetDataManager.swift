@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import SwiftUI
+import UIKit
 
 // MARK: - Subscription Status for Widget
 
@@ -55,6 +57,7 @@ struct WidgetDataManager {
   private let appGroupIdentifier = "group.dev.liyuxuan.joodle"
   private let entriesKey = "widgetEntries"
   private let subscriptionKey = "widgetSubscriptionStatus"
+  private let themeColorKey = "widgetThemeColor"
 
   private init() {}
 
@@ -91,6 +94,36 @@ struct WidgetDataManager {
       print("Failed to decode subscription status: \(error)")
       return false
     }
+  }
+
+  // MARK: - Theme Color
+
+  /// Load the user's selected theme color for widget display
+  /// - Returns: The Color to use for accent in widgets
+  func loadThemeColor() -> Color {
+    guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
+      return resolveThemeColor(named: "Themes/Orange")
+    }
+
+    guard let colorName = sharedDefaults.string(forKey: themeColorKey) else {
+      return resolveThemeColor(named: "Themes/Orange")
+    }
+
+    // Return the color from the Themes asset catalog, resolved through UIColor
+    return resolveThemeColor(named: "Themes/\(colorName)")
+  }
+
+  /// Resolves a named color through UIColor to ensure it works in Canvas
+  /// - Parameter named: The color name in the asset catalog
+  /// - Returns: A Color that is properly resolved for use in Canvas
+  private func resolveThemeColor(named: String) -> Color {
+    // Use UIColor to resolve the color from the asset catalog
+    // This ensures the color is concrete and works in Canvas drawing contexts
+    if let uiColor = UIColor(named: named) {
+      return Color(uiColor)
+    }
+    // Fallback to a default orange color if asset not found
+    return Color(UIColor(red: 1.0, green: 0.36, blue: 0.1, alpha: 1.0))
   }
 
   /// Save entries to shared container for widget access

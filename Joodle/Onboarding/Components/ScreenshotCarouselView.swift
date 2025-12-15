@@ -103,7 +103,7 @@ struct PageIndicatorView: View {
         HStack(spacing: 8) {
             ForEach(0..<totalPages, id: \.self) { index in
                 Circle()
-                    .fill(index == currentPage ? Color.accent : Color.secondary.opacity(0.3))
+                    .fill(index == currentPage ? Color.appAccent : Color.secondary.opacity(0.3))
                     .frame(width: 8, height: 8)
                     .animation(.easeInOut(duration: 0.2), value: currentPage)
             }
@@ -135,7 +135,7 @@ struct ScreenshotCarouselView: View {
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                
+
                 // Custom page indicators
                 PageIndicatorView(totalPages: screenshots.count, currentPage: currentIndex)
             }

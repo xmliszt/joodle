@@ -110,6 +110,7 @@ struct JoodleApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
   @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
   @State private var colorScheme: ColorScheme? = UserPreferences.shared.preferredColorScheme
+  @State private var accentColor: ThemeColor = UserPreferences.shared.accentColor
   @State private var selectedDateFromWidget: Date?
   @State private var showPaywallFromWidget = false
   @State private var showLaunchScreen = true
@@ -141,10 +142,20 @@ struct JoodleApp: App {
     // Regenerate thumbnails with dual sizes (runs async in background)
     Self.runDualThumbnailRegeneration(container: container)
 
+    // Sync theme color to widgets on startup
+    Self.syncThemeColorToWidgets()
+
     // DEBUG: Seed test entries for 2023 and 2024
     #if DEBUG
     DebugDataSeeder.shared.seedTestEntriesIfNeeded(container: container)
     #endif
+  }
+
+  /// Syncs the current theme color preference to widgets via App Group
+  private static func syncThemeColorToWidgets() {
+    Task { @MainActor in
+      WidgetHelper.shared.updateThemeColor()
+    }
   }
 
   /// Cleans up duplicate entries (same dateString) by merging content and deleting duplicates
@@ -384,6 +395,7 @@ struct JoodleApp: App {
         }
       }
       .preferredColorScheme(colorScheme)
+      .tint(accentColor.color)
     }
     .modelContainer(modelContainer)
   }
@@ -395,6 +407,14 @@ struct JoodleApp: App {
       queue: .main
     ) { [self] _ in
       colorScheme = UserPreferences.shared.preferredColorScheme
+    }
+
+    NotificationCenter.default.addObserver(
+      forName: .didChangeAccentColor,
+      object: nil,
+      queue: .main
+    ) { [self] _ in
+      accentColor = UserPreferences.shared.accentColor
     }
   }
 

@@ -202,7 +202,7 @@ struct DrawingCanvasView: View {
         .foregroundColor(.white)
         .padding(.horizontal, 24)
         .padding(.vertical, 12)
-        .background(.accent)
+        .background(.appAccent)
         .cornerRadius(32)
       }
     }

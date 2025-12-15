@@ -282,7 +282,7 @@ struct PremiumFeatureBadge: View {
             Capsule()
                 .fill(
                     LinearGradient(
-                        colors: [.orange, .accent],
+                      colors: [.appAccent.opacity(0.5), .appAccent],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -345,7 +345,7 @@ struct RemainingJoodlesIndicator: View {
                         .font(.caption)
                 }
             }
-            .foregroundColor(remaining > 10 ? .secondary : (remaining > 0 ? .accent : .red))
+            .foregroundColor(remaining > 10 ? .secondary : (remaining > 0 ? .appAccent : .red))
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(

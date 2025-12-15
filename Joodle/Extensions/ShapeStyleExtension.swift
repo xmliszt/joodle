@@ -10,6 +10,12 @@ import SwiftUI
 
 /// ShapeStyle extension providing consistent dynamic colors across the app
 extension ShapeStyle where Self == Color {
+  /// The app's accent color based on user's theme preference
+  /// Use this instead of `.accent` to respect the user's selected theme color
+  static var appAccent: Color {
+    UserPreferences.shared.accentColor.color
+  }
+
   /// Primary background color that adapts to light/dark mode
   static var backgroundColor: Color {
     Color(UIColor.systemBackground)

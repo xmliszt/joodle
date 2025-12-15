@@ -85,7 +85,7 @@ struct SliderCTAButton: View {
     let progressWidth = trackPadding + clampedOffset + thumbSize
 
     return Capsule()
-      .fill(Color.green.opacity(0.2))
+      .fill(Color.appAccent.opacity(0.8))
       .frame(width: trackWidth, height: trackHeight)
       .mask(
         HStack(spacing: 0) {
@@ -105,7 +105,7 @@ struct SliderCTAButton: View {
       // Base gradient/color
       if isSuperMode {
         LinearGradient(
-          colors: [Color.yellow.opacity(0.3), Color.appPrimary.opacity(0.3)],
+          colors: [Color.appAccent.opacity(0.2), Color.appAccent.opacity(0.5)],
           startPoint: .leading,
           endPoint: .trailing
         )
@@ -268,7 +268,7 @@ struct SliderCTAButton: View {
     if isSuperMode {
       return AnyShapeStyle(
         LinearGradient(
-          colors: [Color.orange, Color.appPrimary],
+          colors: [Color.appAccent.opacity(0.5), Color.appAccent],
           startPoint: .topLeading,
           endPoint: .bottomTrailing
         )

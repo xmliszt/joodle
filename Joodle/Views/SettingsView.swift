@@ -53,6 +53,10 @@ struct SettingsView: View {
   @State private var showSubscriptions = false
   @State private var showAppStats = false
 
+  // Theme color change state
+  @State private var pendingThemeColor: ThemeColor?
+  private var themeColorManager = ThemeColorManager.shared
+
   /// Check if restart is needed for sync to work
   private var needsRestartForSync: Bool {
     userPreferences.isCloudSyncEnabled && ModelContainerManager.shared.needsRestartForSyncChange
@@ -135,6 +139,25 @@ struct SettingsView: View {
         }
       }
 
+      // MARK: - Accent Color
+      Section {
+        ThemeColorPaletteView(
+          subscriptionManager: subscriptionManager,
+          onLockedColorTapped: {
+            showPaywall = true
+          },
+          onColorChangeStarted: { color in
+            pendingThemeColor = color
+          },
+          onColorChangeCompleted: {
+            pendingThemeColor = nil
+          }
+        )
+        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+      } header: {
+        Text("Accent Color")
+      }
+
       // MARK: - Interaction Preferences
       if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
         Section {
@@ -187,7 +210,7 @@ struct SettingsView: View {
           // }
           // .foregroundStyle(.primary)
         } header: {
-          Text("LIMITS")
+          Text("Limits")
         } footer: {
           HStack (spacing: 8) {
             Text("Unlock unlimited access with Joodle Super")
@@ -207,7 +230,7 @@ struct SettingsView: View {
               HStack {
                 HStack(spacing: 4) {
                   Image(systemName: "crown.fill")
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(.appAccent)
                     .font(.body)
                   Text("Joodle Super")
                     .font(.headline)
@@ -335,7 +358,7 @@ struct SettingsView: View {
         } label: {
           HStack {
             Image(systemName: AppEnvironment.feedbackButtonIcon)
-              .foregroundColor(.accent)
+              .foregroundColor(.appAccent)
               .frame(width: 24)
             Text(AppEnvironment.feedbackButtonTitle)
               .foregroundColor(.primary)
@@ -377,6 +400,14 @@ struct SettingsView: View {
     .navigationTitle("Settings")
     .navigationBarTitleDisplayMode(.inline)
     .preferredColorScheme(userPreferences.preferredColorScheme)
+    .overlay {
+      if themeColorManager.isRegenerating, let color = pendingThemeColor {
+        ThemeColorLoadingOverlay(
+          themeColorManager: themeColorManager,
+          selectedColor: color
+        )
+      }
+    }
     .onChange(of: userPreferences.preferredColorScheme) { _, _ in
       // Force view refresh when color scheme changes
       NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)

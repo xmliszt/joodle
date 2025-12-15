@@ -98,7 +98,7 @@ struct ShareCardSelectorView: View {
             HStack(spacing: 12) {
               ForEach(availableStyles) { style in
                 Circle()
-                  .fill(selectedStyle == style ? Color.appPrimary : Color.secondaryTextColor.opacity(0.3))
+                  .fill(selectedStyle == style ? Color.appAccent : Color.secondaryTextColor.opacity(0.3))
                   .frame(width: 8, height: 8)
                   .animation(.springFkingSatifying, value: selectedStyle)
               }
@@ -124,7 +124,7 @@ struct ShareCardSelectorView: View {
         }
         // Not super user cannot edit
         .disabled(!isJoodleSuper)
-        .toggleStyle(SwitchToggleStyle(tint: .appPrimary))
+        .toggleStyle(SwitchToggleStyle(tint: .appAccent))
         .padding(.horizontal, 32)
         .onChange(of: showWatermark) { _, _ in
           // Clear cached previews when watermark setting changes
@@ -148,7 +148,7 @@ struct ShareCardSelectorView: View {
                 .fontWeight(.semibold)
                 .foregroundColor(.textColor)
               }
-              .circularGlassButton(tintColor: .appPrimary)
+              .circularGlassButton(tintColor: .appAccent)
 
 
               Button {
@@ -164,7 +164,7 @@ struct ShareCardSelectorView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(.appPrimary)
+                .background(.appAccent)
                 .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
               }
               .glassEffect(.regular.interactive())
@@ -197,7 +197,7 @@ struct ShareCardSelectorView: View {
               .foregroundColor(.white)
               .frame(maxWidth: .infinity)
               .frame(height: 56)
-              .background(.appPrimary)
+              .background(.appAccent)
               .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
             }
             .disabled(isSharing)

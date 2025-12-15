@@ -10,7 +10,7 @@ struct OnboardingButtonStyle: ButtonStyle {
           .foregroundColor(.appBackground)
           .frame(maxWidth: 237)
           .frame(height: 48)
-          .background(isEnabled ? .appPrimary : .appPrimary.opacity(0.3))
+          .background(isEnabled ? .appAccent : .appAccent.opacity(0.3))
           .clipShape(Capsule())
           .glassEffect(.regular.interactive())
           .shadow(color: .appBackground.opacity(0.15), radius: 8, x: 0, y: 4)
@@ -20,7 +20,7 @@ struct OnboardingButtonStyle: ButtonStyle {
           .foregroundColor(.appBackground)
           .frame(maxWidth: 237)
           .frame(height: 48)
-          .background(isEnabled ? .appPrimary : .appPrimary.opacity(0.3))
+          .background(isEnabled ? .appAccent : .appAccent.opacity(0.3))
           .clipShape(Capsule())
           .shadow(color: .appBackground.opacity(0.15), radius: 8, x: 0, y: 4)
       }

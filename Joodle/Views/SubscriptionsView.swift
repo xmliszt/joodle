@@ -112,7 +112,7 @@ struct SubscriptionsView: View {
     VStack(spacing: 12) {
       Image(systemName: "crown.fill")
         .font(.system(size: 50))
-        .foregroundColor(subscriptionManager.isSubscribed ? .accent : .appBorder)
+        .foregroundColor(subscriptionManager.isSubscribed ? .appAccent : .appBorder)
 
 
       if subscriptionManager.isSubscribed {
@@ -130,7 +130,7 @@ struct SubscriptionsView: View {
           HStack(spacing: 6) {
             Image(systemName: subscriptionManager.isInTrialPeriod ? "clock.fill" : "exclamationmark.triangle.fill")
               .font(.caption2)
-              .foregroundStyle(.accent)
+              .foregroundStyle(.appAccent)
             Text(statusMessage)
               .font(.caption)
           }
@@ -139,7 +139,7 @@ struct SubscriptionsView: View {
           .padding(.vertical, 8)
           .background(
             RoundedRectangle(cornerRadius: 32, style: .continuous)
-              .fill(.accent.opacity(0.1))
+              .fill(.appAccent.opacity(0.1))
           )
           .padding(.top, 8)
         }

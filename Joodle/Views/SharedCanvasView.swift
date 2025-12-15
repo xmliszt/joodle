@@ -181,12 +181,12 @@ struct SharedCanvasView<TrailingHeader: View>: View {
 
             if isDot {
               // Fill ellipse paths (dots)
-              context.fill(path, with: .color(.appPrimary))
+              context.fill(path, with: .color(.appAccent))
             } else {
               // Stroke line paths
               context.stroke(
                 path,
-                with: .color(.appPrimary),
+                with: .color(.appAccent),
                 style: StrokeStyle(
                   lineWidth: DRAWING_LINE_WIDTH,
                   lineCap: .round,
@@ -200,12 +200,12 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           if !currentPath.isEmpty {
             if currentPathIsDot {
               // Fill ellipse paths (dots)
-              context.fill(currentPath, with: .color(.appPrimary))
+              context.fill(currentPath, with: .color(.appAccent))
             } else {
               // Stroke line paths
               context.stroke(
                 currentPath,
-                with: .color(.appPrimary),
+                with: .color(.appAccent),
                 style: StrokeStyle(
                   lineWidth: DRAWING_LINE_WIDTH,
                   lineCap: .round,

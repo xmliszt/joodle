@@ -19,7 +19,7 @@ struct FeatureRow: View {
     HStack(alignment: .top, spacing: 16) {
       Image(systemName: icon)
         .font(.system(size: 24))
-        .foregroundColor(.accent)
+        .foregroundColor(.appAccent)
         .frame(width: 40, height: 40)
 
       VStack(alignment: .leading, spacing: 4) {
@@ -63,12 +63,12 @@ struct PricingCard: View {
                 // Selection indicator
                 ZStack {
                   Circle()
-                    .strokeBorder(isSelected ? .accent : .secondary.opacity(0.3), lineWidth: 2)
+                      .strokeBorder(isSelected ? .appAccent : .secondary.opacity(0.3), lineWidth: 2)
                     .frame(width: 24, height: 24)
 
                   if isSelected {
                     Circle()
-                      .fill(.accent)
+                      .fill(.appAccent)
                       .frame(width: 14, height: 14)
                   }
                 }
@@ -103,7 +103,7 @@ struct PricingCard: View {
                     .foregroundColor(.secondary)
                   Text("\(trialText) free trial")
                     .font(.caption)
-                    .foregroundColor(.accent)
+                    .foregroundColor(.appAccent)
                 }
               }
             }
@@ -116,7 +116,7 @@ struct PricingCard: View {
             .fill(.appBorder.opacity(0.3))
             .overlay(
               RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .strokeBorder(isSelected ? .accent : Color.clear, lineWidth: 2)
+                .strokeBorder(isSelected ? .appAccent : Color.clear, lineWidth: 2)
             )
         )
 
@@ -129,7 +129,7 @@ struct PricingCard: View {
             .padding(.vertical, 6)
             .background(
               Capsule()
-                .fill(.accent)
+                .fill(.appAccent)
             )
             .offset(x: -0, y: -12)
         }

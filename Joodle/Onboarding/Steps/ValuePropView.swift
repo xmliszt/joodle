@@ -12,11 +12,11 @@ struct ValuePropView: View {
   private var hasActiveSubscription: Bool {
     StoreKitManager.shared.hasActiveSubscription
   }
-  
+
   private var hasCompletedOnboarding: Bool {
     UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
   }
-  
+
   /// Is a return user (i.e. reinstalled Joodle and still have active subscription)
   private var isReturnUser: Bool {
     !hasCompletedOnboarding && StoreKitManager.shared.hasActiveSubscription
@@ -44,11 +44,11 @@ struct ValuePropView: View {
                   let path = pathWithMetadata.path
 
                   if pathWithMetadata.metadata.isDot {
-                    context.fill(path, with: .color(.appPrimary))
+                    context.fill(path, with: .color(.appAccent))
                   } else {
                     context.stroke(
                       path,
-                      with: .color(.appPrimary),
+                      with: .color(.appAccent),
                       style: StrokeStyle(
                         lineWidth: DRAWING_LINE_WIDTH,
                         lineCap: .round,
@@ -66,7 +66,7 @@ struct ValuePropView: View {
               .resizable()
               .scaledToFit()
               .frame(width: 40, height: 40)
-              .foregroundColor(.accent)
+              .foregroundColor(.appAccent)
               .symbolEffect(.bounce, value: animate)
               .offset(x: displaySize / 2 - 10, y: -displaySize / 2 + 10)
           }

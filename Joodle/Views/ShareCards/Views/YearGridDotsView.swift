@@ -14,27 +14,23 @@ struct ShareCardDayEntry: Identifiable {
   let date: Date
   let hasEntry: Bool
   let thumbnail: Data?
+  let drawingData: Data?
 
   init(from dayEntry: DayEntry) {
     self.dateString = dayEntry.dateString
     self.date = dayEntry.displayDate
     self.hasEntry = !dayEntry.body.isEmpty || (dayEntry.drawingData != nil && !dayEntry.drawingData!.isEmpty)
     self.thumbnail = dayEntry.drawingThumbnail20
+    self.drawingData = dayEntry.drawingData
   }
 
-  init(dateString: String, date: Date, hasEntry: Bool = false, thumbnail: Data? = nil) {
+  init(dateString: String, date: Date, hasEntry: Bool = false, thumbnail: Data? = nil, drawingData: Data? = nil) {
     self.dateString = dateString
     self.date = date
     self.hasEntry = hasEntry
     self.thumbnail = thumbnail
+    self.drawingData = drawingData
   }
-}
-
-/// Dot style for year grid share cards
-enum ShareCardDotStyle {
-  case past
-  case present
-  case future
 }
 
 /// Date item for year grid
@@ -43,33 +39,24 @@ struct ShareCardDateItem: Identifiable {
   var date: Date
 }
 
-/// Dot view for share cards
+/// Dot view for share cards - wrapper around shared DoodleRendererView
 struct ShareCardDotView: View {
   let size: CGFloat
   let hasEntry: Bool
-  let dotStyle: ShareCardDotStyle
+  let dotStyle: DoodleDotStyle
   var thumbnail: Data? = nil
-
-  private var dotColor: Color {
-    let baseColor: Color = hasEntry ? .appPrimary : .primary
-    return baseColor.opacity(dotStyle == .future ? 0.15 : 1)
-  }
+  var drawingData: Data? = nil
 
   var body: some View {
-    ZStack {
-      if let thumbnail = thumbnail, let uiImage = UIImage(data: thumbnail) {
-        Image(uiImage: uiImage)
-          .resizable()
-          .frame(width: size, height: size)
-          .scaleEffect(2)
-          .opacity(dotStyle == .future ? 0.15 : 1)
-      } else {
-        Circle()
-          .fill(dotColor)
-          .frame(width: size, height: size)
-      }
-    }
-    .frame(width: size, height: size)
+    DoodleRendererView(
+      size: size,
+      hasEntry: hasEntry,
+      dotStyle: dotStyle,
+      drawingData: drawingData,
+      strokeColor: .appAccent,
+      strokeMultiplier: 3.0,
+      renderScale: 2.0
+    )
   }
 }
 
@@ -168,7 +155,7 @@ struct YearGridDotsView: View {
 
             Text(String(format: "%.1f%%", percentage))
               .font(.system(size: fontSize, weight: .semibold))
-              .foregroundColor(.appPrimary)
+              .foregroundColor(.appAccent)
           }
           .padding(.horizontal, horizontalPadding)
 
@@ -229,7 +216,7 @@ struct YearGridDotsView: View {
     }
   }
 
-  private func getDotStyle(for date: Date) -> ShareCardDotStyle {
+  private func getDotStyle(for date: Date) -> DoodleDotStyle {
     if date < todayStart {
       return .past
     } else if Calendar.current.isDate(date, inSameDayAs: todayStart) {

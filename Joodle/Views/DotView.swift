@@ -22,7 +22,7 @@ struct DotView: View {
         if highlighted { return .appSecondary }
 
         // Override base color if it is a present dot.
-        if dotStyle == .present { return .appPrimary }
+        if dotStyle == .present { return .appAccent }
         if dotStyle == .future { return .textColor.opacity(0.15) }
         return .textColor
     }
@@ -31,7 +31,7 @@ struct DotView: View {
         if highlighted { return .appSecondary }
 
         // Override base color if it is a present dot.
-        if dotStyle == .present { return .appPrimary }
+        if dotStyle == .present { return .appAccent }
         if dotStyle == .future { return .textColor.opacity(0.15) }
         return .textColor
     }
