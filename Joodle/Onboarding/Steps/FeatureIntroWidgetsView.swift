@@ -32,7 +32,7 @@ struct FeatureIntroWidgetsView: View {
                     orientation: .landscape
                 )
             ],
-            buttonLabel: "Continue",
+            buttonLabel: "Next",
             onContinue: {
                 viewModel.completeStep(.featureIntroWidgets)
             },

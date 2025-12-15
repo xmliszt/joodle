@@ -42,21 +42,21 @@ class OnboardingViewModel: ObservableObject {
     var isRevisitingOnboarding: Bool {
       UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
     }
-  
+
     var isReturnUser: Bool {
       !self.isRevisitingOnboarding && StoreKitManager.shared.hasActiveSubscription
     }
-  
+
     /// Whether to show feature introduction steps
     /// Show for: first-time users, revisiting users from Settings
     /// Skip for: return users (reinstall with existing subscription)
     var shouldShowFeatureIntro: Bool {
         !isReturnUser
     }
-  
+
     var modelContext: ModelContext?
     private var cancellables = Set<AnyCancellable>()
-  
+
     init() {
         // Monitor subscription status changes
         SubscriptionManager.shared.$isSubscribed
@@ -88,22 +88,22 @@ class OnboardingViewModel: ObservableObject {
 
         case .featureIntroYearSwitching:
             navigationPath.append(OnboardingStep.featureIntroReminder)
-        
+
         case .featureIntroReminder:
             navigationPath.append(OnboardingStep.featureIntroViewModes)
 
         case .featureIntroViewModes:
             navigationPath.append(OnboardingStep.featureIntroScrubbing)
-          
+
         case .featureIntroScrubbing:
             navigationPath.append(OnboardingStep.featureIntroSharing)
 
         case .featureIntroSharing:
             navigationPath.append(OnboardingStep.featureIntroColorTheme)
-          
+
         case .featureIntroColorTheme:
           navigationPath.append(OnboardingStep.featureIntroWidgets)
-          
+
         case .featureIntroWidgets:
           navigationPath.append(OnboardingStep.featureIntroShortcuts)
 

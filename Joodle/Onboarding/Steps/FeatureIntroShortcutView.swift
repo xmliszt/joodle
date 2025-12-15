@@ -27,7 +27,7 @@ struct FeatureIntroShortcutView: View {
                     image: Image("Onboarding/Shortcut3")
                 )
             ],
-            buttonLabel: "Next",
+            buttonLabel: "Continue",
             onContinue: {
                 viewModel.completeStep(.featureIntroShortcuts)
             },
