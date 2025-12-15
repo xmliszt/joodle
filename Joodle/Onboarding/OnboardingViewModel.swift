@@ -8,10 +8,13 @@ enum OnboardingStep: Hashable, CaseIterable {
     case valueProposition          // Confetti + Explanation
     case featureIntroEditEntry     // Feature intro: Edit Joodle and note
     case featureIntroYearSwitching // Feature intro: Year switching and countdown
+    case featureIntroReminder      // Feature intro: Set reminder for anniversary datese
     case featureIntroViewModes     // Feature intro: Regular vs minimized view
     case featureIntroScrubbing     // Feature intro: How to scrub through days
     case featureIntroSharing       // Feature intro: Sharing year and days
+    case featureIntroColorTheme    // Feature intro: Color theme
     case featureIntroWidgets       // Feature intro: Widgets
+    case featureIntroShortcuts     // Feature intro: Siri shortcuts
     case paywall                   // Subscription choice
     case icloudConfig              // iCloud sync configuration (only for subscribers)
     case onboardingCompletion      // Completion step
@@ -84,6 +87,9 @@ class OnboardingViewModel: ObservableObject {
             navigationPath.append(OnboardingStep.featureIntroYearSwitching)
 
         case .featureIntroYearSwitching:
+            navigationPath.append(OnboardingStep.featureIntroReminder)
+        
+        case .featureIntroReminder:
             navigationPath.append(OnboardingStep.featureIntroViewModes)
 
         case .featureIntroViewModes:
@@ -93,9 +99,15 @@ class OnboardingViewModel: ObservableObject {
             navigationPath.append(OnboardingStep.featureIntroSharing)
 
         case .featureIntroSharing:
-            navigationPath.append(OnboardingStep.featureIntroWidgets)
-
+            navigationPath.append(OnboardingStep.featureIntroColorTheme)
+          
+        case .featureIntroColorTheme:
+          navigationPath.append(OnboardingStep.featureIntroWidgets)
+          
         case .featureIntroWidgets:
+          navigationPath.append(OnboardingStep.featureIntroShortcuts)
+
+        case .featureIntroShortcuts:
             // After all feature intros, proceed to paywall or iCloud config
             if StoreKitManager.shared.hasActiveSubscription {
                 // User is already subscribed, show iCloud config

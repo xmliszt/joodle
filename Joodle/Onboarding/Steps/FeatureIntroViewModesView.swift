@@ -12,7 +12,7 @@ struct FeatureIntroViewModesView: View {
     var body: some View {
         FeatureIntroStepView(
             title: "Two ways to view",
-            description: "Tap to switch between normal and minimized view. Normal view zooms in for better visibility and seletion. Minimized view gives you a glance at the entire year. Pinch with two fingers also work!",
+            description: "Tap to switch. Normal view zooms in for better visibility. Minimized view gives you a glance at the entire year. Pinch with two fingers also work!",
             screenshots: [
                 ScreenshotItem(
                     image: Image("Onboarding/Regular"),
