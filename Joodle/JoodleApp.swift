@@ -331,6 +331,23 @@ struct JoodleApp: App {
               .onOpenURL { url in
                 handleWidgetURL(url)
               }
+              .onReceive(NotificationCenter.default.publisher(for: .navigateToDateFromShortcut)) { notification in
+                // Handle navigation from App Shortcut (Siri/Spotlight)
+                if let date = notification.userInfo?["date"] as? Date {
+                  selectedDateFromWidget = date
+                } else {
+                  // Fallback to today's date
+                  selectedDateFromWidget = Date()
+                }
+              }
+              .onReceive(NotificationCenter.default.publisher(for: .dismissToRootAndNavigate)) { _ in
+                // Dismiss any presented sheets (e.g., paywall from Settings)
+                // ContentView handles dismissing navigation and navigating to the date
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let rootViewController = windowScene.windows.first?.rootViewController {
+                  rootViewController.dismiss(animated: true)
+                }
+              }
               .sheet(isPresented: $showPaywallFromWidget) {
                 StandalonePaywallView()
                   .presentationDetents([.large])
