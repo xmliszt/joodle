@@ -14,13 +14,13 @@ import StoreKit
 struct PaywallConfiguration {
   /// Whether to use onboarding-style buttons
   var useOnboardingStyle: Bool = false
-
+  
   /// Called when a purchase is completed successfully
   var onPurchaseComplete: (() -> Void)?
-
+  
   /// Called when user chooses to continue with free version
   var onContinueFree: (() -> Void)?
-
+  
   /// Called when restore is successful and user has active subscription
   var onRestoreComplete: (() -> Void)?
 }
@@ -31,46 +31,46 @@ struct PaywallConfiguration {
 struct SliderCTAButton: View {
   /// Whether the slider is in "Super" mode (true) or "Free" mode (false)
   @Binding var isSuperMode: Bool
-
+  
   /// Whether the user can toggle between modes by tapping the thumb
   let allowModeToggle: Bool
-
+  
   /// Whether the button is in a loading state
   let isLoading: Bool
-
+  
   /// Optional trial period text to display (e.g., "7-Day", "1-Month", "3-Month")
   let trialPeriodText: String?
-
+  
   /// Called when the user completes the slide action
   let onSlideComplete: () -> Void
-
+  
   @State private var dragOffset: CGFloat = 0
   @State private var isDragging = false
   @State private var shimmerOffset: CGFloat = -200
-
+  
   @Namespace private var thumbNamespace
-
+  
   private let thumbSize: CGFloat = 60
   private let trackHeight: CGFloat = 56
   private var trackPadding: CGFloat {
     (trackHeight - thumbSize) / 2
   }
-
+  
   var body: some View {
     GeometryReader { geometry in
       let maxOffset = geometry.size.width - thumbSize - (trackPadding * 2)
-
+      
       ZStack(alignment: .leading) {
         // Track background (clipped separately)
         trackBackground
           .clipShape(Capsule())
-
+        
         // Green progress overlay on the left of thumb
         progressOverlay(maxOffset: maxOffset, trackWidth: geometry.size.width)
-
+        
         // Label
         trackLabel(maxWidth: geometry.size.width)
-
+        
         // Thumb (not clipped, sits on top)
         thumb(maxOffset: maxOffset)
       }
@@ -78,12 +78,12 @@ struct SliderCTAButton: View {
     }
     .frame(height: trackHeight)
   }
-
+  
   // MARK: - Progress Overlay
   private func progressOverlay(maxOffset: CGFloat, trackWidth: CGFloat) -> some View {
     let clampedOffset = min(max(dragOffset, 0), maxOffset)
     let progressWidth = trackPadding + clampedOffset + thumbSize
-
+    
     return Capsule()
       .fill(Color.appAccent.opacity(0.8))
       .frame(width: trackWidth, height: trackHeight)
@@ -91,14 +91,14 @@ struct SliderCTAButton: View {
         HStack(spacing: 0) {
           RoundedRectangle(cornerRadius: thumbSize / 2, style: .circular)
             .frame(width: max(progressWidth, 0))
-
+          
           Spacer(minLength: 0)
         }
-        .frame(width: trackWidth)
+          .frame(width: trackWidth)
       )
       .animation(.springFkingSatifying, value: dragOffset)
   }
-
+  
   // MARK: - Track Background
   private var trackBackground: some View {
     ZStack {
@@ -112,7 +112,7 @@ struct SliderCTAButton: View {
       } else {
         Color.appBorder.opacity(0.5)
       }
-
+      
       // Shimmer overlay
       LinearGradient(
         stops: [
@@ -129,13 +129,13 @@ struct SliderCTAButton: View {
       .onAppear {
         startShimmerAnimation()
       }
-
+      
       // Inner shadow for 3D depth
       Capsule()
         .stroke(Color.black.opacity(0.15), lineWidth: 6)
         .blur(radius: 4)
         .mask(Capsule().padding(1))
-
+      
       Capsule()
         .stroke(
           LinearGradient(
@@ -148,9 +148,9 @@ struct SliderCTAButton: View {
     }
     .clipped()
   }
-
+  
   // MARK: - Track Label
-
+  
   private func trackLabel(maxWidth: CGFloat) -> some View {
     ZStack {
       if isLoading {
@@ -166,14 +166,14 @@ struct SliderCTAButton: View {
     .opacity(isDragging ? 0.5 : 0.8)
     .animation(.easeInOut, value: isDragging)
   }
-
+  
   private var trialButtonText: String {
     if let trialText = trialPeriodText {
       return "Start \(trialText) Free Trial"
     }
     return "Subscribe to Joodle Super"
   }
-
+  
   private func startShimmerAnimation() {
     shimmerOffset = -200
     withAnimation(
@@ -183,9 +183,9 @@ struct SliderCTAButton: View {
       shimmerOffset = 400
     }
   }
-
+  
   // MARK: - Thumb
-
+  
   private func thumb(maxOffset: CGFloat) -> some View {
     Group {
       if #available(iOS 26.0, *) {
@@ -210,23 +210,23 @@ struct SliderCTAButton: View {
       }
     }
   }
-
+  
   private var thumbContent: some View {
     Circle()
       .fill(thumbBackground)
       .frame(width: thumbSize, height: thumbSize)
       .overlay(thumbIcon)
   }
-
+  
   private func handleThumbTap() {
     guard !isLoading else { return }
     guard allowModeToggle else { return }
-
+    
     withAnimation(.springFkingSatifying) {
       isSuperMode.toggle()
     }
   }
-
+  
   private func thumbDragGesture(maxOffset: CGFloat) -> some Gesture {
     DragGesture()
       .onChanged { value in
@@ -237,16 +237,16 @@ struct SliderCTAButton: View {
       .onEnded { _ in
         isDragging = false
         let threshold = maxOffset * 0.9
-
+        
         if dragOffset >= threshold {
           // Play haptic feedback on confirmation
           Haptic.play(with: .medium)
-
+          
           // Complete the slide
           withAnimation(.springFkingSatifying) {
             dragOffset = maxOffset
           }
-
+          
           // Trigger completion after animation
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             onSlideComplete()
@@ -263,7 +263,7 @@ struct SliderCTAButton: View {
         }
       }
   }
-
+  
   private var thumbBackground: some ShapeStyle {
     if isSuperMode {
       return AnyShapeStyle(
@@ -277,7 +277,7 @@ struct SliderCTAButton: View {
       return AnyShapeStyle(Color.appTextPrimary)
     }
   }
-
+  
   private var thumbIcon: some View {
     Image(systemName: isSuperMode ? "crown.fill" : "arrow.right")
       .font(.system(size: 24, weight: .semibold))
@@ -289,32 +289,32 @@ struct SliderCTAButton: View {
 
 struct PaywallContentView: View {
   let configuration: PaywallConfiguration
-
+  
   @StateObject private var storeManager = StoreKitManager.shared
   @ObservedObject private var debugLogger = PaywallDebugLogger.shared
-
+  
   @State private var selectedProductID: String?
   @State private var isPurchasing = false
   @State private var showError = false
   @State private var errorMessage: String?
   @State private var useSuperMode = true
-
+  
   var body: some View {
     ScrollView {
-      VStack(spacing: 20) {
+      VStack(spacing: 16) {
         // Header Section
         headerSection
           .paywallDebugGesture()
-
+        
         // Features Section
         featuresSection
-
+        
         // Pricing Section
         pricingSection
-
+        
         // CTA Section
         ctaSection
-
+        
         // Legal Links
         legalLinksSection
       }
@@ -338,15 +338,15 @@ struct PaywallContentView: View {
       }
     }
   }
-
+  
   // MARK: - Header Section
-
+  
   private var headerSection: some View {
     VStack(spacing: 8) {
       Text("Get Joodle Super")
         .font(.system(size: 34, weight: .bold))
         .multilineTextAlignment(.center)
-
+      
       Text("Supercharge your creativity with unlimited Joodles and more!")
         .font(.body)
         .foregroundColor(.secondary)
@@ -356,40 +356,46 @@ struct PaywallContentView: View {
     .padding(.top, 24)
     .padding(.horizontal, 8)
   }
-
+  
   // MARK: - Features Section
-
+  
   private var featuresSection: some View {
-    VStack(alignment: .leading, spacing: 16) {
+    VStack(alignment: .leading, spacing: 4) {
       FeatureRow(
         icon: "scribble.variable",
-        title: "Unlimited Joodles",
-        subtitle: "Draw as many as you want, no limits"
+        title: "Unlimited Joodle entries"
       )
-
+      
       FeatureRow(
-        icon: "square.grid.3x3.fill",
-        title: "Widgets",
-        subtitle: "Access to all Joodle widgets"
+        icon: "bell.badge.waveform.fill",
+        title: "Unlimited anniverary reminders"
       )
-
+      
+      FeatureRow(
+        icon: "square.grid.2x2.fill",
+        title: "Access to all widgets"
+      )
+      
       FeatureRow(
         icon: "checkmark.icloud.fill",
-        title: "iCloud Sync",
-        subtitle: "Sync across all your devices"
+        title: "iCloud Sync across all devices"
       )
-
-       FeatureRow(
-           icon: "square.and.arrow.up.fill",
-           title: "Sharing without watermark",
-           subtitle: "Remove watermark when sharing"
-       )
+      
+      FeatureRow(
+        icon: "square.and.arrow.up.fill",
+        title: "Sharing without watermark"
+      )
+      
+      FeatureRow(
+        icon: "swatchpalette.fill",
+        title: "More accent colors"
+      )
     }
     .padding()
   }
-
+  
   // MARK: - Pricing Section
-
+  
   private var pricingSection: some View {
     VStack(spacing: 16) {
       if storeManager.products.isEmpty {
@@ -400,17 +406,17 @@ struct PaywallContentView: View {
     }
     .padding(.horizontal, 24)
   }
-
+  
   private var emptyProductsView: some View {
     VStack(spacing: 12) {
       Text("Unable to load plans")
         .foregroundColor(.secondary)
-
+      
       Text("Please check your internet connection and try again.")
         .font(.caption)
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
-
+      
       Button {
         Task {
           await storeManager.loadProducts()
@@ -420,7 +426,7 @@ struct PaywallContentView: View {
           .font(.subheadline)
       }
       .buttonStyle(.bordered)
-
+      
       // Debug info - shown when debug mode is enabled or in DEBUG builds
       if shouldShowDebugInfo {
         debugInfoView
@@ -428,7 +434,7 @@ struct PaywallContentView: View {
     }
     .padding(.vertical, 40)
   }
-
+  
   private var shouldShowDebugInfo: Bool {
 #if DEBUG
     return true
@@ -436,7 +442,7 @@ struct PaywallContentView: View {
     return debugLogger.isDebugModeEnabled
 #endif
   }
-
+  
   private var debugInfoView: some View {
     VStack(alignment: .leading, spacing: 4) {
       Text("Debug Info:")
@@ -448,7 +454,7 @@ struct PaywallContentView: View {
           .font(.caption2)
           .foregroundColor(.red)
       }
-
+      
       Text("Tap header 3x for full debug view")
         .font(.caption2)
         .foregroundColor(.blue)
@@ -458,7 +464,7 @@ struct PaywallContentView: View {
     .cornerRadius(8)
     .padding(.top, 8)
   }
-
+  
   private var productCards: some View {
     VStack(spacing: 16) {
       if let yearly = storeManager.yearlyProduct {
@@ -472,7 +478,7 @@ struct PaywallContentView: View {
           }
         )
       }
-
+      
       if let monthly = storeManager.monthlyProduct {
         PricingCard(
           product: monthly,
@@ -486,15 +492,15 @@ struct PaywallContentView: View {
       }
     }
   }
-
+  
   // MARK: - CTA Section
-
+  
   private var ctaSection: some View {
     VStack(spacing: 16) {
       VStack(spacing: 4) {
         // Main CTA Slider
         mainCTAButton
-
+        
         // Price disclaimer
         if useSuperMode,
            let selectedID = selectedProductID,
@@ -505,13 +511,13 @@ struct PaywallContentView: View {
             .multilineTextAlignment(.center)
         }
       }
-
+      
       // Restore Purchases
       restorePurchasesButton
     }
     .padding(.horizontal, 24)
   }
-
+  
   @ViewBuilder
   private var mainCTAButton: some View {
     SliderCTAButton(
@@ -522,7 +528,7 @@ struct PaywallContentView: View {
       onSlideComplete: handleSlideComplete
     )
   }
-
+  
   /// Returns the formatted trial period text for the currently selected product
   /// Returns nil if user is not eligible for introductory offer (e.g., already used free trial)
   private var selectedTrialPeriodText: String? {
@@ -530,17 +536,17 @@ struct PaywallContentView: View {
     guard storeManager.isEligibleForIntroOffer else {
       return nil
     }
-
+    
     guard let selectedID = selectedProductID,
           let product = storeManager.products.first(where: { $0.id == selectedID }),
           let subscription = product.subscription,
           let introOffer = subscription.introductoryOffer else {
       return nil
     }
-
+    
     return formatTrialPeriod(introOffer.period)
   }
-
+  
   /// Formats a subscription period into a user-friendly string (e.g., "7-Day", "1-Month", "3-Month")
   private func formatTrialPeriod(_ period: Product.SubscriptionPeriod) -> String {
     switch period.unit {
@@ -556,7 +562,7 @@ struct PaywallContentView: View {
       return nil ?? "Free"
     }
   }
-
+  
   private func handleSlideComplete() {
     if useSuperMode {
       // Handle purchase
@@ -573,7 +579,7 @@ struct PaywallContentView: View {
       configuration.onContinueFree?()
     }
   }
-
+  
   private var restorePurchasesButton: some View {
     Button {
       Task {
@@ -588,9 +594,9 @@ struct PaywallContentView: View {
         .foregroundColor(.secondary)
     }
   }
-
+  
   // MARK: - Legal Links Section
-
+  
   private var legalLinksSection: some View {
     HStack(spacing: 16) {
       Link("Terms of Service", destination: URL(string: "https://joodle.liyuxuan.dev/terms-of-service")!)
@@ -601,17 +607,17 @@ struct PaywallContentView: View {
     .foregroundColor(.secondary)
     .padding(.bottom, 20)
   }
-
+  
   // MARK: - Helper Methods
-
+  
   private func handleOnAppear() {
     debugLogger.log(.info, "PaywallContentView appeared")
     debugLogger.log(.debug, "Products count: \(storeManager.products.count)")
-
+    
     if selectedProductID == nil, !storeManager.products.isEmpty {
       selectedProductID = storeManager.yearlyProduct?.id
     }
-
+    
     if storeManager.products.isEmpty && !storeManager.isLoading {
       debugLogger.log(.warning, "No products loaded, attempting reload")
       Task {
@@ -619,20 +625,20 @@ struct PaywallContentView: View {
       }
     }
   }
-
+  
   private func handlePurchase(_ product: Product) {
     isPurchasing = true
-
+    
     Task {
       do {
         let transaction = try await storeManager.purchase(product)
-
+        
         if transaction != nil {
           configuration.onPurchaseComplete?()
         }
       } catch {
         debugLogger.logPurchaseFailed(productID: product.id, error: error)
-
+        
         // Show user-friendly error message
         if let storeKitError = error as? StoreKitError {
           switch storeKitError {
@@ -660,14 +666,14 @@ struct PaywallContentView: View {
           showError = true
         }
       }
-
+      
       isPurchasing = false
     }
   }
-
+  
   private func openFeedback() {
     guard let url = AppEnvironment.feedbackURL else { return }
-
+    
     if UIApplication.shared.canOpenURL(url) {
       UIApplication.shared.open(url)
     } else {
@@ -677,7 +683,7 @@ struct PaywallContentView: View {
       }
     }
   }
-
+  
   private func savingsBadgeText() -> String? {
     if let percentage = storeManager.savingsPercentage() {
       return "SAVE \(percentage)%"
@@ -710,7 +716,7 @@ struct PaywallContentView: View {
       onSlideComplete: {}
     )
     .padding(.horizontal, 24)
-
+    
     SliderCTAButton(
       isSuperMode: .constant(false),
       allowModeToggle: true,

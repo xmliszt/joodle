@@ -13,24 +13,17 @@ import StoreKit
 struct FeatureRow: View {
   let icon: String
   let title: String
-  let subtitle: String
 
   var body: some View {
-    HStack(alignment: .top, spacing: 16) {
+    HStack(alignment: .center, spacing: 8) {
       Image(systemName: icon)
-        .font(.system(size: 24))
+        .font(.system(size: 20))
         .foregroundColor(.appAccent)
-        .frame(width: 40, height: 40)
+        .frame(width: 32, height: 32)
 
-      VStack(alignment: .leading, spacing: 4) {
-        Text(title)
-          .font(.headline)
-          .foregroundColor(.primary)
-
-        Text(subtitle)
-          .font(.subheadline)
-          .foregroundColor(.secondary)
-      }
+      Text(title)
+        .font(.subheadline)
+        .foregroundColor(.primary)
 
       Spacer()
     }
