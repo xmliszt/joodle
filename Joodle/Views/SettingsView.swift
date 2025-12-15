@@ -45,6 +45,7 @@ struct SettingsView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
+  @Query private var entries: [DayEntry]
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var showOnboarding = false
   @State private var showPlaceholderGenerator = false
@@ -92,7 +93,6 @@ struct SettingsView: View {
 
   var body: some View {
     Form {
-
       // MARK: - View Mode Preferences
       Section("Default View") {
         if #available(iOS 26.0, *) {
@@ -144,7 +144,55 @@ struct SettingsView: View {
         } header: {
           Text("Interactions")
         } footer: {
-          Text("Haptic feedback also depends on your device's Vibration setting in Settings > Accessibility > Touch > Vibration")
+          Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration")
+        }
+      }
+
+      // MARK: - Free Plan Limits (only shown for free users)
+      if !subscriptionManager.isSubscribed {
+        Section {
+          // Joodles limit row
+          Button {
+            showPaywall = true
+          } label: {
+            HStack {
+              Text("Joodle entries")
+              Spacer()
+              Text("\(subscriptionManager.totalJoodleCount(from: entries)) / \(SubscriptionManager.freeJoodlesAllowed)")
+                .foregroundStyle(
+                  subscriptionManager.totalJoodleCount(from: entries) >= SubscriptionManager.freeJoodlesAllowed ? .red :
+                  .secondary
+                )
+                .font(.system(size: 14))
+            }
+          }
+          .foregroundStyle(.primary)
+
+          // Placeholder for future limits (e.g., countdown reminders)
+          // Button {
+          //   showPaywall = true
+          // } label: {
+          //   HStack {
+          //     Label {
+          //       Text("Countdown Reminders")
+          //     } icon: {
+          //       Image(systemName: "timer")
+          //         .foregroundStyle(.accent)
+          //     }
+          //     Spacer()
+          //     Text("0 / 5")
+          //       .foregroundStyle(.secondary)
+          //     PremiumFeatureBadge()
+          //   }
+          // }
+          // .foregroundStyle(.primary)
+        } header: {
+          Text("LIMITS")
+        } footer: {
+          HStack (spacing: 8) {
+            Text("Unlock unlimited access with Joodle Super")
+            PremiumFeatureBadge()
+          }
         }
       }
 
