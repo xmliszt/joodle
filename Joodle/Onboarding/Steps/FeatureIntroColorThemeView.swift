@@ -26,7 +26,7 @@ struct FeatureIntroColorThemeView: View {
             ],
             buttonLabel: "Next",
             onContinue: {
-                viewModel.completeStep(.featureIntroSharing)
+              viewModel.completeStep(.featureIntroColorTheme)
             },
             onBack: {
                 viewModel.goBack()

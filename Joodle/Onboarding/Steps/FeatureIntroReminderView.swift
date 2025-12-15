@@ -35,7 +35,7 @@ struct FeatureIntroReminderView: View {
             ],
             buttonLabel: "Next",
             onContinue: {
-                viewModel.completeStep(.featureIntroSharing)
+                viewModel.completeStep(.featureIntroReminder)
             },
             onBack: {
                 viewModel.goBack()

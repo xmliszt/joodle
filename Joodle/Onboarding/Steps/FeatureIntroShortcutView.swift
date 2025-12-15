@@ -29,7 +29,7 @@ struct FeatureIntroShortcutView: View {
             ],
             buttonLabel: "Next",
             onContinue: {
-                viewModel.completeStep(.featureIntroSharing)
+                viewModel.completeStep(.featureIntroShortcuts)
             },
             onBack: {
                 viewModel.goBack()
