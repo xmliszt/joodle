@@ -262,7 +262,13 @@ struct SettingsView: View {
               description: tutorial.description
             )
           } label: {
-            Label(tutorial.title, systemImage: tutorial.icon)
+            HStack {
+              Label(tutorial.title, systemImage: tutorial.icon)
+              Spacer()
+              if !SubscriptionManager.shared.isSubscribed && tutorial.isPremiumFeature  {
+                PremiumFeatureBadge()
+              }
+            }
           }
         }
       }

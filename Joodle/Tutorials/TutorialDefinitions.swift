@@ -27,7 +27,8 @@ enum TutorialDefinitions {
       ScreenshotItem(image: Image("Help/Widget7"), dots: [TapDot(x: 263, y: 496)]),
       ScreenshotItem(image: Image("Help/Widget8"))
     ],
-    description: "Long press on your home screen, tap the + button, search for \"Joodle\", and add a widget. Some widgets are configurable. Tap the widget while in edit mode to configure."
+    description: "Long press on your home screen, tap the + button, search for \"Joodle\", and add a widget. Some widgets are configurable. Tap the widget while in edit mode to configure.",
+    isPremiumFeature: true
   )
 
   /// Tutorial for adding Joodle widgets to the lock screen
@@ -45,7 +46,8 @@ enum TutorialDefinitions {
       ScreenshotItem(image: Image("Help/Lockscreen6"), dots: [TapDot(x: 299, y: 910)]),
       ScreenshotItem(image: Image("Help/Lockscreen7"), dots: [TapDot(x: 478, y: 65)])
     ],
-    description: "Long press on your lock screen, tap \"Customize\", then \"ADD WIDGETS\", find \"Joodle\", and tap or drag the widget onto the lock screen."
+    description: "Long press on your lock screen, tap \"Customize\", then \"ADD WIDGETS\", find \"Joodle\", and tap or drag the widget onto the lock screen.",
+    isPremiumFeature: true
   )
 
   /// Tutorial for adding Joodle widgets to the StandBy screen
@@ -62,7 +64,8 @@ enum TutorialDefinitions {
       ScreenshotItem(image: Image("Help/Standby5"), dots: [TapDot(x: 621, y: 296)], orientation: .landscape),
       ScreenshotItem(image: Image("Help/Standby6"), orientation: .landscape)
     ],
-    description: "Long press, tap the + button, search for \"Joodle\", and add a widget. Some widgets are configurable. Tap the widget while in edit mode to configure."
+    description: "Long press, tap the + button, search for \"Joodle\", and add a widget. Some widgets are configurable. Tap the widget while in edit mode to configure.",
+    isPremiumFeature: true
   )
 
   // MARK: - All Tutorials
@@ -85,6 +88,7 @@ struct TutorialData: Identifiable {
   let shortDescription: String
   let screenshots: [ScreenshotItem]
   let description: String?
+  let isPremiumFeature: Bool
 
   init(
     id: String,
@@ -92,7 +96,8 @@ struct TutorialData: Identifiable {
     icon: String,
     shortDescription: String,
     screenshots: [ScreenshotItem],
-    description: String? = nil
+    description: String? = nil,
+    isPremiumFeature: Bool = false
   ) {
     self.id = id
     self.title = title
@@ -100,5 +105,6 @@ struct TutorialData: Identifiable {
     self.shortDescription = shortDescription
     self.screenshots = screenshots
     self.description = description
+    self.isPremiumFeature = isPremiumFeature
   }
 }
