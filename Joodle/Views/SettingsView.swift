@@ -54,9 +54,7 @@ struct SettingsView: View {
   @State private var showPaywall = false
   @State private var showSubscriptions = false
   @State private var showAppStats = false
-  #if DEBUG
   @State private var showDataSeeder = false
-  #endif
   @State private var currentJoodleCount = 0
 
   // Theme color change state
@@ -103,300 +101,17 @@ struct SettingsView: View {
 
   var body: some View {
     Form {
-      // MARK: - View Mode Preferences
-      Section("Default View") {
-        if #available(iOS 26.0, *) {
-          Picker("View Mode", selection: viewModeBinding) {
-            ForEach(ViewMode.allCases, id: \.self) { mode in
-              Text(mode.displayName).tag(mode)
-            }
-          }
-          .pickerStyle(.palette)
-          .glassEffect(.regular.interactive())
-        } else {
-          // Fallback on earlier versions
-          Picker("View Mode", selection: viewModeBinding) {
-            ForEach(ViewMode.allCases, id: \.self) { mode in
-              Text(mode.displayName).tag(mode)
-            }
-          }
-          .pickerStyle(.palette)
-        }
-      }
-
-      // MARK: - Appearance Preferences
-      Section("Appearance") {
-        if #available(iOS 26.0, *) {
-          Picker("Color Scheme", selection: colorSchemeBinding) {
-            Text("System").tag(nil as ColorScheme?)
-            Text("Light").tag(ColorScheme.light as ColorScheme?)
-            Text("Dark").tag(ColorScheme.dark as ColorScheme?)
-          }
-          .pickerStyle(.palette)
-          .glassEffect(.regular.interactive())
-        } else {
-          // Fallback on earlier versions
-          Picker("Color Scheme", selection: colorSchemeBinding) {
-            Text("System").tag(nil as ColorScheme?)
-            Text("Light").tag(ColorScheme.light as ColorScheme?)
-            Text("Dark").tag(ColorScheme.dark as ColorScheme?)
-          }
-          .pickerStyle(.palette)
-        }
-      }
-
-      // MARK: - Accent Color
-      Section {
-        ThemeColorPaletteView(
-          subscriptionManager: subscriptionManager,
-          onLockedColorTapped: {
-            showPaywall = true
-          },
-          onColorChangeStarted: { color in
-            pendingThemeColor = color
-          },
-          onColorChangeCompleted: {
-            pendingThemeColor = nil
-          }
-        )
-        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-      } header: {
-        Text("Accent Color")
-      }
-
-      // MARK: - Interaction Preferences
-      if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
-        Section {
-          Toggle(isOn: hapticBinding) {
-            Text("Haptic feedback")
-          }
-        } header: {
-          Text("Interactions")
-        } footer: {
-          Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration")
-        }
-      }
-      // MARK: - Free Plan Limits (only shown for free users)
-      if !subscriptionManager.isSubscribed {
-        Section {
-          // Joodles limit row
-          Button {
-            showPaywall = true
-          } label: {
-            HStack {
-              Text("Joodle entries")
-              Spacer()
-              Text("\(currentJoodleCount) / \(SubscriptionManager.freeJoodlesAllowed)")
-                .foregroundStyle(
-                  currentJoodleCount >= SubscriptionManager.freeJoodlesAllowed ? .red :
-                  .secondary
-                )
-                .font(.system(size: 14))
-            }
-          }
-          .foregroundStyle(.primary)
-
-          // Reminders limit row
-          Button {
-            showPaywall = true
-          } label: {
-            HStack {
-              Text("Anniversary reminders")
-              Spacer()
-              Text("\(reminderManager.reminders.count) / 5")
-                .foregroundStyle(
-                  reminderManager.hasReachedFreeLimit ? .red : .secondary
-                )
-                .font(.system(size: 14))
-            }
-          }
-          .foregroundStyle(.primary)
-        } header: {
-          Text("Limits")
-        } footer: {
-          HStack (spacing: 8) {
-            Text("Unlock unlimited access with Joodle Super")
-            PremiumFeatureBadge()
-          }
-        }
-      }
-
-      // MARK: - Subscription
-      Section("Super Subscription") {
-        if subscriptionManager.isSubscribed {
-          // Detailed subscription status card
-          Button {
-            showSubscriptions = true
-          } label: {
-            VStack(alignment: .leading, spacing: 4) {
-              HStack {
-                HStack(spacing: 4) {
-                  Image(systemName: "crown.fill")
-                    .foregroundStyle(.appAccent)
-                    .font(.body)
-                  Text("Joodle Super")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                  .font(.caption)
-                  .foregroundColor(.secondary)
-              }
-
-              if let statusMessage = subscriptionManager.subscriptionStatusMessage {
-                // Trial or cancellation status
-                Text(statusMessage)
-                  .font(.subheadline)
-                  .foregroundColor(.secondary)
-                  .frame(maxWidth: .infinity, alignment: .leading)
-              } else {
-                // Active subscription with no issues
-                Text("You have full access to all features")
-                  .font(.subheadline)
-                  .foregroundColor(.secondary)
-                  .frame(maxWidth: .infinity, alignment: .leading)
-              }
-            }
-            .padding(.vertical, 4)
-          }
-        } else {
-          // No subscription - show simple upgrade button
-          Button {
-            showPaywall = true
-          } label: {
-            HStack {
-              Text("Unlock Joodle Super")
-              Spacer()
-              Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            }
-          }
-          .foregroundColor(.primary)
-        }
-      }
-
-      // MARK: - Data Management
-      // Only show manual backup/restore when iCloud sync is not active
-      Section("Data Management") {
-        NavigationLink {
-          iCloudSyncView()
-        } label: {
-          HStack {
-            Text("Sync to iCloud")
-            Spacer()
-
-            // Show premium badge if not subscribed
-            if !subscriptionManager.hasICloudSync {
-              PremiumFeatureBadge()
-            } else if needsRestartForSync {
-              // Show restart required warning
-              Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
-                .font(.caption)
-            } else if cloudSyncManager.isSyncing && subscriptionManager.hasICloudSync {
-              // Show syncing indicator
-              HStack(spacing: 6) {
-                Text("Syncing")
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-                ProgressView()
-                  .scaleEffect(0.6)
-              }
-            } else if !cloudSyncManager.canSync {
-              Image(systemName: "xmark.circle.fill")
-                .foregroundStyle(.red)
-                .font(.caption)
-            } else if userPreferences.isCloudSyncEnabled && CloudSyncManager.shared.isCloudAvailable {
-              Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-                .font(.caption)
-            }
-          }
-        }
-        Button(action: { exportData() }) {
-          Text("Backup locally")
-        }
-
-        Button(action: { showFileImporter = true }) {
-          Text("Restore from local backup")
-        }
-      }
-
-
-      // MARK: - Tutorials
-      Section("Tutorials") {
-        ForEach(TutorialDefinitions.allTutorials) { tutorial in
-          NavigationLink {
-            TutorialView(
-              title: tutorial.title,
-              screenshots: tutorial.screenshots,
-              description: tutorial.description
-            )
-          } label: {
-            HStack {
-              Label(tutorial.title, systemImage: tutorial.icon)
-              Spacer()
-              if !SubscriptionManager.shared.isSubscribed && tutorial.isPremiumFeature  {
-                PremiumFeatureBadge()
-              }
-            }
-          }
-        }
-      }
-
-      // MARK: Revisit onboarding flow
-      Section {
-        Button("Revisit Onboarding") {
-          showOnboarding = true
-        }
-      }
-
-      // MARK: - Feedback
-      Section {
-        Button {
-          openFeedback()
-        } label: {
-          HStack {
-            Image(systemName: AppEnvironment.feedbackButtonIcon)
-              .foregroundColor(.appAccent)
-              .frame(width: 24)
-            Text(AppEnvironment.feedbackButtonTitle)
-              .foregroundColor(.primary)
-            Spacer()
-            Image(systemName: "arrow.up.right")
-              .font(.caption)
-              .foregroundColor(.secondary)
-          }
-        }
-      } footer: {
-        Text("Version \(AppEnvironment.fullVersionString)")
-          .font(.caption2)
-          .frame(maxWidth: .infinity, alignment: .leading)
-      }
-
-      // MARK: - Developer Options (Only show in debug build)
-      if AppEnvironment.isDebug {
-        Section("Developer Options") {
-          Button("App Stats") {
-            showAppStats = true
-          }
-          Button("Data Seeder") {
-            showDataSeeder = true
-          }
-          Button("Generate Placeholder") {
-            showPlaceholderGenerator = true
-          }
-          Button("Clear iCloud KVS (Sync History)", role: .destructive) {
-            let cloudStore = NSUbiquitousKeyValueStore.default
-            cloudStore.removeObject(forKey: "is_cloud_sync_enabled_backup")
-            cloudStore.removeObject(forKey: "cloud_sync_was_enabled")
-            cloudStore.synchronize()
-            print("DEBUG: iCloud KVS sync history cleared!")
-          }
-        }
-      }
+      defaultViewSection
+      appearanceSection
+      accentColorSection
+      interactionSection
+      freePlanLimitsSection
+      subscriptionSection
+      dataManagementSection
+      tutorialsSection
+      onboardingSection
+      feedbackSection
+      developerOptionsSection
     }
     .background(NavigationGestureEnabler(isEnabled: !themeColorManager.isRegenerating))
     .navigationTitle("Settings")
@@ -479,6 +194,320 @@ struct SettingsView: View {
       // Refresh UI when subscription expires
       Task {
         await subscriptionManager.updateSubscriptionStatus()
+      }
+    }
+  }
+
+  // MARK: - Extracted Sections
+
+  @ViewBuilder
+  private var defaultViewSection: some View {
+    Section("Default View") {
+      if #available(iOS 26.0, *) {
+        Picker("View Mode", selection: viewModeBinding) {
+          ForEach(ViewMode.allCases, id: \.self) { mode in
+            Text(mode.displayName).tag(mode)
+          }
+        }
+        .pickerStyle(.palette)
+        .glassEffect(.regular.interactive())
+      } else {
+        Picker("View Mode", selection: viewModeBinding) {
+          ForEach(ViewMode.allCases, id: \.self) { mode in
+            Text(mode.displayName).tag(mode)
+          }
+        }
+        .pickerStyle(.palette)
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var appearanceSection: some View {
+    Section("Appearance") {
+      if #available(iOS 26.0, *) {
+        Picker("Color Scheme", selection: colorSchemeBinding) {
+          Text("System").tag(nil as ColorScheme?)
+          Text("Light").tag(ColorScheme.light as ColorScheme?)
+          Text("Dark").tag(ColorScheme.dark as ColorScheme?)
+        }
+        .pickerStyle(.palette)
+        .glassEffect(.regular.interactive())
+      } else {
+        Picker("Color Scheme", selection: colorSchemeBinding) {
+          Text("System").tag(nil as ColorScheme?)
+          Text("Light").tag(ColorScheme.light as ColorScheme?)
+          Text("Dark").tag(ColorScheme.dark as ColorScheme?)
+        }
+        .pickerStyle(.palette)
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var accentColorSection: some View {
+    Section {
+      ThemeColorPaletteView(
+        subscriptionManager: subscriptionManager,
+        onLockedColorTapped: {
+          showPaywall = true
+        },
+        onColorChangeStarted: { color in
+          pendingThemeColor = color
+        },
+        onColorChangeCompleted: {
+          pendingThemeColor = nil
+        }
+      )
+      .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+    } header: {
+      Text("Accent Color")
+    }
+  }
+
+  @ViewBuilder
+  private var interactionSection: some View {
+    if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
+      Section {
+        Toggle(isOn: hapticBinding) {
+          Text("Haptic feedback")
+        }
+      } header: {
+        Text("Interactions")
+      } footer: {
+        Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration")
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var freePlanLimitsSection: some View {
+    if !subscriptionManager.isSubscribed {
+      Section {
+        Button {
+          showPaywall = true
+        } label: {
+          HStack {
+            Text("Joodle entries")
+            Spacer()
+            Text("\(currentJoodleCount) / \(SubscriptionManager.freeJoodlesAllowed)")
+              .foregroundStyle(
+                currentJoodleCount >= SubscriptionManager.freeJoodlesAllowed ? .red :
+                .secondary
+              )
+              .font(.system(size: 14))
+          }
+        }
+        .foregroundStyle(.primary)
+
+        Button {
+          showPaywall = true
+        } label: {
+            HStack {
+              Text("Anniversary reminders")
+              Spacer()
+              Text("\(reminderManager.reminders.count) / 5")
+                .foregroundStyle(
+                  reminderManager.hasReachedFreeLimit ? .red : .secondary
+                )
+                .font(.system(size: 14))
+            }
+          }
+          .foregroundStyle(.primary)
+      } header: {
+        Text("Limits")
+      } footer: {
+        HStack (spacing: 8) {
+          Text("Unlock unlimited access with Joodle Super")
+          PremiumFeatureBadge()
+        }
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var subscriptionSection: some View {
+    Section("Super Subscription") {
+        if subscriptionManager.isSubscribed {
+          // Detailed subscription status card
+          Button {
+            showSubscriptions = true
+          } label: {
+            VStack(alignment: .leading, spacing: 4) {
+              HStack {
+                HStack(spacing: 4) {
+                  Image(systemName: "crown.fill")
+                    .foregroundStyle(.appAccent)
+                    .font(.body)
+                  Text("Joodle Super")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                  .font(.caption)
+                  .foregroundColor(.secondary)
+              }
+
+              if let statusMessage = subscriptionManager.subscriptionStatusMessage {
+                // Trial or cancellation status
+                Text(statusMessage)
+                  .font(.subheadline)
+                  .foregroundColor(.secondary)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+              } else {
+                // Active subscription with no issues
+                Text("You have full access to all features")
+                  .font(.subheadline)
+                  .foregroundColor(.secondary)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+              }
+            }
+            .padding(.vertical, 4)
+          }
+        } else {
+          // No subscription - show simple upgrade button
+          Button {
+            showPaywall = true
+          } label: {
+            HStack {
+              Text("Unlock Joodle Super")
+              Spacer()
+              Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+          }
+          .foregroundColor(.primary)
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var dataManagementSection: some View {
+    Section("Data Management") {
+        NavigationLink {
+          iCloudSyncView()
+        } label: {
+          HStack {
+            Text("Sync to iCloud")
+            Spacer()
+
+            // Show premium badge if not subscribed
+            if !subscriptionManager.hasICloudSync {
+              PremiumFeatureBadge()
+            } else if needsRestartForSync {
+              // Show restart required warning
+              Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+                .font(.caption)
+            } else if cloudSyncManager.isSyncing && subscriptionManager.hasICloudSync {
+              // Show syncing indicator
+              HStack(spacing: 6) {
+                Text("Syncing")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+                ProgressView()
+                  .scaleEffect(0.6)
+              }
+            } else if !cloudSyncManager.canSync {
+              Image(systemName: "xmark.circle.fill")
+                .foregroundStyle(.red)
+                .font(.caption)
+            } else if userPreferences.isCloudSyncEnabled && CloudSyncManager.shared.isCloudAvailable {
+              Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .font(.caption)
+            }
+          }
+        }
+        Button(action: { exportData() }) {
+          Text("Backup locally")
+        }
+
+        Button(action: { showFileImporter = true }) {
+          Text("Restore from local backup")
+        }
+    }
+  }
+
+  @ViewBuilder
+  private var tutorialsSection: some View {
+    Section("Tutorials") {
+        ForEach(TutorialDefinitions.allTutorials) { tutorial in
+          NavigationLink {
+            TutorialView(
+              title: tutorial.title,
+              screenshots: tutorial.screenshots,
+              description: tutorial.description
+            )
+          } label: {
+            HStack {
+              Label(tutorial.title, systemImage: tutorial.icon)
+              Spacer()
+              if !SubscriptionManager.shared.isSubscribed && tutorial.isPremiumFeature  {
+                PremiumFeatureBadge()
+              }
+            }
+          }
+        }
+    }
+  }
+
+  @ViewBuilder
+  private var onboardingSection: some View {
+    Section {
+      Button("Revisit Onboarding") {
+        showOnboarding = true
+      }
+    }
+  }
+
+  @ViewBuilder
+  private var feedbackSection: some View {
+    Section {
+        Button {
+          openFeedback()
+        } label: {
+          HStack {
+            Image(systemName: AppEnvironment.feedbackButtonIcon)
+              .foregroundColor(.appAccent)
+              .frame(width: 24)
+            Text(AppEnvironment.feedbackButtonTitle)
+              .foregroundColor(.primary)
+            Spacer()
+            Image(systemName: "arrow.up.right")
+              .font(.caption)
+              .foregroundColor(.secondary)
+          }
+        }
+    } footer: {
+      Text("Version \(AppEnvironment.fullVersionString)")
+        .font(.caption2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+  }
+
+  @ViewBuilder
+  private var developerOptionsSection: some View {
+    if AppEnvironment.isDebug {
+      Section("Developer Options") {
+        Button("App Stats") {
+          showAppStats = true
+        }
+        Button("Data Seeder") {
+          showDataSeeder = true
+        }
+        Button("Generate Placeholder") {
+          showPlaceholderGenerator = true
+        }
+        Button("Clear iCloud KVS (Sync History)", role: .destructive) {
+          let cloudStore = NSUbiquitousKeyValueStore.default
+          cloudStore.removeObject(forKey: "is_cloud_sync_enabled_backup")
+          cloudStore.removeObject(forKey: "cloud_sync_was_enabled")
+          cloudStore.synchronize()
+          print("DEBUG: iCloud KVS sync history cleared!")
+        }
       }
     }
   }
