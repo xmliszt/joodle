@@ -48,6 +48,7 @@ struct SettingsView: View {
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
   @StateObject private var subscriptionManager = SubscriptionManager.shared
+  @StateObject private var reminderManager = ReminderManager.shared
   @State private var showOnboarding = false
   @State private var showPlaceholderGenerator = false
   @State private var showPaywall = false
@@ -195,24 +196,21 @@ struct SettingsView: View {
           }
           .foregroundStyle(.primary)
 
-          // Placeholder for future limits (e.g., countdown reminders)
-          // Button {
-          //   showPaywall = true
-          // } label: {
-          //   HStack {
-          //     Label {
-          //       Text("Countdown Reminders")
-          //     } icon: {
-          //       Image(systemName: "timer")
-          //         .foregroundStyle(.accent)
-          //     }
-          //     Spacer()
-          //     Text("0 / 5")
-          //       .foregroundStyle(.secondary)
-          //     PremiumFeatureBadge()
-          //   }
-          // }
-          // .foregroundStyle(.primary)
+          // Reminders limit row
+          Button {
+            showPaywall = true
+          } label: {
+            HStack {
+              Text("Anniversary reminders")
+              Spacer()
+              Text("\(reminderManager.reminders.count) / 5")
+                .foregroundStyle(
+                  reminderManager.hasReachedFreeLimit ? .red : .secondary
+                )
+                .font(.system(size: 14))
+            }
+          }
+          .foregroundStyle(.primary)
         } header: {
           Text("Limits")
         } footer: {

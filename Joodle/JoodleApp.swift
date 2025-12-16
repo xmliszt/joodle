@@ -50,12 +50,14 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     let dateString = response.notification.request.identifier
     print("📬 [AppDelegate] User tapped notification for: \(dateString)")
 
-    // Post a notification to navigate to that date
-    NotificationCenter.default.post(
-      name: NSNotification.Name("NavigateToDate"),
-      object: nil,
-      userInfo: ["dateString": dateString]
-    )
+    // Convert dateString to Date and navigate using the same pattern as AppShortcuts
+    if let date = DayEntry.stringToLocalDate(dateString) {
+      NotificationCenter.default.post(
+        name: .navigateToDateFromShortcut,
+        object: nil,
+        userInfo: ["date": date]
+      )
+    }
 
     completionHandler()
   }
