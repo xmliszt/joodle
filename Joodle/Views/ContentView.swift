@@ -14,10 +14,11 @@ struct ContentView: View {
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.userPreferences) private var userPreferences
   @Environment(\.cloudSyncManager) private var cloudSyncManager
+  @EnvironmentObject private var deepLinkManager: DeepLinkManager
 
   @StateObject private var subscriptionManager = SubscriptionManager.shared
 
-  @Binding var selectedDateFromWidget: Date?
+  @Binding var pendingNavigationDate: Date?
 
   @State private var selectedDateItem: DateItem?
   @State private var selectedEntry: DayEntry?
@@ -35,6 +36,7 @@ struct ContentView: View {
   @State private var yearGridViewSize: CGSize = .zero
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
+  @State private var deferredNavigationDate: Date?
 
   @State private var selectedYear = Calendar.current.component(.year, from: Date())
   @State private var navigateToSettings = false
@@ -352,27 +354,55 @@ struct ContentView: View {
         break
       }
     }
-    .onChange(of: selectedDateFromWidget) { _, newDate in
-      // Handle deep link from widget
-      guard let date = newDate, let scrollProxy = scrollProxy else { return }
+    .onChange(of: pendingNavigationDate) { _, newDate in
+      // Handle deep link from widget or reminder notification
+      guard let date = newDate else { return }
 
       // Clear the binding after handling
       DispatchQueue.main.async {
-        selectedDateFromWidget = nil
+        pendingNavigationDate = nil
       }
 
-      // Update selected year if needed
-      let calendar = Calendar.current
-      let year = calendar.component(.year, from: date)
-      if year != selectedYear {
-        selectedYear = year
+      // If scrollProxy is not available yet, store the date for later
+      guard let scrollProxy = scrollProxy else {
+        deferredNavigationDate = date
+        return
       }
 
-      // Find and select the date item
-      if let item = itemsInYear.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          selectDateItem(item: item, scrollProxy: scrollProxy)
+      navigateToDate(date, scrollProxy: scrollProxy)
+    }
+    .onChange(of: scrollProxy != nil) { _, isAvailable in
+      // Handle deferred navigation when scrollProxy becomes available
+      if isAvailable, let date = deferredNavigationDate, let scrollProxy = scrollProxy {
+        deferredNavigationDate = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+          navigateToDate(date, scrollProxy: scrollProxy)
         }
+      }
+    }
+    .onChange(of: deepLinkManager.shouldResetNavigation) { _, shouldReset in
+      if shouldReset {
+        // Dismiss settings if open (URL scheme handles navigation)
+        if navigateToSettings {
+          navigateToSettings = false
+        }
+      }
+    }
+  }
+
+  /// Navigate to a specific date
+  private func navigateToDate(_ date: Date, scrollProxy: ScrollViewProxy) {
+    // Update selected year if needed
+    let calendar = Calendar.current
+    let year = calendar.component(.year, from: date)
+    if year != selectedYear {
+      selectedYear = year
+    }
+
+    // Find and select the date item
+    if let item = itemsInYear.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        selectDateItem(item: item, scrollProxy: scrollProxy)
       }
     }
   }
@@ -613,8 +643,9 @@ struct ContentView: View {
 }
 
 #Preview {
-  ContentView(selectedDateFromWidget: .constant(nil))
+  ContentView(pendingNavigationDate: .constant(nil))
     .modelContainer(for: DayEntry.self, inMemory: true)
     .environment(\.userPreferences, UserPreferences.shared)
+    .environmentObject(DeepLinkManager.shared)
     .preferredColorScheme(.light)
 }

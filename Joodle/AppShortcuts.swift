@@ -15,20 +15,16 @@ import SwiftUI
 struct CreateTodaysDoodleIntent: AppIntent {
   static var title: LocalizedStringResource = "Create Today's Doodle"
   static var description = IntentDescription("Opens Joodle to create or edit today's doodle entry")
-  
+
   /// This intent opens the app when run
   static var openAppWhenRun: Bool = true
-  
+
   @MainActor
   func perform() async throws -> some IntentResult & OpensIntent {
     // Post notification to navigate to today's date when app opens
     let today = Date()
-    NotificationCenter.default.post(
-      name: .navigateToDateFromShortcut,
-      object: nil,
-      userInfo: ["date": today]
-    )
-    
+    DeepLinkManager.shared.handleShortcut(date: today)
+
     return .result()
   }
 }
@@ -39,53 +35,49 @@ struct CreateTodaysDoodleIntent: AppIntent {
 struct OpenNextAnniversaryIntent: AppIntent {
   static var title: LocalizedStringResource = "Open Next Anniversary"
   static var description = IntentDescription("Opens Joodle to the next upcoming anniversary entry")
-  
+
   /// This intent opens the app when run
   static var openAppWhenRun: Bool = true
-  
+
   @MainActor
   func perform() async throws -> some IntentResult & OpensIntent {
     // Find the next anniversary using SwiftData
     if let nextAnniversaryDate = findNextAnniversary() {
-      NotificationCenter.default.post(
-        name: .navigateToDateFromShortcut,
-        object: nil,
-        userInfo: ["date": nextAnniversaryDate]
-      )
+      DeepLinkManager.shared.handleShortcut(date: nextAnniversaryDate)
     }
     // If no anniversary found, just open the app normally
-    
+
     return .result()
   }
-  
+
   /// Finds the next future entry that has content (text or drawing)
   @MainActor
   private func findNextAnniversary() -> Date? {
     let container = ModelContainerManager.shared.container
     let context = ModelContext(container)
-    
+
     let calendar = Calendar.current
     let today = calendar.startOfDay(for: Date())
     let todayString = DayEntry.dateToString(today)
-    
+
     // Fetch all entries with dateString greater than today
     let predicate = #Predicate<DayEntry> { entry in
       entry.dateString > todayString
     }
-    
+
     let descriptor = FetchDescriptor<DayEntry>(
       predicate: predicate,
       sortBy: [SortDescriptor(\.dateString, order: .forward)]
     )
-    
+
     do {
       let futureEntries = try context.fetch(descriptor)
-      
+
       // Find the first entry that has content (text or drawing)
       for entry in futureEntries {
         let hasText = !entry.body.isEmpty
         let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
-        
+
         if hasText || hasDrawing {
           return entry.displayDate
         }
@@ -93,7 +85,7 @@ struct OpenNextAnniversaryIntent: AppIntent {
     } catch {
       print("AppShortcuts: Failed to fetch future entries: \(error)")
     }
-    
+
     return nil
   }
 }
@@ -104,9 +96,9 @@ struct OpenNextAnniversaryIntent: AppIntent {
 struct OpenJoodleIntent: AppIntent {
   static var title: LocalizedStringResource = "Open Joodle"
   static var description = IntentDescription("Opens the Joodle app")
-  
+
   static var openAppWhenRun: Bool = true
-  
+
   @MainActor
   func perform() async throws -> some IntentResult {
     return .result()
@@ -133,7 +125,7 @@ struct JoodleShortcuts: AppShortcutsProvider {
       shortTitle: "Joodle Today",
       systemImageName: "pencil.tip.crop.circle"
     )
-    
+
     AppShortcut(
       intent: OpenNextAnniversaryIntent(),
       phrases: [
@@ -148,7 +140,7 @@ struct JoodleShortcuts: AppShortcutsProvider {
       shortTitle: "Next Anniversary",
       systemImageName: "calendar.badge.clock"
     )
-    
+
     AppShortcut(
       intent: OpenJoodleIntent(),
       phrases: [
@@ -159,10 +151,4 @@ struct JoodleShortcuts: AppShortcutsProvider {
       systemImageName: "scribble.variable"
     )
   }
-}
-
-// MARK: - Notification Extension
-
-extension Notification.Name {
-  static let navigateToDateFromShortcut = Notification.Name("navigateToDateFromShortcut")
 }
