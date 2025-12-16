@@ -15,12 +15,13 @@ struct ContentView: View {
   @Environment(\.userPreferences) private var userPreferences
   @Environment(\.cloudSyncManager) private var cloudSyncManager
 
-  @Query private var entries: [DayEntry]
   @StateObject private var subscriptionManager = SubscriptionManager.shared
 
   @Binding var selectedDateFromWidget: Date?
 
   @State private var selectedDateItem: DateItem?
+  @State private var selectedEntry: DayEntry?
+  @State private var currentHighlightedEntry: DayEntry?
 
   // --- GESTURE STATE ---
   // Tracks what the user is currently doing
@@ -58,11 +59,6 @@ struct ContentView: View {
 
   // MARK: Computed
 
-  /// All entries (for Joodle limit calculation)
-  private var allEntriesArray: [DayEntry] {
-    return Array(entries)
-  }
-
   /// Flattened array of items to be displayed in the year grid.
   private var itemsInYear: [DateItem] {
     let calendar = Calendar.current
@@ -82,13 +78,6 @@ struct ContentView: View {
     highlightedId.flatMap { getItem(from: $0) }
   }
 
-  private var currentHighlightedEntry: DayEntry? {
-    if let itemDate = currentHighlightedItem?.date {
-      return entries.first(where: { $0.matches(date: itemDate) })
-    }
-    return nil
-  }
-
   var body: some View {
     ZStack {
       GeometryReader { geometry in
@@ -106,15 +95,16 @@ struct ContentView: View {
                     .frame(height: headerHeight)
                     .id("topSpacer")
 
-                  YearGridView(
+                  YearContent(
                     year: selectedYear,
                     viewMode: viewMode,
-                    dotsSpacing: itemsSpacing,
-                    items: itemsInYear,
-                    entries: entries,
-                    // Use isScrubbing to show highlight, fallback to old highlightedId
-                    highlightedItemId: isScrubbing ? highlightedId : nil,
-                    selectedItemId: selectedDateItem?.id
+                    itemsSpacing: itemsSpacing,
+                    itemsInYear: itemsInYear,
+                    isScrubbing: $isScrubbing,
+                    highlightedId: $highlightedId,
+                    selectedDateItem: $selectedDateItem,
+                    selectedEntry: $selectedEntry,
+                    highlightedEntry: $currentHighlightedEntry
                   )
                   .overlay(
                     LongPressScrubRecognizer(
@@ -204,6 +194,15 @@ struct ContentView: View {
 
                   DispatchQueue.main.async {
                     scrollToTodayOrTop(scrollProxy: scrollProxy)
+
+                    // Auto-select today on launch
+                    let currentYear = Calendar.current.component(.year, from: Date())
+                    if selectedYear == currentYear {
+                      let targetId = getRelevantDateId(date: Date())
+                      if let item = getItem(from: targetId) {
+                        selectDateItem(item: item, scrollProxy: scrollProxy)
+                      }
+                    }
                   }
                 }
                 .onDisappear {
@@ -215,6 +214,7 @@ struct ContentView: View {
             bottom: {
               EntryEditingView(
                 date: selectedDateItem?.date,
+                entry: selectedEntry,
                 onOpenDrawingCanvas: {
                   Haptic.play()
                   showDrawingCanvas = true
@@ -272,12 +272,11 @@ struct ContentView: View {
       ) {
         DrawingCanvasView(
           date: selectedDateItem!.date,
-          entry: entries.first(where: { $0.matches(date: selectedDateItem!.date) }),
+          entry: selectedEntry,
           onDismiss: {
             showDrawingCanvas = false
           },
-          isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland,
-          allEntries: allEntriesArray
+          isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland
         )
         .padding(.top, 32)
         .disabled(selectedDateItem == nil)
@@ -311,12 +310,11 @@ struct ContentView: View {
           content: {
             DrawingCanvasView(
               date: selectedDateItem!.date,
-              entry: entries.first(where: { $0.matches(date: selectedDateItem!.date) }),
+              entry: selectedEntry,
               onDismiss: {
                 showDrawingCanvas = false
               },
-              isShowing: showDrawingCanvas,
-              allEntries: allEntriesArray
+              isShowing: showDrawingCanvas
             )
           },
           // Hide dynamic island view when navigate to setting
@@ -337,40 +335,20 @@ struct ContentView: View {
     }
     .onAppear {
       // Sync widget data when app launches
-      WidgetHelper.shared.updateWidgetData(with: entries)
+      WidgetHelper.shared.updateWidgetData(in: modelContext)
 
       // Refresh subscription status
       Task {
         await subscriptionManager.updateSubscriptionStatus()
       }
-
-      // Debug: print font family
-//      for family: String in UIFont.familyNames {
-//        print(family)
-//        for names: String in UIFont.fontNames(forFamilyName: family) {
-//          print("== \(names)")
-//        }
-//      }
-    }
-    .onChange(of: entries.count) { _, _ in
-      // Sync widget data when entries are added or removed
-      WidgetHelper.shared.updateWidgetData(with: entries)
-    }
-    .onChange(of: entries) { _, newEntries in
-      // Sync widget data when entries are modified
-      WidgetHelper.shared.updateWidgetData(with: newEntries)
     }
     .onChange(of: scenePhase) { _, newPhase in
       // Only sync widget data when app goes to background to ensure data is saved
-      // No need to reload on .active since data changes are already handled by onChange(of: entries)
       switch newPhase {
       case .background:
         // App went to background - sync data one final time
-        WidgetHelper.shared.updateWidgetData(with: entries)
-      case .active, .inactive:
-        // No action needed - data changes are handled by other onChange observers
-        break
-      @unknown default:
+        WidgetHelper.shared.updateWidgetData(in: modelContext)
+      default:
         break
       }
     }

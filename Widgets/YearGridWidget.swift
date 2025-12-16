@@ -179,16 +179,13 @@ struct YearGridWidgetView: View {
   }
 
   private var entriesByDateKey: [String: WidgetDayEntry] {
-    let calendar = Calendar.current
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd"
-
     var lookup: [String: WidgetDayEntry] = [:]
     lookup.reserveCapacity(entry.entries.count)
 
+    let calendar = Calendar.current
     for dayEntry in entry.entries {
-      let dayStart = calendar.startOfDay(for: dayEntry.date)
-      let key = formatter.string(from: dayStart)
+      let components = calendar.dateComponents([.year, .month, .day], from: dayEntry.date)
+      let key = String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 1, components.day ?? 1)
       lookup[key] = dayEntry
     }
     return lookup
@@ -226,10 +223,11 @@ struct YearGridWidgetView: View {
           let availableWidth = geometry.size.width - (horizontalPadding * 2)
           let dotsPerRow = calculateDotsPerRow(availableWidth: availableWidth)
           let spacing = calculateSpacing(availableWidth: availableWidth, dotsCount: dotsPerRow)
+          let lookup = entriesByDateKey
 
           LazyVStack(alignment: .leading, spacing: spacing) {
             ForEach(0..<numberOfRows(dotsPerRow: dotsPerRow), id: \.self) { rowIndex in
-              createRow(for: rowIndex, dotsPerRow: dotsPerRow, spacing: spacing)
+              createRow(for: rowIndex, dotsPerRow: dotsPerRow, spacing: spacing, lookup: lookup)
             }
           }
           .padding(.horizontal, horizontalPadding)
@@ -245,7 +243,7 @@ struct YearGridWidgetView: View {
   }
 
   @ViewBuilder
-  private func createRow(for rowIndex: Int, dotsPerRow: Int, spacing: CGFloat) -> some View {
+  private func createRow(for rowIndex: Int, dotsPerRow: Int, spacing: CGFloat, lookup: [String: WidgetDayEntry]) -> some View {
     let rowStart = rowIndex * dotsPerRow
     let rowEnd = min(rowStart + dotsPerRow, dateItems.count)
 
@@ -254,7 +252,7 @@ struct YearGridWidgetView: View {
         ForEach(rowStart..<rowEnd, id: \.self) { index in
           let item = dateItems[index]
           let dotStyle = getDotStyle(for: item.date)
-          let dayEntry = getEntryForDate(item.date)
+          let dayEntry = getEntryForDate(item.date, using: lookup)
           let hasEntry = dayEntry?.hasEntry ?? false
 
           DoodleRendererView(
@@ -286,13 +284,10 @@ struct YearGridWidgetView: View {
     return .future
   }
 
-  private func getEntryForDate(_ date: Date) -> WidgetDayEntry? {
-    let calendar = Calendar.current
-    let dayStart = calendar.startOfDay(for: date)
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd"
-    let key = formatter.string(from: dayStart)
-    return entriesByDateKey[key]
+  private func getEntryForDate(_ date: Date, using lookup: [String: WidgetDayEntry]) -> WidgetDayEntry? {
+    let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+    let key = String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 1, components.day ?? 1)
+    return lookup[key]
   }
 }
 

@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import WidgetKit
+import SwiftData
 
 // MARK: - Subscription Status for Widget
 
@@ -177,6 +178,21 @@ class WidgetHelper {
       WidgetCenter.shared.reloadAllTimelines()
     } catch {
       print("Failed to encode widget entries: \(error)")
+    }
+  }
+
+  /// Update widget data by fetching entries from the provided ModelContext
+  /// This avoids the need to pass all entries from the view
+  @MainActor func updateWidgetData(in modelContext: ModelContext) {
+    let descriptor = FetchDescriptor<DayEntry>(
+      sortBy: [SortDescriptor(\.dateString)]
+    )
+
+    do {
+      let entries = try modelContext.fetch(descriptor)
+      updateWidgetData(with: entries)
+    } catch {
+      print("Failed to fetch entries for widget update: \(error)")
     }
   }
 }

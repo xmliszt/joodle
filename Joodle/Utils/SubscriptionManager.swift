@@ -430,6 +430,52 @@ class SubscriptionManager: ObservableObject {
         }.count
     }
 
+    /// Efficiently get total count of Joodles using ModelContext
+    func fetchTotalJoodleCount(in modelContext: ModelContext) -> Int {
+        let descriptor = FetchDescriptor<DayEntry>(
+            predicate: #Predicate<DayEntry> { $0.drawingData != nil }
+        )
+
+        do {
+            return try modelContext.fetchCount(descriptor)
+        } catch {
+            print("Failed to fetch Joodle count: \(error)")
+            return 0
+        }
+    }
+
+    /// Efficiently check if user can create a new Joodle using ModelContext
+    func checkAccess(in modelContext: ModelContext) -> Bool {
+        if hasUnlimitedJoodles { return true }
+        return fetchTotalJoodleCount(in: modelContext) < maxJoodlesAllowed
+    }
+
+    /// Efficiently check if a specific Joodle can be edited using ModelContext
+    func canEditJoodle(entry: DayEntry, in modelContext: ModelContext) -> Bool {
+        if hasUnlimitedJoodles { return true }
+
+        // If this entry doesn't have a drawing, it's not a Joodle yet, so we check creation limit
+        guard entry.drawingData != nil else {
+            return checkAccess(in: modelContext)
+        }
+
+        // Count how many Joodles exist before this one to determine its index
+        let targetDateString = entry.dateString
+        let descriptor = FetchDescriptor<DayEntry>(
+            predicate: #Predicate<DayEntry> {
+                $0.drawingData != nil && $0.dateString < targetDateString
+            }
+        )
+
+        do {
+            let countBefore = try modelContext.fetchCount(descriptor)
+            return countBefore < maxJoodlesAllowed
+        } catch {
+            print("Failed to check edit access: \(error)")
+            return false
+        }
+    }
+
     /// Check if a specific Joodle can be edited (by its index, 0-based)
     func canEditJoodle(atIndex index: Int) -> Bool {
         if hasUnlimitedJoodles {

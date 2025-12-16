@@ -161,7 +161,7 @@ struct JoodleApp: App {
   /// Cleans up duplicate entries (same dateString) by merging content and deleting duplicates
   /// This runs on EVERY app launch to ensure no duplicates exist (handles iCloud sync conflicts)
   private static func runDuplicateEntryCleanup(container: ModelContainer) {
-    Task { @MainActor in
+    Task.detached {
       let context = ModelContext(container)
       // Use forceCleanupDuplicates to always run regardless of previous cleanup flag
       // This ensures duplicates created by iCloud sync conflicts are cleaned up
@@ -176,7 +176,7 @@ struct JoodleApp: App {
   /// These serve no purpose and waste storage space
   /// This runs on EVERY app launch to clean up any accidentally created empty entries
   private static func runEmptyEntryCleanup(container: ModelContainer) {
-    Task { @MainActor in
+    Task.detached {
       let context = ModelContext(container)
       let descriptor = FetchDescriptor<DayEntry>()
 
@@ -206,61 +206,65 @@ struct JoodleApp: App {
 
   /// Runs the dateString migration synchronously to populate dateString for existing entries
   private static func runDateStringMigration(container: ModelContainer) {
-    let context = ModelContext(container)
-    let descriptor = FetchDescriptor<DayEntry>()
+    Task.detached {
+      let context = ModelContext(container)
+      let descriptor = FetchDescriptor<DayEntry>()
 
-    do {
-      let allEntries = try context.fetch(descriptor)
-      var migratedCount = 0
+      do {
+        let allEntries = try context.fetch(descriptor)
+        var migratedCount = 0
 
-      for entry in allEntries {
-        if entry.dateString.isEmpty {
-          entry.dateString = DayEntry.dateToString(entry.createdAt)
-          migratedCount += 1
+        for entry in allEntries {
+          if entry.dateString.isEmpty {
+            entry.dateString = DayEntry.dateToString(entry.createdAt)
+            migratedCount += 1
+          }
         }
-      }
 
-      if migratedCount > 0 {
-        try context.save()
-        print("DateStringMigration: Migrated \(migratedCount) entries on startup")
+        if migratedCount > 0 {
+          try context.save()
+          print("DateStringMigration: Migrated \(migratedCount) entries on startup")
+        }
+      } catch {
+        print("DateStringMigration: Failed during startup: \(error)")
       }
-    } catch {
-      print("DateStringMigration: Failed during startup: \(error)")
     }
   }
 
   /// Cleans up legacy 1080px thumbnail data to reclaim storage
   private static func runLegacyThumbnailCleanup(container: ModelContainer) {
-    let context = ModelContext(container)
-    let cleanupKey = "hasCleanedLegacy1080Thumbnails_v1"
+    Task.detached {
+      let context = ModelContext(container)
+      let cleanupKey = "hasCleanedLegacy1080Thumbnails_v1"
 
-    // Only run once
-    guard !UserDefaults.standard.bool(forKey: cleanupKey) else {
-      return
-    }
+      // Only run once
+      guard !UserDefaults.standard.bool(forKey: cleanupKey) else {
+        return
+      }
 
-    let descriptor = FetchDescriptor<DayEntry>()
+      let descriptor = FetchDescriptor<DayEntry>()
 
-    do {
-      let allEntries = try context.fetch(descriptor)
-      var cleanedCount = 0
+      do {
+        let allEntries = try context.fetch(descriptor)
+        var cleanedCount = 0
 
-      for entry in allEntries {
-        // Only clear legacy 1080px thumbnail
-        if entry.drawingThumbnail1080 != nil {
-          entry.drawingThumbnail1080 = nil
-          cleanedCount += 1
+        for entry in allEntries {
+          // Only clear legacy 1080px thumbnail
+          if entry.drawingThumbnail1080 != nil {
+            entry.drawingThumbnail1080 = nil
+            cleanedCount += 1
+          }
         }
-      }
 
-      if cleanedCount > 0 {
-        try context.save()
-        print("LegacyThumbnailCleanup: Cleaned up \(cleanedCount) entries with 1080px thumbnails on startup")
-      }
+        if cleanedCount > 0 {
+          try context.save()
+          print("LegacyThumbnailCleanup: Cleaned up \(cleanedCount) entries with 1080px thumbnails on startup")
+        }
 
-      UserDefaults.standard.set(true, forKey: cleanupKey)
-    } catch {
-      print("LegacyThumbnailCleanup: Failed during startup: \(error)")
+        UserDefaults.standard.set(true, forKey: cleanupKey)
+      } catch {
+        print("LegacyThumbnailCleanup: Failed during startup: \(error)")
+      }
     }
   }
 
@@ -274,7 +278,7 @@ struct JoodleApp: App {
     }
 
     // Run asynchronously to not block app startup
-    Task { @MainActor in
+    Task.detached {
       let context = ModelContext(container)
       let descriptor = FetchDescriptor<DayEntry>()
 

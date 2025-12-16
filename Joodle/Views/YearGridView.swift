@@ -12,7 +12,7 @@ let GRID_HORIZONTAL_PADDING: CGFloat = 40
 let MAX_SCALE: CGFloat = 1.5
 let MAX_SCALE_DISTANCE: CGFloat = 2.5
 
-struct DateItem: Identifiable {
+struct DateItem: Identifiable, Equatable {
   var id: String
   var date: Date
 }

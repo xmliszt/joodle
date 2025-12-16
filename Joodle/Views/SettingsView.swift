@@ -45,13 +45,14 @@ struct SettingsView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
-  @Query private var entries: [DayEntry]
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var showOnboarding = false
   @State private var showPlaceholderGenerator = false
   @State private var showPaywall = false
   @State private var showSubscriptions = false
   @State private var showAppStats = false
+  @State private var showDebugLogs = false
+  @State private var currentJoodleCount = 0
 
   // Theme color change state
   @State private var pendingThemeColor: ThemeColor?
@@ -170,7 +171,6 @@ struct SettingsView: View {
           Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration")
         }
       }
-
       // MARK: - Free Plan Limits (only shown for free users)
       if !subscriptionManager.isSubscribed {
         Section {
@@ -181,9 +181,9 @@ struct SettingsView: View {
             HStack {
               Text("Joodle entries")
               Spacer()
-              Text("\(subscriptionManager.totalJoodleCount(from: entries)) / \(SubscriptionManager.freeJoodlesAllowed)")
+              Text("\(currentJoodleCount) / \(SubscriptionManager.freeJoodlesAllowed)")
                 .foregroundStyle(
-                  subscriptionManager.totalJoodleCount(from: entries) >= SubscriptionManager.freeJoodlesAllowed ? .red :
+                  currentJoodleCount >= SubscriptionManager.freeJoodlesAllowed ? .red :
                   .secondary
                 )
                 .font(.system(size: 14))
@@ -461,6 +461,9 @@ struct SettingsView: View {
       Task {
         await StoreKitManager.shared.updatePurchasedProducts()
         await subscriptionManager.updateSubscriptionStatus()
+        if !subscriptionManager.isSubscribed {
+          currentJoodleCount = subscriptionManager.fetchTotalJoodleCount(in: modelContext)
+        }
       }
     }
     .onReceive(NotificationCenter.default.publisher(for: .subscriptionDidExpire)) { _ in
@@ -487,79 +490,94 @@ struct SettingsView: View {
   }
 
   private func exportData() {
-    do {
-      let descriptor = FetchDescriptor<DayEntry>()
-      let entries = try modelContext.fetch(descriptor)
-      let dtos = entries.map { entry in
-        DayEntryDTO(
-          body: entry.body,
-          createdAt: entry.createdAt,
-          dateString: entry.dateString,
-          drawingData: entry.drawingData,
-          drawingThumbnail20: entry.drawingThumbnail20,
-          drawingThumbnail200: entry.drawingThumbnail200
-        )
+    let container = modelContext.container
+    Task.detached {
+      do {
+        let context = ModelContext(container)
+        let descriptor = FetchDescriptor<DayEntry>()
+        let entries = try context.fetch(descriptor)
+        let dtos = entries.map { entry in
+          DayEntryDTO(
+            body: entry.body,
+            createdAt: entry.createdAt,
+            dateString: entry.dateString,
+            drawingData: entry.drawingData,
+            drawingThumbnail20: entry.drawingThumbnail20,
+            drawingThumbnail200: entry.drawingThumbnail200
+          )
+        }
+        let data = try JSONEncoder().encode(dtos)
+
+        await MainActor.run {
+          exportDocument = JSONDocument(data: data)
+          showFileExporter = true
+        }
+      } catch {
+        print("Failed to prepare export: \(error)")
       }
-      let data = try JSONEncoder().encode(dtos)
-      exportDocument = JSONDocument(data: data)
-      showFileExporter = true
-    } catch {
-      print("Failed to prepare export: \(error)")
     }
   }
 
   private func importData(from url: URL) {
-    guard url.startAccessingSecurityScopedResource() else { return }
-    defer { url.stopAccessingSecurityScopedResource() }
+    let container = modelContext.container
+    Task.detached {
+      guard url.startAccessingSecurityScopedResource() else { return }
+      defer { url.stopAccessingSecurityScopedResource() }
 
-    do {
-      let data = try Data(contentsOf: url)
-      let dtos = try JSONDecoder().decode([DayEntryDTO].self, from: data)
+      do {
+        let data = try Data(contentsOf: url)
+        let dtos = try JSONDecoder().decode([DayEntryDTO].self, from: data)
+        let context = ModelContext(container)
 
-      var importedCount = 0
-      var mergedCount = 0
-      var skippedCount = 0
-      for dto in dtos {
-        // Skip empty entries (no text and no drawing)
-        let dtoHasContent = !dto.body.isEmpty || (dto.drawingData != nil && !dto.drawingData!.isEmpty)
-        if !dtoHasContent {
-          skippedCount += 1
-          continue
+        var importedCount = 0
+        var mergedCount = 0
+        var skippedCount = 0
+        for dto in dtos {
+          // Skip empty entries (no text and no drawing)
+          let dtoHasContent = !dto.body.isEmpty || (dto.drawingData != nil && !dto.drawingData!.isEmpty)
+          if !dtoHasContent {
+            skippedCount += 1
+            continue
+          }
+
+          // Use findOrCreate to get or create the single entry for this date
+          let entry = DayEntry.findOrCreate(for: dto.createdAt, in: context)
+
+          let hadContent = !entry.body.isEmpty || (entry.drawingData != nil && !entry.drawingData!.isEmpty)
+
+          // Merge imported data into existing entry
+          if entry.body.isEmpty && !dto.body.isEmpty {
+            entry.body = dto.body
+          } else if !entry.body.isEmpty && !dto.body.isEmpty && entry.body != dto.body {
+            // Both have text - append imported text
+            entry.body = entry.body + "\n\n---\n\n" + dto.body
+          }
+
+          // Import drawing if entry doesn't have one
+          if (entry.drawingData == nil || entry.drawingData?.isEmpty == true) && dto.drawingData != nil {
+            entry.drawingData = dto.drawingData
+            entry.drawingThumbnail20 = dto.drawingThumbnail20
+            entry.drawingThumbnail200 = dto.drawingThumbnail200
+          }
+
+          if hadContent {
+            mergedCount += 1
+          } else {
+            importedCount += 1
+          }
         }
 
-        // Use findOrCreate to get or create the single entry for this date
-        let entry = DayEntry.findOrCreate(for: dto.createdAt, in: modelContext)
-
-        let hadContent = !entry.body.isEmpty || (entry.drawingData != nil && !entry.drawingData!.isEmpty)
-
-        // Merge imported data into existing entry
-        if entry.body.isEmpty && !dto.body.isEmpty {
-          entry.body = dto.body
-        } else if !entry.body.isEmpty && !dto.body.isEmpty && entry.body != dto.body {
-          // Both have text - append imported text
-          entry.body = entry.body + "\n\n---\n\n" + dto.body
+        try context.save()
+        await MainActor.run {
+          importMessage = "Imported \(importedCount) new entries, merged \(mergedCount) existing entries. Skipped \(skippedCount) empty entries."
+          showImportAlert = true
         }
-
-        // Import drawing if entry doesn't have one
-        if (entry.drawingData == nil || entry.drawingData?.isEmpty == true) && dto.drawingData != nil {
-          entry.drawingData = dto.drawingData
-          entry.drawingThumbnail20 = dto.drawingThumbnail20
-          entry.drawingThumbnail200 = dto.drawingThumbnail200
-        }
-
-        if hadContent {
-          mergedCount += 1
-        } else {
-          importedCount += 1
+      } catch {
+        await MainActor.run {
+          importMessage = "Import failed: \(error.localizedDescription)"
+          showImportAlert = true
         }
       }
-
-      try modelContext.save()
-      importMessage = "Imported \(importedCount) new entries\(skippedCount > 0 ? ", skipped \(skippedCount) empty" : "")"
-      showImportAlert = true
-    } catch {
-      importMessage = "Import failed: \(error.localizedDescription)"
-      showImportAlert = true
     }
   }
 

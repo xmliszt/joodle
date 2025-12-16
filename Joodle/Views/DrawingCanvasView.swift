@@ -30,9 +30,6 @@ struct DrawingCanvasView: View {
   /// But that doesn't make it visible yet as controlled by DynamicIslandExpandedView
   let isShowing: Bool
 
-  /// All entries for Joodle limit calculation
-  let allEntries: [DayEntry]
-
   @State private var currentPath = Path()
   @State private var paths: [Path] = []
   @State private var pathMetadata: [PathMetadata] = []
@@ -124,7 +121,7 @@ struct DrawingCanvasView: View {
   // MARK: - Access Control UI
 
   private var remainingJoodlesHeader: some View {
-    let totalCount = subscriptionManager.totalJoodleCount(from: allEntries)
+    let totalCount = subscriptionManager.fetchTotalJoodleCount(in: modelContext)
     let remaining = subscriptionManager.remainingJoodles(currentTotalCount: totalCount)
 
     return HStack(spacing: 6) {
@@ -224,26 +221,27 @@ struct DrawingCanvasView: View {
     // Check if this is an existing Joodle (editing) or new Joodle (creating)
     let hasExistingDrawing = entry?.drawingData != nil
 
-    if hasExistingDrawing {
+    if hasExistingDrawing, let entry = entry {
       // Editing existing - check if within first N Joodles
-      let entriesWithDrawings = allEntries
-        .filter { $0.drawingData != nil }
-        .sorted { $0.dateString < $1.dateString }
-
-      if let entry = entry,
-         let index = entriesWithDrawings.firstIndex(where: { $0.id == entry.id }) {
-        if subscriptionManager.canEditJoodle(atIndex: index) {
-          accessState = .canEdit
-        } else {
-          accessState = .editingLocked(reason: "Free account can only edit the first \(SubscriptionManager.freeJoodlesAllowed) Joodles. This Joodle is #\(index + 1).")
-        }
-      } else {
+      if subscriptionManager.canEditJoodle(entry: entry, in: modelContext) {
         accessState = .canEdit
+      } else {
+        // Calculate index for error message
+        let targetDateString = entry.dateString
+        let descriptor = FetchDescriptor<DayEntry>(
+          predicate: #Predicate<DayEntry> {
+            $0.drawingData != nil && $0.dateString < targetDateString
+          }
+        )
+        let index = (try? modelContext.fetchCount(descriptor)) ?? 0
+        accessState = .editingLocked(
+          reason:
+            "Free account can only edit the first \(SubscriptionManager.freeJoodlesAllowed) Joodles. This Joodle is #\(index + 1)."
+        )
       }
     } else {
       // Creating new - check limit
-      let totalCount = subscriptionManager.totalJoodleCount(from: allEntries)
-      if subscriptionManager.canCreateJoodle(currentTotalCount: totalCount) {
+      if subscriptionManager.checkAccess(in: modelContext) {
         accessState = .canCreate
       } else {
         accessState = .limitReached
@@ -486,7 +484,6 @@ struct DrawingCanvasView: View {
     date: Date(),
     entry: DayEntry(body: "HELLO", createdAt: Date(), drawingData: nil),
     onDismiss: {},
-    isShowing: true,
-    allEntries: []
+    isShowing: true
   )
 }

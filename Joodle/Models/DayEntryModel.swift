@@ -73,13 +73,9 @@ final class DayEntry {
   /// - Parameter date: The date to convert
   /// - Returns: A string in "yyyy-MM-dd" format representing the local calendar date
   static func dateToString(_ date: Date) -> String {
-    // Create a new formatter each time to ensure we use the CURRENT timezone
-    // This is important because timezone can change during app lifetime
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd"
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = TimeZone.current
-    return formatter.string(from: date)
+    // Optimized implementation using Calendar directly to avoid expensive DateFormatter creation
+    let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+    return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 1, components.day ?? 1)
   }
 
   /// Converts a dateString back to a Date (at noon UTC for internal storage stability)
@@ -153,7 +149,6 @@ final class DayEntry {
   ///   - date: The date to find or create an entry for
   ///   - modelContext: The SwiftData model context
   /// - Returns: The single entry for this date (existing or newly created)
-  @MainActor
   static func findOrCreate(for date: Date, in modelContext: ModelContext) -> DayEntry {
     let targetDateString = dateToString(date)
     let predicate = #Predicate<DayEntry> { entry in
@@ -192,7 +187,6 @@ final class DayEntry {
   ///   - entries: Array of entries to merge (must have same dateString)
   ///   - modelContext: The SwiftData model context
   /// - Returns: The merged primary entry
-  @MainActor
   private static func mergeAndCleanup(entries: [DayEntry], in modelContext: ModelContext) -> DayEntry {
     // Sort by content priority: drawing > text > empty
     let sortedEntries = entries.sorted { entry1, entry2 in
@@ -252,7 +246,6 @@ final class DayEntry {
   /// Deletes this entry and ALL other entries for the same date
   /// Use this when user explicitly wants to delete/clear a day's entry
   /// - Parameter modelContext: The SwiftData model context
-  @MainActor
   func deleteAllForSameDate(in modelContext: ModelContext) {
     let targetDateString = self.dateString
     let predicate = #Predicate<DayEntry> { entry in

@@ -10,7 +10,6 @@ import SwiftData
 
 /// Handles cleanup of duplicate DayEntry records that have the same dateString
 /// This can happen due to iCloud sync conflicts, race conditions, or edge cases
-@MainActor
 class DuplicateEntryCleanup {
   static let shared = DuplicateEntryCleanup()
 
@@ -196,7 +195,8 @@ class DuplicateEntryCleanup {
   /// - Parameter modelContext: The SwiftData model context
   /// - Returns: Number of dates with duplicates
   func checkDuplicateCount(modelContext: ModelContext) -> Int {
-    let descriptor = FetchDescriptor<DayEntry>()
+    var descriptor = FetchDescriptor<DayEntry>()
+    descriptor.propertiesToFetch = [\.dateString, \.createdAt]
 
     do {
       let allEntries = try modelContext.fetch(descriptor)
@@ -222,7 +222,8 @@ class DuplicateEntryCleanup {
   /// - Parameter modelContext: The SwiftData model context
   /// - Returns: Dictionary of dateString -> entry count for dates with duplicates
   func getDuplicateDetails(modelContext: ModelContext) -> [String: Int] {
-    let descriptor = FetchDescriptor<DayEntry>()
+    var descriptor = FetchDescriptor<DayEntry>()
+    descriptor.propertiesToFetch = [\.dateString, \.createdAt]
 
     do {
       let allEntries = try modelContext.fetch(descriptor)
@@ -249,8 +250,7 @@ class DuplicateEntryCleanup {
   func getTotalEntryCount(modelContext: ModelContext) -> Int {
     let descriptor = FetchDescriptor<DayEntry>()
     do {
-      let allEntries = try modelContext.fetch(descriptor)
-      return allEntries.count
+      return try modelContext.fetchCount(descriptor)
     } catch {
       print("DuplicateEntryCleanup: Failed to get total entry count: \(error)")
       return 0
@@ -261,7 +261,9 @@ class DuplicateEntryCleanup {
   /// - Parameter modelContext: The SwiftData model context
   /// - Returns: Number of unique dates with entries
   func getUniqueDateCount(modelContext: ModelContext) -> Int {
-    let descriptor = FetchDescriptor<DayEntry>()
+    var descriptor = FetchDescriptor<DayEntry>()
+    descriptor.propertiesToFetch = [\.dateString, \.createdAt]
+
     do {
       let allEntries = try modelContext.fetch(descriptor)
       var uniqueDates = Set<String>()

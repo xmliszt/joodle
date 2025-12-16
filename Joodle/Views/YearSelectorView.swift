@@ -10,26 +10,18 @@ import SwiftData
 
 struct YearSelectorView: View {
   @Environment(\.modelContext) private var modelContext
-  @Query private var entries: [DayEntry]
+  @State private var earliestYear: Int = Calendar.current.component(.year, from: Date())
 
   let highlightedItem: DateItem?
   @Binding var selectedYear: Int
 
   private var availableYears: [Int] {
     let currentYear = Calendar.current.component(.year, from: Date())
-
-    // Find the earliest entry year
-    let earliestYear: Int
-    if let firstEntry = entries.sorted(by: { $0.createdAt < $1.createdAt }).first {
-      earliestYear = Calendar.current.component(.year, from: firstEntry.createdAt)
-    } else {
-      // If no entries exist, start from current year
-      earliestYear = currentYear
-    }
-
     // Create range from earliest year to current year + 1
     let endYear = currentYear + 1
-    return Array(earliestYear...endYear)
+    // Ensure earliestYear is not in the future relative to currentYear (sanity check)
+    let startYear = min(earliestYear, currentYear)
+    return Array(startYear...endYear)
   }
 
   private var headerText: String {
@@ -63,9 +55,27 @@ struct YearSelectorView: View {
       }
     }
     .menuStyle(.borderlessButton)
+    .onAppear {
+      fetchEarliestYear()
+    }
   }
 
   // MARK: - Helper Methods
+  private func fetchEarliestYear() {
+    var descriptor = FetchDescriptor<DayEntry>(
+      sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+    )
+    descriptor.fetchLimit = 1
+
+    do {
+      if let firstEntry = try modelContext.fetch(descriptor).first {
+        earliestYear = Calendar.current.component(.year, from: firstEntry.createdAt)
+      }
+    } catch {
+      print("Failed to fetch earliest year: \(error)")
+    }
+  }
+
   private func getFormattedDate(_ date: Date) -> String {
     return date.formatted(date: .abbreviated, time: .omitted)
   }

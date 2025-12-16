@@ -107,7 +107,7 @@ struct ShareCardSelectorView: View {
         }
 
         Spacer().frame(maxHeight: .infinity)
-        
+
         // Watermark toggle - only visible for Joodle Super users
         Toggle(isOn: $showWatermark) {
           HStack(spacing: 8) {
@@ -132,7 +132,7 @@ struct ShareCardSelectorView: View {
           // Re-render current preview
           renderPreview(for: selectedStyle)
         }
-        
+
         Spacer().frame(height: 16)
 
         // Action buttons
@@ -168,7 +168,7 @@ struct ShareCardSelectorView: View {
                 .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
               }
               .glassEffect(.regular.interactive())
-              .disabled(isSharing)
+              .disabled(isSharing || shareItem != nil)
             }
           }
           .padding(.horizontal, UIDevice.screenCornerRadius / 2)
@@ -200,7 +200,7 @@ struct ShareCardSelectorView: View {
               .background(.appAccent)
               .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
             }
-            .disabled(isSharing)
+            .disabled(isSharing || shareItem != nil)
           }
           .padding(.horizontal, UIDevice.screenCornerRadius / 2)
         }
@@ -219,7 +219,7 @@ struct ShareCardSelectorView: View {
         }
       }
       .sheet(item: $shareItem) { item in
-        ShareSheet(items: [item.image])
+        ShareSheet(items: item.items)
       }
       .onAppear {
         setupInitialState()
@@ -335,12 +335,39 @@ struct ShareCardSelectorView: View {
     }
   }
 
+  private func prepareAndPresentShareSheet(with image: UIImage) {
+    isSharing = true
+    Task.detached {
+      let itemToShare: Any
+      if let pngData = image.pngData() {
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileName = "Joodle-\(UUID().uuidString).png"
+        let fileURL = tempDir.appendingPathComponent(fileName)
+        do {
+          try pngData.write(to: fileURL)
+          itemToShare = fileURL
+        } catch {
+          itemToShare = image
+        }
+      } else {
+        itemToShare = image
+      }
+
+      await MainActor.run {
+        isSharing = false
+        shareItem = ShareItem(items: [itemToShare])
+      }
+    }
+  }
+
   private func shareCard() {
+    guard shareItem == nil else { return }
+
     let watermarkSetting = shouldShowWatermark
 
     // If we already have the rendered preview, use it directly
     if let cachedImage = renderedPreviews[selectedStyle]?[previewColorScheme]?[watermarkSetting] {
-      shareItem = ShareItem(image: cachedImage)
+      prepareAndPresentShareSheet(with: cachedImage)
       return
     }
 
@@ -370,9 +397,10 @@ struct ShareCardSelectorView: View {
         )
       }
 
-      isSharing = false
       if let image = image {
-        shareItem = ShareItem(image: image)
+        prepareAndPresentShareSheet(with: image)
+      } else {
+        isSharing = false
       }
     }
   }
@@ -395,7 +423,7 @@ extension ShareCardSelectorView {
 // Helper struct for sheet presentation
 struct ShareItem: Identifiable {
   let id = UUID()
-  let image: UIImage
+  let items: [Any]
 }
 
 // UIKit ShareSheet wrapper
@@ -403,27 +431,8 @@ struct ShareSheet: UIViewControllerRepresentable {
   let items: [Any]
 
   func makeUIViewController(context: Context) -> UIActivityViewController {
-    // Convert UIImages to PNG data to preserve transparency
-    let activityItems = items.map { item -> Any in
-      if let image = item as? UIImage, let pngData = image.pngData() {
-        // Create a temporary file URL for the PNG
-        let tempDir = FileManager.default.temporaryDirectory
-        let fileName = "Joodle-\(UUID().uuidString).png"
-        let fileURL = tempDir.appendingPathComponent(fileName)
-
-        do {
-          try pngData.write(to: fileURL)
-          return fileURL
-        } catch {
-          print("Failed to write PNG data: \(error)")
-          return image
-        }
-      }
-      return item
-    }
-
     let controller = UIActivityViewController(
-      activityItems: activityItems,
+      activityItems: items,
       applicationActivities: nil
     )
     return controller

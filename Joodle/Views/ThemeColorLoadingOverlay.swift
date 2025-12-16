@@ -64,7 +64,7 @@ struct ThemeColorLoadingOverlay: View {
             }
             .padding(32)
             .background {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+              RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius, style: .continuous)
                     .fill(.regularMaterial)
             }
             .shadow(color: .black.opacity(0.2), radius: 20, y: 10)
