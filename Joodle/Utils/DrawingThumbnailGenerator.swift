@@ -20,6 +20,10 @@ class DrawingThumbnailGenerator {
   /// - Parameter drawingData: The raw drawing path data
   /// - Returns: Tuple of (20px thumbnail, 200px thumbnail) data
   func generateThumbnails(from drawingData: Data) async -> (Data?, Data?) {
+    // Capture the accent color on the calling thread to avoid thread-safety issues
+    // when accessing UserPreferences.shared from background threads
+    let accentColor = await MainActor.run { UIColor(Color.appAccent) }
+
     // Run on detached task to avoid blocking main thread
     return await Task.detached(priority: .userInitiated) {
       // Decode the drawing data
@@ -28,9 +32,9 @@ class DrawingThumbnailGenerator {
       }
 
       // Generate 20px thumbnail with thicker strokes for visibility
-      let thumbnail20 = self.generateThumbnailCG(from: pathsData, size: 20, useThickerStrokes: true)
+      let thumbnail20 = self.generateThumbnailCG(from: pathsData, size: 20, useThickerStrokes: true, color: accentColor)
       // Generate 200px thumbnail with normal strokes
-      let thumbnail200 = self.generateThumbnailCG(from: pathsData, size: 200, useThickerStrokes: false)
+      let thumbnail200 = self.generateThumbnailCG(from: pathsData, size: 200, useThickerStrokes: false, color: accentColor)
 
       return (thumbnail20, thumbnail200)
     }.value
@@ -45,16 +49,20 @@ class DrawingThumbnailGenerator {
     // Use thicker strokes for small thumbnails (<=20px)
     let useThickerStrokes = size <= 20
 
+    // Capture the accent color on the calling thread to avoid thread-safety issues
+    // when accessing UserPreferences.shared from background threads
+    let accentColor = await MainActor.run { UIColor(Color.appAccent) }
+
     return await Task.detached(priority: .userInitiated) {
       guard let pathsData = self.decodeDrawingData(drawingData) else {
         return nil
       }
-      return self.generateThumbnailCG(from: pathsData, size: size, useThickerStrokes: useThickerStrokes)
+      return self.generateThumbnailCG(from: pathsData, size: size, useThickerStrokes: useThickerStrokes, color: accentColor)
     }.value
   }
 
   /// Generate thumbnail from decoded path data using Core Graphics
-  private func generateThumbnailCG(from pathsData: [PathData], size: CGFloat, useThickerStrokes: Bool) -> Data? {
+  private func generateThumbnailCG(from pathsData: [PathData], size: CGFloat, useThickerStrokes: Bool, color: UIColor) -> Data? {
     let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
 
     let image = renderer.image { context in
@@ -62,10 +70,9 @@ class DrawingThumbnailGenerator {
       let scale = size / CANVAS_SIZE
       let strokeMultiplier: CGFloat = useThickerStrokes ? SMALL_THUMBNAIL_STROKE_MULTIPLIER : 1.0
 
-      // Set colors
-      let uiColor = UIColor(Color.appAccent)
-      cgContext.setStrokeColor(uiColor.cgColor)
-      cgContext.setFillColor(uiColor.cgColor)
+      // Set colors using the pre-captured color (thread-safe)
+      cgContext.setStrokeColor(color.cgColor)
+      cgContext.setFillColor(color.cgColor)
 
       for pathData in pathsData {
         if pathData.isDot {
