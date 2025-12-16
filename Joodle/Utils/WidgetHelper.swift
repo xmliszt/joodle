@@ -151,15 +151,22 @@ class WidgetHelper {
       return
     }
 
+    // Calculate cutoff date for including full drawing data (last 7 days)
+    let sevenDaysAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+
     // Convert DayEntry to WidgetEntryData
     // Note: Drawing data is included to support widgets that display actual drawings
     // Use displayDate which is timezone-agnostic (stable noon UTC)
     let widgetEntries = entries.map { entry in
-      WidgetEntryData(
+      // Only include full drawing data for recent entries to save space/memory
+      // Older entries will rely on thumbnails
+      let shouldIncludeDrawingData = entry.createdAt >= sevenDaysAgo
+
+      return WidgetEntryData(
         date: entry.displayDate,
         hasText: !entry.body.isEmpty,
         hasDrawing: entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true),
-        drawingData: entry.drawingData,
+        drawingData: shouldIncludeDrawingData ? entry.drawingData : nil,
         thumbnail: entry.drawingThumbnail20,
         body: entry.body.isEmpty ? nil : entry.body
       )

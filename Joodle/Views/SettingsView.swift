@@ -6,6 +6,8 @@ import UniformTypeIdentifiers
 
 // MARK: - Navigation Coordinator for Swipe Back Gesture
 struct NavigationGestureEnabler: UIViewControllerRepresentable {
+  var isEnabled: Bool = true
+
   func makeUIViewController(context: Context) -> UIViewController {
     let controller = UIViewController()
     return controller
@@ -14,7 +16,7 @@ struct NavigationGestureEnabler: UIViewControllerRepresentable {
   func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
     DispatchQueue.main.async {
       if let navigationController = uiViewController.navigationController {
-        navigationController.interactivePopGestureRecognizer?.isEnabled = true
+        navigationController.interactivePopGestureRecognizer?.isEnabled = isEnabled
         navigationController.interactivePopGestureRecognizer?.delegate = context.coordinator
       }
     }
@@ -51,7 +53,9 @@ struct SettingsView: View {
   @State private var showPaywall = false
   @State private var showSubscriptions = false
   @State private var showAppStats = false
-  @State private var showDebugLogs = false
+  #if DEBUG
+  @State private var showDataSeeder = false
+  #endif
   @State private var currentJoodleCount = 0
 
   // Theme color change state
@@ -380,8 +384,8 @@ struct SettingsView: View {
           Button("App Stats") {
             showAppStats = true
           }
-          Button("Clear Today's Entries", role: .destructive) {
-            clearTodaysEntries()
+          Button("Data Seeder") {
+            showDataSeeder = true
           }
           Button("Generate Placeholder") {
             showPlaceholderGenerator = true
@@ -396,10 +400,12 @@ struct SettingsView: View {
         }
       }
     }
-    .background(NavigationGestureEnabler())
+    .background(NavigationGestureEnabler(isEnabled: !themeColorManager.isRegenerating))
     .navigationTitle("Settings")
     .navigationBarTitleDisplayMode(.inline)
     .preferredColorScheme(userPreferences.preferredColorScheme)
+    .navigationBarBackButtonHidden(themeColorManager.isRegenerating)
+    .interactiveDismissDisabled(themeColorManager.isRegenerating)
     .overlay {
       if themeColorManager.isRegenerating, let color = pendingThemeColor {
         ThemeColorLoadingOverlay(
@@ -421,6 +427,11 @@ struct SettingsView: View {
     .sheet(isPresented: $showAppStats) {
       AppStatsView()
     }
+    #if DEBUG
+    .sheet(isPresented: $showDataSeeder) {
+      DebugDataSeederView()
+    }
+    #endif
     .sheet(isPresented: $showPaywall) {
       StandalonePaywallView()
     }
@@ -578,21 +589,6 @@ struct SettingsView: View {
           showImportAlert = true
         }
       }
-    }
-  }
-
-  private func clearTodaysEntries() {
-    let todayDateString = DayEntry.dateToString(Date())
-
-    let predicate = #Predicate<DayEntry> { entry in
-      entry.dateString == todayDateString
-    }
-
-    do {
-      try modelContext.delete(model: DayEntry.self, where: predicate)
-      try modelContext.save()
-    } catch {
-      print("Failed to clear today's entries: \(error)")
     }
   }
 }
@@ -1118,9 +1114,104 @@ struct JSONDocument: FileDocument {
   }
 
   func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-    return FileWrapper(regularFileWithContents: data)
+    let file = FileWrapper(regularFileWithContents: data)
+    return file
   }
 }
+
+#if DEBUG
+struct DebugDataSeederView: View {
+  @Environment(\.dismiss) private var dismiss
+  @Environment(\.modelContext) private var modelContext
+  @State private var selectedYear = 2024
+  @State private var seedCount = 10
+  @State private var currentDebugCount = 0
+  @State private var isSeeding = false
+
+  var body: some View {
+    NavigationStack {
+      Form {
+        Section("Current Status") {
+          HStack {
+            Text("Seeded Entries (≤2024)")
+            Spacer()
+            Text("\(currentDebugCount)")
+              .foregroundStyle(.secondary)
+          }
+        }
+
+        Section("Seed Data") {
+          Picker("Year", selection: $selectedYear) {
+            ForEach((2020...2024).reversed(), id: \.self) { year in
+              Text(String(year)).tag(year)
+            }
+          }
+
+          HStack {
+            Text("Count")
+            Spacer()
+            TextField("Count", value: $seedCount, format: .number)
+              .keyboardType(.numberPad)
+              .multilineTextAlignment(.trailing)
+              .frame(width: 80)
+
+            Button("MAX") {
+              seedCount = DebugDataSeeder.shared.daysInYear(selectedYear)
+            }
+            .buttonStyle(.bordered)
+            .font(.caption)
+          }
+
+          Button("Seed \(seedCount) Entries for \(selectedYear)") {
+            seedData()
+          }
+          .disabled(isSeeding)
+        }
+
+        Section("Danger Zone") {
+          Button("Clear All Seeded Data", role: .destructive) {
+            clearData()
+          }
+          .disabled(isSeeding)
+        }
+      }
+      .navigationTitle("Data Seeder")
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Done") { dismiss() }
+        }
+      }
+      .onAppear {
+        refreshCount()
+      }
+    }
+  }
+
+  private func refreshCount() {
+    currentDebugCount = DebugDataSeeder.shared.getDebugEntryCount(container: modelContext.container)
+  }
+
+  private func seedData() {
+    isSeeding = true
+    Task {
+      await DebugDataSeeder.shared.seedEntries(
+        for: selectedYear, count: seedCount, container: modelContext.container)
+      refreshCount()
+      isSeeding = false
+    }
+  }
+
+  private func clearData() {
+    isSeeding = true
+    Task {
+      await DebugDataSeeder.shared.clearAllDebugData(container: modelContext.container)
+      refreshCount()
+      isSeeding = false
+    }
+  }
+}
+#endif
 
 #Preview {
   NavigationStack {

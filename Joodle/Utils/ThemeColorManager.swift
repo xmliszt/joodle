@@ -65,24 +65,52 @@ final class ThemeColorManager {
                 return
             }
 
-            // Regenerate thumbnails for each entry
-            for (index, entry) in entriesWithDrawings.enumerated() {
-                guard let drawingData = entry.drawingData else { continue }
+            // Regenerate thumbnails concurrently with limit
+            await withTaskGroup(of: (Int, Data?, Data?).self) { group in
+                var activeTasks = 0
+                let maxConcurrency = 4 // Limit concurrent tasks to prevent memory spikes
 
-                // Generate new thumbnails with the new accent color
-                let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(
-                    from: drawingData
-                )
+                for (index, entry) in entriesWithDrawings.enumerated() {
+                    guard let drawingData = entry.drawingData else { continue }
 
-                entry.drawingThumbnail20 = thumbnails.0
-                entry.drawingThumbnail200 = thumbnails.1
+                    if activeTasks >= maxConcurrency {
+                        if let (completedIndex, thumb20, thumb200) = await group.next() {
+                            let completedEntry = entriesWithDrawings[completedIndex]
+                            completedEntry.drawingThumbnail20 = thumb20
+                            completedEntry.drawingThumbnail200 = thumb200
 
-                entriesProcessed = index + 1
-                regenerationProgress = Double(entriesProcessed) / Double(totalEntriesToProcess)
+                            entriesProcessed += 1
+                            regenerationProgress = Double(entriesProcessed) / Double(totalEntriesToProcess)
 
-                // Save periodically to avoid memory buildup
-                if entriesProcessed % 10 == 0 {
-                    try? modelContext.save()
+                            if entriesProcessed % 20 == 0 {
+                                try? modelContext.save()
+                            }
+                            activeTasks -= 1
+                        }
+                    }
+
+                    group.addTask {
+                        let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(
+                            from: drawingData
+                        )
+                        return (index, thumbnails.0, thumbnails.1)
+                    }
+                    activeTasks += 1
+                }
+
+                // Process remaining tasks
+                for await (index, thumb20, thumb200) in group {
+                    let entry = entriesWithDrawings[index]
+                    entry.drawingThumbnail20 = thumb20
+                    entry.drawingThumbnail200 = thumb200
+
+                    entriesProcessed += 1
+                    regenerationProgress = Double(entriesProcessed) / Double(totalEntriesToProcess)
+
+                    // Save periodically to avoid memory buildup
+                    if entriesProcessed % 20 == 0 {
+                        try? modelContext.save()
+                    }
                 }
             }
 

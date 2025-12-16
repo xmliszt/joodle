@@ -16,167 +16,138 @@ import SwiftUI
 final class DebugDataSeeder {
     static let shared = DebugDataSeeder()
 
-    private let seededKey = "debug_has_seeded_test_entries_v1"
-
     private init() {}
 
-    /// Seeds test entries for 2023 and 2024
-    /// Always reseeds to ensure data is not corrupted
-    /// - Parameter container: The ModelContainer to use for seeding
+    /// No-op for app launch as we now seed on demand from Settings
+    /// Kept for compatibility with existing calls in JoodleApp.swift
     func seedTestEntriesIfNeeded(container: ModelContainer) {
-        // Always reseed in debug mode to fix any corrupted entries
-        Task { @MainActor in
-            await seedTestEntries(container: container)
+        // Intentionally left empty - seeding is now manual via Settings
+    }
+
+    /// Seeds entries for a specific year
+    /// - Parameters:
+    ///   - year: The year to seed (must be 2024 or earlier)
+    ///   - count: Number of entries to seed
+    ///   - container: The ModelContainer to use
+    func seedEntries(for year: Int, count: Int, container: ModelContainer) async {
+        guard year <= 2024 else {
+            print("🌱 DebugDataSeeder: Can only seed for 2024 and before")
+            return
         }
-    }
 
-    /// Force seed test entries (ignores the "already seeded" flag)
-    /// - Parameter container: The ModelContainer to use for seeding
-    func forceSeedTestEntries(container: ModelContainer) {
-        Task { @MainActor in
-            await seedTestEntries(container: container)
-        }
-    }
-
-    /// Clears the seeded flag so entries can be seeded again
-    func resetSeededFlag() {
-        UserDefaults.standard.removeObject(forKey: seededKey)
-        print("🌱 DebugDataSeeder: Seeded flag reset")
-    }
-
-    /// Deletes all seeded test entries (entries with "[DEBUG]" in body)
-    /// - Parameter container: The ModelContainer to use
-    func deleteSeededEntries(container: ModelContainer) {
-        Task { @MainActor in
-            let context = ModelContext(container)
-            let descriptor = FetchDescriptor<DayEntry>()
-
-            do {
-                let allEntries = try context.fetch(descriptor)
-                var deletedCount = 0
-
-                for entry in allEntries {
-                    if entry.body.contains("[DEBUG]") {
-                        context.delete(entry)
-                        deletedCount += 1
-                    }
-                }
-
-                if deletedCount > 0 {
-                    try context.save()
-                    print("🌱 DebugDataSeeder: Deleted \(deletedCount) debug entries")
-                }
-
-                // Reset the flag so we can seed again
-                resetSeededFlag()
-            } catch {
-                print("🌱 DebugDataSeeder: Failed to delete entries - \(error)")
-            }
-        }
-    }
-
-    // MARK: - Private Methods
-
-    private func seedTestEntries(container: ModelContainer) async {
         let context = ModelContext(container)
+        print("🌱 DebugDataSeeder: Seeding \(count) entries for \(year)...")
 
-        print("🌱 DebugDataSeeder: Starting to seed test entries for 2023 and 2024...")
-
+        let dates = generateRandomDates(for: year, count: count)
         var seededCount = 0
 
-        // Seed entries for 2023
-        let entries2023 = generateTestDates(for: 2023)
-        for date in entries2023 {
+        for date in dates {
             if await createEntryIfNeeded(for: date, in: context) {
                 seededCount += 1
             }
         }
 
-        // Seed entries for 2024
-        let entries2024 = generateTestDates(for: 2024)
-        for date in entries2024 {
-            if await createEntryIfNeeded(for: date, in: context) {
-                seededCount += 1
-            }
-        }
-
-        // Save all changes
         do {
             try context.save()
-            UserDefaults.standard.set(true, forKey: seededKey)
-            print("🌱 DebugDataSeeder: Successfully seeded \(seededCount) test entries")
+            print("🌱 DebugDataSeeder: Successfully seeded \(seededCount) entries for \(year)")
         } catch {
             print("🌱 DebugDataSeeder: Failed to save seeded entries - \(error)")
         }
     }
 
-    /// Generates a variety of test dates for a given year
-    /// - Parameter year: The year to generate dates for
-    /// - Returns: Array of dates spread throughout the year
-    private func generateTestDates(for year: Int) -> [Date] {
-        var dates: [Date] = []
+    /// Clears all entries from 2024 and before
+    func clearAllDebugData(container: ModelContainer) async {
+        let context = ModelContext(container)
+        let descriptor = FetchDescriptor<DayEntry>()
 
-        // Add some entries for each month (2-3 per month for variety)
-        for month in 1...12 {
-            // First week
-            if let date = createDate(year: year, month: month, day: 5) {
-                dates.append(date)
+        do {
+            let allEntries = try context.fetch(descriptor)
+            var deletedCount = 0
+            let calendar = Calendar.current
+
+            for entry in allEntries {
+                let year = calendar.component(.year, from: entry.createdAt)
+                if year <= 2024 {
+                    context.delete(entry)
+                    deletedCount += 1
+                }
             }
 
-            // Mid month
-            if let date = createDate(year: year, month: month, day: 15) {
-                dates.append(date)
+            if deletedCount > 0 {
+                try context.save()
+                print("🌱 DebugDataSeeder: Cleared \(deletedCount) entries from 2024 and before")
+            } else {
+                print("🌱 DebugDataSeeder: No entries found to clear")
             }
-
-            // End of month (use day 25 to be safe for all months)
-            if let date = createDate(year: year, month: month, day: 25) {
-                dates.append(date)
-            }
+        } catch {
+            print("🌱 DebugDataSeeder: Failed to clear data - \(error)")
         }
-
-        // Add some special dates
-        // New Year's Day
-        if let date = createDate(year: year, month: 1, day: 1) {
-            dates.append(date)
-        }
-
-        // Valentine's Day
-        if let date = createDate(year: year, month: 2, day: 14) {
-            dates.append(date)
-        }
-
-        // Halloween
-        if let date = createDate(year: year, month: 10, day: 31) {
-            dates.append(date)
-        }
-
-        // Christmas
-        if let date = createDate(year: year, month: 12, day: 25) {
-            dates.append(date)
-        }
-
-        // New Year's Eve
-        if let date = createDate(year: year, month: 12, day: 31) {
-            dates.append(date)
-        }
-
-        return dates
     }
 
-    /// Creates a date from year, month, day components
-    private func createDate(year: Int, month: Int, day: Int) -> Date? {
+    /// Returns the count of entries from 2024 and before
+    func getDebugEntryCount(container: ModelContainer) -> Int {
+        let context = ModelContext(container)
+        let descriptor = FetchDescriptor<DayEntry>()
+
+        do {
+            let allEntries = try context.fetch(descriptor)
+            let calendar = Calendar.current
+            let count = allEntries.filter { entry in
+                let year = calendar.component(.year, from: entry.createdAt)
+                return year <= 2024
+            }.count
+            return count
+        } catch {
+            print("🌱 DebugDataSeeder: Failed to count entries - \(error)")
+            return 0
+        }
+    }
+
+    /// Returns the number of days in a given year
+    func daysInYear(_ year: Int) -> Int {
+        let calendar = Calendar.current
         var components = DateComponents()
         components.year = year
-        components.month = month
-        components.day = day
-        components.hour = 12
-        components.minute = 0
-        components.second = 0
-        return Calendar.current.date(from: components)
+        guard let date = calendar.date(from: components),
+              let range = calendar.range(of: .day, in: .year, for: date) else {
+            return 365
+        }
+        return range.count
     }
 
-    /// Creates or overwrites an entry for the date
-    /// - Returns: true if entry was created/updated
+    // MARK: - Private Methods
+
+    private func generateRandomDates(for year: Int, count: Int) -> [Date] {
+        let calendar = Calendar.current
+
+        // Create start date (Jan 1st)
+        var startComponents = DateComponents()
+        startComponents.year = year
+        startComponents.month = 1
+        startComponents.day = 1
+        startComponents.hour = 12
+
+        guard let startDate = calendar.date(from: startComponents) else { return [] }
+
+        // Generate all possible dates for the year
+        var allDates: [Date] = []
+        var currentDate = startDate
+
+        // Loop until we reach next year
+        while calendar.component(.year, from: currentDate) == year {
+            allDates.append(currentDate)
+            guard let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) else { break }
+            currentDate = nextDate
+        }
+
+        // Shuffle and take required count
+        // If count >= allDates.count, we return all dates (filling the year)
+        let shuffledDates = allDates.shuffled()
+        let limit = min(count, shuffledDates.count)
+
+        return Array(shuffledDates.prefix(limit))
+    }
+
     private func createEntryIfNeeded(for date: Date, in context: ModelContext) async -> Bool {
         let dateString = DayEntry.dateToString(date)
 
@@ -198,12 +169,11 @@ final class DebugDataSeeder {
         // Create new entry with debug content
         let entry = DayEntry(body: generateDebugBody(for: date), createdAt: date)
 
-        // Use createMockDrawingData() from MockDataHelper.swift for sample drawing
-        let drawingData = createMockDrawingData()
-        entry.drawingData = drawingData
+        // Use PLACEHOLDER_DATA from PlaceholderDoodle.swift
+        entry.drawingData = PLACEHOLDER_DATA
 
         // Generate thumbnails for the drawing
-        let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: drawingData)
+        let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: PLACEHOLDER_DATA)
         entry.drawingThumbnail20 = thumbnails.0
         entry.drawingThumbnail200 = thumbnails.1
 
@@ -211,7 +181,6 @@ final class DebugDataSeeder {
         return true
     }
 
-    /// Generates debug body text for an entry
     private func generateDebugBody(for date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
@@ -220,26 +189,7 @@ final class DebugDataSeeder {
         let moods = ["😊", "😢", "😤", "🥳", "😴", "🤔", "😎", "🥰"]
         let randomMood = moods.randomElement() ?? "😊"
 
-        return "[DEBUG] Test entry for \(formatter.string(from: date)) \(randomMood)"
-    }
-}
-
-// MARK: - Debug Menu Extension
-
-extension DebugDataSeeder {
-    /// Returns debug actions for use in a debug menu
-    var debugActions: [(title: String, action: (ModelContainer) -> Void)] {
-        return [
-            ("Seed Test Entries (2023 & 2024)", { [weak self] container in
-                self?.forceSeedTestEntries(container: container)
-            }),
-            ("Delete Debug Entries", { [weak self] container in
-                self?.deleteSeededEntries(container: container)
-            }),
-            ("Reset Seeded Flag", { [weak self] _ in
-                self?.resetSeededFlag()
-            })
-        ]
+        return "[DEBUG] Seeded entry for \(formatter.string(from: date)) \(randomMood)"
     }
 }
 #endif

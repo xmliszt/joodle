@@ -71,15 +71,15 @@ struct YearGridView: View {
     VStack(spacing: dotsSpacing) {
       ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, rowItems in
         HStack(alignment: .top, spacing: dotsSpacing) {
-          ForEach(rowItems) { item in
+          ForEach(Array(rowItems.enumerated()), id: \.element.id) { colIndex, item in
             let dotStyle = getDotStyle(for: item.date)
             let entry = getEntryForDate(item.date, from: entriesByDateKey)
             let hasEntry = entry != nil && entry!.body.isEmpty == false
             let hasDrawing = entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true)
             let isHighlighted = highlightedItemId == item.id
 
-            // Calculate current item index
-            let currentIndex = items.firstIndex { $0.id == item.id } ?? 0
+            // Calculate current item index directly from row and column
+            let currentIndex = (rowIndex * viewMode.dotsPerRow) + colIndex
 
             // Calculate scale based on distance from highlighted dot
             let scale = calculateScale(
