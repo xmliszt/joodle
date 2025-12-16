@@ -143,7 +143,7 @@ struct DrawingCanvasView: View {
       } label: {
         Text("Upgrade")
           .font(.caption.bold())
-          .foregroundStyle(.white)
+          .foregroundStyle(.appAccentContrast)
       }
       .buttonStyle(.borderedProminent)
       .buttonBorderShape(.capsule)
@@ -196,7 +196,7 @@ struct DrawingCanvasView: View {
           Text("Upgrade")
         }
         .font(.headline)
-        .foregroundColor(.white)
+        .foregroundColor(.appAccentContrast)
         .padding(.horizontal, 24)
         .padding(.vertical, 12)
         .background(.appAccent)

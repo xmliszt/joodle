@@ -220,11 +220,11 @@ struct PremiumLockedOverlayModifier: ViewModifier {
                         VStack(spacing: 8) {
                             Image(systemName: "lock.fill")
                                 .font(.title)
-                                .foregroundColor(.white)
+                                .foregroundColor(.appAccentContrast)
 
                             Text("Joodle Super")
                                 .font(.caption.bold())
-                                .foregroundColor(.white)
+                                .foregroundColor(.appAccentContrast)
                         }
                     }
                 }
@@ -275,7 +275,7 @@ struct PremiumFeatureBadge: View {
             Text("SUPER")
                 .font(.system(size: 7, weight: .bold))
         }
-        .foregroundColor(.white)
+        .foregroundColor(.appAccentContrast)
         .padding(.horizontal, 6)
         .padding(.vertical, 3)
         .background(

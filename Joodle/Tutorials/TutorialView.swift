@@ -244,7 +244,7 @@ struct DotPositionTweakerView: View {
                         .font(.caption.bold())
                         .frame(width: 32, height: 32)
                         .background(index == currentIndex ? Color.appAccent : Color.secondary.opacity(0.2))
-                        .foregroundColor(index == currentIndex ? .white : .primary)
+                        .foregroundColor(index == currentIndex ? .appAccentContrast : .primary)
                         .clipShape(Circle())
                 }
             }
@@ -268,7 +268,7 @@ struct DotPositionTweakerView: View {
                         .font(.caption2.bold())
                         .frame(width: 28, height: 28)
                         .background(index == currentIndex ? Color.appAccent : Color.secondary.opacity(0.2))
-                        .foregroundColor(index == currentIndex ? .white : .primary)
+                        .foregroundColor(index == currentIndex ? .appAccentContrast : .primary)
                         .clipShape(Circle())
                 }
             }

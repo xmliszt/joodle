@@ -117,7 +117,7 @@ struct PricingCard: View {
         if let badge = badge {
           Text(badge)
             .font(.caption2.weight(.bold))
-            .foregroundColor(.white)
+            .foregroundColor(.appAccentContrast)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(

@@ -161,7 +161,7 @@ struct ShareCardSelectorView: View {
                   Text("Share")
                     .font(.system(size: 18, weight:.semibold))
                 }
-                .foregroundColor(.white)
+                .foregroundColor(.appAccentContrast)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(.appAccent)
@@ -194,7 +194,7 @@ struct ShareCardSelectorView: View {
                 Text("Share")
                   .font(.system(size: 18, weight:.semibold))
               }
-              .foregroundColor(.white)
+              .foregroundColor(.appAccentContrast)
               .frame(maxWidth: .infinity)
               .frame(height: 56)
               .background(.appAccent)

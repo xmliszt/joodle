@@ -33,6 +33,21 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
         Color("Themes/\(rawValue)")
     }
 
+    /// The contrast color for text/icons displayed on top of this accent color
+    /// Returns a color that provides good readability when used as foreground on accent background
+    var contrastColor: Color {
+        switch self {
+        case .neutral:
+            // Neutral is dark in light mode (needs white text) and light in dark mode (needs dark text)
+            // Use the primary label color which is black in light mode and white in dark mode,
+            // but we need the opposite, so use the background color
+            return Color(UIColor.systemBackground)
+        default:
+            // All other accent colors are vibrant and work well with white text
+            return .white
+        }
+    }
+
     /// SF Symbol name for the color (used for accessibility)
     var symbolName: String {
         "circle.fill"

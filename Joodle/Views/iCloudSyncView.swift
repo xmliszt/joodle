@@ -33,17 +33,17 @@ struct iCloudSyncView: View {
           VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
               Image(systemName: "arrow.clockwise.circle.fill")
-                .foregroundStyle(.white)
+                .foregroundStyle(.appAccentContrast)
                 .font(.title2)
 
               VStack(alignment: .leading, spacing: 4) {
                 Text("Restart Required")
                   .font(.headline)
-                  .foregroundStyle(.white)
+                  .foregroundStyle(.appAccentContrast)
 
                 Text("iCloud Sync is enabled but requires a restart to start working. Your data will sync after you restart the app.")
                   .font(.caption)
-                  .foregroundStyle(.white.opacity(0.9))
+                  .foregroundStyle(.appAccentContrast.opacity(0.9))
                   .fixedSize(horizontal: false, vertical: true)
               }
             }
@@ -391,17 +391,17 @@ struct SyncActivityDetailView: View {
           VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
               Image(systemName: "arrow.clockwise.circle.fill")
-                .foregroundStyle(.white)
+                .foregroundStyle(.appAccentContrast)
                 .font(.title2)
 
               VStack(alignment: .leading, spacing: 4) {
                 Text("Restart Required")
                   .font(.headline)
-                  .foregroundStyle(.white)
+                  .foregroundStyle(.appAccentContrast)
 
                 Text("iCloud Sync is enabled but requires a restart to start working. Sync activity will appear after you restart.")
                   .font(.caption)
-                  .foregroundStyle(.white.opacity(0.9))
+                  .foregroundStyle(.appAccentContrast.opacity(0.9))
                   .fixedSize(horizontal: false, vertical: true)
               }
             }

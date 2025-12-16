@@ -16,6 +16,12 @@ extension ShapeStyle where Self == Color {
     UserPreferences.shared.accentColor.color
   }
 
+  /// The contrast color for text/icons displayed on top of appAccent
+  /// Use this instead of `.white` when the background is `.appAccent`
+  static var appAccentContrast: Color {
+    UserPreferences.shared.accentColor.contrastColor
+  }
+
   /// Primary background color that adapts to light/dark mode
   static var backgroundColor: Color {
     Color(UIColor.systemBackground)
