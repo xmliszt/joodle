@@ -23,7 +23,11 @@ struct CreateTodaysDoodleIntent: AppIntent {
   func perform() async throws -> some IntentResult & OpensIntent {
     // Post notification to navigate to today's date when app opens
     let today = Date()
-    DeepLinkManager.shared.handleShortcut(date: today)
+    NotificationCenter.default.post(
+      name: .navigateToDateFromShortcut,
+      object: nil,
+      userInfo: ["date": today]
+    )
 
     return .result()
   }
@@ -43,7 +47,11 @@ struct OpenNextAnniversaryIntent: AppIntent {
   func perform() async throws -> some IntentResult & OpensIntent {
     // Find the next anniversary using SwiftData
     if let nextAnniversaryDate = findNextAnniversary() {
-      DeepLinkManager.shared.handleShortcut(date: nextAnniversaryDate)
+      NotificationCenter.default.post(
+        name: .navigateToDateFromShortcut,
+        object: nil,
+        userInfo: ["date": nextAnniversaryDate]
+      )
     }
     // If no anniversary found, just open the app normally
 
@@ -108,6 +116,13 @@ struct OpenJoodleIntent: AppIntent {
 // MARK: - App Shortcuts Provider
 
 /// Provides App Shortcuts that appear in Spotlight and Siri
+// MARK: - Notification Extension
+
+extension Notification.Name {
+  static let navigateToDateFromShortcut = Notification.Name("navigateToDateFromShortcut")
+  static let dismissToRootAndNavigate = Notification.Name("dismissToRootAndNavigate")
+}
+
 struct JoodleShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(

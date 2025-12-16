@@ -111,7 +111,8 @@ struct JoodleApp: App {
   @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
   @State private var colorScheme: ColorScheme? = UserPreferences.shared.preferredColorScheme
   @State private var accentColor: ThemeColor = UserPreferences.shared.accentColor
-  @StateObject private var deepLinkManager = DeepLinkManager.shared
+  @State private var selectedDateFromWidget: Date?
+  @State private var showPaywallFromWidget = false
   @State private var showLaunchScreen = true
   @State private var hasSetupObservers = false
   @State private var showPendingRestartAlert = false
@@ -328,12 +329,11 @@ struct JoodleApp: App {
             }
         } else {
           NavigationStack {
-            ContentView(pendingNavigationDate: $deepLinkManager.pendingNavigationDate)
+            ContentView(selectedDateFromWidget: $selectedDateFromWidget)
               .environment(\.userPreferences, UserPreferences.shared)
               .environment(\.cloudSyncManager, CloudSyncManager.shared)
               .environment(\.networkMonitor, NetworkMonitor.shared)
               .environment(\.preferencesSyncManager, PreferencesSyncManager.shared)
-              .environmentObject(deepLinkManager)
               .preferredColorScheme(colorScheme)
               .font(.system(size: 17))
               .onAppear {
@@ -344,19 +344,26 @@ struct JoodleApp: App {
                 }
               }
               .onOpenURL { url in
-                deepLinkManager.handle(url: url)
+                handleWidgetURL(url)
               }
-
-              .onChange(of: deepLinkManager.shouldResetNavigation) { _, shouldReset in
-                if shouldReset {
-                  // Dismiss any presented sheets (e.g., paywall from Settings)
-                  if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                     let rootViewController = windowScene.windows.first?.rootViewController {
-                    rootViewController.dismiss(animated: true)
-                  }
+              .onReceive(NotificationCenter.default.publisher(for: .navigateToDateFromShortcut)) { notification in
+                // Handle navigation from App Shortcut (Siri/Spotlight)
+                if let date = notification.userInfo?["date"] as? Date {
+                  selectedDateFromWidget = date
+                } else {
+                  // Fallback to today's date
+                  selectedDateFromWidget = Date()
                 }
               }
-              .sheet(isPresented: $deepLinkManager.shouldShowPaywall) {
+              .onReceive(NotificationCenter.default.publisher(for: .dismissToRootAndNavigate)) { _ in
+                // Dismiss any presented sheets (e.g., paywall from Settings)
+                // ContentView handles dismissing navigation and navigating to the date
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let rootViewController = windowScene.windows.first?.rootViewController {
+                  rootViewController.dismiss(animated: true)
+                }
+              }
+              .sheet(isPresented: $showPaywallFromWidget) {
                 StandalonePaywallView()
                   .presentationDetents([.large])
               }
@@ -425,5 +432,32 @@ struct JoodleApp: App {
     }
   }
 
+  private func handleWidgetURL(_ url: URL) {
+    guard url.scheme == "joodle" else { return }
 
+    // Handle URL scheme: joodle://paywall
+    if url.host == "paywall" {
+      // Check subscription status before showing paywall
+      Task {
+        await SubscriptionManager.shared.updateSubscriptionStatus()
+
+        // If not subscribed, show the paywall
+        if !SubscriptionManager.shared.isSubscribed {
+          showPaywallFromWidget = true
+        }
+      }
+      return
+    }
+
+    // Handle URL scheme: joodle://date/{timestamp}
+    if url.host == "date" {
+      // Extract timestamp from path
+      let pathComponents = url.pathComponents
+      if pathComponents.count >= 2,
+         let timestamp = TimeInterval(pathComponents[1]) {
+        let date = Date(timeIntervalSince1970: timestamp)
+        selectedDateFromWidget = date
+      }
+    }
+  }
 }
