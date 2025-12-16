@@ -53,6 +53,7 @@ struct ShareCardDotView: View {
       hasEntry: hasEntry,
       dotStyle: dotStyle,
       drawingData: drawingData,
+      thumbnail: thumbnail,
       strokeColor: .appAccent,
       strokeMultiplier: 3.0,
       renderScale: 2.0

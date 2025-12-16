@@ -88,6 +88,9 @@ struct DoodleRendererView: View {
   /// Optional raw drawing data to render
   let drawingData: Data?
 
+  /// Optional thumbnail image data to use as fallback when drawingData is nil
+  let thumbnail: Data?
+
   /// The color to use for strokes and fills
   let strokeColor: Color
 
@@ -103,6 +106,7 @@ struct DoodleRendererView: View {
     hasEntry: Bool,
     dotStyle: DoodleDotStyle,
     drawingData: Data? = nil,
+    thumbnail: Data? = nil,
     strokeColor: Color,
     strokeMultiplier: CGFloat = 3.0,
     renderScale: CGFloat = 2.0
@@ -111,6 +115,7 @@ struct DoodleRendererView: View {
     self.hasEntry = hasEntry
     self.dotStyle = dotStyle
     self.drawingData = drawingData
+    self.thumbnail = thumbnail
     self.strokeColor = strokeColor
     self.strokeMultiplier = strokeMultiplier
     self.renderScale = renderScale
@@ -135,6 +140,14 @@ struct DoodleRendererView: View {
           renderScale: renderScale
         )
         .opacity(dotStyle.opacity)
+      } else if let thumbnailData = thumbnail,
+                let uiImage = UIImage(data: thumbnailData) {
+        // Fallback to thumbnail image if available
+        Image(uiImage: uiImage)
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .frame(width: size * 2, height: size * 2)
+          .opacity(dotStyle.opacity)
       } else {
         // Fallback to simple circle dot
         Circle()

@@ -259,7 +259,7 @@ struct YearGridWidgetView: View {
             size: dotSize,
             hasEntry: hasEntry,
             dotStyle: dotStyle,
-            drawingData: showJoodles ? dayEntry?.drawingData : nil,
+            thumbnail: showJoodles ? dayEntry?.thumbnail : nil,
             strokeColor: themeColor,
             strokeMultiplier: 2.0,
             renderScale: 2.0
