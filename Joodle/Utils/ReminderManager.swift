@@ -3,11 +3,17 @@ import UserNotifications
 import SwiftUI
 import Combine
 
-struct Reminder: Codable, Identifiable {
+struct Reminder: Codable, Identifiable, Equatable {
     var id: String { dateString }
     let dateString: String
     let reminderDate: Date
     let entryBody: String?
+
+    static func == (lhs: Reminder, rhs: Reminder) -> Bool {
+        lhs.dateString == rhs.dateString &&
+        lhs.reminderDate == rhs.reminderDate &&
+        lhs.entryBody == rhs.entryBody
+    }
 }
 
 @MainActor
@@ -17,13 +23,29 @@ class ReminderManager: ObservableObject {
     @Published private(set) var reminders: [Reminder] = []
 
     private let maxFreeReminders = 5
-    private let storageKey = "joodle_reminders"
+    private let localStorageKey = "joodle_reminders"
+    private let cloudStorageKey = "joodle_reminders_cloud"
     private var cancellables = Set<AnyCancellable>()
+
+    // iCloud Key-Value Store
+    private let cloudStore = NSUbiquitousKeyValueStore.default
+    private var cloudChangeObserver: NSObjectProtocol?
 
     private init() {
         loadReminders()
         cleanupOutdatedReminders()
         setupForegroundObserver()
+        setupCloudObserver()
+
+        // Perform initial sync from cloud
+        syncFromCloud()
+    }
+
+    deinit {
+        // Remove observer directly in deinit since it's nonisolated
+        if let observer = cloudChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     // MARK: - Public Properties
@@ -41,7 +63,7 @@ class ReminderManager: ObservableObject {
     // MARK: - Persistence
 
     private func loadReminders() {
-        if let data = UserDefaults.standard.data(forKey: storageKey),
+        if let data = UserDefaults.standard.data(forKey: localStorageKey),
            let decoded = try? JSONDecoder().decode([Reminder].self, from: data) {
             self.reminders = decoded
         }
@@ -49,8 +71,130 @@ class ReminderManager: ObservableObject {
 
     private func saveReminders() {
         if let encoded = try? JSONEncoder().encode(reminders) {
-            UserDefaults.standard.set(encoded, forKey: storageKey)
+            UserDefaults.standard.set(encoded, forKey: localStorageKey)
         }
+
+        // Also sync to iCloud if cloud sync is enabled
+        syncToCloud()
+    }
+
+    // MARK: - iCloud Sync
+
+    private func setupCloudObserver() {
+        // Observe changes from other devices
+        cloudChangeObserver = NotificationCenter.default.addObserver(
+            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: cloudStore,
+            queue: .main
+        ) { [weak self] notification in
+            Task { @MainActor in
+                self?.handleCloudChange(notification)
+            }
+        }
+
+        // Start observing iCloud KVS
+        cloudStore.synchronize()
+    }
+
+    private func removeCloudObserver() {
+        if let observer = cloudChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+            cloudChangeObserver = nil
+        }
+    }
+
+    private func handleCloudChange(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let reasonForChange = userInfo[NSUbiquitousKeyValueStoreChangeReasonKey] as? Int else {
+            return
+        }
+
+        switch reasonForChange {
+        case NSUbiquitousKeyValueStoreServerChange,
+             NSUbiquitousKeyValueStoreInitialSyncChange,
+             NSUbiquitousKeyValueStoreAccountChange:
+            syncFromCloud()
+        default:
+            break
+        }
+    }
+
+    /// Push local reminders to iCloud
+    private func syncToCloud() {
+        guard UserPreferences.shared.isCloudSyncEnabled else { return }
+
+        guard let encoded = try? JSONEncoder().encode(reminders) else { return }
+
+        cloudStore.set(encoded, forKey: cloudStorageKey)
+        cloudStore.synchronize()
+    }
+
+    /// Pull reminders from iCloud and merge with local
+    private func syncFromCloud() {
+        guard UserPreferences.shared.isCloudSyncEnabled else { return }
+
+        cloudStore.synchronize()
+
+        guard let data = cloudStore.data(forKey: cloudStorageKey),
+              let cloudReminders = try? JSONDecoder().decode([Reminder].self, from: data) else {
+            return
+        }
+
+        mergeReminders(from: cloudReminders)
+    }
+
+    /// Merge reminders from cloud with local reminders
+    /// Strategy: Keep the most recent version of each reminder (by reminderDate)
+    /// and add any reminders that exist only in cloud
+    private func mergeReminders(from cloudReminders: [Reminder]) {
+        var merged: [String: Reminder] = [:]
+
+        // Add all local reminders first
+        for reminder in reminders {
+            merged[reminder.dateString] = reminder
+        }
+
+        // Merge cloud reminders - prefer the one with the later reminderDate
+        var hasChanges = false
+        for cloudReminder in cloudReminders {
+            if let existing = merged[cloudReminder.dateString] {
+                if cloudReminder.reminderDate > existing.reminderDate {
+                    merged[cloudReminder.dateString] = cloudReminder
+                    hasChanges = true
+                }
+            } else {
+                merged[cloudReminder.dateString] = cloudReminder
+                hasChanges = true
+            }
+        }
+
+        if hasChanges {
+            let newReminders = Array(merged.values)
+
+            // Cancel all existing notifications
+            for reminder in reminders {
+                cancelNotification(for: reminder)
+            }
+
+            reminders = newReminders
+
+            // Save to local storage (but don't trigger another cloud sync)
+            if let encoded = try? JSONEncoder().encode(reminders) {
+                UserDefaults.standard.set(encoded, forKey: localStorageKey)
+            }
+
+            // Reschedule notifications for all reminders
+            for reminder in reminders {
+                scheduleNotification(for: reminder)
+            }
+        }
+    }
+
+    /// Force a full sync (pull then push)
+    func performFullSync() {
+        guard UserPreferences.shared.isCloudSyncEnabled else { return }
+        syncFromCloud()
+        syncToCloud()
     }
 
     // MARK: - Foreground Observer
@@ -60,6 +204,7 @@ class ReminderManager: ObservableObject {
             .sink { [weak self] _ in
                 Task { @MainActor in
                     self?.cleanupOutdatedReminders()
+                    self?.syncFromCloud()
                 }
             }
             .store(in: &cancellables)
