@@ -25,8 +25,8 @@ struct EntryEditingView: View {
   @State private var entry: DayEntry?
   @State private var showButtons = true
   @State private var showShareSheet = false
-
-
+  @State private var showReminderSheet = false
+  @StateObject private var reminderManager = ReminderManager.shared
 
   private var isToday: Bool {
     guard let date else { return false }
@@ -78,7 +78,7 @@ struct EntryEditingView: View {
                 .disableAutocorrection(false)
                 .autocapitalization(.sentences)
                 .focused($isTextFieldFocused)
-                // Nudge to align with placeholder text
+              // Nudge to align with placeholder text
                 .padding(.top, -8)
                 .padding(.horizontal, -5)
                 .onDisappear {
@@ -289,6 +289,13 @@ struct EntryEditingView: View {
       .sheet(isPresented: $showShareSheet) {
         ShareCardSelectorView(entry: entry, date: date ?? Date())
       }
+      .sheet(isPresented: $showReminderSheet) {
+        if let date {
+          ReminderSheet(dateString: DayEntry.dateToString(date), entryBody: entry?.body)
+            .presentationDetents([.height(280)])
+            .presentationDragIndicator(.visible)
+        }
+      }
 
       // Header with date and edit button
       VStack {
@@ -308,6 +315,23 @@ struct EntryEditingView: View {
                     }
                     .circularGlassButton()
                     .transition(.opacity)
+
+                    // Reminder Button
+                    if (isToday || isFuture) && !isTextFieldFocused && showButtons {
+                      Button {
+                        showReminderSheet = true
+                      } label: {
+                        if reminderManager.getReminder(for: DayEntry.dateToString(date ?? Date())) != nil {
+                          Image(systemName: "bell.badge.waveform.fill")
+                          .symbolEffect(.wiggle.byLayer, options: .nonRepeating)
+                        } else {
+                          Image(systemName: "bell.fill")
+                        }
+                      }
+                      .circularGlassButton(tintColor: reminderManager.getReminder(for: DayEntry.dateToString(date ?? Date())) != nil ? .appAccent : nil)
+                      .transition(.opacity)
+                    }
+
                   }
                 }
               }
@@ -325,6 +349,23 @@ struct EntryEditingView: View {
                   }
                   .circularGlassButton()
                   .transition(.opacity)
+
+                  // Reminder Button
+                  if (isToday || isFuture) && !isTextFieldFocused && showButtons {
+                    let hasReminder = reminderManager.getReminder(for: DayEntry.dateToString(date ?? Date())) != nil
+                    Button {
+                      showReminderSheet = true
+                    } label: {
+                      if #available(iOS 18.0, *) {
+                        Image(systemName: hasReminder ? "bell.badge.waveform.fill" : "bell.fill")
+                          .symbolEffect(.wiggle.byLayer, options: .nonRepeating, value: hasReminder)
+                      } else {
+                        Image(systemName: hasReminder ? "bell.badge.waveform.fill" : "bell.fill")
+                      }
+                    }
+                    .circularGlassButton(tintColor: hasReminder ? .appAccent : nil)
+                    .transition(.opacity)
+                  }
                 }
               }
               .animation(.springFkingSatifying, value: isTextFieldFocused)

@@ -11,12 +11,53 @@ import SwiftUI
 import UIKit
 import Combine
 
-// AppDelegate to enforce portrait orientation
-class AppDelegate: NSObject, UIApplicationDelegate {
+// AppDelegate to enforce portrait orientation and handle notifications
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+  func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+  ) -> Bool {
+    // Set self as the notification center delegate to handle foreground notifications
+    UNUserNotificationCenter.current().delegate = self
+    return true
+  }
+
   func application(
     _ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?
   ) -> UIInterfaceOrientationMask {
     return .portrait
+  }
+
+  // MARK: - UNUserNotificationCenterDelegate
+
+  /// Handle notifications when the app is in the foreground
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    // Show the notification even when app is in foreground
+    completionHandler([.banner, .sound, .badge])
+  }
+
+  /// Handle user tapping on a notification
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    // Handle the notification tap - the identifier is the dateString
+    let dateString = response.notification.request.identifier
+    print("📬 [AppDelegate] User tapped notification for: \(dateString)")
+
+    // Post a notification to navigate to that date
+    NotificationCenter.default.post(
+      name: NSNotification.Name("NavigateToDate"),
+      object: nil,
+      userInfo: ["dateString": dateString]
+    )
+
+    completionHandler()
   }
 }
 
