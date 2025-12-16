@@ -11,9 +11,9 @@ import SwiftUI
 struct EntryEditingView: View {
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
+  @Query private var entries: [DayEntry]
 
   let date: Date?
-  private let providedEntry: DayEntry?
   let onOpenDrawingCanvas: (() -> Void)?
   let onFocusChange: ((Bool) -> Void)?
 
@@ -26,19 +26,7 @@ struct EntryEditingView: View {
   @State private var showButtons = true
   @State private var showShareSheet = false
 
-  init(
-    date: Date?,
-    entry: DayEntry? = nil,
-    onOpenDrawingCanvas: (() -> Void)? = nil,
-    onFocusChange: ((Bool) -> Void)? = nil
-  ) {
-    self.date = date
-    self.providedEntry = entry
-    self.onOpenDrawingCanvas = onOpenDrawingCanvas
-    self.onFocusChange = onFocusChange
-    _entry = State(initialValue: entry)
-    _textContent = State(initialValue: entry?.body ?? "")
-  }
+
 
   private var isToday: Bool {
     guard let date else { return false }
@@ -67,10 +55,6 @@ struct EntryEditingView: View {
     guard entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil) else { return nil }
 
     return CountdownHelper.countdownText(from: currentTime, to: date)
-  }
-
-  private var providedEntryID: PersistentIdentifier? {
-    providedEntry?.persistentModelID
   }
 
   var body: some View {
@@ -105,16 +89,26 @@ struct EntryEditingView: View {
                     saveNote(text: textContent, for: date)
                   }
                 }
-                .onChange(of: date ?? nil) { oldValue, _ in
+                .onChange(of: date ?? nil) { oldValue, newValue in
+                  // Save old content first if any
                   if !textContent.isEmpty, let oldDate = oldValue {
                     saveNote(text: textContent, for: oldDate)
                   }
 
+                  // Unfocus
                   withAnimation {
                     isTextFieldFocused = false
                   }
 
-                  syncEntryFromParent(forceTextUpdate: true)
+                  // Update entry if got new date
+                  if let newDate = newValue {
+                    let candidates = entries.filter { $0.matches(date: newDate) }
+                    // Prioritize entry with content
+                    entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
+
+                    // Always update textContent - clear it if no entry exists
+                    textContent = entry?.body ?? ""
+                  }
                 }
                 .onChange(of: isTextFieldFocused) { _, newValue in
                   onFocusChange?(newValue)
@@ -218,14 +212,60 @@ struct EntryEditingView: View {
         }
       }
       .onAppear {
-        syncEntryFromParent(forceTextUpdate: true)
+        // Load entry first
+        guard let date else { return }
+        let candidates = entries.filter { $0.matches(date: date) }
+        // Prioritize entry with content
+        entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
+
+        if let entry {
+          textContent = entry.body
+        }
+        // Then start timer
         startTimerIfNeeded()
       }
-      .onChange(of: providedEntryID) { _, _ in
-        syncEntryFromParent()
+      .onChange(of: date ?? nil) { oldValue, newValue in
+        // Save old content first if any
+        if !textContent.isEmpty, let oldDate = oldValue {
+          saveNote(text: textContent, for: oldDate)
+        }
+
+        // Unfocus
+        withAnimation {
+          isTextFieldFocused = false
+        }
+
+        // Update entry if got new date
+        if let newDate = newValue {
+          let candidates = entries.filter { $0.matches(date: newDate) }
+          // Prioritize entry with content
+          entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
+
+          // Always update textContent - clear it if no entry exists
+          textContent = entry?.body ?? ""
+        }
       }
-      .onChange(of: providedEntry?.body ?? "") { _, _ in
-        syncEntryFromParent()
+      .onChange(of: entries) { _, newEntries in
+        guard let date else { return }
+        // Always refresh entry from the latest entries array
+        // This handles the case where an entry is created/updated externally (e.g., from drawing canvas)
+        let candidates = newEntries.filter { $0.matches(date: date) }
+        // Prioritize entry with content
+        let found = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
+
+        // Only update if we found a different entry or entry was nil
+        if found?.id != entry?.id {
+          entry = found
+          // Update textContent only if user is not currently editing
+          // This prevents overwriting what user is typing
+          if !isTextFieldFocused {
+            textContent = found?.body ?? ""
+          }
+        } else if let found = found {
+          // Same entry but data might have changed (e.g., drawing added)
+          // Update the reference to get latest data
+          entry = found
+        }
       }
       .onChange(of: entry) { _, _ in
         // Restart timer when entry changes (loaded or modified)
@@ -426,19 +466,6 @@ struct EntryEditingView: View {
   }
 
   // MARK: - Private Methods
-  private func syncEntryFromParent(forceTextUpdate: Bool = false) {
-    if let providedEntry {
-      entry = providedEntry
-      if forceTextUpdate || !isTextFieldFocused {
-        textContent = providedEntry.body
-      }
-    } else {
-      entry = nil
-      if forceTextUpdate || !isTextFieldFocused {
-        textContent = ""
-      }
-    }
-  }
 
   /// Start the timer if needed
   private func startTimerIfNeeded() {

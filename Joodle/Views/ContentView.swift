@@ -16,13 +16,12 @@ struct ContentView: View {
   @Environment(\.cloudSyncManager) private var cloudSyncManager
   @EnvironmentObject private var deepLinkManager: DeepLinkManager
 
+  @Query private var entries: [DayEntry]
   @StateObject private var subscriptionManager = SubscriptionManager.shared
 
   @Binding var pendingNavigationDate: Date?
 
   @State private var selectedDateItem: DateItem?
-  @State private var selectedEntry: DayEntry?
-  @State private var currentHighlightedEntry: DayEntry?
 
   // --- GESTURE STATE ---
   // Tracks what the user is currently doing
@@ -80,6 +79,20 @@ struct ContentView: View {
     highlightedId.flatMap { getItem(from: $0) }
   }
 
+  private var currentHighlightedEntry: DayEntry? {
+    if let itemDate = currentHighlightedItem?.date {
+      return entries.first(where: { $0.matches(date: itemDate) })
+    }
+    return nil
+  }
+
+  /// Compute selectedEntry on-the-fly to avoid binding propagation issues
+  private var selectedEntry: DayEntry? {
+    guard let date = selectedDateItem?.date else { return nil }
+    let candidates = entries.filter { $0.matches(date: date) }
+    return candidates.first(where: { ($0.drawingData?.isEmpty == false) || !$0.body.isEmpty }) ?? candidates.first
+  }
+
   var body: some View {
     ZStack {
       GeometryReader { geometry in
@@ -97,16 +110,14 @@ struct ContentView: View {
                     .frame(height: headerHeight)
                     .id("topSpacer")
 
-                  YearContent(
+                  YearGridView(
                     year: selectedYear,
                     viewMode: viewMode,
-                    itemsSpacing: itemsSpacing,
-                    itemsInYear: itemsInYear,
-                    isScrubbing: $isScrubbing,
-                    highlightedId: $highlightedId,
-                    selectedDateItem: $selectedDateItem,
-                    selectedEntry: $selectedEntry,
-                    highlightedEntry: $currentHighlightedEntry
+                    dotsSpacing: itemsSpacing,
+                    items: itemsInYear,
+                    entries: entries,
+                    highlightedItemId: isScrubbing ? highlightedId : nil,
+                    selectedItemId: selectedDateItem?.id
                   )
                   .overlay(
                     LongPressScrubRecognizer(
@@ -216,7 +227,6 @@ struct ContentView: View {
             bottom: {
               EntryEditingView(
                 date: selectedDateItem?.date,
-                entry: selectedEntry,
                 onOpenDrawingCanvas: {
                   Haptic.play()
                   showDrawingCanvas = true
