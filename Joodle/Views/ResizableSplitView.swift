@@ -84,6 +84,15 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                 .fill(.appSurface.opacity(0.7))
                 .frame(width: 60, height: 4)
             )
+          // Double-tap to navigate to today's date entry
+            .onTapGesture(count: 2) {
+              let today = Date()
+              NotificationCenter.default.post(
+                name: .navigateToDateFromShortcut,
+                object: nil,
+                userInfo: ["date": today]
+              )
+            }
           // Drag gesture handling for resize handle area
             .gesture(
               !isDraggable
