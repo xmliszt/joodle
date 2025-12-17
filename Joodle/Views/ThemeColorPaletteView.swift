@@ -136,7 +136,7 @@ private struct ColorCircleButton: View {
                         .fill(.black.opacity(0.4))
                         .frame(width: size, height: size)
 
-                    Image(systemName: "lock.fill")
+                    Image(systemName: "crown.fill")
                         .font(.system(size: size * 0.35, weight: .semibold))
                         .foregroundStyle(.white)
                 }
