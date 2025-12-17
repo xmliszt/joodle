@@ -30,7 +30,7 @@ struct ValuePropView: View {
         VStack(spacing: 32) {
           // Drawing preview
           ZStack {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
               .fill(Color(uiColor: .secondarySystemBackground))
               .stroke(Color(uiColor: .separator), lineWidth: 1)
               .frame(width: displaySize, height: displaySize)
@@ -65,9 +65,9 @@ struct ValuePropView: View {
             Image(systemName: hasActiveSubscription ? "checkmark.seal.fill" : "sparkles")
               .resizable()
               .scaledToFit()
-              .frame(width: 40, height: 40)
+              .frame(width: 64, height: 64)
               .foregroundColor(.appAccent)
-              .symbolEffect(.bounce, value: animate)
+              .symbolEffect(.bounce.up.byLayer, options: .nonRepeating, value: animate)
               .offset(x: displaySize / 2 - 10, y: -displaySize / 2 + 10)
           }
 
@@ -77,8 +77,8 @@ struct ValuePropView: View {
               Text("Welcome back!")
                 .font(.title3.bold())
 
-              Text("Your memories are still here, quietly waiting for you. Rediscover the Joodles you once created, each carrying a piece of your story. Continue building your collection and watch it grow, not just day by day, but over the years.")
-                .font(.mansalva(size: 14))
+              Text("Your memories are still here, quietly waiting for you. Rediscover the Joodles you once created, each carrying a piece of your story.")
+                .font(.mansalva(size: 18))
                 .multilineTextAlignment(.center)
                 .foregroundColor(.appTextSecondary)
                 .lineSpacing(1)
@@ -87,8 +87,8 @@ struct ValuePropView: View {
               Text("You created your first Joodle!")
                 .font(.title3.bold())
 
-              Text("Imagine seeing a year of your life in a single glance. Small Joodles, each holding a moment worth remembering. With a few strokes, capture what matters and build a personal collection of memories. Always private. Always yours.")
-              .font(.mansalva(size: 14))
+              Text("Imagine seeing a year of your life in a single glance. Each Joodle carries a special piece of memory. Always private. Always yours.")
+              .font(.mansalva(size: 18))
               .multilineTextAlignment(.center)
               .foregroundColor(.appTextSecondary)
               .lineSpacing(1)
