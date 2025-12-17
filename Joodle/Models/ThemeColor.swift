@@ -10,10 +10,10 @@ import SwiftUI
 /// Represents the available theme accent colors in the app.
 /// Each case corresponds to a color set in Assets.xcassets/Themes.
 enum ThemeColor: String, CaseIterable, Codable, Identifiable {
+    case orange = "Orange"
     case blue = "Blue"
     case brown = "Brown"
     case green = "Green"
-    case orange = "Orange"
     case pink = "Pink"
     case purple = "Purple"
     case red = "Red"

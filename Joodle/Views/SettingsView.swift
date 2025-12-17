@@ -59,6 +59,7 @@ struct SettingsView: View {
 
   // Theme color change state
   @State private var pendingThemeColor: ThemeColor?
+  @State private var showThemeOverlay = false
   private var themeColorManager = ThemeColorManager.shared
 
   /// Check if restart is needed for sync to work
@@ -113,20 +114,28 @@ struct SettingsView: View {
       feedbackSection
       developerOptionsSection
     }
-    .background(NavigationGestureEnabler(isEnabled: !themeColorManager.isRegenerating))
+    .background(NavigationGestureEnabler(isEnabled: !showThemeOverlay))
     .navigationTitle("Settings")
     .navigationBarTitleDisplayMode(.inline)
     .preferredColorScheme(userPreferences.preferredColorScheme)
-    .navigationBarBackButtonHidden(themeColorManager.isRegenerating)
-    .interactiveDismissDisabled(themeColorManager.isRegenerating)
+    .navigationBarBackButtonHidden(showThemeOverlay)
+    .interactiveDismissDisabled(showThemeOverlay)
     .overlay {
-      if themeColorManager.isRegenerating, let color = pendingThemeColor {
+      if showThemeOverlay, let color = pendingThemeColor {
         ThemeColorLoadingOverlay(
           themeColorManager: themeColorManager,
-          selectedColor: color
+          selectedColor: color,
+          onDismiss: {
+            withAnimation {
+              showThemeOverlay = false
+              pendingThemeColor = nil
+            }
+          }
         )
+        .id(color) // Force fresh view instance for each color change
       }
     }
+
     .onChange(of: userPreferences.preferredColorScheme) { _, _ in
       // Force view refresh when color scheme changes
       NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
@@ -254,9 +263,10 @@ struct SettingsView: View {
         },
         onColorChangeStarted: { color in
           pendingThemeColor = color
+          showThemeOverlay = true
         },
         onColorChangeCompleted: {
-          pendingThemeColor = nil
+          // Don't dismiss here - let the overlay handle the completion screen and dismissal
         }
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))

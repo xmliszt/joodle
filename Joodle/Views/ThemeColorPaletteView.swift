@@ -143,7 +143,7 @@ private struct ColorCircleButton: View {
             }
         }
         .buttonStyle(.plain)
-//        .circularGlassButton(tintColor: isNeutralColor ? .gray : colorInfo.color)
+        .circularGlassButton(tintColor: isNeutralColor ? .gray : colorInfo.color)
         .accessibilityLabel("\(colorInfo.displayName) color\(isSelected ? ", selected" : "")\(colorInfo.isLocked ? ", locked" : "")")
         .accessibilityHint(colorInfo.isLocked ? "Requires premium subscription" : "Tap to select this color")
     }
