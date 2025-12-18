@@ -6,15 +6,8 @@ import Combine
 enum OnboardingStep: Hashable, CaseIterable {
     case drawingEntry              // The greeting + drawing
     case valueProposition          // Confetti + Explanation
-    case featureIntroEditEntry     // Feature intro: Edit Joodle and note
-    case featureIntroYearSwitching // Feature intro: Year switching and countdown
-    case featureIntroReminder      // Feature intro: Set reminder for anniversary datese
-    case featureIntroViewModes     // Feature intro: Regular vs minimized view
-    case featureIntroScrubbing     // Feature intro: How to scrub through days
-    case featureIntroSharing       // Feature intro: Sharing year and days
-    case featureIntroColorTheme    // Feature intro: Color theme
-    case featureIntroWidgets       // Feature intro: Widgets
-    case featureIntroShortcuts     // Feature intro: Siri shortcuts
+    case yearGridDemo              // Interactive tutorial in sandboxed environment
+    case featureIntroWidgets       // Feature intro: Widgets (kept - can't be interactive)
     case paywall                   // Subscription choice
     case icloudConfig              // iCloud sync configuration (only for subscribers)
     case onboardingCompletion      // Completion step
@@ -75,40 +68,20 @@ class OnboardingViewModel: ObservableObject {
         case .valueProposition:
             // After confirming first Joodle, decide next step based on user type
             if shouldShowFeatureIntro {
-                // First-time user or revisiting from Settings: show feature intros
-                navigationPath.append(OnboardingStep.featureIntroEditEntry)
+                // First-time user or revisiting from Settings: show interactive tutorial
+                navigationPath.append(OnboardingStep.yearGridDemo)
             } else {
                 // Return user (reinstall with subscription): skip feature intros
                 // Go directly to iCloud config since they already have subscription
                 navigationPath.append(OnboardingStep.icloudConfig)
             }
 
-        case .featureIntroEditEntry:
-            navigationPath.append(OnboardingStep.featureIntroYearSwitching)
-
-        case .featureIntroYearSwitching:
-            navigationPath.append(OnboardingStep.featureIntroReminder)
-
-        case .featureIntroReminder:
-            navigationPath.append(OnboardingStep.featureIntroViewModes)
-
-        case .featureIntroViewModes:
-            navigationPath.append(OnboardingStep.featureIntroScrubbing)
-
-        case .featureIntroScrubbing:
-            navigationPath.append(OnboardingStep.featureIntroSharing)
-
-        case .featureIntroSharing:
-            navigationPath.append(OnboardingStep.featureIntroColorTheme)
-
-        case .featureIntroColorTheme:
-          navigationPath.append(OnboardingStep.featureIntroWidgets)
+        case .yearGridDemo:
+            // After interactive tutorial, show widgets intro
+            navigationPath.append(OnboardingStep.featureIntroWidgets)
 
         case .featureIntroWidgets:
-          navigationPath.append(OnboardingStep.featureIntroShortcuts)
-
-        case .featureIntroShortcuts:
-            // After all feature intros, proceed to paywall or iCloud config
+            // After widgets intro, proceed to paywall or iCloud config
             if StoreKitManager.shared.hasActiveSubscription {
                 // User is already subscribed, show iCloud config
                 navigationPath.append(OnboardingStep.icloudConfig)

@@ -14,7 +14,7 @@ enum TutorialDefinitions {
   /// Tutorial for adding Joodle widgets to the home screen
   static let homeScreenWidgets = TutorialData(
     id: "home-screen-widgets",
-    title: "Home Screen Widgets",
+    title: "Add Home Screen Widgets",
     icon: "square.grid.2x2",
     shortDescription: "Add Joodle to your home screen",
     screenshots: [
@@ -34,7 +34,7 @@ enum TutorialDefinitions {
   /// Tutorial for adding Joodle widgets to the lock screen
   static let lockScreenWidgets = TutorialData(
     id: "lock-screen-widgets",
-    title: "Lock Screen Widgets",
+    title: "Add Lock Screen Widgets",
     icon: "square.grid.2x2",
     shortDescription: "Add Joodle to your lock screen",
     screenshots: [
@@ -53,7 +53,7 @@ enum TutorialDefinitions {
   /// Tutorial for adding Joodle widgets to the StandBy screen
   static let standbyWidgets = TutorialData(
     id: "standby-widgets",
-    title: "StandBy Screen Widgets",
+    title: "Add StandBy Screen Widgets",
     icon: "square.grid.2x2",
     shortDescription: "Add Joodle to your StandBy screen",
     screenshots: [

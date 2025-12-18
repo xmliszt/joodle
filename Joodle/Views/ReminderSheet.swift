@@ -4,29 +4,57 @@ struct ReminderSheet: View {
     @Environment(\.dismiss) private var dismiss
     let dateString: String
     let entryBody: String?
+
+    /// Optional mock store for tutorial mode - when provided, uses mock data instead of real ReminderManager
+    var mockStore: MockDataStore?
+
     @StateObject private var reminderManager = ReminderManager.shared
     @State private var selectedTime: Date
     @State private var showPaywall = false
     @State private var showPastTimeAlert = false
 
-    private var hasExistingReminder: Bool {
-        reminderManager.getReminder(for: dateString) != nil
+    private var isMockMode: Bool {
+        mockStore != nil
     }
 
-    init(dateString: String, entryBody: String? = nil) {
+    private var hasExistingReminder: Bool {
+        if let mockStore = mockStore {
+            return mockStore.hasReminder(for: dateString)
+        }
+        return reminderManager.getReminder(for: dateString) != nil
+    }
+
+    init(dateString: String, entryBody: String? = nil, mockStore: MockDataStore? = nil) {
         self.dateString = dateString
         self.entryBody = entryBody
+        self.mockStore = mockStore
+
         // Default to 9 AM on the entry date if no reminder exists
-        if let existing = ReminderManager.shared.getReminder(for: dateString) {
-            _selectedTime = State(initialValue: existing.reminderDate)
-        } else if let entryDate = DayEntry.stringToLocalDate(dateString) {
-            // Set to 9 AM on that day
-            var components = Calendar.current.dateComponents([.year, .month, .day], from: entryDate)
-            components.hour = 9
-            components.minute = 0
-            _selectedTime = State(initialValue: Calendar.current.date(from: components) ?? Date())
+        if let mockStore = mockStore {
+            // Mock mode - check mock store for existing reminder
+            if let existing = mockStore.getReminder(for: dateString) {
+                _selectedTime = State(initialValue: existing.reminderTime)
+            } else if let entryDate = DayEntry.stringToLocalDate(dateString) {
+                var components = Calendar.current.dateComponents([.year, .month, .day], from: entryDate)
+                components.hour = 9
+                components.minute = 0
+                _selectedTime = State(initialValue: Calendar.current.date(from: components) ?? Date())
+            } else {
+                _selectedTime = State(initialValue: Date())
+            }
         } else {
-            _selectedTime = State(initialValue: Date())
+            // Real mode - check ReminderManager
+            if let existing = ReminderManager.shared.getReminder(for: dateString) {
+                _selectedTime = State(initialValue: existing.reminderDate)
+            } else if let entryDate = DayEntry.stringToLocalDate(dateString) {
+                // Set to 9 AM on that day
+                var components = Calendar.current.dateComponents([.year, .month, .day], from: entryDate)
+                components.hour = 9
+                components.minute = 0
+                _selectedTime = State(initialValue: Calendar.current.date(from: components) ?? Date())
+            } else {
+                _selectedTime = State(initialValue: Date())
+            }
         }
     }
 
@@ -46,7 +74,9 @@ struct ReminderSheet: View {
 
     /// Whether the combined reminder date is in the past
     private var isReminderInPast: Bool {
-        combinedReminderDate <= Date()
+        // In mock mode, skip past time validation for tutorial
+        if isMockMode { return false }
+        return combinedReminderDate <= Date()
     }
 
     var body: some View {
@@ -66,16 +96,23 @@ struct ReminderSheet: View {
                     formatter.timeStyle = .long
                     formatter.timeZone = .current
 
-                    // Check if reminder time is in the past
+                    // Check if reminder time is in the past (skip in mock mode)
                     if isReminderInPast {
                         showPastTimeAlert = true
                         return
                     }
 
-                    if reminderManager.addReminder(for: dateString, at: combinedReminderDate, entryBody: entryBody) {
+                    if isMockMode {
+                        // Mock mode - store in mock store without real notification
+                        mockStore?.setReminder(for: dateString, at: combinedReminderDate)
                         dismiss()
                     } else {
-                        showPaywall = true
+                        // Real mode - use ReminderManager
+                        if reminderManager.addReminder(for: dateString, at: combinedReminderDate, entryBody: entryBody) {
+                            dismiss()
+                        } else {
+                            showPaywall = true
+                        }
                     }
                 } label: {
                     Text(hasExistingReminder ? "Update Reminder" : "Set Reminder")
@@ -99,7 +136,11 @@ struct ReminderSheet: View {
                 if hasExistingReminder {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Clear", role: .destructive) {
-                            reminderManager.removeReminder(for: dateString)
+                            if isMockMode {
+                                mockStore?.removeReminder(for: dateString)
+                            } else {
+                                reminderManager.removeReminder(for: dateString)
+                            }
                             dismiss()
                         }
                         .foregroundStyle(.red)
@@ -116,7 +157,10 @@ struct ReminderSheet: View {
             }
         }
         .onAppear {
-            reminderManager.requestNotificationPermission()
+            // Only request permission in real mode
+            if !isMockMode {
+                reminderManager.requestNotificationPermission()
+            }
         }
     }
 }
@@ -157,4 +201,19 @@ private extension View {
 
 #Preview("With Entry Body") {
     ReminderSheet(dateString: DayEntry.dateToString(Date().addingTimeInterval(86400)), entryBody: "Meeting with the team to discuss project updates")
+}
+
+#Preview("Mock Mode - Tutorial") {
+    struct MockPreview: View {
+        @StateObject private var mockStore = MockDataStore()
+
+        var body: some View {
+            ReminderSheet(
+                dateString: DayEntry.dateToString(Date().addingTimeInterval(86400)),
+                entryBody: "Test entry for tutorial",
+                mockStore: mockStore
+            )
+        }
+    }
+    return MockPreview()
 }

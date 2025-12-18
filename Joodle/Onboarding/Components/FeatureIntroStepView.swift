@@ -68,7 +68,7 @@ struct FeatureIntroStepView: View {
         description: "Select any day to create or edit the Joodle, and add a note",
         screenshots: [
             ScreenshotItem(
-                image: Image("Onboarding/Regular")
+                image: Image("Onboarding/WidgetsHomeScreen1")
             )
         ],
         buttonLabel: "Next",
@@ -83,10 +83,10 @@ struct FeatureIntroStepView: View {
         description: "Tap here to switch between regular and year-at-a-glance view",
         screenshots: [
             ScreenshotItem(
-                image: Image("Onboarding/Regular")
+                image: Image("Onboarding/WidgetsHomeScreen1")
             ),
             ScreenshotItem(
-                image: Image("Onboarding/Minimized")
+                image: Image("Onboarding/WidgetsHomeScreen1")
             )
         ],
         buttonLabel: "Got it",
@@ -118,10 +118,10 @@ struct FeatureIntroStepView: View {
         description: "Share your entire year from the minimized view, or share individual days from the entry sheet",
         screenshots: [
             ScreenshotItem(
-                image: Image("Onboarding/SharingYear")
+                image: Image("Onboarding/WidgetsHomeScreen1")
             ),
             ScreenshotItem(
-                image: Image("Onboarding/SharingDay")
+                image: Image("Onboarding/WidgetsHomeScreen1")
             )
         ],
         buttonLabel: "Next",

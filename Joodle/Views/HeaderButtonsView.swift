@@ -13,6 +13,10 @@ struct HeaderButtonsView: View {
   let currentYear: Int
   let onToggleViewMode: () -> Void
   let onSettingsAction: () -> Void
+
+  /// When true, adds tutorial highlight anchors to interactive elements
+  var tutorialMode: Bool = false
+
   @Namespace private var namespace
 
   @State private var showingShareSheet = false
@@ -45,6 +49,9 @@ struct HeaderButtonsView: View {
           }
           .circularGlassButton()
           .glassEffectID("view-mode", in: namespace)
+          .applyIf(tutorialMode) { view in
+            view.tutorialHighlightAnchor(.viewModeButton)
+          }
         }
       }
       .animation(.springFkingSatifying, value: viewMode)
@@ -74,6 +81,9 @@ struct HeaderButtonsView: View {
           Image(systemName: viewMode == .now ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
         }
         .circularGlassButton()
+        .applyIf(tutorialMode) { view in
+          view.tutorialHighlightAnchor(.viewModeButton)
+        }
       }
       .animation(.springFkingSatifying, value: viewMode)
       .sheet(isPresented: $showingShareSheet) {
@@ -97,6 +107,29 @@ struct HeaderButtonsView: View {
       onSettingsAction: {
         print("Settings tapped")
       }
+    )
+
+    Button("Toggle Mode") {
+      viewMode = viewMode == .now ? .year : .now
+    }
+  }
+  .padding()
+}
+
+#Preview("Tutorial Mode") {
+  @Previewable @State var viewMode: ViewMode = .now
+
+  VStack(spacing: 20) {
+    HeaderButtonsView(
+      viewMode: viewMode,
+      currentYear: 2025,
+      onToggleViewMode: {
+        viewMode = viewMode == .now ? .year : .now
+      },
+      onSettingsAction: {
+        print("Settings tapped")
+      },
+      tutorialMode: true
     )
 
     Button("Toggle Mode") {

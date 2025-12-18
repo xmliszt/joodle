@@ -52,7 +52,7 @@ struct ThemeColorLoadingOverlay: View {
                     .contentTransition(.numericText())
 
                 // Progress info
-                VStack(spacing: 8) {
+                VStack(spacing: 16) {
                     if showCompletionScreen {
                         Text("Your new theme is ready!")
                             .font(.subheadline)
@@ -67,6 +67,7 @@ struct ThemeColorLoadingOverlay: View {
                         ProgressView(value: themeColorManager.regenerationProgress)
                             .progressViewStyle(.linear)
                             .frame(width: 200)
+                            .tint(.secondary)
 
                         // Count
                         Text("\(themeColorManager.entriesProcessed) / \(themeColorManager.totalEntriesToProcess)")
@@ -76,6 +77,7 @@ struct ThemeColorLoadingOverlay: View {
                     } else {
                         ProgressView()
                             .progressViewStyle(.circular)
+                            .tint(.secondary)
 
                         Text("Preparing...")
                             .font(.subheadline)
@@ -87,7 +89,7 @@ struct ThemeColorLoadingOverlay: View {
             .background {
               if #available(iOS 26.0, *) {
                 RoundedRectangle(cornerRadius: 32, style: .continuous)
-                  .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 32))
+                  .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 32))
               } else {
                 // Fallback on earlier versions
                 RoundedRectangle(cornerRadius: 32, style: .continuous)
@@ -212,7 +214,7 @@ private struct ThemeColorLoadingOverlayCompletionPreview: View {
         .background {
           if #available(iOS 26.0, *) {
             RoundedRectangle(cornerRadius: 32, style: .continuous)
-              .glassEffect(.clear, in: RoundedRectangle(cornerRadius: 32))
+              .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 32))
           } else {
             // Fallback on earlier versions
             RoundedRectangle(cornerRadius: 32, style: .continuous)

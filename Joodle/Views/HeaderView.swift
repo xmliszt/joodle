@@ -16,6 +16,9 @@ struct HeaderView: View {
   let onToggleViewMode: () -> Void
   let onSettingsAction: () -> Void
 
+  /// When true, adds tutorial highlight anchors to interactive elements
+  var tutorialMode: Bool = false
+
   private let drawingSize: CGFloat = 52.0
 
   private var dotColor: Color {
@@ -44,6 +47,9 @@ struct HeaderView: View {
             selectedYear: $selectedYear
           )
           .lineLimit(1)
+          .applyIf(tutorialMode) { view in
+            view.tutorialHighlightAnchor(.yearSelector)
+          }
 
           if let entry = highlightedEntry {
             if entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? false) {
@@ -84,7 +90,8 @@ struct HeaderView: View {
           viewMode: viewMode,
           currentYear: selectedYear,
           onToggleViewMode: onToggleViewMode,
-          onSettingsAction: onSettingsAction
+          onSettingsAction: onSettingsAction,
+          tutorialMode: tutorialMode
         )
       }
       .padding(.horizontal, 20)
@@ -113,6 +120,19 @@ struct HeaderView: View {
 
 }
 
+// MARK: - View Extension for Conditional Modifier
+
+extension View {
+  @ViewBuilder
+  func applyIf<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+    if condition {
+      transform(self)
+    } else {
+      self
+    }
+  }
+}
+
 #Preview {
   @Previewable @State var selectedYear = 2024
   @Previewable @State var viewMode: ViewMode = .now
@@ -126,6 +146,26 @@ struct HeaderView: View {
       viewMode: viewMode,
       onToggleViewMode: { viewMode = viewMode == .now ? .year : .now },
       onSettingsAction: {}
+    )
+  }
+  .frame(height: 200)
+  .modelContainer(for: DayEntry.self, inMemory: true)
+}
+
+#Preview("Tutorial Mode") {
+  @Previewable @State var selectedYear = 2024
+  @Previewable @State var viewMode: ViewMode = .now
+
+  GeometryReader { geometry in
+    HeaderView(
+      highlightedEntry: nil,
+      geometry: geometry,
+      highlightedItem: DateItem(id: "test", date: Date()),
+      selectedYear: $selectedYear,
+      viewMode: viewMode,
+      onToggleViewMode: { viewMode = viewMode == .now ? .year : .now },
+      onSettingsAction: {},
+      tutorialMode: true
     )
   }
   .frame(height: 200)

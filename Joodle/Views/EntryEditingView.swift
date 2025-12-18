@@ -17,6 +17,15 @@ struct EntryEditingView: View {
   let onOpenDrawingCanvas: (() -> Void)?
   let onFocusChange: ((Bool) -> Void)?
 
+  /// Optional mock store for tutorial mode - when provided, uses mock data instead of real database
+  var mockStore: MockDataStore?
+
+  /// When true, adds tutorial highlight anchors to interactive elements
+  var tutorialMode: Bool = false
+
+  /// Optional binding for reminder sheet state - used by tutorial to track sheet dismiss
+  var showReminderSheetBinding: Binding<Bool>?
+
   @State private var showDeleteConfirmation = false
   @State private var currentTime = Date()
   @State private var isTimerActive = false
@@ -25,8 +34,58 @@ struct EntryEditingView: View {
   @State private var entry: DayEntry?
   @State private var showButtons = true
   @State private var showShareSheet = false
-  @State private var showReminderSheet = false
+  @State private var _showReminderSheetInternal = false
   @StateObject private var reminderManager = ReminderManager.shared
+
+  /// Computed property that uses binding if provided, otherwise uses internal state
+  private var showReminderSheet: Bool {
+    get {
+      showReminderSheetBinding?.wrappedValue ?? _showReminderSheetInternal
+    }
+  }
+
+  private func setShowReminderSheet(_ value: Bool) {
+    if let binding = showReminderSheetBinding {
+      binding.wrappedValue = value
+    } else {
+      _showReminderSheetInternal = value
+    }
+  }
+
+  /// Whether we're in mock/tutorial mode
+  private var isMockMode: Bool {
+    mockStore != nil
+  }
+
+  /// Get mock entry for current date
+  private var mockEntry: MockDayEntry? {
+    guard let mockStore = mockStore, let date = date else { return nil }
+    return mockStore.getEntry(for: date)
+  }
+
+  /// Text content to display - from mock or real entry
+  private var displayTextContent: String {
+    if isMockMode {
+      return mockEntry?.body ?? ""
+    }
+    return textContent
+  }
+
+  /// Drawing data to display - from mock or real entry
+  private var displayDrawingData: Data? {
+    if isMockMode {
+      return mockEntry?.drawingData
+    }
+    return entry?.drawingData
+  }
+
+  /// Whether there's an entry with content
+  private var hasEntryContent: Bool {
+    if isMockMode {
+      return mockEntry?.hasContent ?? false
+    }
+    return entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
+  }
 
   private var isToday: Bool {
     guard let date else { return false }
@@ -51,10 +110,26 @@ struct EntryEditingView: View {
   private var countdownText: String? {
     guard let date else { return nil }
     guard isFuture else { return nil }
-    // Guard: only show countdown if at least there is body text, or drawing.
-    guard entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil) else { return nil }
+
+    // In mock mode, check mock entry
+    if isMockMode {
+      guard mockEntry != nil && (mockEntry!.hasContent) else { return nil }
+    } else {
+      // Guard: only show countdown if at least there is body text, or drawing.
+      guard entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil) else { return nil }
+    }
 
     return CountdownHelper.countdownText(from: currentTime, to: date)
+  }
+
+  /// Check if reminder exists for current date
+  private var hasReminder: Bool {
+    guard let date = date else { return false }
+    let dateString = DayEntry.dateToString(date)
+    if isMockMode {
+      return mockStore?.hasReminder(for: dateString) ?? false
+    }
+    return reminderManager.getReminder(for: dateString) != nil
   }
 
   var body: some View {
@@ -69,6 +144,7 @@ struct EntryEditingView: View {
           VStack(alignment: .leading, spacing: 0) {
             // Text content
             ZStack(alignment: .topLeading) {
+              // Both mock mode and real mode use TextEditor for full editing
               TextEditor(text: $textContent)
                 .font(.body)
                 .lineSpacing(4)
@@ -86,13 +162,21 @@ struct EntryEditingView: View {
                     isTextFieldFocused = false
                   } completion: {
                     guard let date, textContent.isEmpty == false else { return }
-                    saveNote(text: textContent, for: date)
+                    if isMockMode {
+                      saveMockNote(text: textContent, for: date)
+                    } else {
+                      saveNote(text: textContent, for: date)
+                    }
                   }
                 }
                 .onChange(of: date ?? nil) { oldValue, newValue in
                   // Save old content first if any
                   if !textContent.isEmpty, let oldDate = oldValue {
-                    saveNote(text: textContent, for: oldDate)
+                    if isMockMode {
+                      saveMockNote(text: textContent, for: oldDate)
+                    } else {
+                      saveNote(text: textContent, for: oldDate)
+                    }
                   }
 
                   // Unfocus
@@ -102,12 +186,17 @@ struct EntryEditingView: View {
 
                   // Update entry if got new date
                   if let newDate = newValue {
-                    let candidates = entries.filter { $0.matches(date: newDate) }
-                    // Prioritize entry with content
-                    entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
+                    if isMockMode {
+                      // Load from mock store
+                      textContent = mockStore?.getEntry(for: newDate)?.body ?? ""
+                    } else {
+                      let candidates = entries.filter { $0.matches(date: newDate) }
+                      // Prioritize entry with content
+                      entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
 
-                    // Always update textContent - clear it if no entry exists
-                    textContent = entry?.body ?? ""
+                      // Always update textContent - clear it if no entry exists
+                      textContent = entry?.body ?? ""
+                    }
                   }
                 }
                 .onChange(of: isTextFieldFocused) { _, newValue in
@@ -178,20 +267,41 @@ struct EntryEditingView: View {
             }
 
             // Drawing content
-            if let drawingData = entry?.drawingData, !drawingData.isEmpty {
+            if let drawingData = displayDrawingData, !drawingData.isEmpty {
               VStack(alignment: .leading, spacing: 8) {
-                DrawingDisplayView(
-                  entry: entry,
-                  displaySize: 200,
-                  dotStyle: .present,
-                  accent: true,
-                  highlighted: false,
-                  scale: 1.0,
-                  useThumbnail: false
-                )
-                .frame(width: 200, height: 200)
-                .background(.appSurface)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
+                if isMockMode {
+                  // In mock mode, create a temporary DayEntry for display
+                  let tempEntry = DayEntry(
+                    body: mockEntry?.body ?? "",
+                    createdAt: date ?? Date(),
+                    drawingData: drawingData
+                  )
+                  DrawingDisplayView(
+                    entry: tempEntry,
+                    displaySize: 200,
+                    dotStyle: .present,
+                    accent: true,
+                    highlighted: false,
+                    scale: 1.0,
+                    useThumbnail: false
+                  )
+                  .frame(width: 200, height: 200)
+                  .background(.appSurface)
+                  .clipShape(RoundedRectangle(cornerRadius: 20))
+                } else {
+                  DrawingDisplayView(
+                    entry: entry,
+                    displaySize: 200,
+                    dotStyle: .present,
+                    accent: true,
+                    highlighted: false,
+                    scale: 1.0,
+                    useThumbnail: false
+                  )
+                  .frame(width: 200, height: 200)
+                  .background(.appSurface)
+                  .clipShape(RoundedRectangle(cornerRadius: 20))
+                }
               }
             }
           }
@@ -214,17 +324,26 @@ struct EntryEditingView: View {
       .onAppear {
         // Load entry first
         guard let date else { return }
-        let candidates = entries.filter { $0.matches(date: date) }
-        // Prioritize entry with content
-        entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
 
-        if let entry {
-          textContent = entry.body
+        if isMockMode {
+          // Load from mock store
+          textContent = mockStore?.getEntry(for: date)?.body ?? ""
+        } else {
+          let candidates = entries.filter { $0.matches(date: date) }
+          // Prioritize entry with content
+          entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
+
+          if let entry {
+            textContent = entry.body
+          }
         }
         // Then start timer
         startTimerIfNeeded()
       }
       .onChange(of: date ?? nil) { oldValue, newValue in
+        // Skip in mock mode
+        guard !isMockMode else { return }
+
         // Save old content first if any
         if !textContent.isEmpty, let oldDate = oldValue {
           saveNote(text: textContent, for: oldDate)
@@ -246,6 +365,9 @@ struct EntryEditingView: View {
         }
       }
       .onChange(of: entries) { _, newEntries in
+        // Skip in mock mode
+        guard !isMockMode else { return }
+
         guard let date else { return }
         // Always refresh entry from the latest entries array
         // This handles the case where an entry is created/updated externally (e.g., from drawing canvas)
@@ -268,6 +390,9 @@ struct EntryEditingView: View {
         }
       }
       .onChange(of: entry) { _, _ in
+        // Skip in mock mode
+        guard !isMockMode else { return }
+
         // Restart timer when entry changes (loaded or modified)
         startTimerIfNeeded()
       }
@@ -289,9 +414,13 @@ struct EntryEditingView: View {
       .sheet(isPresented: $showShareSheet) {
         ShareCardSelectorView(entry: entry, date: date ?? Date())
       }
-      .sheet(isPresented: $showReminderSheet) {
+      .sheet(isPresented: showReminderSheetBinding ?? $_showReminderSheetInternal) {
         if let date {
-          ReminderSheet(dateString: DayEntry.dateToString(date), entryBody: entry?.body)
+          ReminderSheet(
+            dateString: DayEntry.dateToString(date),
+            entryBody: isMockMode ? mockEntry?.body : entry?.body,
+            mockStore: mockStore
+          )
             .presentationDetents([.height(280)])
             .presentationDragIndicator(.visible)
         }
@@ -305,30 +434,34 @@ struct EntryEditingView: View {
             if #available(iOS 26.0, *) {
               GlassEffectContainer(spacing: 8) {
                 HStack(spacing: 8) {
-                  if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
-                      && !isTextFieldFocused && showButtons
-                  {
-                    Button {
-                      showShareSheet = true
-                    } label: {
-                      Image(systemName: "square.and.arrow.up")
+                  if hasEntryContent && !isTextFieldFocused && showButtons {
+                    // Share button - hide in mock mode
+                    if !isMockMode {
+                      Button {
+                        showShareSheet = true
+                      } label: {
+                        Image(systemName: "square.and.arrow.up")
+                      }
+                      .circularGlassButton()
+                      .transition(.opacity)
                     }
-                    .circularGlassButton()
-                    .transition(.opacity)
 
                     // Reminder Button
                     if (isToday || isFuture) && !isTextFieldFocused && showButtons {
                       Button {
-                        showReminderSheet = true
+                        setShowReminderSheet(true)
                       } label: {
-                        if reminderManager.getReminder(for: DayEntry.dateToString(date ?? Date())) != nil {
+                        if hasReminder {
                           Image(systemName: "bell.badge.waveform.fill")
                           .symbolEffect(.wiggle.byLayer, options: .nonRepeating)
                         } else {
                           Image(systemName: "bell.fill")
                         }
                       }
-                      .circularGlassButton(tintColor: reminderManager.getReminder(for: DayEntry.dateToString(date ?? Date())) != nil ? .appAccent : nil)
+                      .circularGlassButton(tintColor: hasReminder ? .appAccent : nil)
+                      .applyIf(tutorialMode) { view in
+                        view.tutorialHighlightAnchor(.bellIcon)
+                      }
                       .transition(.opacity)
                     }
 
@@ -336,25 +469,25 @@ struct EntryEditingView: View {
                 }
               }
               .animation(.springFkingSatifying, value: isTextFieldFocused)
-              .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
+              .animation(.springFkingSatifying, value: hasEntryContent)
             } else {
               HStack(spacing: 8) {
-                if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
-                    && !isTextFieldFocused && showButtons
-                {
-                  Button {
-                    showShareSheet = true
-                  } label: {
-                    Image(systemName: "square.and.arrow.up")
+                if hasEntryContent && !isTextFieldFocused && showButtons {
+                  // Share button - hide in mock mode
+                  if !isMockMode {
+                    Button {
+                      showShareSheet = true
+                    } label: {
+                      Image(systemName: "square.and.arrow.up")
+                    }
+                    .circularGlassButton()
+                    .transition(.opacity)
                   }
-                  .circularGlassButton()
-                  .transition(.opacity)
 
                   // Reminder Button
                   if (isToday || isFuture) && !isTextFieldFocused && showButtons {
-                    let hasReminder = reminderManager.getReminder(for: DayEntry.dateToString(date ?? Date())) != nil
                     Button {
-                      showReminderSheet = true
+                      setShowReminderSheet(true)
                     } label: {
                       if #available(iOS 18.0, *) {
                         Image(systemName: hasReminder ? "bell.badge.waveform.fill" : "bell.fill")
@@ -364,12 +497,15 @@ struct EntryEditingView: View {
                       }
                     }
                     .circularGlassButton(tintColor: hasReminder ? .appAccent : nil)
+                    .applyIf(tutorialMode) { view in
+                      view.tutorialHighlightAnchor(.bellIcon)
+                    }
                     .transition(.opacity)
                   }
                 }
               }
               .animation(.springFkingSatifying, value: isTextFieldFocused)
-              .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
+              .animation(.springFkingSatifying, value: hasEntryContent)
             }
             Spacer()
           }
@@ -411,10 +547,8 @@ struct EntryEditingView: View {
                     .transition(.opacity.animation(.springFkingSatifying))
                   }
 
-                  // Delete entry button
-                  if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
-                      && !isTextFieldFocused && showButtons
-                  {
+                  // Delete entry button - only in real mode
+                  if hasEntryContent && !isTextFieldFocused && showButtons && !isMockMode {
                     Button {
                       showDeleteConfirmation = true
                     } label: {
@@ -432,12 +566,15 @@ struct EntryEditingView: View {
                       Image(systemName: "scribble")
                     }
                     .circularGlassButton()
+                    .applyIf(tutorialMode) { view in
+                      view.tutorialHighlightAnchor(.paintButton)
+                    }
                     .transition(.opacity)
                   }
                 }
               }
               .animation(.springFkingSatifying, value: isTextFieldFocused)
-              .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
+              .animation(.springFkingSatifying, value: hasEntryContent)
             } else {
               // Fallback on earlier versions
               HStack(spacing: 8) {
@@ -452,10 +589,8 @@ struct EntryEditingView: View {
                   .transition(.opacity.animation(.springFkingSatifying))
                 }
 
-                // Delete entry button
-                if entry != nil && (!entry!.body.isEmpty || entry!.drawingData != nil)
-                    && !isTextFieldFocused && showButtons
-                {
+                // Delete entry button - only in real mode
+                if hasEntryContent && !isTextFieldFocused && showButtons && !isMockMode {
                   Button {
                     showDeleteConfirmation = true
                   } label: {
@@ -473,11 +608,14 @@ struct EntryEditingView: View {
                     Image(systemName: "scribble")
                   }
                   .circularGlassButton()
+                  .applyIf(tutorialMode) { view in
+                    view.tutorialHighlightAnchor(.paintButton)
+                  }
                   .transition(.opacity)
                 }
               }
               .animation(.springFkingSatifying, value: isTextFieldFocused)
-              .animation(.springFkingSatifying, value: entry?.body.isEmpty ?? true)
+              .animation(.springFkingSatifying, value: hasEntryContent)
             }
           }
         }
@@ -510,6 +648,9 @@ struct EntryEditingView: View {
 
   /// Start the timer if needed
   private func startTimerIfNeeded() {
+    // Skip in mock mode
+    guard !isMockMode else { return }
+
     // Always activate timer for future dates within 24 hours
     // countdownText will handle nil entry checks
     guard isFuture && needsRealTimeUpdates else { return }
@@ -530,6 +671,9 @@ struct EntryEditingView: View {
   }
 
   private func deleteEntry() {
+    // Skip in mock mode
+    guard !isMockMode else { return }
+
     guard let entry else { return }
 
     // Delete ALL entries for this date (handles duplicates)
@@ -538,7 +682,24 @@ struct EntryEditingView: View {
     self.entry = nil
   }
 
-  private func saveNote(text: String, for date: Date) {
+  /// Save note to mock store (tutorial mode)
+  func saveMockNote(text: String, for date: Date) {
+    guard let mockStore = mockStore else { return }
+
+    // Get existing entry or create new one
+    if var existingEntry = mockStore.getEntry(for: date) {
+      existingEntry.body = text
+      mockStore.updateEntry(existingEntry)
+    } else {
+      let newEntry = MockDayEntry(date: date, body: text, drawingData: nil)
+      mockStore.addEntry(newEntry)
+    }
+  }
+
+  func saveNote(text: String, for date: Date) {
+    // Skip in mock mode
+    guard !isMockMode else { return }
+
     // If text is empty and no existing entry, don't create an empty entry
     if text.isEmpty && entry == nil {
       return
@@ -573,7 +734,77 @@ struct EntryEditingView: View {
     withAnimation(.easeIn(duration: 0.25)) {
       isTextFieldFocused = false
       guard let date else { return }
-      saveNote(text: textContent, for: date)
+      if isMockMode {
+        saveMockNote(text: textContent, for: date)
+      } else {
+        saveNote(text: textContent, for: date)
+      }
     }
   }
+}
+
+// MARK: - Previews
+
+#Preview("Real Mode") {
+  EntryEditingView(
+    date: Date(),
+    onOpenDrawingCanvas: { print("Open canvas") },
+    onFocusChange: nil
+  )
+  .modelContainer(for: DayEntry.self, inMemory: true)
+}
+
+#Preview("Mock Mode - Tutorial") {
+  struct MockPreview: View {
+    @StateObject private var mockStore = MockDataStore()
+
+    var body: some View {
+      EntryEditingView(
+        date: Date(),
+        onOpenDrawingCanvas: { print("Open canvas") },
+        onFocusChange: nil,
+        mockStore: mockStore,
+        tutorialMode: true
+      )
+      .onAppear {
+        // Add a mock entry
+        let entry = MockDayEntry(
+          date: Date(),
+          body: "This is a sample note for the tutorial!",
+          drawingData: PLACEHOLDER_DATA
+        )
+        mockStore.addEntry(entry)
+        mockStore.selectDate(Date())
+      }
+    }
+  }
+  return MockPreview()
+}
+
+#Preview("Mock Mode - Future Date") {
+  struct MockPreview: View {
+    @StateObject private var mockStore = MockDataStore()
+    let futureDate = Date().addingTimeInterval(86400 * 30) // 30 days from now
+
+    var body: some View {
+      EntryEditingView(
+        date: futureDate,
+        onOpenDrawingCanvas: { print("Open canvas") },
+        onFocusChange: nil,
+        mockStore: mockStore,
+        tutorialMode: true
+      )
+      .onAppear {
+        // Add a mock entry for future date
+        let entry = MockDayEntry(
+          date: futureDate,
+          body: "🎂 Birthday party!",
+          drawingData: nil
+        )
+        mockStore.addEntry(entry)
+        mockStore.selectDate(futureDate)
+      }
+    }
+  }
+  return MockPreview()
 }

@@ -55,7 +55,8 @@ struct SettingsView: View {
   @State private var showSubscriptions = false
   @State private var showAppStats = false
   @State private var showDataSeeder = false
-  @State private var currentJoodleCount = 0
+  @State private var currentJoodleCount: Int = 0
+  @State var selectedTutorialStep: TutorialStepType?
 
   // Theme color change state
   @State private var pendingThemeColor: ThemeColor?
@@ -109,7 +110,7 @@ struct SettingsView: View {
       freePlanLimitsSection
       subscriptionSection
       dataManagementSection
-      tutorialsSection
+      tutorialSection
       onboardingSection
       feedbackSection
       developerOptionsSection
@@ -142,6 +143,13 @@ struct SettingsView: View {
     }
     .fullScreenCover(isPresented: $showOnboarding) {
       OnboardingFlowView()
+    }
+    .fullScreenCover(item: $selectedTutorialStep) { stepType in
+      let _ = print("🟢 [SettingsView] fullScreenCover presenting InteractiveTutorialView with stepType: \(stepType)")
+      InteractiveTutorialView(stepType: stepType) {
+        print("🔵 [SettingsView] InteractiveTutorialView onDismiss called")
+        selectedTutorialStep = nil
+      }
     }
     .sheet(isPresented: $showPlaceholderGenerator) {
       PlaceholderGeneratorView()
@@ -442,25 +450,46 @@ struct SettingsView: View {
   }
 
   @ViewBuilder
-  private var tutorialsSection: some View {
-    Section("Tutorials") {
-        ForEach(TutorialDefinitions.allTutorials) { tutorial in
-          NavigationLink {
-            TutorialView(
-              title: tutorial.title,
-              screenshots: tutorial.screenshots,
-              description: tutorial.description
-            )
-          } label: {
-            HStack {
-              Label(tutorial.title, systemImage: tutorial.icon)
-              Spacer()
-              if !SubscriptionManager.shared.isSubscribed && tutorial.isPremiumFeature  {
-                PremiumFeatureBadge()
-              }
+  private var tutorialSection: some View {
+    Section {
+      // Interactive tutorials
+      ForEach(TutorialStepType.allCases) { stepType in
+        Button {
+          print("🔵 [SettingsView] Tutorial button tapped - stepType: \(stepType)")
+          selectedTutorialStep = stepType
+        } label: {
+          HStack {
+            Label(stepType.title, systemImage: stepType.icon)
+              .foregroundColor(.textColor)
+            Spacer()
+            Image(systemName: "chevron.right")
+              .font(.caption)
+              .foregroundColor(.secondaryTextColor)
+          }
+        }
+      }
+
+      // Static widget tutorials
+      ForEach(TutorialDefinitions.allTutorials) { tutorial in
+        NavigationLink {
+          TutorialView(
+            title: tutorial.title,
+            screenshots: tutorial.screenshots,
+            description: tutorial.description
+          )
+        } label: {
+          HStack {
+            Label(tutorial.title, systemImage: tutorial.icon)
+              .foregroundColor(.primary)
+            Spacer()
+            if !SubscriptionManager.shared.isSubscribed && tutorial.isPremiumFeature  {
+              PremiumFeatureBadge()
             }
           }
         }
+      }
+    } header: {
+      Text("Learn Core Features")
     }
   }
 

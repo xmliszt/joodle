@@ -17,24 +17,10 @@ struct OnboardingFlowView: View {
                         DrawingEntryView(viewModel: viewModel)
                     case .valueProposition:
                         ValuePropView(viewModel: viewModel)
-                    case .featureIntroEditEntry:
-                        FeatureIntroEditEntryView(viewModel: viewModel)
-                    case .featureIntroYearSwitching:
-                        FeatureIntroYearSwitchingView(viewModel: viewModel)
-                    case .featureIntroReminder:
-                        FeatureIntroReminderView(viewModel: viewModel)
-                    case .featureIntroViewModes:
-                        FeatureIntroViewModesView(viewModel: viewModel)
-                    case .featureIntroScrubbing:
-                        FeatureIntroScrubView(viewModel: viewModel)
-                    case .featureIntroSharing:
-                        FeatureIntroSharingView(viewModel: viewModel)
-                    case .featureIntroColorTheme:
-                        FeatureIntroColorThemeView(viewModel: viewModel)
+                    case .yearGridDemo:
+                        InteractiveTutorialView(viewModel: viewModel)
                     case .featureIntroWidgets:
                         FeatureIntroWidgetsView(viewModel: viewModel)
-                    case .featureIntroShortcuts:
-                        FeatureIntroShortcutView(viewModel: viewModel)
                     case .paywall:
                         PaywallView(viewModel: viewModel)
                     case .icloudConfig:

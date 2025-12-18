@@ -30,6 +30,12 @@ struct DrawingCanvasView: View {
   /// But that doesn't make it visible yet as controlled by DynamicIslandExpandedView
   let isShowing: Bool
 
+  /// Optional mock store for tutorial mode - when provided, uses mock data instead of real database
+  var mockStore: MockDataStore?
+
+  /// Optional mock entry for tutorial mode - used when mockStore is provided
+  var mockEntry: MockDayEntry?
+
   @State private var currentPath = Path()
   @State private var paths: [Path] = []
   @State private var pathMetadata: [PathMetadata] = []
@@ -43,8 +49,16 @@ struct DrawingCanvasView: View {
   @State private var undoStack: [([Path], [PathMetadata])] = []
   @State private var redoStack: [([Path], [PathMetadata])] = []
 
+  /// Whether we're in mock/tutorial mode
+  private var isMockMode: Bool {
+    mockStore != nil
+  }
+
   /// Whether editing is allowed based on subscription status
   private var canEditOrCreate: Bool {
+    // Always allow in mock mode
+    if isMockMode { return true }
+
     switch accessState {
     case .canCreate, .canEdit:
       return true
@@ -56,8 +70,8 @@ struct DrawingCanvasView: View {
   var body: some View {
     ZStack {
       VStack(spacing: 16) {
-        // Show remaining Joodles indicator for free users
-        if !subscriptionManager.isSubscribed {
+        // Show remaining Joodles indicator for free users (not in mock mode)
+        if !isMockMode && !subscriptionManager.isSubscribed {
           remainingJoodlesHeader
         }
 
@@ -86,8 +100,8 @@ struct DrawingCanvasView: View {
         }
         .disabled(!canEditOrCreate)
         .overlay {
-          // Show lock overlay when access is denied
-          if !canEditOrCreate {
+          // Show lock overlay when access is denied (not in mock mode)
+          if !isMockMode && !canEditOrCreate {
             accessDeniedOverlay
           }
         }
@@ -96,16 +110,22 @@ struct DrawingCanvasView: View {
       .background(.backgroundColor)
     }
     .onAppear {
-      checkAccessState()
+      if !isMockMode {
+        checkAccessState()
+      }
       loadExistingDrawing()
     }
     .onChange(of: isShowing) { oldValue, newValue in
-      checkAccessState()
+      if !isMockMode {
+        checkAccessState()
+      }
       loadExistingDrawing()
     }
     .onChange(of: subscriptionManager.isSubscribed) { _, _ in
-      // Re-check access when subscription changes
-      checkAccessState()
+      // Re-check access when subscription changes (not in mock mode)
+      if !isMockMode {
+        checkAccessState()
+      }
     }
     .confirmationDialog("Clear Drawing", isPresented: $showClearConfirmation) {
       Button("Clear", role: .destructive, action: clearDrawing).circularGlassButton()
@@ -265,8 +285,10 @@ struct DrawingCanvasView: View {
     // Clear redo stack when new action is performed
     redoStack.removeAll()
 
-    // Save immediately to store
-    saveDrawingToStore()
+    // Save immediately to store (skip in mock mode - we'll save on dismiss)
+    if !isMockMode {
+      saveDrawingToStore()
+    }
 
     // Reset drawing state
     isDrawing = false
@@ -299,8 +321,10 @@ struct DrawingCanvasView: View {
     isDrawing = false
     currentPathIsDot = false
 
-    // Save to store
-    saveDrawingToStore()
+    // Save to store (skip in mock mode)
+    if !isMockMode {
+      saveDrawingToStore()
+    }
 
     // Limit redo stack size
     if redoStack.count > 50 {
@@ -324,11 +348,19 @@ struct DrawingCanvasView: View {
     isDrawing = false
     currentPathIsDot = false
 
-    // Save to store
-    saveDrawingToStore()
+    // Save to store (skip in mock mode)
+    if !isMockMode {
+      saveDrawingToStore()
+    }
   }
 
   private func loadExistingDrawing() {
+    // Check mock mode first
+    if isMockMode {
+      loadMockDrawing()
+      return
+    }
+
     guard let data = entry?.drawingData else {
       // Initialize with empty state for new drawings
       undoStack.removeAll()
@@ -345,6 +377,27 @@ struct DrawingCanvasView: View {
       return
     }
 
+    loadPathsFromData(data)
+  }
+
+  private func loadMockDrawing() {
+    guard let mockEntry = mockEntry, let data = mockEntry.drawingData else {
+      // Initialize with empty state for new drawings
+      undoStack.removeAll()
+      redoStack.removeAll()
+      paths.removeAll()
+      pathMetadata.removeAll()
+      currentPath = Path()
+      isDrawing = false
+      currentPathIsDot = false
+      redoStack.removeAll()
+      return
+    }
+
+    loadPathsFromData(data)
+  }
+
+  private func loadPathsFromData(_ data: Data) {
     do {
       let decodedPaths = try JSONDecoder().decode([PathData].self, from: data)
       paths = decodedPaths.map { pathData in
@@ -386,8 +439,49 @@ struct DrawingCanvasView: View {
   }
 
   private func saveDrawing() {
-    saveDrawingToStore()
+    if isMockMode {
+      saveMockDrawing()
+    } else {
+      saveDrawingToStore()
+    }
     onDismiss()
+  }
+
+  private func saveMockDrawing() {
+    guard let mockStore = mockStore else { return }
+
+    // Convert paths to data
+    if paths.isEmpty {
+      // Clear drawing from mock entry
+      if let selectedDate = mockStore.selectedDateItem?.date {
+        if var existingEntry = mockStore.getEntry(for: selectedDate) {
+          existingEntry.drawingData = nil
+          mockStore.updateEntry(existingEntry)
+        }
+      }
+      return
+    }
+
+    let pathsData = paths.enumerated().map { (index, path) in
+      let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
+      return PathData(points: path.extractPoints(), isDot: isDot)
+    }
+
+    do {
+      let data = try JSONEncoder().encode(pathsData)
+
+      if let selectedDate = mockStore.selectedDateItem?.date {
+        if var existingEntry = mockStore.getEntry(for: selectedDate) {
+          existingEntry.drawingData = data
+          mockStore.updateEntry(existingEntry)
+        } else {
+          let newEntry = MockDayEntry(date: selectedDate, body: "", drawingData: data)
+          mockStore.addEntry(newEntry)
+        }
+      }
+    } catch {
+      print("Failed to save mock drawing: \(error)")
+    }
   }
 
   private func saveDrawingToStore() {
@@ -462,17 +556,19 @@ struct DrawingCanvasView: View {
     // Clear redo stack when new action is performed
     redoStack.removeAll()
 
-    // Also clear from store
-    if let existingEntry = entry {
-      existingEntry.drawingData = nil
-      existingEntry.drawingThumbnail20 = nil
-      existingEntry.drawingThumbnail200 = nil
+    // Also clear from store (skip in mock mode)
+    if !isMockMode {
+      if let existingEntry = entry {
+        existingEntry.drawingData = nil
+        existingEntry.drawingThumbnail20 = nil
+        existingEntry.drawingThumbnail200 = nil
 
-      // If entry is now empty (no text either), delete it entirely
-      if existingEntry.body.isEmpty {
-        existingEntry.deleteAllForSameDate(in: modelContext)
-      } else {
-        try? modelContext.save()
+        // If entry is now empty (no text either), delete it entirely
+        if existingEntry.body.isEmpty {
+          existingEntry.deleteAllForSameDate(in: modelContext)
+        } else {
+          try? modelContext.save()
+        }
       }
     }
   }
@@ -486,4 +582,22 @@ struct DrawingCanvasView: View {
     onDismiss: {},
     isShowing: true
   )
+}
+
+#Preview("Mock Mode - Tutorial") {
+  struct MockPreview: View {
+    @StateObject private var mockStore = MockDataStore()
+
+    var body: some View {
+      DrawingCanvasView(
+        date: Date(),
+        entry: nil,
+        onDismiss: {},
+        isShowing: true,
+        mockStore: mockStore,
+        mockEntry: nil
+      )
+    }
+  }
+  return MockPreview()
 }

@@ -148,7 +148,7 @@ struct ScreenshotCarouselView: View {
 #Preview("Single Portrait Screenshot") {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
-            image: Image("Onboarding/Regular"),
+            image: Image("Onboarding/WidgetsHomeScreen1"),
             dots: [TapDot(x: 300, y: 167)]
         )
     ])
@@ -160,11 +160,11 @@ struct ScreenshotCarouselView: View {
 #Preview("Multiple Screenshots Carousel") {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
-            image: Image("Onboarding/Regular"),
+            image: Image("Onboarding/WidgetsHomeScreen1"),
             dots: [TapDot(x: 525, y: 67)]
         ),
         ScreenshotItem(
-            image: Image("Onboarding/Minimized")
+            image: Image("Onboarding/WidgetsHomeScreen1")
         )
     ])
     .padding(.horizontal, 24)
@@ -175,7 +175,7 @@ struct ScreenshotCarouselView: View {
 #Preview("Landscape Screenshot (Standby)") {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
-            image: Image("Onboarding/WidgetStandby1"),
+            image: Image("Onboarding/WidgetsHomeScreen1"),
             orientation: .landscape
         )
     ])
@@ -204,7 +204,7 @@ struct ScreenshotCarouselView: View {
 #Preview("Screenshot with Multiple Dots") {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
-            image: Image("Onboarding/Sharing"),
+            image: Image("Onboarding/WidgetsHomeScreen1"),
             dots: [
                 TapDot(x: 525, y: 67),
                 TapDot(x: 75, y: 67)
