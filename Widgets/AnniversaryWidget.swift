@@ -658,7 +658,7 @@ struct AnniversaryWidget: Widget {
       AnniversaryWidgetView(entry: entry)
     }
     .configurationDisplayName("Anniversary")
-    .description("Upcoming anniversary with countdown.")
+    .description("Future Anniversary Joodle with countdown.")
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }

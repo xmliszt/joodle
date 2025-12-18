@@ -8,17 +8,40 @@
 import SwiftUI
 import WidgetKit
 
+/// A seedable random number generator for consistent random selection
+struct SeededRandomNumberGenerator: RandomNumberGenerator {
+  private var state: UInt64
+
+  init(seed: UInt64) {
+    self.state = seed
+  }
+
+  mutating func next() -> UInt64 {
+    // Simple xorshift64 algorithm
+    state ^= state << 13
+    state ^= state >> 7
+    state ^= state << 17
+    return state
+  }
+}
+
 struct RandomJoodleProvider: TimelineProvider {
   func placeholder(in context: Context) -> RandomJoodleEntry {
-    RandomJoodleEntry(date: Date(), Joodle: nil, prompt: getRandomPrompt(), isSubscribed: true)
+    var (generator, _) = makeSeededGenerator(for: Date(), family: context.family)
+    return RandomJoodleEntry(date: Date(), Joodle: nil, prompt: getRandomPrompt(using: &generator), isSubscribed: true)
   }
 
   func getSnapshot(in context: Context, completion: @escaping (RandomJoodleEntry) -> Void) {
+    let currentDate = Date()
     let isSubscribed = WidgetDataManager.shared.isSubscribed()
+
+    // Use a seeded random generator based on the current date and widget family
+    var (generator, _) = makeSeededGenerator(for: currentDate, family: context.family)
+
     let entry = RandomJoodleEntry(
-      date: Date(),
-      Joodle: isSubscribed ? getRandomJoodle() : nil,
-      prompt: getRandomPrompt(),
+      date: currentDate,
+      Joodle: isSubscribed ? getRandomJoodle(using: &generator, family: context.family) : nil,
+      prompt: getRandomPrompt(using: &generator),
       isSubscribed: isSubscribed
     )
     completion(entry)
@@ -28,12 +51,16 @@ struct RandomJoodleProvider: TimelineProvider {
   {
     let currentDate = Date()
     let isSubscribed = WidgetDataManager.shared.isSubscribed()
-    let Joodle = isSubscribed ? getRandomJoodle() : nil
+
+    // Use a seeded random generator based on the current date and widget family to ensure
+    // consistent random selection for the same day, but different results per widget type
+    var (generator, _) = makeSeededGenerator(for: currentDate, family: context.family)
+    let Joodle = isSubscribed ? getRandomJoodle(using: &generator, family: context.family) : nil
 
     let entry = RandomJoodleEntry(
       date: currentDate,
       Joodle: Joodle,
-      prompt: getRandomPrompt(),
+      prompt: getRandomPrompt(using: &generator),
       isSubscribed: isSubscribed
     )
 
@@ -55,7 +82,38 @@ struct RandomJoodleProvider: TimelineProvider {
     completion(timeline)
   }
 
-  private func getRandomJoodle() -> JoodleData? {
+  /// Creates a seeded random number generator based on the date (day granularity) and widget family
+  private func makeSeededGenerator(for date: Date, family: WidgetFamily) -> (SeededRandomNumberGenerator, UInt64) {
+    let calendar = Calendar.current
+    let components = calendar.dateComponents([.year, .month, .day], from: date)
+    let dateSeed = UInt64(components.year! * 10000 + components.month! * 100 + components.day!)
+    // Use distinct prime multipliers for each family to ensure very different bit patterns
+    let familyMultiplier: UInt64 = switch family {
+    case .systemSmall: 0x9E3779B97F4A7C15       // Golden ratio based
+    case .systemMedium: 0xBF58476D1CE4E5B9      // Splitmix64 constant
+    case .systemLarge: 0x94D049BB133111EB       // Splitmix64 constant
+    case .systemExtraLarge: 0xC6A4A7935BD1E995  // MurmurHash constant
+    case .accessoryCircular: 0x517CC1B727220A95 // Random prime-based
+    case .accessoryRectangular: 0x2545F4914F6CDD1D // Weyl sequence
+    case .accessoryInline: 0x6A09E667F3BCC909   // SHA-256 fractional
+    @unknown default: 0x85EBCA6B
+    }
+    // XOR the date seed with the family multiplier for maximum bit difference
+    let finalSeed = dateSeed ^ familyMultiplier
+    return (SeededRandomNumberGenerator(seed: finalSeed), finalSeed)
+  }
+
+  /// Returns the index that was selected for the previous day (to avoid repeats)
+  private func getPreviousDaySelectedIndex(entriesCount: Int, family: WidgetFamily) -> Int? {
+    guard entriesCount > 1 else { return nil }
+
+    let calendar = Calendar.current
+    let yesterday = calendar.date(byAdding: .day, value: -1, to: Date())!
+    var (yesterdayGenerator, _) = makeSeededGenerator(for: yesterday, family: family)
+    return Int.random(in: 0..<entriesCount, using: &yesterdayGenerator)
+  }
+
+  private func getRandomJoodle(using generator: inout SeededRandomNumberGenerator, family: WidgetFamily) -> JoodleData? {
     let entries = WidgetDataManager.shared.loadEntries()
 
     // Filter entries from the past year (365 days back) that have drawings
@@ -73,10 +131,18 @@ struct RandomJoodleProvider: TimelineProvider {
       return nil
     }
 
-    // Select a random Joodle
-    guard let selectedEntry = JoodleEntries.randomElement() else {
-      return nil
+    // Select a random Joodle using the seeded generator
+    var randomIndex = Int.random(in: 0..<JoodleEntries.count, using: &generator)
+
+    // Ensure we don't pick the same doodle as yesterday (if there's more than one option)
+    if JoodleEntries.count > 1,
+       let previousIndex = getPreviousDaySelectedIndex(entriesCount: JoodleEntries.count, family: family),
+       randomIndex == previousIndex {
+      // Pick the next index to avoid repetition
+      randomIndex = (randomIndex + 1) % JoodleEntries.count
     }
+
+    let selectedEntry = JoodleEntries[randomIndex]
 
     return JoodleData(
       date: selectedEntry.date,
@@ -84,8 +150,9 @@ struct RandomJoodleProvider: TimelineProvider {
     )
   }
 
-  private func getRandomPrompt() -> String {
-    return EMPTY_PLACEHOLDERS.randomElement()!
+  private func getRandomPrompt(using generator: inout SeededRandomNumberGenerator) -> String {
+    let randomIndex = Int.random(in: 0..<EMPTY_PLACEHOLDERS.count, using: &generator)
+    return EMPTY_PLACEHOLDERS[randomIndex]
   }
 }
 
@@ -181,16 +248,27 @@ struct WidgetLockedView: View {
           )
         )
 
-      VStack(spacing: 4) {
-        Text("Joodle Super")
-          .font(family == .systemLarge ? .headline : .caption.bold())
-          .foregroundColor(.primary)
+      if family != .accessoryCircular {
+        VStack(spacing: 4) {
+          Text("Joodle Super")
+            .font(family == .systemLarge ? .headline : .caption.bold())
+            .foregroundColor(.primary)
 
-        Text("Upgrade to unlock widgets")
-          .font(family == .systemLarge ? .subheadline : .caption2)
-          .foregroundColor(.secondary)
-          .multilineTextAlignment(.center)
-          .lineSpacing(4)
+          Text("Upgrade to unlock widgets")
+            .font(family == .systemLarge ? .subheadline : .caption2)
+            .foregroundColor(.secondary)
+            .multilineTextAlignment(.center)
+            .lineSpacing(4)
+        }
+      } else {
+        VStack (alignment: .center) {
+          Text("Unlock")
+            .font(.system(size: 8))
+            .foregroundColor(.primary)
+          Text("Super")
+            .font(.system(size: 8))
+            .foregroundColor(.primary)
+        }
       }
     }
     .padding()
@@ -323,7 +401,7 @@ struct RandomJoodleWidget: Widget {
       RandomJoodleWidgetView(entry: entry)
     }
     .configurationDisplayName("Random Joodle")
-    .description("Random Joodle from past year.")
+    .description("Random Joodle From Your Collection. Refreshed Daily.")
     .supportedFamilies([.systemSmall, .systemLarge, .accessoryCircular])
   }
 }

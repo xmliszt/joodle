@@ -345,7 +345,7 @@ struct YearGridWidget: Widget {
         }
     }
     .configurationDisplayName("Year Progress")
-    .description("View your year progress at a glance.")
+    .description("View your year progress at a simple glance.")
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }
