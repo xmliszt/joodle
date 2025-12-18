@@ -676,6 +676,12 @@ struct EntryEditingView: View {
 
     guard let entry else { return }
 
+    // Remove any associated reminder
+    if let date = date {
+      let dateString = DayEntry.dateToString(date)
+      reminderManager.removeReminder(for: dateString)
+    }
+
     // Delete ALL entries for this date (handles duplicates)
     entry.deleteAllForSameDate(in: modelContext)
     textContent = ""
