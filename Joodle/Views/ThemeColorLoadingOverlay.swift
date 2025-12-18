@@ -93,6 +93,7 @@ struct ThemeColorLoadingOverlay: View {
               } else {
                 // Fallback on earlier versions
                 RoundedRectangle(cornerRadius: 32, style: .continuous)
+                  .fill(.background)
               }
             }
         }
@@ -218,6 +219,7 @@ private struct ThemeColorLoadingOverlayCompletionPreview: View {
           } else {
             // Fallback on earlier versions
             RoundedRectangle(cornerRadius: 32, style: .continuous)
+              .fill(.background)
           }
         }
     }

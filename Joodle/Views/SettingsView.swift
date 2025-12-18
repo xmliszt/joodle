@@ -145,9 +145,7 @@ struct SettingsView: View {
       OnboardingFlowView()
     }
     .fullScreenCover(item: $selectedTutorialStep) { stepType in
-      let _ = print("🟢 [SettingsView] fullScreenCover presenting InteractiveTutorialView with stepType: \(stepType)")
       InteractiveTutorialView(stepType: stepType) {
-        print("🔵 [SettingsView] InteractiveTutorialView onDismiss called")
         selectedTutorialStep = nil
       }
     }
@@ -455,7 +453,6 @@ struct SettingsView: View {
       // Interactive tutorials
       ForEach(TutorialStepType.allCases) { stepType in
         Button {
-          print("🔵 [SettingsView] Tutorial button tapped - stepType: \(stepType)")
           selectedTutorialStep = stepType
         } label: {
           HStack {

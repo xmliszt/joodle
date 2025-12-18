@@ -91,7 +91,6 @@ struct InteractiveTutorialView: View {
         self.onDismiss = onDismiss
 
         let steps = TutorialSteps.singleStep(stepType)
-        print("🔵 [InteractiveTutorial] Standalone init - stepType: \(stepType), steps count: \(steps.count)")
 
         _coordinator = StateObject(wrappedValue: TutorialCoordinator(
             steps: steps,
@@ -106,7 +105,6 @@ struct InteractiveTutorialView: View {
     // MARK: - Body
 
     var body: some View {
-        let _ = print("🔵 [InteractiveTutorial] body - isOnboarding: \(isOnboarding), isReady: \(isReady), forceRefresh: \(forceRefresh)")
         ZStack {
             // Background always visible (prevents black screen in standalone mode)
             Color.backgroundColor
@@ -114,7 +112,6 @@ struct InteractiveTutorialView: View {
 
             // Main content - conditionally rendered for standalone mode
             if isOnboarding || isReady {
-                let _ = print("🟢 [InteractiveTutorial] Rendering main content (isOnboarding: \(isOnboarding), isReady: \(isReady))")
                 GeometryReader { geometry in
                     ZStack {
                         // Main tutorial content
@@ -173,24 +170,18 @@ struct InteractiveTutorialView: View {
         }
         .navigationBarBackButtonHidden(true)
         .onAppear {
-            print("🔵 [InteractiveTutorial] onAppear - isOnboarding: \(isOnboarding), isReady: \(isReady)")
             setupInitialState()
             animateIn()
         }
         .task {
             // For standalone mode: delay to ensure fullScreenCover transition completes
-            print("🔵 [InteractiveTutorial] task started - isOnboarding: \(isOnboarding)")
             if !isOnboarding {
-                print("🟡 [InteractiveTutorial] Standalone mode - waiting 0.1s before setting isReady")
                 try? await Task.sleep(nanoseconds: 100_000_000)  // 0.1 seconds
-                print("🟡 [InteractiveTutorial] Sleep completed, setting isReady=true and forceRefresh")
                 await MainActor.run {
                     forceRefresh = UUID()
-                    print("🟡 [InteractiveTutorial] forceRefresh set to: \(forceRefresh)")
                     withAnimation(.easeIn(duration: 0.2)) {
                         isReady = true
                     }
-                    print("🟢 [InteractiveTutorial] isReady is now: \(isReady)")
                 }
             }
         }
@@ -288,7 +279,6 @@ struct InteractiveTutorialView: View {
 
     @ViewBuilder
     private func tutorialContent(geometry: GeometryProxy) -> some View {
-        let _ = print("🔵 [InteractiveTutorial] tutorialContent - geometry.size: \(geometry.size)")
         let itemsSpacing = calculateSpacing(
             containerWidth: geometry.size.width,
             viewMode: mockStore.viewMode
@@ -491,7 +481,6 @@ struct InteractiveTutorialView: View {
     // MARK: - Setup & Animation
 
     private func setupInitialState() {
-        print("🔵 [InteractiveTutorial] setupInitialState - isOnboarding: \(isOnboarding), startingStepType: \(String(describing: startingStepType))")
         if isOnboarding {
             // Onboarding mode: use user's doodle from onboarding flow
             if let drawingData = viewModel?.firstJoodleData {
@@ -531,7 +520,6 @@ struct InteractiveTutorialView: View {
     }
 
     private func animateIn() {
-        print("🔵 [InteractiveTutorial] animateIn - gridOpacity: \(gridOpacity), overlayOpacity: \(overlayOpacity)")
         // Animate grid fade in
         withAnimation(.easeOut(duration: 0.5).delay(0.2)) {
             gridOpacity = 1.0
@@ -558,7 +546,6 @@ struct InteractiveTutorialView: View {
     }
 
     private func scrollToTodayEntry() {
-        print("🔵 [InteractiveTutorial] scrollToTodayEntry - hasScrolledToEntry: \(hasScrolledToEntry), scrollProxy: \(scrollProxy != nil ? "exists" : "nil")")
         guard !hasScrolledToEntry else { return }
         hasScrolledToEntry = true
 
