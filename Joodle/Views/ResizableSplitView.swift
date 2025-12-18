@@ -23,6 +23,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   let hasBottomView: Bool
   let onBottomDismissed: (() -> Void)?
   let onTopViewHeightChange: ((CGFloat) -> Void)?
+  let tutorialMode: Bool
 
   init(
     @ViewBuilder top: () -> Top,
@@ -30,12 +31,14 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     hasBottomView: Bool,
     onBottomDismissed: (() -> Void)? = nil,
     onTopViewHeightChange: ((CGFloat) -> Void)? = nil,
+    tutorialMode: Bool = false
   ) {
     self.topView = top()
     self.bottomView = bottom()
     self.hasBottomView = hasBottomView
     self.onBottomDismissed = onBottomDismissed
     self.onTopViewHeightChange = onTopViewHeightChange
+    self.tutorialMode = tutorialMode
   }
 
   /// The height of the drag detection zone for the drag handle
@@ -83,19 +86,29 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
               RoundedRectangle(cornerRadius: 2)
                 .fill(.appSurface.opacity(0.7))
                 .frame(width: 60, height: 4)
+                .tutorialHighlightAnchor(.centerHandle)
             )
           // Double-tap to navigate to today's date entry
             .onTapGesture(count: 2) {
-              let today = Date()
-              NotificationCenter.default.post(
-                name: .navigateToDateFromShortcut,
-                object: nil,
-                userInfo: ["date": today]
-              )
+              if tutorialMode {
+                // In tutorial mode, only notify tutorial system
+                NotificationCenter.default.post(
+                  name: .tutorialDoubleTapCompleted,
+                  object: nil
+                )
+              } else {
+                // In normal mode, navigate to today's date
+                let today = Date()
+                NotificationCenter.default.post(
+                  name: .navigateToDateFromShortcut,
+                  object: nil,
+                  userInfo: ["date": today]
+                )
+              }
             }
-          // Drag gesture handling for resize handle area
+          // Drag gesture handling for resize handle area (disabled in tutorial mode)
             .gesture(
-              !isDraggable
+              (!isDraggable || tutorialMode)
               ? nil
               : DragGesture()
                 .onChanged { value in
@@ -150,7 +163,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             )
           // Drag gesture handling for bottom container as well
             .gesture(
-              !isDraggable
+              (!isDraggable || tutorialMode)
               ? nil
               : DragGesture()
                 .onChanged { value in

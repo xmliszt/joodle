@@ -25,7 +25,18 @@ struct TutorialSteps {
             endCondition: .scrubEnded
         ),
 
-        // Step 2a: Draw and Edit - tap paint button to open canvas
+        // Step 2: Quick Switch to Today - double-tap center handle
+        TutorialStepConfig(
+            type: .quickSwitchToday,
+            highlightAnchor: .button(id: .centerHandle),
+            tooltip: TutorialTooltip(
+                message: "Double-tap the handle to quickly jump to today's entry",
+                position: .above
+            ),
+            endCondition: .doubleTapCompleted
+        ),
+
+        // Step 3a: Draw and Edit - tap paint button to open canvas
         TutorialStepConfig(
             type: .drawAndEdit,
             highlightAnchor: .button(id: .paintButton),
@@ -34,10 +45,10 @@ struct TutorialSteps {
                 position: .above
             ),
             endCondition: .buttonTapped(id: .paintButton),
-            prerequisiteSetup: .openEntryEditingView
+            prerequisiteSetup: .navigateToToday  // Simulates the double-tap effect from previous step
         ),
 
-        // Step 2b: Draw and Edit - draw on canvas then dismiss
+        // Step 3b: Draw and Edit - draw on canvas then dismiss
         TutorialStepConfig(
             type: .drawAndEdit,
             highlightAnchor: .drawingCanvas,
@@ -48,7 +59,7 @@ struct TutorialSteps {
             endCondition: .viewDismissed(viewId: "drawingCanvas")
         ),
 
-        // Step 3a: Switch View Mode (button tap)
+        // Step 4a: Switch View Mode (button tap)
         TutorialStepConfig(
             type: .switchViewMode,
             highlightAnchor: .button(id: .viewModeButton),
@@ -59,7 +70,7 @@ struct TutorialSteps {
             endCondition: .viewModeChanged(to: .year)
         ),
 
-        // Step 3b: Switch View Mode (pinch gesture)
+        // Step 4b: Switch View Mode (pinch gesture)
         TutorialStepConfig(
             type: .switchViewMode,
             highlightAnchor: .gesture(type: .pinchOut),
@@ -71,7 +82,7 @@ struct TutorialSteps {
             prerequisiteSetup: .clearSelectionAndScroll
         ),
 
-        // Step 4: Switch Year
+        // Step 5: Switch Year
         TutorialStepConfig(
             type: .switchYear,
             highlightAnchor: .button(id: .yearSelector),
@@ -82,7 +93,7 @@ struct TutorialSteps {
             endCondition: .yearChanged
         ),
 
-        // Step 5: Add Reminder
+        // Step 6: Add Reminder
         TutorialStepConfig(
             type: .addReminder,
             highlightAnchor: .button(id: .bellIcon),

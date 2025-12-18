@@ -188,6 +188,9 @@ struct InteractiveTutorialView: View {
         .onReceive(NotificationCenter.default.publisher(for: .tutorialPrerequisiteNeeded)) { notification in
             handlePrerequisite(notification)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .tutorialDoubleTapCompleted)) { _ in
+            handleDoubleTapCompleted()
+        }
         .onChange(of: mockStore.viewMode) { oldValue, newValue in
             handleViewModeChange(from: oldValue, to: newValue)
         }
@@ -384,7 +387,8 @@ struct InteractiveTutorialView: View {
                 hasBottomView: mockStore.selectedDateItem != nil,
                 onBottomDismissed: {
                     mockStore.clearSelection()
-                }
+                },
+                tutorialMode: true
             )
             .ignoresSafeArea(.container, edges: .bottom)
 
@@ -496,6 +500,10 @@ struct InteractiveTutorialView: View {
             case .scrubbing:
                 break // Just need the grid with today's entry visible
 
+            case .quickSwitchToday:
+                // Need bottom view visible so center handle is shown
+                mockStore.selectDate(Date())
+
             case .drawAndEdit:
                 // First sub-step needs EntryEditingView open to show paint button
                 mockStore.selectDate(Date())
@@ -583,6 +591,16 @@ struct InteractiveTutorialView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 scrollToTodayEntry()
             }
+
+        case .navigateToToday:
+            // Simulate the effect of double-tapping the center handle
+            // Scroll to today's entry and select it
+            hasScrolledToEntry = false
+            scrollToTodayEntry()
+            // Small delay to let scroll complete, then select today
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                mockStore.selectDate(Date())
+            }
         }
     }
 
@@ -653,6 +671,14 @@ struct InteractiveTutorialView: View {
                 // and after it finishes, coordinator.isActive will become false
                 coordinator.advance()
             }
+        }
+    }
+
+    private func handleDoubleTapCompleted() {
+        guard let step = coordinator.currentStep else { return }
+
+        if case .doubleTapCompleted = step.endCondition {
+            _ = coordinator.checkEndCondition(.doubleTapCompleted)
         }
     }
 

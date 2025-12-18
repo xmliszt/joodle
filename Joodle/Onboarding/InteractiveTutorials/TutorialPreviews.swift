@@ -496,6 +496,7 @@ private func endDescription(_ condition: TutorialEndCondition) -> String {
     case .pinchGestureCompleted: return "Pinch Done"
     case .yearChanged: return "Year Changes"
     case .sheetDismissed: return "Sheet Closes"
+    case .doubleTapCompleted: return "Double Tap"
     }
 }
 

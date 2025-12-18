@@ -341,6 +341,8 @@ struct TutorialDebugOverlay: View {
             return "sheetClosed"
         case .buttonTapped(id: let id):
           return "buttonTapped:\(id)"
+        case .doubleTapCompleted:
+          return "doubleTap"
         }
     }
 
@@ -353,7 +355,9 @@ struct TutorialDebugOverlay: View {
         case .openEntryEditingView:
             return "openEntry"
         case .clearSelectionAndScroll:
-          return "clearSelection"
+            return "clearSelection"
+        case .navigateToToday:
+            return "navToday"
         }
     }
 }

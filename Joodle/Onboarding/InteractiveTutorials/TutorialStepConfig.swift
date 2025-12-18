@@ -12,6 +12,7 @@ import SwiftUI
 /// Defines the types of tutorial steps available
 enum TutorialStepType: String, CaseIterable, Identifiable {
     case scrubbing
+    case quickSwitchToday  // Double-tap center handle to navigate to today
     case drawAndEdit       // Combined: open canvas + draw/edit (replaces openCanvas + drawOnCanvas)
     case switchViewMode
     case switchYear
@@ -22,6 +23,7 @@ enum TutorialStepType: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .scrubbing: return "Browse Your Joodles"
+        case .quickSwitchToday: return "Quick Travel to Today"
         case .drawAndEdit: return "Draw and Edit Joodle"
         case .switchViewMode: return "Change View Mode"
         case .switchYear: return "Navigate Years"
@@ -32,6 +34,7 @@ enum TutorialStepType: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .scrubbing: return "hand.draw"
+        case .quickSwitchToday: return "hand.tap"
         case .drawAndEdit: return "paintbrush.pointed"
         case .switchViewMode: return "rectangle.compress.vertical"
         case .switchYear: return "calendar"
@@ -83,6 +86,7 @@ enum TutorialButtonId: String {
     case viewModeButton = "tutorial.viewModeButton"
     case yearSelector = "tutorial.yearSelector"
     case bellIcon = "tutorial.bellIcon"
+    case centerHandle = "tutorial.centerHandle"
 }
 
 // MARK: - End Condition
@@ -96,6 +100,7 @@ enum TutorialEndCondition: Equatable {
     case pinchGestureCompleted
     case yearChanged
     case sheetDismissed
+    case doubleTapCompleted                   // When double-tap gesture completes
 }
 
 // MARK: - Prerequisite
@@ -106,6 +111,7 @@ enum TutorialPrerequisite {
     case populateAnniversaryEntry
     case openEntryEditingView
     case clearSelectionAndScroll  // Deselect entry and scroll grid
+    case navigateToToday          // Scroll to today and select it (simulates double-tap effect)
 }
 
 // MARK: - Tooltip Configuration

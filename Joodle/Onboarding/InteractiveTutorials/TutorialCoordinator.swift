@@ -13,6 +13,7 @@ import Combine
 extension Notification.Name {
     static let tutorialPrerequisiteNeeded = Notification.Name("tutorialPrerequisiteNeeded")
     static let tutorialStepCompleted = Notification.Name("tutorialStepCompleted")
+    static let tutorialDoubleTapCompleted = Notification.Name("tutorialDoubleTapCompleted")
 }
 
 // MARK: - Tutorial Coordinator
@@ -203,6 +204,9 @@ class TutorialCoordinator: ObservableObject {
         case (.sheetDismissed, .sheetDismissed):
             shouldAdvance = true
 
+        case (.doubleTapCompleted, .doubleTapCompleted):
+            shouldAdvance = true
+
         default:
             shouldAdvance = false
         }
@@ -239,6 +243,7 @@ enum TutorialEvent: Equatable {
     case pinchGestureCompleted
     case yearChanged
     case sheetDismissed
+    case doubleTapCompleted
 }
 
 // MARK: - Preview Extensions
@@ -301,6 +306,9 @@ enum PreviewMockFrames {
         // Entry editing buttons
         TutorialButtonId.paintButton.rawValue: CGRect(x: 340, y: 520, width: 44, height: 44),
         TutorialButtonId.bellIcon.rawValue: CGRect(x: 30, y: 520, width: 44, height: 44),
+
+        // Split view center handle
+        TutorialButtonId.centerHandle.rawValue: CGRect(x: 166, y: 426, width: 60, height: 4),
 
         // Grid entries
         "gridEntry.0": CGRect(x: 172, y: 320, width: 48, height: 48), // Today
