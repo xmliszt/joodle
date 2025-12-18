@@ -141,12 +141,14 @@ struct DoodleRendererView: View {
         )
         .opacity(dotStyle.opacity)
       } else if let thumbnailData = thumbnail,
-                let uiImage = UIImage(data: thumbnailData) {
+                let uiImage = UIImage(data: thumbnailData)?.withRenderingMode(.alwaysTemplate) {
         // Fallback to thumbnail image if available
+        // Use template rendering mode so the image adapts to the stroke color
         Image(uiImage: uiImage)
           .resizable()
           .aspectRatio(contentMode: .fit)
           .frame(width: size * 2, height: size * 2)
+          .foregroundColor(strokeColor)
           .opacity(dotStyle.opacity)
       } else {
         // Fallback to simple circle dot
