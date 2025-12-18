@@ -118,7 +118,10 @@ struct PageIndicatorView: View {
 /// Single image: static display. Multiple images: horizontal carousel with paging.
 struct ScreenshotCarouselView: View {
     let screenshots: [ScreenshotItem]
+    var autoScrollInterval: TimeInterval = 3.0
+
     @State private var currentIndex = 0
+    @State private var autoScrollTimer: Timer?
 
     var body: some View {
         if screenshots.isEmpty {
@@ -135,11 +138,43 @@ struct ScreenshotCarouselView: View {
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
+                .onAppear {
+                    startAutoScroll()
+                }
+                .onDisappear {
+                    stopAutoScroll()
+                }
+                .onChange(of: currentIndex) { _, _ in
+                    // Reset timer when user manually swipes
+                    restartAutoScroll()
+                }
 
                 // Custom page indicators
                 PageIndicatorView(totalPages: screenshots.count, currentPage: currentIndex)
             }
         }
+    }
+
+    // MARK: - Auto-scroll
+
+    private func startAutoScroll() {
+        guard screenshots.count > 1, autoScrollInterval > 0 else { return }
+
+        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: autoScrollInterval, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                currentIndex = (currentIndex + 1) % screenshots.count
+            }
+        }
+    }
+
+    private func stopAutoScroll() {
+        autoScrollTimer?.invalidate()
+        autoScrollTimer = nil
+    }
+
+    private func restartAutoScroll() {
+        stopAutoScroll()
+        startAutoScroll()
     }
 }
 
@@ -148,7 +183,7 @@ struct ScreenshotCarouselView: View {
 #Preview("Single Portrait Screenshot") {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
-            image: Image("Onboarding/WidgetsHomeScreen1"),
+            image: Image("Onboarding/WidgetHomeScreen1"),
             dots: [TapDot(x: 300, y: 167)]
         )
     ])
@@ -160,11 +195,11 @@ struct ScreenshotCarouselView: View {
 #Preview("Multiple Screenshots Carousel") {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
-            image: Image("Onboarding/WidgetsHomeScreen1"),
+            image: Image("Onboarding/WidgetHomeScreen1"),
             dots: [TapDot(x: 525, y: 67)]
         ),
         ScreenshotItem(
-            image: Image("Onboarding/WidgetsHomeScreen1")
+            image: Image("Onboarding/WidgetHomeScreen1")
         )
     ])
     .padding(.horizontal, 24)
@@ -175,7 +210,7 @@ struct ScreenshotCarouselView: View {
 #Preview("Landscape Screenshot (Standby)") {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
-            image: Image("Onboarding/WidgetsHomeScreen1"),
+            image: Image("Onboarding/WidgetHomeScreen1"),
             orientation: .landscape
         )
     ])
@@ -204,7 +239,7 @@ struct ScreenshotCarouselView: View {
 #Preview("Screenshot with Multiple Dots") {
     ScreenshotCarouselView(screenshots: [
         ScreenshotItem(
-            image: Image("Onboarding/WidgetsHomeScreen1"),
+            image: Image("Onboarding/WidgetHomeScreen1"),
             dots: [
                 TapDot(x: 525, y: 67),
                 TapDot(x: 75, y: 67)

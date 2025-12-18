@@ -14,33 +14,38 @@ struct FeatureIntroStepView: View {
     let buttonLabel: String
     let onContinue: () -> Void
     var onBack: (() -> Void)? = nil
+    var autoScrollInterval: TimeInterval = 3.0
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            VStack(spacing: 32) {
+            VStack(spacing: 16) {
                 // Title at the top
                 Text(title)
                     .font(.title2.bold())
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-                    .padding(.top, 60) // Space for back button
+                    .padding(.vertical, 16) // Space for back button
 
                 // Screenshot carousel - takes available space
-                ScreenshotCarouselView(screenshots: screenshots)
+                ScreenshotCarouselView(
+                    screenshots: screenshots,
+                    autoScrollInterval: autoScrollInterval
+                )
 
-                // Description below screenshots
-                Text(description)
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-                    .padding(.horizontal, 24)
+              
+                VStack (spacing: 32) {
+                  // Description below screenshots
+                  Text(description)
+                      .font(.body)
+                      .foregroundColor(.secondary)
+                      .multilineTextAlignment(.center)
+                      .lineSpacing(4)
+                      .padding(.horizontal, 24)
 
-                Spacer()
-
-                // Continue button at bottom
-                OnboardingButtonView(label: buttonLabel) {
-                    onContinue()
+                  // Continue button at bottom
+                  OnboardingButtonView(label: buttonLabel) {
+                      onContinue()
+                  }
                 }
             }
 
@@ -68,7 +73,7 @@ struct FeatureIntroStepView: View {
         description: "Select any day to create or edit the Joodle, and add a note",
         screenshots: [
             ScreenshotItem(
-                image: Image("Onboarding/WidgetsHomeScreen1")
+                image: Image("Onboarding/WidgetHomeScreen1")
             )
         ],
         buttonLabel: "Next",
@@ -83,10 +88,10 @@ struct FeatureIntroStepView: View {
         description: "Tap here to switch between regular and year-at-a-glance view",
         screenshots: [
             ScreenshotItem(
-                image: Image("Onboarding/WidgetsHomeScreen1")
+                image: Image("Onboarding/WidgetHomeScreen1")
             ),
             ScreenshotItem(
-                image: Image("Onboarding/WidgetsHomeScreen1")
+                image: Image("Onboarding/WidgetHomeScreen1")
             )
         ],
         buttonLabel: "Got it",
@@ -103,7 +108,7 @@ struct FeatureIntroStepView: View {
             ScreenshotItem(image: Image("Onboarding/WidgetsHomeScreen1")),
             ScreenshotItem(image: Image("Onboarding/WidgetsLockScreen")),
             ScreenshotItem(
-                image: Image("Onboarding/WidgetsStandby1"),
+                image: Image("Onboarding/WidgetStandby1"),
                 orientation: .landscape
             )
         ],
@@ -118,10 +123,10 @@ struct FeatureIntroStepView: View {
         description: "Share your entire year from the minimized view, or share individual days from the entry sheet",
         screenshots: [
             ScreenshotItem(
-                image: Image("Onboarding/WidgetsHomeScreen1")
+                image: Image("Onboarding/WidgetHomeScreen1")
             ),
             ScreenshotItem(
-                image: Image("Onboarding/WidgetsHomeScreen1")
+                image: Image("Onboarding/WidgetHomeScreen1")
             )
         ],
         buttonLabel: "Next",
