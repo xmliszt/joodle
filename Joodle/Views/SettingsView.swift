@@ -218,21 +218,41 @@ struct SettingsView: View {
   @ViewBuilder
   private var defaultViewSection: some View {
     Section("Default View") {
-      if #available(iOS 26.0, *) {
-        Picker("View Mode", selection: viewModeBinding) {
-          ForEach(ViewMode.allCases, id: \.self) { mode in
-            Text(mode.displayName).tag(mode)
-          }
+      VStack(spacing: 0) {
+        // Preview image with morph transition
+        ZStack {
+          Image("Others/MinimizedView")
+            .resizable()
+            .scaledToFit()
+            .offset(y: userPreferences.defaultViewMode == .now ? 300 : 10)
+
+          Image("Others/NormalView")
+            .resizable()
+            .scaledToFit()
+            .offset(y: userPreferences.defaultViewMode == .now ? 10 : 300)
         }
-        .pickerStyle(.palette)
-        .glassEffect(.regular.interactive())
-      } else {
-        Picker("View Mode", selection: viewModeBinding) {
-          ForEach(ViewMode.allCases, id: \.self) { mode in
-            Text(mode.displayName).tag(mode)
+        .frame(maxWidth: .infinity)
+        .frame(height: 300)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: userPreferences.defaultViewMode)
+
+        // Picker
+        if #available(iOS 26.0, *) {
+          Picker("View Mode", selection: viewModeBinding) {
+            ForEach(ViewMode.allCases, id: \.self) { mode in
+              Text(mode.displayName).tag(mode)
+            }
           }
+          .pickerStyle(.palette)
+          .glassEffect(.regular.interactive())
+        } else {
+          Picker("View Mode", selection: viewModeBinding) {
+            ForEach(ViewMode.allCases, id: \.self) { mode in
+              Text(mode.displayName).tag(mode)
+            }
+          }
+          .pickerStyle(.palette)
         }
-        .pickerStyle(.palette)
       }
     }
   }
