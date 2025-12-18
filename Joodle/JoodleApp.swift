@@ -390,21 +390,14 @@ struct JoodleApp: App {
                 handleWidgetURL(url)
               }
               .onReceive(NotificationCenter.default.publisher(for: .navigateToDateFromShortcut)) { notification in
-                // Handle navigation from App Shortcut (Siri/Spotlight)
-                if let date = notification.userInfo?["date"] as? Date {
-                  selectedDateFromWidget = date
-                } else {
-                  // Fallback to today's date
-                  selectedDateFromWidget = Date()
-                }
+                // Handle navigation from App Shortcut (Siri/Spotlight) or push notifications
+                let date = (notification.userInfo?["date"] as? Date) ?? Date()
+                NavigationHelper.navigateToDate(date, selectedDateBinding: $selectedDateFromWidget)
               }
               .onReceive(NotificationCenter.default.publisher(for: .dismissToRootAndNavigate)) { _ in
                 // Dismiss any presented sheets (e.g., paywall from Settings)
-                // ContentView handles dismissing navigation and navigating to the date
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let rootViewController = windowScene.windows.first?.rootViewController {
-                  rootViewController.dismiss(animated: true)
-                }
+                NavigationHelper.dismissAllPresentedViews()
+                Haptic.play()
               }
               .sheet(isPresented: $showPaywallFromWidget) {
                 StandalonePaywallView()
@@ -499,7 +492,7 @@ struct JoodleApp: App {
       if pathComponents.count >= 2,
          let timestamp = TimeInterval(pathComponents[1]) {
         let date = Date(timeIntervalSince1970: timestamp)
-        selectedDateFromWidget = date
+        NavigationHelper.navigateToDate(date, selectedDateBinding: $selectedDateFromWidget)
       }
     }
   }

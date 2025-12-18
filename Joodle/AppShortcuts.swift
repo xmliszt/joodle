@@ -114,15 +114,6 @@ struct OpenJoodleIntent: AppIntent {
 }
 
 // MARK: - App Shortcuts Provider
-
-/// Provides App Shortcuts that appear in Spotlight and Siri
-// MARK: - Notification Extension
-
-extension Notification.Name {
-  static let navigateToDateFromShortcut = Notification.Name("navigateToDateFromShortcut")
-  static let dismissToRootAndNavigate = Notification.Name("dismissToRootAndNavigate")
-}
-
 struct JoodleShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(

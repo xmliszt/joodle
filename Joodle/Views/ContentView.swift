@@ -374,15 +374,22 @@ struct ContentView: View {
       // Update selected year if needed
       let calendar = Calendar.current
       let year = calendar.component(.year, from: date)
-      if year != selectedYear {
+      let yearChanged = year != selectedYear
+      if yearChanged {
         selectedYear = year
       }
 
-      // Find and select the date item
-      if let item = itemsInYear.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          selectDateItem(item: item, scrollProxy: scrollProxy)
-        }
+      // Calculate item ID directly from date (ID = timestamp of start of day)
+      // This avoids dependency on itemsInYear which may not be updated yet after year change
+      let startOfDay = calendar.startOfDay(for: date)
+      let itemId = "\(Int(startOfDay.timeIntervalSince1970))"
+      let dateItem = DateItem(id: itemId, date: startOfDay)
+
+      // Use longer delay if year changed to allow view to re-render with new items
+      let delay = yearChanged ? 0.3 : 0.1
+      DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+        selectedDateItem = dateItem
+        scrollToRelevantDate(itemId: dateItem.id, scrollProxy: scrollProxy, anchor: .center)
       }
     }
   }
