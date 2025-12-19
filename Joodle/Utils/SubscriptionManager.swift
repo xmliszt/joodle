@@ -14,9 +14,13 @@ import SwiftData
 class SubscriptionManager: ObservableObject {
     static let shared = SubscriptionManager()
 
-    @Published var isSubscribed: Bool {
+    // MARK: - Stored Properties (persisted to UserDefaults)
+
+    /// Whether user has an active subscription - computed from stored expiration date
+    @Published private(set) var isSubscribed: Bool = false {
         didSet {
-            UserDefaults.standard.set(isSubscribed, forKey: "isJoodleSuper")
+            // Don't trigger side effects during initialization to avoid circular dependency
+            guard !isInitializing else { return }
 
             // Handle subscription state changes
             if oldValue && !isSubscribed {
@@ -28,34 +32,64 @@ class SubscriptionManager: ObservableObject {
     }
 
     @Published var isInTrialPeriod: Bool = false
-    @Published var subscriptionExpirationDate: Date?
-    @Published var willAutoRenew: Bool = true
+    @Published var willAutoRenew: Bool = false
 
     /// Flag indicating subscription just expired (for UI alerts)
     @Published var subscriptionJustExpired: Bool = false
 
+    /// The stored subscription expiration date - this is the source of truth for local checks
+    var subscriptionExpirationDate: Date? {
+        get {
+            UserDefaults.standard.object(forKey: "subscriptionExpirationDate") as? Date
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "subscriptionExpirationDate")
+        }
+    }
+
+    /// The stored product ID of the current subscription
+    private var storedProductID: String? {
+        get {
+            UserDefaults.standard.string(forKey: "subscriptionProductID")
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "subscriptionProductID")
+        }
+    }
+
     private var cancellables = Set<AnyCancellable>()
     private var expirationCheckTimer: Timer?
 
+    /// Flag to prevent triggering side effects during initialization
+    private var isInitializing = true
+
+    // MARK: - Initialization
+
     private init() {
-        self.isSubscribed = UserDefaults.standard.bool(forKey: "isJoodleSuper")
+        // Set initial subscription state from stored date WITHOUT triggering didSet side effects
+        if let expirationDate = subscriptionExpirationDate, Date() < expirationDate {
+            isSubscribed = true
+        }
+
+        // Now allow side effects
+        isInitializing = false
 
         // Start monitoring subscription status
         Task {
-            await updateSubscriptionStatus()
+            // Refresh from StoreKit on launch to get latest status
+            await refreshSubscriptionFromStoreKit()
 
             // Check iCloud sync status on launch - disable if not subscribed
             await checkAndDisableCloudSyncIfNeeded()
 
             // Check premium theme color on launch - reset to default if not subscribed
             await checkAndResetPremiumThemeColorIfNeeded()
-            // Note: Widget subscription status is now updated inside updateSubscriptionStatus()
         }
 
-        // Set up periodic expiration check
+        // Set up periodic expiration check (local check, very lightweight)
         setupExpirationCheck()
 
-        // Listen for app becoming active to refresh status
+        // Listen for app becoming active to refresh status from StoreKit
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
@@ -106,80 +140,130 @@ class SubscriptionManager: ObservableObject {
         isSubscribed ? Int.max : Self.freeJoodlesAllowed
     }
 
-    // MARK: - Update Status
+    // MARK: - Local Subscription Check
 
-    func updateSubscriptionStatus() async {
+    /// Updates isSubscribed based on the stored expiration date (no network call)
+    private func updateSubscribedStateFromStoredDate() {
+        if let expirationDate = subscriptionExpirationDate {
+            let wasSubscribed = isSubscribed
+            let nowSubscribed = Date() < expirationDate
+
+            // Only update if changed to avoid unnecessary didSet triggers
+            if wasSubscribed != nowSubscribed {
+                isSubscribed = nowSubscribed
+            }
+        } else {
+            if isSubscribed {
+                isSubscribed = false
+            }
+        }
+    }
+
+    // MARK: - StoreKit Refresh
+
+    /// Refreshes subscription status from StoreKit and updates stored expiration date
+    func refreshSubscriptionFromStoreKit() async {
         let storeManager = StoreKitManager.shared
 
-        // First ensure products are loaded
+        // Ensure products are loaded
         if storeManager.products.isEmpty {
             await storeManager.loadProducts()
         }
 
-        // Update purchased products from StoreKit
+        // Query StoreKit for current subscription status
         await storeManager.updatePurchasedProducts()
 
-        // Sync our state with StoreKitManager
-        self.isSubscribed = storeManager.hasActiveSubscription
-        self.isInTrialPeriod = storeManager.isInTrialPeriod
-        self.subscriptionExpirationDate = storeManager.subscriptionExpirationDate
-        self.willAutoRenew = storeManager.willAutoRenew
+        // Update our stored state from StoreKit
+        if storeManager.hasActiveSubscription {
+            // Store the expiration date and product ID
+            subscriptionExpirationDate = storeManager.subscriptionExpirationDate
+            storedProductID = storeManager.currentProductID
+            isInTrialPeriod = storeManager.isInTrialPeriod
+            willAutoRenew = storeManager.willAutoRenew
 
-        // Note: handleSubscriptionLost() and handleSubscriptionGained() are called
-        // automatically by the didSet observer on isSubscribed when the value changes
+            // Update subscribed state
+            if !isSubscribed {
+                isSubscribed = true
+            }
 
-        // Always update widget subscription status after StoreKit refresh
-        // This ensures widgets have the latest subscription state
+            print("✅ Subscription active - expires: \(storeManager.subscriptionExpirationDate?.formatted() ?? "N/A")")
+        } else {
+            // StoreKit says no active subscription
+            // Check if our stored date has also expired
+            if let storedExpiration = subscriptionExpirationDate, Date() >= storedExpiration {
+                // Both StoreKit and local date say expired - clear everything
+                isInTrialPeriod = false
+                willAutoRenew = false
+
+                if isSubscribed {
+                    isSubscribed = false
+                }
+
+                print("❌ Subscription expired")
+            } else if subscriptionExpirationDate != nil {
+                // StoreKit returned empty but we have a valid stored date
+                // This can happen during StoreKit race conditions - trust the stored date
+                print("⚠️ StoreKit returned no subscription but stored date still valid")
+            }
+        }
+
+        // Update widget subscription status
         WidgetHelper.shared.updateSubscriptionStatus()
+    }
+
+    /// Public method for external callers (maintains API compatibility)
+    func updateSubscriptionStatus() async {
+        await refreshSubscriptionFromStoreKit()
     }
 
     // MARK: - Expiration Monitoring
 
     private func setupExpirationCheck() {
-        // Check every 60 seconds if subscription has expired
-        expirationCheckTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        // Check every 30 seconds if subscription has expired (local check only)
+        expirationCheckTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.checkExpiration()
             }
         }
     }
 
+    /// Local check - just compares current time with stored expiration date
     private func checkExpiration() {
         guard isSubscribed else { return }
 
         if let expirationDate = subscriptionExpirationDate {
-            if Date() > expirationDate {
-                // Subscription has expired - refresh from StoreKit to confirm
+            if Date() >= expirationDate {
+                // Subscription has expired locally - refresh from StoreKit to confirm
+                // (in case of renewal)
                 Task {
-                    await updateSubscriptionStatus()
+                    await refreshSubscriptionFromStoreKit()
                 }
             }
         }
     }
 
     @objc private func appDidBecomeActive() {
-        // Refresh subscription status when app becomes active
+        // Refresh subscription status from StoreKit when app becomes active
         Task {
-            await updateSubscriptionStatus()
+            await refreshSubscriptionFromStoreKit()
         }
     }
 
     @objc private func appWillResignActive() {
         // Update widget subscription status when app goes to background
-        // This ensures widget has fresh data even if the app isn't opened for a while
         WidgetHelper.shared.updateSubscriptionStatus()
     }
 
     // MARK: - Subscription State Change Handling
 
     private func handleSubscriptionGained() {
+        print("🎉 Subscription gained!")
+
         // Auto-enable iCloud sync when user upgrades or restores subscription
         if !UserPreferences.shared.isCloudSyncEnabled {
-            // Check if system requirements are met for iCloud sync
             let syncManager = CloudSyncManager.shared
 
             if syncManager.isCloudAvailable && syncManager.systemCloudEnabled {
-                // Check if this is a reinstall with existing iCloud data
                 let cloudStore = NSUbiquitousKeyValueStore.default
                 cloudStore.synchronize()
                 let hadSyncEnabled = cloudStore.bool(forKey: "is_cloud_sync_enabled_backup") ||
@@ -192,17 +276,9 @@ class SubscriptionManager: ObservableObject {
 
                 UserPreferences.shared.isCloudSyncEnabled = true
 
-                // Save sync state to iCloud KVS for future reinstall recovery
                 cloudStore.set(true, forKey: "is_cloud_sync_enabled_backup")
                 cloudStore.set(true, forKey: "cloud_sync_was_enabled")
                 cloudStore.synchronize()
-
-                // Note: Container was already created at app launch
-                // ModelContainerManager.needsRestartForSyncChange will be checked by UI
-            } else {
-                print("   iCloud sync not auto-enabled: system requirements not met")
-                print("   isCloudAvailable: \(syncManager.isCloudAvailable)")
-                print("   systemCloudEnabled: \(syncManager.systemCloudEnabled)")
             }
         }
 
@@ -224,25 +300,18 @@ class SubscriptionManager: ObservableObject {
         if currentColor.isPremium {
             print("   Resetting premium theme color '\(currentColor.displayName)' to default '\(ThemeColor.defaultColor.displayName)'")
             UserPreferences.shared.accentColor = ThemeColor.defaultColor
-            // Update widgets with the new theme color
             WidgetHelper.shared.updateThemeColor()
         }
 
-        // Track if we need to recreate the container (which destroys and recreates views)
         let needsContainerRecreation = UserPreferences.shared.isCloudSyncEnabled
 
-        // Disable iCloud sync if it was enabled
         if needsContainerRecreation {
             UserPreferences.shared.isCloudSyncEnabled = false
 
-            // Also clear the iCloud KVS sync state so reinstall won't auto-enable
-            // without a valid subscription
             let cloudStore = NSUbiquitousKeyValueStore.default
             cloudStore.set(false, forKey: "is_cloud_sync_enabled_backup")
             cloudStore.set(false, forKey: "cloud_sync_was_enabled")
             cloudStore.synchronize()
-
-            // Note: ModelContainerManager.needsRestartForSyncChange will be checked by UI
 
             print("   iCloud sync disabled and cloud state cleared")
         }
@@ -256,9 +325,7 @@ class SubscriptionManager: ObservableObject {
             object: nil
         )
 
-        // Set the expired flag after a delay if container recreation is needed
-        // This allows the view hierarchy to be recreated before showing the alert
-        // Otherwise the alert would be dismissed when the view is destroyed
+        // Set the expired flag
         if needsContainerRecreation {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?.subscriptionJustExpired = true
@@ -268,220 +335,193 @@ class SubscriptionManager: ObservableObject {
         }
     }
 
-    /// Check and reset premium theme color if user doesn't have active subscription
-    /// Called on app launch to ensure premium colors are not used by non-subscribers
-    private func checkAndResetPremiumThemeColorIfNeeded() async {
+    // MARK: - Theme Color Check
+
+    func checkAndResetPremiumThemeColorIfNeeded() async {
+        guard !isSubscribed else { return }
+
         let currentColor = UserPreferences.shared.accentColor
-        if currentColor.isPremium && !isSubscribed {
-            print("⚠️ Premium theme color '\(currentColor.displayName)' was selected but user is not subscribed - resetting to default")
-
-            await MainActor.run {
-                UserPreferences.shared.accentColor = ThemeColor.defaultColor
-                // Update widgets with the new theme color
-                WidgetHelper.shared.updateThemeColor()
-            }
+        if currentColor.isPremium {
+            print("🎨 Non-subscriber using premium color '\(currentColor.displayName)' - resetting to default")
+            UserPreferences.shared.accentColor = ThemeColor.defaultColor
+            WidgetHelper.shared.updateThemeColor()
         }
     }
 
-    /// Check and disable iCloud sync if user doesn't have active subscription
-    /// Called on app launch to ensure sync is disabled for non-subscribers
-    private func checkAndDisableCloudSyncIfNeeded() async {
-        // If iCloud sync is enabled but user is not subscribed, disable it
-        if UserPreferences.shared.isCloudSyncEnabled && !isSubscribed {
-            print("⚠️ iCloud sync was enabled but user is not subscribed - disabling")
+    // MARK: - Cloud Sync Check
 
-            await MainActor.run {
-                UserPreferences.shared.isCloudSyncEnabled = false
+    func checkAndDisableCloudSyncIfNeeded() async {
+        guard !isSubscribed else { return }
 
-                // Also clear the iCloud KVS sync state so reinstall won't auto-enable
-                // without a valid subscription
-                let cloudStore = NSUbiquitousKeyValueStore.default
-                cloudStore.set(false, forKey: "is_cloud_sync_enabled_backup")
-                cloudStore.set(false, forKey: "cloud_sync_was_enabled")
-                cloudStore.synchronize()
+        if UserPreferences.shared.isCloudSyncEnabled {
+            print("☁️ Non-subscriber has iCloud sync enabled - disabling")
+            UserPreferences.shared.isCloudSyncEnabled = false
 
-                // Note: ModelContainerManager.needsRestartForSyncChange will be checked by UI
-            }
+            let cloudStore = NSUbiquitousKeyValueStore.default
+            cloudStore.set(false, forKey: "is_cloud_sync_enabled_backup")
+            cloudStore.set(false, forKey: "cloud_sync_was_enabled")
+            cloudStore.synchronize()
         }
     }
 
-    /// Call this after showing the expiry alert to the user
+    /// Reset the expired flag (call after user acknowledges)
     func acknowledgeExpiry() {
         subscriptionJustExpired = false
     }
 
-    // MARK: - Computed Properties
+    // MARK: - Status Message
 
     var subscriptionStatusMessage: String? {
         guard isSubscribed else { return nil }
 
+        if !willAutoRenew {
+            if let expirationDate = subscriptionExpirationDate {
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                return "Expires \(formatter.string(from: expirationDate))"
+            }
+            return "Subscription ending"
+        }
+
         if isInTrialPeriod {
-            if let expiration = subscriptionExpirationDate {
-                let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: expiration).day ?? 0
-                if daysLeft <= 1 {
-                    return "Free trial ends today"
-                }
-                return "Free trial ends in \(daysLeft) days"
-            } else {
-                return "You're on a free trial"
+            if let expirationDate = subscriptionExpirationDate {
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                return "Trial ends \(formatter.string(from: expirationDate))"
             }
-        } else if !willAutoRenew {
-            if let expiration = subscriptionExpirationDate {
-                let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: expiration).day ?? 0
-                if daysLeft <= 0 {
-                    return "Subscription expires today"
-                } else if daysLeft == 1 {
-                    return "Subscription expires tomorrow"
-                }
-                return "Subscription ends \(formatExpirationDate(expiration))"
-            } else {
-                return "Subscription will not renew"
-            }
+            return "Free trial active"
         }
 
         return nil
     }
 
-    private func formatExpirationDate(_ date: Date) -> String {
+    func formatExpirationDate(_ date: Date?) -> String? {
+        guard let date = date else { return nil }
         let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        formatter.timeZone = TimeZone.current
-        let timeZoneAbbreviation = formatter.timeZone.abbreviation() ?? ""
-        return "\(formatter.string(from: date)) (\(timeZoneAbbreviation))"
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
 
     var shouldShowRenewalWarning: Bool {
         guard isSubscribed else { return false }
 
-        // Show warning if in trial
+        if !willAutoRenew {
+            return true
+        }
+
         if isInTrialPeriod {
-            if let expiration = subscriptionExpirationDate {
-                let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: expiration).day ?? 0
-                return daysLeft <= 3
-            }
-            return false
-        }
-
-        // Show warning if subscription won't renew
-        guard !willAutoRenew else { return false }
-
-        if let expiration = subscriptionExpirationDate {
-            let daysUntilExpiration = Calendar.current.dateComponents([.day], from: Date(), to: expiration).day ?? 0
-            return daysUntilExpiration <= 7
-        }
-
-        return true
-    }
-
-    /// Check if user is about to lose access (for showing warnings)
-    var isAccessAtRisk: Bool {
-        guard isSubscribed else { return false }
-
-        if !willAutoRenew || isInTrialPeriod {
-            if let expiration = subscriptionExpirationDate {
-                let daysLeft = Calendar.current.dateComponents([.day], from: Date(), to: expiration).day ?? 0
-                return daysLeft <= 3
+            if let expirationDate = subscriptionExpirationDate {
+                let daysUntilExpiry = Calendar.current.dateComponents([.day], from: Date(), to: expirationDate).day ?? 0
+                return daysUntilExpiry <= 3
             }
         }
 
         return false
     }
 
-    // MARK: - Manual Subscription Control (for testing/debugging)
+    var isAccessAtRisk: Bool {
+        guard isSubscribed else { return false }
 
+        if !willAutoRenew {
+            if let expirationDate = subscriptionExpirationDate {
+                let daysUntilExpiry = Calendar.current.dateComponents([.day], from: Date(), to: expirationDate).day ?? 0
+                return daysUntilExpiry <= 7
+            }
+            return true
+        }
+
+        return false
+    }
+
+    // MARK: - Debug Methods
+
+    #if DEBUG
     func grantSubscription() {
-        self.isSubscribed = true
-        // Update widget subscription status
-        WidgetHelper.shared.updateSubscriptionStatus()
+        // For testing: grant a 1-hour subscription
+        subscriptionExpirationDate = Date().addingTimeInterval(3600)
+        storedProductID = "debug.subscription"
+        isSubscribed = true
     }
 
     func revokeSubscription() {
-        self.isSubscribed = false
-        // Update widget subscription status
-        WidgetHelper.shared.updateSubscriptionStatus()
+        subscriptionExpirationDate = nil
+        storedProductID = nil
+        isSubscribed = false
     }
+    #endif
 
-    // MARK: - Drawing Protection for Initial Sync
+    // MARK: - Joodle Access Helpers
 
-    /// Check if today has a drawing in the current local database and protect it
-    // MARK: - Joodle Limit Helpers
-
-    /// Check if user can create a new Joodle based on their plan
     func canCreateJoodle(currentTotalCount: Int) -> Bool {
-        if hasUnlimitedJoodles {
+        if isSubscribed {
             return true
         }
-        return currentTotalCount < maxJoodlesAllowed
+        return currentTotalCount < Self.freeJoodlesAllowed
     }
 
-    /// Get remaining Joodles for free users
     func remainingJoodles(currentTotalCount: Int) -> Int {
-        if hasUnlimitedJoodles {
+        if isSubscribed {
             return Int.max
         }
-        return max(0, maxJoodlesAllowed - currentTotalCount)
+        return max(0, Self.freeJoodlesAllowed - currentTotalCount)
     }
 
-    /// Get total count of Joodles across all entries
     func totalJoodleCount(from entries: [DayEntry]) -> Int {
         return entries.filter { entry in
             entry.drawingData != nil
         }.count
     }
 
-    /// Efficiently get total count of Joodles using ModelContext
     func fetchTotalJoodleCount(in modelContext: ModelContext) -> Int {
         let descriptor = FetchDescriptor<DayEntry>(
-            predicate: #Predicate<DayEntry> { $0.drawingData != nil }
-        )
-
-        do {
-            return try modelContext.fetchCount(descriptor)
-        } catch {
-            print("Failed to fetch Joodle count: \(error)")
-            return 0
-        }
-    }
-
-    /// Efficiently check if user can create a new Joodle using ModelContext
-    func checkAccess(in modelContext: ModelContext) -> Bool {
-        if hasUnlimitedJoodles { return true }
-        return fetchTotalJoodleCount(in: modelContext) < maxJoodlesAllowed
-    }
-
-    /// Efficiently check if a specific Joodle can be edited using ModelContext
-    func canEditJoodle(entry: DayEntry, in modelContext: ModelContext) -> Bool {
-        if hasUnlimitedJoodles { return true }
-
-        // If this entry doesn't have a drawing, it's not a Joodle yet, so we check creation limit
-        guard entry.drawingData != nil else {
-            return checkAccess(in: modelContext)
-        }
-
-        // Count how many Joodles exist before this one to determine its index
-        let targetDateString = entry.dateString
-        let descriptor = FetchDescriptor<DayEntry>(
-            predicate: #Predicate<DayEntry> {
-                $0.drawingData != nil && $0.dateString < targetDateString
+            predicate: #Predicate { entry in
+                entry.drawingData != nil
             }
         )
 
         do {
-            let countBefore = try modelContext.fetchCount(descriptor)
-            return countBefore < maxJoodlesAllowed
+            let count = try modelContext.fetchCount(descriptor)
+            return count
         } catch {
-            print("Failed to check edit access: \(error)")
-            return false
+            print("Error fetching Joodle count: \(error)")
+            return 0
         }
     }
 
-    /// Check if a specific Joodle can be edited (by its index, 0-based)
-    func canEditJoodle(atIndex index: Int) -> Bool {
-        if hasUnlimitedJoodles {
+    func checkAccess(in modelContext: ModelContext) -> Bool {
+        let totalCount = fetchTotalJoodleCount(in: modelContext)
+        return canCreateJoodle(currentTotalCount: totalCount)
+    }
+
+    func canEditJoodle(entry: DayEntry, in modelContext: ModelContext) -> Bool {
+        if isSubscribed {
             return true
         }
-        // Free users can only edit their first N Joodles
-        return index < maxJoodlesAllowed
+
+        let descriptor = FetchDescriptor<DayEntry>(
+            predicate: #Predicate { entry in
+                entry.drawingData != nil
+            },
+            sortBy: [SortDescriptor(\.dateString, order: .forward)]
+        )
+
+        do {
+            let allJoodles = try modelContext.fetch(descriptor)
+            guard let index = allJoodles.firstIndex(where: { $0.id == entry.id }) else {
+                return true
+            }
+            return index < Self.freeJoodlesAllowed
+        } catch {
+            print("Error checking Joodle edit access: \(error)")
+            return true
+        }
+    }
+
+    func canEditJoodle(atIndex index: Int) -> Bool {
+        if isSubscribed {
+            return true
+        }
+        return index < Self.freeJoodlesAllowed
     }
 }

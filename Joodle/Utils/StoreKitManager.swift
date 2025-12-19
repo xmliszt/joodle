@@ -208,8 +208,9 @@ class StoreKitManager: NSObject, ObservableObject {
                 // Check if the transaction is verified
                 let transaction = try checkVerified(verification)
 
-                // Update purchased products
+                // Update purchased products and sync with SubscriptionManager
                 await updatePurchasedProducts()
+                await SubscriptionManager.shared.refreshSubscriptionFromStoreKit()
 
                 // Finish the transaction after we've updated our state
                 await transaction.finish()
@@ -269,6 +270,13 @@ class StoreKitManager: NSObject, ObservableObject {
         var autoRenew = false  // Default to false, will be set to true if we find an active subscription
         var eligibleForIntro = true
         var currentProduct: String?
+
+        // Store previous state to preserve when StoreKit returns inconsistent empty results
+        let previousPurchasedIDs = self.purchasedProductIDs
+        let previousProductID = self.currentProductID
+        let previousExpirationDate = self.subscriptionExpirationDate
+        let previousAutoRenew = self.willAutoRenew
+        let previousInTrial = self.isInTrialPeriod
 
         // Check intro offer eligibility using any subscription product
         if let subscriptionProduct = products.first(where: { $0.subscription != nil }),
@@ -343,6 +351,21 @@ class StoreKitManager: NSObject, ObservableObject {
             }
         }
 
+        // Protection: If StoreKit returned empty but we previously had valid subscription data,
+        // check if the previous expiration date hasn't passed yet - if so, keep previous state
+        let queryReturnedEmpty = purchasedIDs.isEmpty && currentProduct == nil
+        let hadPreviousSubscription = !previousPurchasedIDs.isEmpty && previousProductID != nil
+
+        if queryReturnedEmpty && hadPreviousSubscription {
+            if let prevExpiration = previousExpirationDate, Date() < prevExpiration {
+                // StoreKit returned inconsistent empty results - keep previous state
+                print("⚠️ StoreKit returned empty but previous subscription still valid (expires: \(prevExpiration.formatted())). Keeping previous state.")
+                debugLogger.log(.warning, "StoreKit returned empty", details: "Keeping previous valid state")
+                self.isEligibleForIntroOffer = eligibleForIntro  // Only update intro offer eligibility
+                return
+            }
+        }
+
         self.purchasedProductIDs = purchasedIDs
         self.currentProductID = currentProduct
         self.isInTrialPeriod = inTrial
@@ -393,7 +416,7 @@ class StoreKitManager: NSObject, ObservableObject {
                     await self.updatePurchasedProducts()
 
                     // Notify SubscriptionManager to sync state and update widget
-                    await SubscriptionManager.shared.updateSubscriptionStatus()
+                    await SubscriptionManager.shared.refreshSubscriptionFromStoreKit()
 
                     // Finish the transaction only after successful processing
                     await transaction.finish()
