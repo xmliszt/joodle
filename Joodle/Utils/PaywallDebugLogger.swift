@@ -240,7 +240,7 @@ final class PaywallDebugLogger: ObservableObject {
     #else
     // No-op utility methods in release builds
     @inlinable func clearLogs() {}
-    var exportLogs: String { "" }
+    @inlinable func exportLogs() -> String { "" }
     var diagnosticSummary: String { "" }
     #endif
 }

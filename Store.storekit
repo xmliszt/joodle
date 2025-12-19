@@ -24,13 +24,13 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 787840906.48469305,
+    "_lastSynchronizedDate" : 787842666.43162596,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "SGP",
     "_storeKitErrors" : [
       {
-        "enabled" : true,
+        "enabled" : false,
         "name" : "Load Products"
       },
       {
@@ -88,7 +88,7 @@
           "groupNumber" : 1,
           "internalID" : "6756226596",
           "introductoryOffer" : {
-            "internalID" : "5300349F",
+            "internalID" : "851B1C12",
             "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P1W"
@@ -120,7 +120,7 @@
                 "new",
                 "expired"
               ],
-              "internalID" : "FF3737D2",
+              "internalID" : "3B080ED7",
               "isStackable" : true,
               "numberOfPeriods" : 1,
               "paymentMode" : "free",
@@ -133,7 +133,7 @@
           "groupNumber" : 2,
           "internalID" : "6756226848",
           "introductoryOffer" : {
-            "internalID" : "B7D042C4",
+            "internalID" : "90D32676",
             "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P2W"
