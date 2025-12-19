@@ -271,13 +271,6 @@ class StoreKitManager: NSObject, ObservableObject {
         var eligibleForIntro = true
         var currentProduct: String?
 
-        // Store previous state to preserve when StoreKit returns inconsistent empty results
-        let previousPurchasedIDs = self.purchasedProductIDs
-        let previousProductID = self.currentProductID
-        let previousExpirationDate = self.subscriptionExpirationDate
-        let previousAutoRenew = self.willAutoRenew
-        let previousInTrial = self.isInTrialPeriod
-
         // Check intro offer eligibility using any subscription product
         if let subscriptionProduct = products.first(where: { $0.subscription != nil }),
            let subscription = subscriptionProduct.subscription {

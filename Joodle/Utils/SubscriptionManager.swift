@@ -167,7 +167,7 @@ class SubscriptionManager: ObservableObject {
 
     /// Verify subscription with online check before granting access
     /// Returns true if access should be granted, false otherwise
-    func verifySubscriptionForAccess() async -> Bool {
+    @discardableResult func verifySubscriptionForAccess() async -> Bool {
         // If network is available, always refresh from StoreKit to get latest status
         if isNetworkAvailable {
             await refreshSubscriptionFromStoreKit()

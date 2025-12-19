@@ -65,6 +65,7 @@ struct SubscriptionTestingView: View {
 
         // MARK: - Quick Actions
         Section {
+          #if DEBUG
           Button("Grant Subscription (App Only)") {
             subscriptionManager.grantSubscription()
           }
@@ -74,6 +75,7 @@ struct SubscriptionTestingView: View {
             subscriptionManager.revokeSubscription()
           }
           .disabled(!subscriptionManager.isSubscribed)
+          #endif
 
           Button {
             syncFromStoreKit()

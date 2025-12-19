@@ -234,7 +234,6 @@ class ReminderManager: ObservableObject {
     @discardableResult
     func addReminder(for dateString: String, at date: Date, entryBody: String? = nil) async -> Bool {
         // Debug logging
-        let now = Date()
         let formatter = DateFormatter()
         formatter.dateStyle = .full
         formatter.timeStyle = .long

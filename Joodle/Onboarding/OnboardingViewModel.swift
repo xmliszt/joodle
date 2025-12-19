@@ -127,9 +127,11 @@ class OnboardingViewModel: ObservableObject {
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
 
         // Update subscription status if premium was set during onboarding
+        #if DEBUG
         if isPremium {
             SubscriptionManager.shared.grantSubscription()
         }
+        #endif
 
         // Always save the drawing immediately to local database
         // This ensures the drawing is never lost, regardless of sync state
