@@ -212,6 +212,8 @@ class ReminderManager: ObservableObject {
 
     // MARK: - Reminder Management
 
+    /// Synchronous check - uses cached subscription state
+    /// For critical access points, use canAddReminderWithVerification() first
     func canAddReminder() -> Bool {
         if SubscriptionManager.shared.isSubscribed {
             return true
@@ -219,8 +221,18 @@ class ReminderManager: ObservableObject {
         return reminders.count < maxFreeReminders
     }
 
+    /// Async access check with online verification
+    /// Use this before allowing reminder creation
+    func canAddReminderWithVerification() async -> Bool {
+        let hasAccess = await SubscriptionManager.shared.verifySubscriptionForAccess()
+        if hasAccess {
+            return true
+        }
+        return reminders.count < maxFreeReminders
+    }
+
     @discardableResult
-    func addReminder(for dateString: String, at date: Date, entryBody: String? = nil) -> Bool {
+    func addReminder(for dateString: String, at date: Date, entryBody: String? = nil) async -> Bool {
         // Debug logging
         let now = Date()
         let formatter = DateFormatter()
@@ -228,22 +240,14 @@ class ReminderManager: ObservableObject {
         formatter.timeStyle = .long
         formatter.timeZone = .current
 
-        print("════════════════════════════════════════════")
-        print("📝 [ReminderManager] addReminder called")
-        print("   - dateString: \(dateString)")
-        print("   - requested date: \(formatter.string(from: date))")
-        print("   - current time: \(formatter.string(from: now))")
-        print("   - date timestamp: \(date.timeIntervalSince1970)")
-        print("   - now timestamp: \(now.timeIntervalSince1970)")
-        print("   - difference (seconds): \(date.timeIntervalSince(now))")
-        print("   - is in future: \(date > now)")
-        print("   - timezone: \(TimeZone.current.identifier)")
-
         // Check limit if adding new reminder (not updating existing)
         let isUpdating = reminders.contains(where: { $0.dateString == dateString })
-        if !isUpdating && !canAddReminder() {
-            print("❌ [ReminderManager] Cannot add reminder - limit reached")
-            return false
+        if !isUpdating {
+            let canAdd = await canAddReminderWithVerification()
+            if !canAdd {
+                print("❌ [ReminderManager] Cannot add reminder - limit reached or verification failed")
+                return false
+            }
         }
 
         // Remove existing reminder for this dateString if any
@@ -253,9 +257,6 @@ class ReminderManager: ObservableObject {
         reminders.append(reminder)
         saveReminders()
         scheduleNotification(for: reminder)
-
-        // Verify pending notifications
-        printPendingNotifications()
 
         return true
     }
@@ -298,13 +299,6 @@ class ReminderManager: ObservableObject {
         formatter.timeStyle = .long
         formatter.timeZone = .current
 
-        print("────────────────────────────────────────────")
-        print("🔔 [ReminderManager] scheduleNotification called")
-        print("   - Reminder ID: \(reminder.id)")
-        print("   - Current time: \(formatter.string(from: now))")
-        print("   - Scheduled time: \(formatter.string(from: reminder.reminderDate))")
-        print("   - Time until trigger: \(reminder.reminderDate.timeIntervalSince(now)) seconds")
-
         // Check if the reminder date is in the past
         if reminder.reminderDate <= now {
             print("⚠️ [ReminderManager] WARNING: Reminder date is in the PAST! Skipping notification.")
@@ -320,7 +314,6 @@ class ReminderManager: ObservableObject {
             [.year, .month, .day, .hour, .minute, .second],
             from: reminder.reminderDate
         )
-        print("   - Date components: year=\(components.year ?? 0), month=\(components.month ?? 0), day=\(components.day ?? 0), hour=\(components.hour ?? 0), minute=\(components.minute ?? 0), second=\(components.second ?? 0)")
 
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
         print("   - Next trigger date: \(String(describing: trigger.nextTriggerDate()))")
@@ -333,10 +326,6 @@ class ReminderManager: ObservableObject {
 
         // Check authorization status first
         UNUserNotificationCenter.current().getNotificationSettings { settings in
-            print("   - Authorization status: \(settings.authorizationStatus.rawValue)")
-            print("   - Alert setting: \(settings.alertSetting.rawValue)")
-            print("   - Sound setting: \(settings.soundSetting.rawValue)")
-
             if settings.authorizationStatus != .authorized {
                 print("❌ [ReminderManager] Notifications NOT authorized!")
                 return
@@ -349,23 +338,6 @@ class ReminderManager: ObservableObject {
                     print("✅ [ReminderManager] Notification scheduled successfully for \(reminder.id)")
                 }
             }
-        }
-    }
-
-    /// Debug function to print all pending notifications
-    func printPendingNotifications() {
-        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
-            print("────────────────────────────────────────────")
-            print("📋 [ReminderManager] Pending notifications: \(requests.count)")
-            for request in requests {
-                if let trigger = request.trigger as? UNCalendarNotificationTrigger {
-                    print("   - ID: \(request.identifier)")
-                    print("     Title: \(request.content.title)")
-                    print("     Next trigger: \(String(describing: trigger.nextTriggerDate()))")
-                    print("     Date components: \(trigger.dateComponents)")
-                }
-            }
-            print("════════════════════════════════════════════")
         }
     }
 

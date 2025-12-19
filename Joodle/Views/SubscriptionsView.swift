@@ -108,7 +108,6 @@ struct SubscriptionsView: View {
       }
     }
 
-    await storeManager.updatePurchasedProducts()
     await subscriptionManager.updateSubscriptionStatus()
   }
 

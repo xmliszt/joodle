@@ -9,6 +9,7 @@ import Foundation
 import Combine
 import StoreKit
 import SwiftData
+import Network
 
 @MainActor
 class SubscriptionManager: ObservableObject {
@@ -57,11 +58,27 @@ class SubscriptionManager: ObservableObject {
         }
     }
 
+    /// Last time subscription was successfully verified online with StoreKit
+    private var lastOnlineVerificationDate: Date? {
+        get {
+            UserDefaults.standard.object(forKey: "lastOnlineVerificationDate") as? Date
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "lastOnlineVerificationDate")
+        }
+    }
+
     private var cancellables = Set<AnyCancellable>()
     private var expirationCheckTimer: Timer?
 
     /// Flag to prevent triggering side effects during initialization
     private var isInitializing = true
+
+    /// Minimum interval between StoreKit refreshes (in seconds) to avoid rate limiting
+    private let refreshInterval: TimeInterval = 30
+
+    /// Last time we attempted a refresh (to implement rate limiting)
+    private var lastRefreshAttempt: Date?
 
     // MARK: - Initialization
 
@@ -140,6 +157,37 @@ class SubscriptionManager: ObservableObject {
         isSubscribed ? Int.max : Self.freeJoodlesAllowed
     }
 
+    // MARK: - Network-Aware Access Control
+
+    /// Check if network is available for StoreKit verification
+    private var isNetworkAvailable: Bool {
+        // Use NetworkMonitor if available, otherwise return true to not block
+        return NetworkMonitor.shared.isConnected
+    }
+
+    /// Verify subscription with online check before granting access
+    /// Returns true if access should be granted, false otherwise
+    func verifySubscriptionForAccess() async -> Bool {
+        // If network is available, always refresh from StoreKit to get latest status
+        if isNetworkAvailable {
+            await refreshSubscriptionFromStoreKit()
+            return isSubscribed
+        }
+
+        // Network is NOT available - check local expiry date
+        // If subscription is still valid locally, allow access (safe assumption)
+        // When user comes online, the expiry date will be auto-updated
+        if let expirationDate = subscriptionExpirationDate, Date() < expirationDate {
+            print("✅ Offline but subscription expiry date is still valid - allowing access")
+            return isSubscribed
+        }
+
+        // Network unavailable AND (no expiry date OR expiry date has passed)
+        // This is a security risk - deny access
+        print("⚠️ Offline and subscription has expired locally - denying access")
+        return false
+    }
+
     // MARK: - Local Subscription Check
 
     /// Updates isSubscribed based on the stored expiration date (no network call)
@@ -163,6 +211,19 @@ class SubscriptionManager: ObservableObject {
 
     /// Refreshes subscription status from StoreKit and updates stored expiration date
     func refreshSubscriptionFromStoreKit() async {
+        // Check if network is available
+        // When offline, StoreKit returns inconsistent cached results
+        // So we skip the StoreKit query and just use local expiry date
+        guard isNetworkAvailable else {
+            print("⚠️ Offline - skipping StoreKit refresh, using local expiry date")
+            // Just check local expiry date
+            updateSubscribedStateFromStoredDate()
+
+            // Update widget subscription status
+            WidgetHelper.shared.updateSubscriptionStatus()
+            return
+        }
+
         let storeManager = StoreKitManager.shared
 
         // Ensure products are loaded
@@ -170,7 +231,7 @@ class SubscriptionManager: ObservableObject {
             await storeManager.loadProducts()
         }
 
-        // Query StoreKit for current subscription status
+        // Query StoreKit for current subscription status (only when online)
         await storeManager.updatePurchasedProducts()
 
         // Update our stored state from StoreKit
@@ -188,24 +249,22 @@ class SubscriptionManager: ObservableObject {
 
             print("✅ Subscription active - expires: \(storeManager.subscriptionExpirationDate?.formatted() ?? "N/A")")
         } else {
-            // StoreKit says no active subscription
-            // Check if our stored date has also expired
-            if let storedExpiration = subscriptionExpirationDate, Date() >= storedExpiration {
-                // Both StoreKit and local date say expired - clear everything
-                isInTrialPeriod = false
-                willAutoRenew = false
+            // StoreKit says no active subscription - immediately clear everything
+            // StoreKit is the source of truth, stored date is just a cache
+            subscriptionExpirationDate = nil
+            storedProductID = nil
+            isInTrialPeriod = false
+            willAutoRenew = false
 
-                if isSubscribed {
-                    isSubscribed = false
-                }
-
-                print("❌ Subscription expired")
-            } else if subscriptionExpirationDate != nil {
-                // StoreKit returned empty but we have a valid stored date
-                // This can happen during StoreKit race conditions - trust the stored date
-                print("⚠️ StoreKit returned no subscription but stored date still valid")
+            if isSubscribed {
+                isSubscribed = false
             }
+
+            print("❌ Subscription not active - cleared stored data")
         }
+
+        // Update last online verification timestamp (only when online)
+        lastOnlineVerificationDate = Date()
 
         // Update widget subscription status
         WidgetHelper.shared.updateSubscriptionStatus()
@@ -451,10 +510,22 @@ class SubscriptionManager: ObservableObject {
     }
     #endif
 
-    // MARK: - Joodle Access Helpers
+    // MARK: - Joodle Access Helpers (Synchronous - uses cached state)
 
+    /// Synchronous check - uses cached subscription state
+    /// For critical access points, use verifySubscriptionForAccess() first
     func canCreateJoodle(currentTotalCount: Int) -> Bool {
         if isSubscribed {
+            return true
+        }
+        return currentTotalCount < Self.freeJoodlesAllowed
+    }
+
+    /// Async access check with online verification
+    /// Use this before allowing creation of new Joodles
+    func canCreateJoodleWithVerification(currentTotalCount: Int) async -> Bool {
+        let hasAccess = await verifySubscriptionForAccess()
+        if hasAccess {
             return true
         }
         return currentTotalCount < Self.freeJoodlesAllowed
@@ -494,6 +565,13 @@ class SubscriptionManager: ObservableObject {
         return canCreateJoodle(currentTotalCount: totalCount)
     }
 
+    /// Async access check with online verification
+    /// Use this before allowing Joodle creation
+    func checkAccessWithVerification(in modelContext: ModelContext) async -> Bool {
+        let totalCount = fetchTotalJoodleCount(in: modelContext)
+        return await canCreateJoodleWithVerification(currentTotalCount: totalCount)
+    }
+
     func canEditJoodle(entry: DayEntry, in modelContext: ModelContext) -> Bool {
         if isSubscribed {
             return true
@@ -520,6 +598,27 @@ class SubscriptionManager: ObservableObject {
 
     func canEditJoodle(atIndex index: Int) -> Bool {
         if isSubscribed {
+            return true
+        }
+        return index < Self.freeJoodlesAllowed
+    }
+
+    /// Async edit check with online verification
+    /// Use this before allowing Joodle edits
+    func canEditJoodleWithVerification(entry: DayEntry, in modelContext: ModelContext) async -> Bool {
+        let hasAccess = await verifySubscriptionForAccess()
+        if hasAccess {
+            return true
+        }
+
+        // Fall back to checking if within free limit
+        return canEditJoodle(entry: entry, in: modelContext)
+    }
+
+    /// Async edit check with online verification (by index)
+    func canEditJoodleWithVerification(atIndex index: Int) async -> Bool {
+        let hasAccess = await verifySubscriptionForAccess()
+        if hasAccess {
             return true
         }
         return index < Self.freeJoodlesAllowed

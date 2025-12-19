@@ -93,6 +93,12 @@ final class PremiumAccessController: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
 
+    /// Last time we refreshed from StoreKit to avoid excessive calls
+    private var lastRefreshTime: Date?
+
+    /// Minimum interval between StoreKit refreshes (in seconds)
+    private let refreshInterval: TimeInterval = 30
+
     private init() {
         // Observe subscription manager changes
         SubscriptionManager.shared.$isSubscribed
@@ -114,9 +120,28 @@ final class PremiumAccessController: ObservableObject {
 
     // MARK: - Feature Access Checks
 
-    /// Check if a feature is accessible
+    /// Check if a feature is accessible (synchronous, uses cached state)
+    /// For critical access points, prefer `checkAccessWithRefresh` instead
     func canAccess(_ feature: PremiumFeature) -> Bool {
+        // Trigger background refresh when checking premium features
+        triggerBackgroundRefreshIfNeeded()
         return isSubscribed
+    }
+
+    /// Check if a feature is accessible after refreshing from StoreKit first
+    /// Use this for critical access points where you need the latest subscription status
+    func checkAccessWithRefresh(_ feature: PremiumFeature) async -> Bool {
+        // Refresh from StoreKit first to get the latest status
+        await refreshSubscriptionStatus()
+        return isSubscribed
+    }
+
+    /// Triggers a background StoreKit refresh if enough time has passed since the last refresh
+    private func triggerBackgroundRefreshIfNeeded() {
+        // Trigger background refresh (rate limiting is handled in refreshSubscriptionStatus)
+        Task {
+            await refreshSubscriptionStatus()
+        }
     }
 
     /// Check if user can create a new Joodle based on current total count
@@ -168,10 +193,27 @@ final class PremiumAccessController: ObservableObject {
         subscriptionExpired = false
     }
 
-    /// Refresh subscription status from StoreKit
+    /// Refresh subscription status from StoreKit (rate-limited)
     func refreshSubscriptionStatus() async {
-        await StoreKitManager.shared.updatePurchasedProducts()
-        await SubscriptionManager.shared.updateSubscriptionStatus()
+        let now = Date()
+
+        // Check if we should refresh (rate limiting)
+        if let lastRefresh = lastRefreshTime {
+            guard now.timeIntervalSince(lastRefresh) >= refreshInterval else {
+                return
+            }
+        }
+
+        // Update last refresh time immediately to prevent duplicate calls
+        lastRefreshTime = now
+
+        await SubscriptionManager.shared.refreshSubscriptionFromStoreKit()
+    }
+
+    /// Force an immediate refresh from StoreKit, bypassing rate limiting
+    func forceRefresh() async {
+        lastRefreshTime = Date()
+        await SubscriptionManager.shared.refreshSubscriptionFromStoreKit()
     }
 }
 
@@ -190,16 +232,28 @@ struct PremiumGatedModifier: ViewModifier {
     let feature: PremiumFeature
     @Binding var showPaywall: Bool
     @ObservedObject private var accessController = PremiumAccessController.shared
+    @State private var isChecking = false
 
     let onAccessGranted: (() -> Void)?
 
     func body(content: Content) -> some View {
         content
             .onTapGesture {
-                if accessController.canAccess(feature) {
-                    onAccessGranted?()
-                } else {
-                    showPaywall = true
+                // Prevent multiple taps while checking
+                guard !isChecking else { return }
+                isChecking = true
+
+                // Verify subscription with online check before granting access
+                Task {
+                    let hasAccess = await SubscriptionManager.shared.verifySubscriptionForAccess()
+                    await MainActor.run {
+                        isChecking = false
+                        if hasAccess {
+                            onAccessGranted?()
+                        } else {
+                            showPaywall = true
+                        }
+                    }
                 }
             }
     }
@@ -298,19 +352,31 @@ struct PremiumGatedButton<Label: View>: View {
     @ViewBuilder let label: () -> Label
 
     @State private var showPaywall = false
+    @State private var isChecking = false
     @ObservedObject private var accessController = PremiumAccessController.shared
 
     var body: some View {
         Button {
-            if accessController.canAccess(feature) {
-                action()
-            } else {
-                showPaywall = true
+            // Prevent multiple taps while checking
+            guard !isChecking else { return }
+            isChecking = true
+
+            // Verify subscription with online check before granting access
+            Task {
+                let hasAccess = await SubscriptionManager.shared.verifySubscriptionForAccess()
+                await MainActor.run {
+                    isChecking = false
+                    if hasAccess {
+                        action()
+                    } else {
+                        showPaywall = true
+                    }
+                }
             }
         } label: {
             label()
                 .overlay(alignment: .topTrailing) {
-                    if !accessController.canAccess(feature) {
+                    if !accessController.isSubscribed {
                         Image(systemName: "lock.fill")
                             .font(.caption2)
                             .foregroundColor(.secondary)

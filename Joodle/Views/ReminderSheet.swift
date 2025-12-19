@@ -108,10 +108,15 @@ struct ReminderSheet: View {
                         dismiss()
                     } else {
                         // Real mode - use ReminderManager
-                        if reminderManager.addReminder(for: dateString, at: combinedReminderDate, entryBody: entryBody) {
-                            dismiss()
-                        } else {
-                            showPaywall = true
+                        Task {
+                            let success = await reminderManager.addReminder(for: dateString, at: combinedReminderDate, entryBody: entryBody)
+                            await MainActor.run {
+                                if success {
+                                    dismiss()
+                                } else {
+                                    showPaywall = true
+                                }
+                            }
                         }
                     }
                 } label: {

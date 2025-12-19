@@ -351,21 +351,8 @@ class StoreKitManager: NSObject, ObservableObject {
             }
         }
 
-        // Protection: If StoreKit returned empty but we previously had valid subscription data,
-        // check if the previous expiration date hasn't passed yet - if so, keep previous state
-        let queryReturnedEmpty = purchasedIDs.isEmpty && currentProduct == nil
-        let hadPreviousSubscription = !previousPurchasedIDs.isEmpty && previousProductID != nil
-
-        if queryReturnedEmpty && hadPreviousSubscription {
-            if let prevExpiration = previousExpirationDate, Date() < prevExpiration {
-                // StoreKit returned inconsistent empty results - keep previous state
-                print("⚠️ StoreKit returned empty but previous subscription still valid (expires: \(prevExpiration.formatted())). Keeping previous state.")
-                debugLogger.log(.warning, "StoreKit returned empty", details: "Keeping previous valid state")
-                self.isEligibleForIntroOffer = eligibleForIntro  // Only update intro offer eligibility
-                return
-            }
-        }
-
+        // StoreKit is the source of truth - always trust its response
+        // If it returns empty, that means no active subscription
         self.purchasedProductIDs = purchasedIDs
         self.currentProductID = currentProduct
         self.isInTrialPeriod = inTrial

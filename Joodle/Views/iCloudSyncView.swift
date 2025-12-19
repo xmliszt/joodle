@@ -18,6 +18,8 @@ struct iCloudSyncView: View {
   @State private var showDisableAlert = false
   @State private var showSystemSettingsAlert = false
   @State private var showPaywall = false
+  @State private var isCheckingSubscription = false
+  @State private var pendingToggleAction = false
 
   /// Check if restart is needed for sync to work
   /// This happens when user enabled sync during onboarding but chose "Later" for restart
@@ -141,16 +143,31 @@ struct iCloudSyncView: View {
           get: { userPreferences.isCloudSyncEnabled },
           set: { newValue in
             if newValue {
-              // Check subscription first
-              if !subscriptionManager.hasICloudSync {
-                showPaywall = true
-              } else if !syncManager.systemCloudEnabled {
-                showSystemSettingsAlert = true
-              } else if ModelContainerManager.shared.needsRestartForSyncChange {
-                // Restart is required - show special alert
-                showEnableWithRestartAlert = true
-              } else {
-                showEnableAlert = true
+              // Verify subscription with online check before enabling iCloud sync
+              guard !isCheckingSubscription else { return }
+              isCheckingSubscription = true
+              pendingToggleAction = true
+
+              Task {
+                // Verify subscription with online check (required for iCloud Sync)
+                let hasAccess = await SubscriptionManager.shared.verifySubscriptionForAccess()
+
+                await MainActor.run {
+                  isCheckingSubscription = false
+                  pendingToggleAction = false
+
+                  // Check if user has access to iCloud Sync feature
+                  if !hasAccess {
+                    showPaywall = true
+                  } else if !syncManager.systemCloudEnabled {
+                    showSystemSettingsAlert = true
+                  } else if ModelContainerManager.shared.needsRestartForSyncChange {
+                    // Restart is required - show special alert
+                    showEnableWithRestartAlert = true
+                  } else {
+                    showEnableAlert = true
+                  }
+                }
               }
             } else {
               // No restart needed to disable - sync just stops on next app launch
@@ -171,7 +188,8 @@ struct iCloudSyncView: View {
             }
           }
         }
-        .disabled(!subscriptionManager.hasICloudSync || !syncManager.systemCloudEnabled || !syncManager.isCloudAvailable || !networkMonitor.isConnected)
+        .disabled(isCheckingSubscription || (!subscriptionManager.hasICloudSync || !syncManager.systemCloudEnabled || !syncManager.isCloudAvailable || !networkMonitor.isConnected))
+        .opacity(isCheckingSubscription ? 0.6 : 1.0)
       } footer: {
         if syncManager.needsSystemSettingsChange {
           Text("Joodle can't sync with iCloud because \"Saved to iCloud\" is disabled in system settings.")
@@ -373,6 +391,10 @@ struct iCloudSyncView: View {
       syncManager.checkCloudAvailability()
       // Clear the pending restart flag since user can see the banner here
       UserDefaults.standard.removeObject(forKey: "pending_icloud_sync_restart")
+      // Verify subscription status when accessing iCloud Sync view (premium feature)
+      Task {
+        await SubscriptionManager.shared.verifySubscriptionForAccess()
+      }
     }
   }
 }

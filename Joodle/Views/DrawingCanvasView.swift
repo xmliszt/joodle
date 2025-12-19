@@ -232,39 +232,44 @@ struct DrawingCanvasView: View {
   // MARK: - Access Check
 
   private func checkAccessState() {
-    // If subscribed, always allow
-    if subscriptionManager.isSubscribed {
-      accessState = entry?.drawingData != nil ? .canEdit : .canCreate
-      return
-    }
+    // Perform async verification with online check
+    Task {
+      // Check if this is an existing Joodle (editing) or new Joodle (creating)
+      let hasExistingDrawing = entry?.drawingData != nil
 
-    // Check if this is an existing Joodle (editing) or new Joodle (creating)
-    let hasExistingDrawing = entry?.drawingData != nil
+      if hasExistingDrawing, let entry = entry {
+        // Editing existing - verify access with online check
+        let canEdit = await subscriptionManager.canEditJoodleWithVerification(entry: entry, in: modelContext)
 
-    if hasExistingDrawing, let entry = entry {
-      // Editing existing - check if within first N Joodles
-      if subscriptionManager.canEditJoodle(entry: entry, in: modelContext) {
-        accessState = .canEdit
-      } else {
-        // Calculate index for error message
-        let targetDateString = entry.dateString
-        let descriptor = FetchDescriptor<DayEntry>(
-          predicate: #Predicate<DayEntry> {
-            $0.drawingData != nil && $0.dateString < targetDateString
+        await MainActor.run {
+          if canEdit {
+            accessState = .canEdit
+          } else {
+            // Calculate index for error message
+            let targetDateString = entry.dateString
+            let descriptor = FetchDescriptor<DayEntry>(
+              predicate: #Predicate<DayEntry> {
+                $0.drawingData != nil && $0.dateString < targetDateString
+              }
+            )
+            let index = (try? modelContext.fetchCount(descriptor)) ?? 0
+            accessState = .editingLocked(
+              reason:
+                "Free account can only edit the first \(SubscriptionManager.freeJoodlesAllowed) Joodles. This Joodle is #\(index + 1)."
+            )
           }
-        )
-        let index = (try? modelContext.fetchCount(descriptor)) ?? 0
-        accessState = .editingLocked(
-          reason:
-            "Free account can only edit the first \(SubscriptionManager.freeJoodlesAllowed) Joodles. This Joodle is #\(index + 1)."
-        )
-      }
-    } else {
-      // Creating new - check limit
-      if subscriptionManager.checkAccess(in: modelContext) {
-        accessState = .canCreate
+        }
       } else {
-        accessState = .limitReached
+        // Creating new - verify access with online check
+        let canCreate = await subscriptionManager.checkAccessWithVerification(in: modelContext)
+
+        await MainActor.run {
+          if canCreate {
+            accessState = .canCreate
+          } else {
+            accessState = .limitReached
+          }
+        }
       }
     }
   }

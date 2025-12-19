@@ -224,6 +224,10 @@ struct ShareCardSelectorView: View {
       .onAppear {
         setupInitialState()
       }
+      .task {
+        // Verify subscription status when accessing share cards (premium feature)
+        await SubscriptionManager.shared.verifySubscriptionForAccess()
+      }
     }
   }
 
