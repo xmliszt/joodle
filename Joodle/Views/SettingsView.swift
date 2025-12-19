@@ -108,7 +108,7 @@ struct SettingsView: View {
     Form {
       defaultViewSection
       appearanceSection
-      accentColorSection
+      themeColorSection
       interactionSection
       freePlanLimitsSection
       subscriptionSection
@@ -283,7 +283,7 @@ struct SettingsView: View {
   }
 
   @ViewBuilder
-  private var accentColorSection: some View {
+  private var themeColorSection: some View {
     Section {
       ThemeColorPaletteView(
         subscriptionManager: subscriptionManager,
@@ -300,7 +300,7 @@ struct SettingsView: View {
       )
       .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
     } header: {
-      Text("Accent Color")
+      Text("Theme Color")
     }
   }
 
@@ -434,7 +434,7 @@ struct SettingsView: View {
       }
       .foregroundColor(.primary)
     }
-    .offerCodeRedemption(isPresented: $showRedeemCode) {_ in 
+    .offerCodeRedemption(isPresented: $showRedeemCode) {_ in
       // Refresh subscription status after redemption
       Task {
         await storeKitManager.updatePurchasedProducts()
