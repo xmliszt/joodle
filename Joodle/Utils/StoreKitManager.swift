@@ -271,12 +271,6 @@ class StoreKitManager: NSObject, ObservableObject {
         var eligibleForIntro = true
         var currentProduct: String?
 
-        // Check intro offer eligibility using any subscription product
-        if let subscriptionProduct = products.first(where: { $0.subscription != nil }),
-           let subscription = subscriptionProduct.subscription {
-            eligibleForIntro = await subscription.isEligibleForIntroOffer
-        }
-
         // Use Product.SubscriptionInfo.status for accurate current subscription detection
         // This is more reliable than Transaction.currentEntitlements for determining the CURRENT plan
         if let subscriptionProduct = products.first(where: { $0.subscription != nil }),
@@ -322,6 +316,18 @@ class StoreKitManager: NSObject, ObservableObject {
                 debugPrint("Failed to get subscription status: \(error)")
                 debugLogger.log(.error, "Failed to get subscription status", details: error.localizedDescription)
             }
+        }
+
+        // Check intro offer eligibility on the user's current active subscription product
+        // This must be done AFTER determining currentProduct to get accurate eligibility
+        if let productID = currentProduct,
+           let activeProduct = products.first(where: { $0.id == productID }),
+           let subscription = activeProduct.subscription {
+            eligibleForIntro = await subscription.isEligibleForIntroOffer
+        } else if let anySubscriptionProduct = products.first(where: { $0.subscription != nil }),
+                  let subscription = anySubscriptionProduct.subscription {
+            // Fallback: If no current product (user not subscribed), check any subscription product
+            eligibleForIntro = await subscription.isEligibleForIntroOffer
         }
 
         // Fallback: If we didn't find status via subscription.status, check currentEntitlements
