@@ -19,8 +19,9 @@ class ShareCardRenderer {
   /// - Parameters:
   ///   - entry: The day entry containing the drawing data
   ///   - targetPixelSize: The desired output size in physical pixels
+  ///   - colorScheme: The color scheme to use for rendering (affects dynamic colors like .appAccent)
   /// - Returns: A high-resolution UIImage at 1x scale that will be downsized by SwiftUI
-  private func renderDrawingAtHighResolution(entry: DayEntry, targetPixelSize: CGSize) -> UIImage? {
+  private func renderDrawingAtHighResolution(entry: DayEntry, targetPixelSize: CGSize, colorScheme: ColorScheme) -> UIImage? {
     guard let drawingData = entry.drawingData, !drawingData.isEmpty else {
       return nil
     }
@@ -41,6 +42,7 @@ class ShareCardRenderer {
       useThumbnail: false
     )
     .frame(width: renderSize.width, height: renderSize.height)
+    .environment(\.colorScheme, colorScheme)
 
     // Render to high-res image
     let controller = UIHostingController(rootView: drawingView)
@@ -119,7 +121,7 @@ class ShareCardRenderer {
       // Render at high pixel resolution (2700x2700) max limit.
       // SwiftUI will scale it down to fit the 600*scale container
       let highResPixelSize = CGSize(width: 2700, height: 2700)  // High resolution pixels
-      highResDrawing = renderDrawingAtHighResolution(entry: entry, targetPixelSize: highResPixelSize)
+      highResDrawing = renderDrawingAtHighResolution(entry: entry, targetPixelSize: highResPixelSize, colorScheme: colorScheme)
     }
 
 
