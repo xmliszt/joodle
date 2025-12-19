@@ -35,9 +35,6 @@ struct FeatureIntroWidgetsView: View {
             buttonLabel: "Next",
             onContinue: {
                 viewModel.completeStep(.featureIntroWidgets)
-            },
-            onBack: {
-                viewModel.goBack()
             }
         )
     }

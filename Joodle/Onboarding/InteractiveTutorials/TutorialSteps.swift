@@ -19,7 +19,7 @@ struct TutorialSteps {
             type: .scrubbing,
             highlightAnchor: .gridEntry(dateOffset: 0),  // Today's entry only
             tooltip: TutorialTooltip(
-                message: "Tap and hold on your Joodle, then drag to browse",
+                message: "Tap on your Joodle without releasing your finger, then start dragging to browse",
                 position: .below
             ),
             endCondition: .scrubEnded
@@ -98,7 +98,7 @@ struct TutorialSteps {
             type: .addReminder,
             highlightAnchor: .button(id: .bellIcon),
             tooltip: TutorialTooltip(
-                message: "Tap to set an anniversary reminder for this future date",
+                message: "Tap to set an anniversary reminder. Reminder can only be set if it is in the future.",
                 position: .above
             ),
             endCondition: .sheetDismissed,

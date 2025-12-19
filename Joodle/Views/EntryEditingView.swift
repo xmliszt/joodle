@@ -459,7 +459,9 @@ struct EntryEditingView: View {
                         }
                       }
                       .circularGlassButton(tintColor: hasReminder ? .appAccent : nil)
-                      .applyIf(tutorialMode) { view in
+                      .applyIf(tutorialMode && isFuture) { view in
+                        // Only register bellIcon anchor for future dates (addReminder tutorial needs this)
+                        // This prevents capturing wrong frames during transitions from non-future entries
                         view.tutorialHighlightAnchor(.bellIcon)
                       }
                       .transition(.opacity)
@@ -497,10 +499,19 @@ struct EntryEditingView: View {
                       }
                     }
                     .circularGlassButton(tintColor: hasReminder ? .appAccent : nil)
-                    .applyIf(tutorialMode) { view in
+                    .applyIf(tutorialMode && isFuture) { view in
+                      // Only register bellIcon anchor for future dates (addReminder tutorial needs this)
+                      // This prevents capturing wrong frames during transitions from non-future entries
                       view.tutorialHighlightAnchor(.bellIcon)
                     }
                     .transition(.opacity)
+                    .onAppear {
+                      #if DEBUG
+                      if tutorialMode {
+                        print("🔔 [Tutorial] Bell button visible - isFuture:\(isFuture) hasContent:\(hasEntryContent)")
+                      }
+                      #endif
+                    }
                   }
                 }
               }

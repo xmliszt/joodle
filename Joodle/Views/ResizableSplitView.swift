@@ -24,6 +24,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   let onBottomDismissed: (() -> Void)?
   let onTopViewHeightChange: ((CGFloat) -> Void)?
   let tutorialMode: Bool
+  let allowHandleDrag: Bool
 
   init(
     @ViewBuilder top: () -> Top,
@@ -31,7 +32,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     hasBottomView: Bool,
     onBottomDismissed: (() -> Void)? = nil,
     onTopViewHeightChange: ((CGFloat) -> Void)? = nil,
-    tutorialMode: Bool = false
+    tutorialMode: Bool = false,
+    allowHandleDrag: Bool? = nil
   ) {
     self.topView = top()
     self.bottomView = bottom()
@@ -39,6 +41,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     self.onBottomDismissed = onBottomDismissed
     self.onTopViewHeightChange = onTopViewHeightChange
     self.tutorialMode = tutorialMode
+    // If allowHandleDrag is not specified, default to !tutorialMode (disabled in tutorial mode)
+    self.allowHandleDrag = allowHandleDrag ?? !tutorialMode
   }
 
   /// The height of the drag detection zone for the drag handle
@@ -106,9 +110,9 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                 )
               }
             }
-          // Drag gesture handling for resize handle area (disabled in tutorial mode)
+          // Drag gesture handling for resize handle area
             .gesture(
-              (!isDraggable || tutorialMode)
+              (!isDraggable || !allowHandleDrag)
               ? nil
               : DragGesture()
                 .onChanged { value in
@@ -163,7 +167,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             )
           // Drag gesture handling for bottom container as well
             .gesture(
-              (!isDraggable || tutorialMode)
+              (!isDraggable || !allowHandleDrag)
               ? nil
               : DragGesture()
                 .onChanged { value in

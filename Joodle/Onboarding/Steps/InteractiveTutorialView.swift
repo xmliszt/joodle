@@ -20,6 +20,9 @@ struct InteractiveTutorialView: View {
     @State private var gridOpacity: Double = 0
     @State private var overlayOpacity: Double = 0
 
+    // Transition safety: blocks all grid interactions until overlay is ready
+    @State private var isTransitionComplete = false
+
     // View state
     @State private var showDrawingCanvas = false
     @State private var showReminderSheet = false
@@ -42,6 +45,15 @@ struct InteractiveTutorialView: View {
     /// Whether this is shown during onboarding (vs from Settings)
     var isOnboarding: Bool {
         viewModel != nil && !singleStepMode
+    }
+
+    /// Whether the current step is a gesture hint step (fully interactable screen)
+    private var isGestureHintStep: Bool {
+        guard let step = coordinator.currentStep else { return false }
+        if case .gesture = step.highlightAnchor {
+            return true
+        }
+        return false
     }
 
     /// Whether device has Dynamic Island
@@ -142,6 +154,21 @@ struct InteractiveTutorialView: View {
                             )
                         }
 
+                        // Gesture-blocking overlay during transition (before tutorial overlay is ready)
+                        // This prevents accidental taps on the grid during the scroll animation
+                        if !isTransitionComplete {
+                            Color.clear
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .contentShape(Rectangle())
+                                .allowsHitTesting(true)
+                                .onTapGesture { } // Absorb all taps
+                                .gesture(
+                                    DragGesture(minimumDistance: 0)
+                                        .onChanged { _ in } // Absorb all drags
+                                )
+                                .ignoresSafeArea()
+                        }
+
                         // Tutorial overlay (dimmed with cutout + tooltip)
                         if coordinator.isActive && hasAnimatedIn {
                             TutorialOverlayView(coordinator: coordinator)
@@ -160,6 +187,13 @@ struct InteractiveTutorialView: View {
                         #endif
                     }
                     .onPreferenceChange(HighlightFramePreferenceKey.self) { frames in
+                        #if DEBUG
+                        // Debug: Log bellIcon frame registration
+                        if let bellFrame = frames[TutorialButtonId.bellIcon.rawValue] {
+                            print("🔔 [addReminder] bellIcon frame: \(Int(bellFrame.minX)),\(Int(bellFrame.minY)) ✓")
+                        }
+                        #endif
+
                         frames.forEach { key, frame in
                             coordinator.registerHighlightFrame(id: key, frame: frame)
                         }
@@ -205,6 +239,10 @@ struct InteractiveTutorialView: View {
         }
         .onChange(of: isScrubbing) { oldValue, newValue in
             handleScrubbingChange(from: oldValue, to: newValue)
+        }
+        // Safety: If bottom view appears during scrubbing step transition, dismiss it and re-scroll
+        .onChange(of: mockStore.selectedDateItem) { oldValue, newValue in
+            handleSelectionChangeDuringTransition(from: oldValue, to: newValue)
         }
         // Watch for tutorial completion to navigate to next step or dismiss
         .onChange(of: coordinator.isActive) { oldValue, newValue in
@@ -388,7 +426,12 @@ struct InteractiveTutorialView: View {
                 onBottomDismissed: {
                     mockStore.clearSelection()
                 },
-                tutorialMode: true
+                onTopViewHeightChange: { _ in
+                    // When bottom view appears/resizes, scroll to keep selected entry visible
+                    scrollToSelectedEntry()
+                },
+                tutorialMode: true,
+                allowHandleDrag: isGestureHintStep  // Allow dragging during gesture hint steps
             )
             .ignoresSafeArea(.container, edges: .bottom)
 
@@ -550,6 +593,8 @@ struct InteractiveTutorialView: View {
             withAnimation(.easeIn(duration: 0.3)) {
                 overlayOpacity = 1.0
             }
+            // Mark transition as complete - now user can interact with the grid
+            isTransitionComplete = true
         }
     }
 
@@ -559,6 +604,14 @@ struct InteractiveTutorialView: View {
 
         withAnimation(.easeInOut(duration: 0.6)) {
             scrollProxy?.scrollTo("todayEntryAnchor", anchor: .center)
+        }
+    }
+
+    /// Scroll to the currently selected entry (used when bottom view appears)
+    private func scrollToSelectedEntry() {
+        guard let selectedItem = mockStore.selectedDateItem else { return }
+        withAnimation(.easeInOut(duration: 0.4)) {
+            scrollProxy?.scrollTo(selectedItem.id, anchor: .center)
         }
     }
 
@@ -572,8 +625,14 @@ struct InteractiveTutorialView: View {
             mockStore.ensureFutureYear()
 
         case .populateAnniversaryEntry:
-            mockStore.ensureFutureYear()
-            mockStore.populateAnniversaryEntry()
+            // First clear any existing selection to avoid capturing frames during transition
+            mockStore.clearSelection()
+
+            // Wait for clear animation to finish, then populate and select anniversary entry
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                mockStore.ensureFutureYear()
+                mockStore.populateAnniversaryEntry()
+            }
 
         case .openEntryEditingView:
             // Entry should already be open from scrubbing step
@@ -679,6 +738,29 @@ struct InteractiveTutorialView: View {
 
         if case .doubleTapCompleted = step.endCondition {
             _ = coordinator.checkEndCondition(.doubleTapCompleted)
+        }
+    }
+
+    /// Handle selection changes during transition - prevents accidental selections before tutorial is ready
+    private func handleSelectionChangeDuringTransition(from oldValue: DateItem?, to newValue: DateItem?) {
+        // Only apply this safety check during the scrubbing step and before transition is complete
+        guard !isTransitionComplete,
+              let step = coordinator.currentStep,
+              step.type == .scrubbing,
+              newValue != nil,
+              !isScrubbing else { return }
+
+        // User somehow selected an entry during transition (shouldn't happen with gesture blocking,
+        // but this is a safety net). Clear selection and re-scroll to today.
+        DispatchQueue.main.async {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                mockStore.clearSelection()
+            }
+            // Re-scroll to today's entry after dismissing the bottom view
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                hasScrolledToEntry = false
+                scrollToTodayEntry()
+            }
         }
     }
 

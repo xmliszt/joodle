@@ -91,19 +91,26 @@ struct TutorialOverlayView: View {
                         }
 
                     case .gesture(let gestureType):
-                        // Full dim for gesture hint - allow gestures to pass through
+                        // Dimmed background for gesture hint visibility
+                      ZStack {
                         Color.black.opacity(dimOpacity)
-                            .allowsHitTesting(false)
+                              .allowsHitTesting(false)
 
+                        
                         // Gesture hint animation
                         GestureHintOverlay(gestureType: gestureType)
+                          .offset(y: -112)
 
+                      
                         // Centered tooltip
                         TutorialTooltipView(
                             tooltip: step.tooltip,
                             highlightFrame: nil,
                             screenSize: geometry.size
                         )
+                        .offset(y: -64)
+                      }
+                      
 
                     case .none:
                         // Just dimmed overlay with tooltip
