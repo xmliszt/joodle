@@ -327,10 +327,6 @@ struct iCloudSyncView: View {
         }
       }
     }
-    .refreshable {
-      // Pull to refresh triggers iCloud sync check and status update
-      await performManualSync()
-    }
     .navigationTitle("Sync to iCloud")
     .sheet(isPresented: $showPaywall) {
       StandalonePaywallView()
@@ -378,19 +374,6 @@ struct iCloudSyncView: View {
       // Clear the pending restart flag since user can see the banner here
       UserDefaults.standard.removeObject(forKey: "pending_icloud_sync_restart")
     }
-  }
-
-  /// Refreshes iCloud sync status when user pulls to refresh
-  /// Note: SwiftData/NSPersistentCloudKitContainer handles actual sync automatically.
-  /// This just refreshes the displayed status and checks availability.
-  private func performManualSync() async {
-    // Check cloud availability and refresh status
-    await MainActor.run {
-      syncManager.checkCloudAvailability()
-    }
-
-    // Brief delay to allow any pending status updates to process
-    try? await Task.sleep(nanoseconds: 300_000_000)
   }
 }
 
