@@ -2,18 +2,20 @@
 //  PaywallDebugLogger.swift
 //  Joodle
 //
-//  Debug logging utility for StoreKit troubleshooting in TestFlight builds
+//  Debug logging utility for StoreKit troubleshooting in DEBUG builds only
 //
 
 import Foundation
 import SwiftUI
 
 /// A debug logger that captures StoreKit-related events and errors
-/// for troubleshooting in TestFlight builds where console logs aren't accessible
+/// for troubleshooting in DEBUG builds where console logs are accessible
+/// This logger is a no-op in release builds for performance and security
 @MainActor
 final class PaywallDebugLogger: ObservableObject {
     static let shared = PaywallDebugLogger()
 
+    #if DEBUG
     /// Maximum number of log entries to keep
     private let maxLogEntries = 100
 
@@ -27,6 +29,13 @@ final class PaywallDebugLogger: ObservableObject {
         log(.info, "PaywallDebugLogger initialized")
         logEnvironmentInfo()
     }
+    #else
+    /// In release builds, these are no-op stubs
+    var logEntries: [LogEntry] { [] }
+    var isDebugModeEnabled = false
+
+    private init() {}
+    #endif
 
     // MARK: - Log Entry Model
 
@@ -64,6 +73,7 @@ final class PaywallDebugLogger: ObservableObject {
 
     // MARK: - Logging Methods
 
+    #if DEBUG
     func log(_ level: LogLevel, _ message: String, details: String? = nil) {
         let entry = LogEntry(
             timestamp: Date(),
@@ -83,7 +93,12 @@ final class PaywallDebugLogger: ObservableObject {
         let detailsText = details.map { " | \($0)" } ?? ""
         print("\(level.rawValue) [Paywall] \(message)\(detailsText)")
     }
+    #else
+    // No-op logging in release builds
+    @inlinable func log(_ level: LogLevel, _ message: String, details: String? = nil) {}
+    #endif
 
+    #if DEBUG
     func logProductsLoading() {
         log(.info, "Loading products...")
     }
@@ -137,9 +152,24 @@ final class PaywallDebugLogger: ObservableObject {
     func logRestoreFailed(_ error: Error) {
         log(.error, "Restore failed", details: error.localizedDescription)
     }
+    #else
+    // No-op convenience methods in release builds
+    @inlinable func logProductsLoading() {}
+    @inlinable func logProductsLoaded(count: Int, productIDs: [String]) {}
+    @inlinable func logProductDetails(id: String, displayName: String, price: String) {}
+    @inlinable func logStoreKitError(_ error: Error, context: String) {}
+    @inlinable func logPurchaseAttempt(productID: String) {}
+    @inlinable func logPurchaseSuccess(productID: String) {}
+    @inlinable func logPurchaseFailed(productID: String, error: Error) {}
+    @inlinable func logPurchaseCancelled() {}
+    @inlinable func logRestoreAttempt() {}
+    @inlinable func logRestoreSuccess(productIDs: Set<String>) {}
+    @inlinable func logRestoreFailed(_ error: Error) {}
+    #endif
 
     // MARK: - Environment Info
 
+    #if DEBUG
     private func logEnvironmentInfo() {
         let environment = getEnvironment()
         log(.info, "Environment: \(environment)")
@@ -155,18 +185,7 @@ final class PaywallDebugLogger: ObservableObject {
     }
 
     private func getEnvironment() -> String {
-        #if DEBUG
         return "DEBUG (Xcode)"
-        #else
-        if let receiptURL = Bundle.main.appStoreReceiptURL {
-            if receiptURL.lastPathComponent == "sandboxReceipt" {
-                return "TestFlight/Sandbox"
-            } else if receiptURL.path.contains("sandboxReceipt") {
-                return "TestFlight/Sandbox (path)"
-            }
-        }
-        return "Production/App Store"
-        #endif
     }
 
     // MARK: - Utility Methods
@@ -218,4 +237,10 @@ final class PaywallDebugLogger: ObservableObject {
         - dev.liyuxuan.joodle.super.yearly
         """
     }
+    #else
+    // No-op utility methods in release builds
+    @inlinable func clearLogs() {}
+    var exportLogs: String { "" }
+    var diagnosticSummary: String { "" }
+    #endif
 }

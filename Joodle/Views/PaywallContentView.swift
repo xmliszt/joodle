@@ -326,7 +326,7 @@ struct PaywallContentView: View {
       Button("OK", role: .cancel) {}
     } message: {
       if let error = errorMessage {
-        Text("\(error)\n\nIf this issue persists, please submit feedback to help us fix it.")
+        Text("\(error)\n\nIf this issue persists, please submit feedback, or contact the developer at me@liyuxuan.dev.")
       }
     }
     .onAppear {
@@ -523,7 +523,7 @@ struct PaywallContentView: View {
     SliderCTAButton(
       isSuperMode: .constant(true),
       allowModeToggle: false,
-      isLoading: isPurchasing,
+      isLoading: isPurchasing || storeManager.hasActiveSubscription,
       trialPeriodText: selectedTrialPeriodText,
       onSlideComplete: handleSlideComplete
     )
@@ -599,9 +599,9 @@ struct PaywallContentView: View {
 
   private var legalLinksSection: some View {
     HStack(spacing: 16) {
-      Link("Terms of Service", destination: URL(string: "https://joodle.liyuxuan.dev/terms-of-service")!)
+      Link("Terms of Service", destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!)
       Text("•")
-      Link("Privacy Policy", destination: URL(string: "https://joodle.liyuxuan.dev/privacy-policy")!)
+      Link("Privacy Policy", destination: URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!)
     }
     .font(.caption2)
     .foregroundColor(.secondary)
@@ -627,6 +627,13 @@ struct PaywallContentView: View {
   }
 
   private func handlePurchase(_ product: Product) {
+    // Guard against double-purchase if user is already subscribed
+    if storeManager.hasActiveSubscription {
+      debugLogger.log(.warning, "Attempted purchase while already subscribed - skipping")
+      configuration.onPurchaseComplete?()
+      return
+    }
+
     isPurchasing = true
 
     Task {
@@ -634,7 +641,20 @@ struct PaywallContentView: View {
         let transaction = try await storeManager.purchase(product)
 
         if transaction != nil {
-          configuration.onPurchaseComplete?()
+          // Don't reset isPurchasing here - the view will be dismissed
+          // by onPurchaseComplete, and resetting would re-enable the slider
+          // before dismiss takes effect
+          await MainActor.run {
+            configuration.onPurchaseComplete?()
+          }
+          return
+        } else {
+          // Transaction is nil - purchase was not completed (e.g., pending approval)
+          debugLogger.log(.warning, "Purchase returned nil transaction for product: \(product.id)")
+          await MainActor.run {
+            errorMessage = "Purchase could not be completed. It may be pending approval or was cancelled. Please check your subscription status from \"Settings > [Your Name] > Subscriptions\""
+            showError = true
+          }
         }
       } catch {
         debugLogger.logPurchaseFailed(productID: product.id, error: error)
@@ -667,6 +687,7 @@ struct PaywallContentView: View {
         }
       }
 
+      // Only reset isPurchasing on error or when transaction is nil
       isPurchasing = false
     }
   }

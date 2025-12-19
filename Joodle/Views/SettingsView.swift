@@ -48,6 +48,7 @@ struct SettingsView: View {
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
   @StateObject private var subscriptionManager = SubscriptionManager.shared
+  @StateObject private var storeKitManager = StoreKitManager.shared
   @StateObject private var reminderManager = ReminderManager.shared
   @State private var showOnboarding = false
   @State private var showPlaceholderGenerator = false
@@ -56,7 +57,9 @@ struct SettingsView: View {
   @State private var showAppStats = false
   @State private var showDataSeeder = false
   @State private var currentJoodleCount: Int = 0
-  @State var selectedTutorialStep: TutorialStepType?
+  @State private var selectedTutorialStep: TutorialStepType?
+  @State private var showSubscriptionTesting = false
+  @State private var showRedeemCode = false
 
   // Theme color change state
   @State private var pendingThemeColor: ThemeColor?
@@ -416,6 +419,27 @@ struct SettingsView: View {
           }
           .foregroundColor(.primary)
       }
+
+      // Redeem Promo Code - available for all users
+      Button {
+        showRedeemCode = true
+      } label: {
+        HStack {
+          Text("Redeem Promo Code")
+          Spacer()
+          Image(systemName: "ticket")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+      .foregroundColor(.primary)
+    }
+    .offerCodeRedemption(isPresented: $showRedeemCode) {_ in 
+      // Refresh subscription status after redemption
+      Task {
+        await storeKitManager.updatePurchasedProducts()
+        await subscriptionManager.updateSubscriptionStatus()
+      }
     }
   }
 
@@ -564,6 +588,22 @@ struct SettingsView: View {
           cloudStore.synchronize()
           print("DEBUG: iCloud KVS sync history cleared!")
         }
+      }
+
+      Section("Subscription Testing") {
+        HStack {
+          Text("App Status")
+          Spacer()
+          Text(subscriptionManager.isSubscribed ? "Subscribed ✓" : "Free")
+            .foregroundColor(subscriptionManager.isSubscribed ? .green : .secondary)
+        }
+
+        Button("Subscription Testing Console") {
+          showSubscriptionTesting = true
+        }
+      }
+      .sheet(isPresented: $showSubscriptionTesting) {
+        SubscriptionTestingView()
       }
     }
   }

@@ -132,15 +132,8 @@ struct PricingCard: View {
   }
 
   private func yearlyMonthlyPrice() -> String {
-    // Calculate monthly price from yearly
-    let yearlyPrice = product.price
-    let monthlyEquivalent = yearlyPrice / 12
-
-    // Use the product's priceFormatStyle locale for consistent formatting
-    return monthlyEquivalent.formatted(
-      .currency(code: product.priceFormatStyle.currencyCode)
-      .locale(product.priceFormatStyle.locale)
-    )
+    let monthlyEquivalent = product.price / 12
+    return monthlyEquivalent.formatted(product.priceFormatStyle)
   }
 
   /// Returns the formatted trial period text for this product (e.g., "7-day", "1-month", "3-month")

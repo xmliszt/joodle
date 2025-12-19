@@ -231,7 +231,9 @@ struct DebugShareSheet: UIViewControllerRepresentable {
 // MARK: - Debug Gesture Modifier
 
 /// A view modifier that adds a hidden triple-tap gesture to show the debug view
+/// Only active in DEBUG builds - no-op in release builds
 struct PaywallDebugGestureModifier: ViewModifier {
+    #if DEBUG
     @ObservedObject var logger = PaywallDebugLogger.shared
     @State private var showDebugView = false
     @State private var tapCount = 0
@@ -246,10 +248,16 @@ struct PaywallDebugGestureModifier: ViewModifier {
                 PaywallDebugView(logger: logger)
             }
     }
+    #else
+    func body(content: Content) -> some View {
+        content
+    }
+    #endif
 }
 
 extension View {
     /// Adds a hidden debug gesture (triple tap) to show the paywall debug view
+    /// Only active in DEBUG builds - no-op in release builds
     func paywallDebugGesture() -> some View {
         modifier(PaywallDebugGestureModifier())
     }

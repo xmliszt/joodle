@@ -7,9 +7,10 @@
 
 import Foundation
 import StoreKit
+import Combine
 
 @MainActor
-class StoreKitManager: ObservableObject {
+class StoreKitManager: NSObject, ObservableObject {
     static let shared = StoreKitManager()
 
     @Published var products: [Product] = []
@@ -22,19 +23,30 @@ class StoreKitManager: ObservableObject {
     @Published var subscriptionExpirationDate: Date?
     @Published var willAutoRenew = true
     @Published var isEligibleForIntroOffer = true
+    @Published var currentProductID: String?  // The actual currently active subscription product
 
     private let productIDs: [String] = [
         "dev.liyuxuan.joodle.super.monthly",
         "dev.liyuxuan.joodle.super.yearly"
     ]
 
-    private var updateListenerTask: Task<Void, Error>?
+    private var updateListenerTask: Task<Void, Never>?
+    private var foregroundObserver: AnyCancellable?
 
     /// Debug logger for TestFlight troubleshooting
     private let debugLogger = PaywallDebugLogger.shared
 
-    init() {
+    override init() {
+        super.init()
+
+        // Add StoreKit 1 observer for App Store promoted in-app purchases
+        // This is required for handling purchases initiated from the App Store product page
+        SKPaymentQueue.default().add(self)
+
+        // Start listening for StoreKit 2 transaction updates
         updateListenerTask = listenForTransactions()
+        setupForegroundObserver()
+
         Task {
             await loadProducts()
             await updatePurchasedProducts()
@@ -43,6 +55,26 @@ class StoreKitManager: ObservableObject {
 
     deinit {
         updateListenerTask?.cancel()
+        foregroundObserver?.cancel()
+        // Remove StoreKit 1 observer
+        SKPaymentQueue.default().remove(self)
+    }
+
+    // MARK: - Foreground Observer
+
+    /// Listen for app returning to foreground to refresh subscription status
+    /// This catches changes made in the system subscription management sheet
+    private func setupForegroundObserver() {
+        foregroundObserver = NotificationCenter.default
+            .publisher(for: UIApplication.willEnterForegroundNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    await self?.updatePurchasedProducts()
+                    // Also sync SubscriptionManager to update feature flags and UI state
+                    await SubscriptionManager.shared.updateSubscriptionStatus()
+                    self?.debugLogger.log(.debug, "Refreshed subscription status on foreground")
+                }
+            }
     }
 
     // MARK: - Load Products
@@ -179,7 +211,7 @@ class StoreKitManager: ObservableObject {
                 // Update purchased products
                 await updatePurchasedProducts()
 
-                // Finish the transaction
+                // Finish the transaction after we've updated our state
                 await transaction.finish()
 
                 debugLogger.logPurchaseSuccess(productID: product.id)
@@ -190,7 +222,9 @@ class StoreKitManager: ObservableObject {
                 return nil
 
             case .pending:
-                debugLogger.log(.info, "Purchase pending", details: product.id)
+                // Transaction is pending approval (Ask to Buy, SCA, etc.)
+                // It will appear in Transaction.updates when approved
+                debugLogger.log(.info, "Purchase pending approval", details: product.id)
                 return nil
 
             @unknown default:
@@ -212,6 +246,8 @@ class StoreKitManager: ObservableObject {
         debugLogger.logRestoreAttempt()
 
         do {
+            // AppStore.sync() forces the app to get fresh transaction data from the App Store
+            // This satisfies App Store Review Guidelines section 3.1.1 requirement for restore mechanism
             try await AppStore.sync()
             await updatePurchasedProducts()
             debugLogger.logRestoreSuccess(productIDs: purchasedProductIDs)
@@ -230,8 +266,9 @@ class StoreKitManager: ObservableObject {
         var purchasedIDs: Set<String> = []
         var expirationDate: Date?
         var inTrial = false
-        var autoRenew = true
+        var autoRenew = false  // Default to false, will be set to true if we find an active subscription
         var eligibleForIntro = true
+        var currentProduct: String?
 
         // Check intro offer eligibility using any subscription product
         if let subscriptionProduct = products.first(where: { $0.subscription != nil }),
@@ -239,47 +276,75 @@ class StoreKitManager: ObservableObject {
             eligibleForIntro = await subscription.isEligibleForIntroOffer
         }
 
-        for await result in Transaction.currentEntitlements {
+        // Use Product.SubscriptionInfo.status for accurate current subscription detection
+        // This is more reliable than Transaction.currentEntitlements for determining the CURRENT plan
+        if let subscriptionProduct = products.first(where: { $0.subscription != nil }),
+           let subscription = subscriptionProduct.subscription {
             do {
-                let transaction = try checkVerified(result)
+                let statuses = try await subscription.status
 
-                // Check if the subscription is still active
-                if transaction.revocationDate == nil {
-                    purchasedIDs.insert(transaction.productID)
-
-                    // Get subscription status details
-                    if let product = products.first(where: { $0.id == transaction.productID }),
-                       let subscription = product.subscription {
-
-                        // Check current subscription status
-                        let statuses = try await subscription.status
-
-                        for status in statuses {
-                            // Verify the status
-                            let renewalInfo = try checkVerified(status.renewalInfo)
-                            let transactionInfo = try checkVerified(status.transaction)
-
-                            // Check if in trial period
-                          if let offerType = transactionInfo.offer?.type {
-                                inTrial = (offerType == .introductory)
-                            }
-
-                            // Get expiration date
-                            if let expiration = transactionInfo.expirationDate {
-                                expirationDate = expiration
-                            }
-
-                            // Check auto-renewal status
-                            autoRenew = renewalInfo.willAutoRenew
-                        }
+                for status in statuses {
+                    // Only process active subscription states
+                    guard status.state == .subscribed || status.state == .inGracePeriod || status.state == .inBillingRetryPeriod else {
+                        debugLogger.log(.debug, "Skipping non-active status", details: "State: \(status.state)")
+                        continue
                     }
+
+                    // Verify the status components
+                    let renewalInfo = try checkVerified(status.renewalInfo)
+                    let transactionInfo = try checkVerified(status.transaction)
+
+                    // The transaction's productID is the CURRENTLY active subscription
+                    currentProduct = transactionInfo.productID
+                    purchasedIDs.insert(transactionInfo.productID)
+
+                    // Check if in trial period
+                    if let offerType = transactionInfo.offer?.type {
+                        inTrial = (offerType == .introductory)
+                    }
+
+                    // Get expiration date from the current transaction
+                    if let expiration = transactionInfo.expirationDate {
+                        expirationDate = expiration
+                    }
+
+                    // Check auto-renewal status
+                    // renewalInfo.currentProductID shows what they'll renew to (could be different if they changed plans)
+                    autoRenew = renewalInfo.willAutoRenew
+
+                    debugLogger.log(.debug, "Found active subscription", details: "Product: \(transactionInfo.productID), AutoRenew: \(autoRenew), State: \(status.state), RenewalProduct: \(renewalInfo.currentProductID)")
+
+                    // We found an active subscription, no need to continue
+                    break
                 }
             } catch {
-                debugPrint("Failed to verify transaction: \(error)")
+                debugPrint("Failed to get subscription status: \(error)")
+                debugLogger.log(.error, "Failed to get subscription status", details: error.localizedDescription)
+            }
+        }
+
+        // Fallback: If we didn't find status via subscription.status, check currentEntitlements
+        if currentProduct == nil {
+            for await result in Transaction.currentEntitlements {
+                do {
+                    let transaction = try checkVerified(result)
+
+                    if transaction.revocationDate == nil {
+                        purchasedIDs.insert(transaction.productID)
+
+                        // Only set as current if we don't have one yet
+                        if currentProduct == nil {
+                            currentProduct = transaction.productID
+                        }
+                    }
+                } catch {
+                    debugPrint("Failed to verify transaction: \(error)")
+                }
             }
         }
 
         self.purchasedProductIDs = purchasedIDs
+        self.currentProductID = currentProduct
         self.isInTrialPeriod = inTrial
         self.subscriptionExpirationDate = expirationDate
         self.willAutoRenew = autoRenew
@@ -287,6 +352,7 @@ class StoreKitManager: ObservableObject {
 
         print("📊 Subscription Status:")
         print("   Active: \(!purchasedIDs.isEmpty)")
+        print("   Current Product: \(currentProduct ?? "None")")
         print("   Trial: \(inTrial)")
         print("   Expiration: \(expirationDate?.formatted() ?? "N/A")")
         print("   Auto-Renew: \(autoRenew)")
@@ -310,26 +376,34 @@ class StoreKitManager: ObservableObject {
 
     // MARK: - Transaction Listener
 
-    func listenForTransactions() -> Task<Void, Error> {
-        return Task.detached {
-            for await result in Transaction.updates {
-                do {
-                    let transaction: Transaction
-                    switch result {
-                    case .unverified:
-                        throw StoreError.failedVerification
-                    case .verified(let safe):
-                        transaction = safe
-                    }
+    /// Listen for transaction updates that happen outside the app
+    /// This includes: renewals, cancellations, billing issues, Ask to Buy approvals,
+    /// and purchases made on other devices
+    private func listenForTransactions() -> Task<Void, Never> {
+        return Task(priority: .background) { [weak self] in
+            // Iterate through any pending/new transactions
+            for await verificationResult in Transaction.updates {
+                guard let self = self else { return }
 
+                do {
+                    // Only process verified transactions
+                    let transaction = try self.checkVerified(verificationResult)
+
+                    // Update our purchased products state
                     await self.updatePurchasedProducts()
 
                     // Notify SubscriptionManager to sync state and update widget
                     await SubscriptionManager.shared.updateSubscriptionStatus()
 
+                    // Finish the transaction only after successful processing
                     await transaction.finish()
+
+                    debugPrint("✅ Transaction update processed: \(transaction.productID)")
                 } catch {
-                    debugPrint("Transaction verification failed: \(error)")
+                    // Transaction failed verification - log but don't finish
+                    // Unverified transactions could be from jailbroken devices
+                    debugPrint("❌ Transaction verification failed: \(error)")
+                    self.debugLogger.log(.error, "Transaction update verification failed", details: error.localizedDescription)
                 }
             }
         }
@@ -339,6 +413,12 @@ class StoreKitManager: ObservableObject {
 
     var hasActiveSubscription: Bool {
         !purchasedProductIDs.isEmpty
+    }
+
+    /// Returns the currently active subscription product
+    var currentProduct: Product? {
+        guard let productID = currentProductID else { return nil }
+        return products.first { $0.id == productID }
     }
 
     var monthlyProduct: Product? {
@@ -375,6 +455,36 @@ class StoreKitManager: ObservableObject {
         )).intValue
 
         return percentageInt
+    }
+}
+
+// MARK: - SKPaymentTransactionObserver (StoreKit 1)
+
+/// Required for handling App Store promoted in-app purchases
+/// When a user taps on a promoted IAP on the App Store product page,
+/// this observer allows the app to handle the purchase flow
+extension StoreKitManager: SKPaymentTransactionObserver {
+
+    /// Called when transactions are updated
+    /// For StoreKit 2, we handle most transactions through Transaction.updates,
+    /// but this is still needed for promoted in-app purchases
+    nonisolated func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+        // StoreKit 2 handles most transaction processing through Transaction.updates
+        // This method is primarily here for the shouldAddStorePayment callback to work
+        // We don't need to process transactions here since StoreKit 2 will handle them
+    }
+
+    /// Called when a user initiates an in-app purchase from the App Store
+    /// Return true to continue the purchase immediately
+    /// Return false to defer the purchase to a later time
+    nonisolated func paymentQueue(_ queue: SKPaymentQueue, shouldAddStorePayment payment: SKPayment, for product: SKProduct) -> Bool {
+        // Return true to allow the purchase to proceed immediately
+        // The transaction will be processed through StoreKit 2's Transaction.updates
+        //
+        // If you need to defer the purchase (e.g., show a custom paywall first),
+        // return false and manually add the payment later:
+        // SKPaymentQueue.default().add(payment)
+        return true
     }
 }
 

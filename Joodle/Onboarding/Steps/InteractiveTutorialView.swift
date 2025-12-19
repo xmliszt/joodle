@@ -56,6 +56,11 @@ struct InteractiveTutorialView: View {
         return false
     }
 
+    /// Whether the current step is the scrubbing step (disable scroll to prevent accidental scrolling)
+    private var isScrubbingStep: Bool {
+        coordinator.currentStep?.type == .scrubbing
+    }
+
     /// Whether device has Dynamic Island
     private var hasDynamicIsland: Bool {
         UIDevice.hasDynamicIsland
@@ -305,15 +310,11 @@ struct InteractiveTutorialView: View {
     }
 
     private func exitTutorial() {
+        // skipAll() handles navigation via its onComplete callback
+        // For onboarding: onComplete calls viewModel.completeStep(.yearGridDemo)
+        // For standalone: onComplete calls onDismiss
+        // Do NOT call completeStep here to avoid double navigation which can corrupt the navigation path
         coordinator.skipAll()
-
-        if isOnboarding {
-            // During onboarding, skip to next step
-            viewModel?.completeStep(.yearGridDemo)
-        } else {
-            // Standalone mode - call dismiss callback
-            onDismiss?()
-        }
     }
 
     // MARK: - Tutorial Content
@@ -402,8 +403,9 @@ struct InteractiveTutorialView: View {
                             }
                         }
                         .background(Color.backgroundColor)
-                        // Only disable scroll when actively scrubbing
-                        .scrollDisabled(isScrubbing)
+                        // Disable scroll during scrubbing step (prevents accidental scroll when tap doesn't hold long enough)
+                        // Also disable when actively scrubbing
+                        .scrollDisabled(isScrubbingStep || isScrubbing)
                         .onAppear {
                             scrollProxy = proxy
                         }

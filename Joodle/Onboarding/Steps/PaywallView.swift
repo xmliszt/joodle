@@ -44,16 +44,6 @@ struct PaywallView: View {
             .padding(.top, 8)
             .padding(.trailing, 8)
         }
-        .overlay(alignment: .topLeading) {
-            Button {
-                viewModel.goBack()
-            } label: {
-                Image(systemName: "arrow.left")
-            }
-            .circularGlassButton(tintColor: .primary)
-            .padding(.leading, 16)
-            .padding(.top, 8)
-        }
         .navigationBarBackButtonHidden(true)
     }
 }

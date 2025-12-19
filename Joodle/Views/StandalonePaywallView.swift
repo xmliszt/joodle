@@ -26,14 +26,14 @@ struct StandalonePaywallView: View {
                     PaywallContentView(configuration: PaywallConfiguration(
                         useOnboardingStyle: false,
                         onPurchaseComplete: {
-                            Task {
+                            Task { @MainActor in
                                 await subscriptionManager.updateSubscriptionStatus()
                                 dismiss()
                             }
                         },
                         onContinueFree: nil,
                         onRestoreComplete: {
-                            Task {
+                            Task { @MainActor in
                                 await subscriptionManager.updateSubscriptionStatus()
                                 dismiss()
                             }

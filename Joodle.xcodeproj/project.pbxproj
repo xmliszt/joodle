@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		FA80CBF22EE9D05200E3BD1E /* Configuration.storekit in Resources */ = {isa = PBXBuildFile; fileRef = FA80CBF12EE9D05200E3BD1E /* Configuration.storekit */; };
+		FA80CBF22EE9D05200E3BD1E /* Store.storekit in Resources */ = {isa = PBXBuildFile; fileRef = FA80CBF12EE9D05200E3BD1E /* Store.storekit */; };
 		FA85D4502EB7AECA007D82EE /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D44F2EB7AECA007D82EE /* WidgetKit.framework */; };
 		FA85D4632EB7AECB007D82EE /* WidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		FA8A958E2EE5CCF300FF871C /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA8A958D2EE5CCF300FF871C /* StoreKit.framework */; };
@@ -53,7 +53,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		FA80CBF12EE9D05200E3BD1E /* Configuration.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Configuration.storekit; sourceTree = "<group>"; };
+		FA80CBF12EE9D05200E3BD1E /* Store.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Store.storekit; sourceTree = "<group>"; };
 		FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA85D44F2EB7AECA007D82EE /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		FA85D4512EB7AECA007D82EE /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -186,7 +186,7 @@
 		FADC357A2E48C2E1007AE111 = {
 			isa = PBXGroup;
 			children = (
-				FA80CBF12EE9D05200E3BD1E /* Configuration.storekit */,
+				FA80CBF12EE9D05200E3BD1E /* Store.storekit */,
 				FAE73C552EC0D32800AFCED7 /* Shared */,
 				FA85D4732EB7AFC5007D82EE /* WidgetsExtension.entitlements */,
 				FADC35852E48C2E1007AE111 /* Joodle */,
@@ -368,7 +368,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FA80CBF22EE9D05200E3BD1E /* Configuration.storekit in Resources */,
+				FA80CBF22EE9D05200E3BD1E /* Store.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

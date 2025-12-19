@@ -341,7 +341,7 @@ struct ContentView: View {
         subscriptionManager.acknowledgeExpiry()
       }
     } message: {
-      Text("Your Joodle Super subscription has ended. Some features are now limited, including iCloud sync and unlimited Joodles.")
+      Text("Your Joodle Super subscription has ended. Some features are now limited.")
     }
     .onAppear {
       // Sync widget data when app launches

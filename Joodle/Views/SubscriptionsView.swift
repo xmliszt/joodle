@@ -13,8 +13,13 @@ struct SubscriptionsView: View {
   @Environment(\.scenePhase) private var scenePhase
   @StateObject private var storeManager = StoreKitManager.shared
   @StateObject private var subscriptionManager = SubscriptionManager.shared
-  @State private var currentProduct: Product?
   @State private var subscriptionGroupID: String?
+  @State private var isRefreshing = false
+
+  /// The current product comes directly from StoreKitManager for accuracy
+  private var currentProduct: Product? {
+    storeManager.currentProduct
+  }
 
   var body: some View {
     ZStack {
@@ -23,13 +28,16 @@ struct SubscriptionsView: View {
           // Header
           headerSection
 
-          // Current Plan Card (if subscribed)
+          // Current Plan Card (if subscribed and we know the product)
           if let product = currentProduct {
             currentPlanSection(product: product)
+          } else if subscriptionManager.isSubscribed && isRefreshing {
+            // Show placeholder while loading current product
+            currentPlanLoadingSection
           }
 
           // Manage Subscription Button
-          if subscriptionManager.isSubscribed  {
+          if subscriptionManager.isSubscribed {
             manageSubscriptionButton
           }
 
@@ -39,8 +47,11 @@ struct SubscriptionsView: View {
         .padding(.vertical, 20)
         .padding(.bottom, 40)
       }
+      .refreshable {
+        await refreshSubscriptionStatus()
+      }
 
-      if storeManager.isLoading {
+      if storeManager.isLoading && !isRefreshing {
         Color.black.opacity(0.3)
           .ignoresSafeArea()
         ProgressView()
@@ -50,20 +61,19 @@ struct SubscriptionsView: View {
     .navigationTitle("Joodle Super")
     .navigationBarTitleDisplayMode(.inline)
     .onAppear {
-      detectCurrentProduct()
       Task {
-        await storeManager.updatePurchasedProducts()
-        await subscriptionManager.updateSubscriptionStatus()
-        detectCurrentProduct()
+        isRefreshing = true
+        await refreshSubscriptionStatus()
+        isRefreshing = false
       }
     }
     .onChange(of: scenePhase) { oldPhase, newPhase in
       if newPhase == .active {
         // Refresh subscription status when returning from system subscription management
         Task {
-          await storeManager.updatePurchasedProducts()
-          await subscriptionManager.updateSubscriptionStatus()
-          detectCurrentProduct()
+          isRefreshing = true
+          await refreshSubscriptionStatus()
+          isRefreshing = false
         }
       }
     }
@@ -76,11 +86,30 @@ struct SubscriptionsView: View {
       guard subscriptionGroupID != nil else { return }
 
       Task {
-        await storeManager.updatePurchasedProducts()
-        await subscriptionManager.updateSubscriptionStatus()
-        detectCurrentProduct()
+        isRefreshing = true
+        await refreshSubscriptionStatus()
+        isRefreshing = false
       }
     }
+  }
+
+  // MARK: - Refresh Subscription Status
+
+  /// Refreshes subscription status from StoreKit
+  /// - Parameter forceSync: If true, calls AppStore.sync() to force sync with App Store servers.
+  ///   Only use for manual "Restore Purchases" - it triggers Apple ID sign-in prompts.
+  private func refreshSubscriptionStatus(forceSync: Bool = false) async {
+    if forceSync {
+      // Only call AppStore.sync() for manual restore - it triggers sign-in prompts
+      do {
+        try await AppStore.sync()
+      } catch {
+        print("AppStore.sync failed: \(error)")
+      }
+    }
+
+    await storeManager.updatePurchasedProducts()
+    await subscriptionManager.updateSubscriptionStatus()
   }
 
   // MARK: - Load Subscription Group ID
@@ -114,7 +143,6 @@ struct SubscriptionsView: View {
         .font(.system(size: 50))
         .foregroundColor(subscriptionManager.isSubscribed ? .appAccent : .appBorder)
 
-
       if subscriptionManager.isSubscribed {
         Text("Joodle Super")
           .font(.system(size: 28, weight: .bold))
@@ -143,6 +171,18 @@ struct SubscriptionsView: View {
           )
           .padding(.top, 8)
         }
+
+        // Show refresh indicator
+        if isRefreshing {
+          HStack(spacing: 6) {
+            ProgressView()
+              .scaleEffect(0.7)
+            Text("Updating...")
+              .font(.caption2)
+              .foregroundColor(.secondary)
+          }
+          .padding(.top, 4)
+        }
       } else {
         Text("No active subscription")
           .font(.subheadline)
@@ -167,6 +207,29 @@ struct SubscriptionsView: View {
         badge: subscriptionManager.isInTrialPeriod ? "FREE TRIAL" : nil,
         isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
         onSelect: {}
+      )
+      .padding(.horizontal, 20)
+    }
+  }
+
+  // MARK: - Current Plan Loading Placeholder
+
+  private var currentPlanLoadingSection: some View {
+    VStack(alignment: .leading, spacing: 12) {
+      Text("Your Current Plan")
+        .font(.caption)
+        .foregroundColor(.secondary)
+        .padding(.horizontal, 20)
+
+      HStack {
+        Spacer()
+        ProgressView()
+          .padding(.vertical, 40)
+        Spacer()
+      }
+      .background(
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+          .fill(.appBorder.opacity(0.2))
       )
       .padding(.horizontal, 20)
     }
@@ -210,11 +273,19 @@ struct SubscriptionsView: View {
           .multilineTextAlignment(.leading)
           .padding(.horizontal, 32)
       } else {
-        Text("Manage your subscription, change plans, or cancel anytime.")
-          .font(.caption2)
-          .foregroundColor(.secondary)
-          .multilineTextAlignment(.leading)
-          .padding(.horizontal, 32)
+        if let renewalDate = subscriptionManager.subscriptionExpirationDate {
+          Text("Your subscription will automatically renew on \(formatExpirationDate(renewalDate) ?? "the renewal date"). Manage your subscription, change plans, or cancel anytime.")
+            .font(.caption2)
+            .foregroundColor(.secondary)
+            .multilineTextAlignment(.leading)
+            .padding(.horizontal, 32)
+        } else {
+          Text("Manage your subscription, change plans, or cancel anytime.")
+            .font(.caption2)
+            .foregroundColor(.secondary)
+            .multilineTextAlignment(.leading)
+            .padding(.horizontal, 32)
+        }
       }
     }
   }
@@ -223,9 +294,9 @@ struct SubscriptionsView: View {
 
   private var legalSection: some View {
     HStack(spacing: 16) {
-      Link("Terms of Service", destination: URL(string: "https://joodle.liyuxuan.dev/terms-of-service")!)
+      Link("Terms of Service", destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!)
       Text("•")
-      Link("Privacy Policy", destination: URL(string: "https://joodle.liyuxuan.dev/privacy-policy")!)
+      Link("Privacy Policy", destination: URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!)
     }
     .font(.caption2)
     .foregroundColor(.secondary)
@@ -234,17 +305,6 @@ struct SubscriptionsView: View {
 
   // MARK: - Helper Methods
 
-  private func detectCurrentProduct() {
-    // Find which product the user is currently subscribed to
-    for productID in storeManager.purchasedProductIDs {
-      if let product = storeManager.products.first(where: { $0.id == productID }) {
-        currentProduct = product
-        return
-      }
-    }
-    currentProduct = nil
-  }
-
   private func formatExpirationDate(_ date: Date?) -> String? {
     guard let date = date else { return nil }
     let formatter = DateFormatter()
@@ -252,6 +312,14 @@ struct SubscriptionsView: View {
     formatter.timeStyle = .short
     formatter.timeZone = TimeZone.current
     let timeZoneAbbreviation = formatter.timeZone.abbreviation() ?? ""
+    return "\(formatter.string(from: date)) (\(timeZoneAbbreviation))"
+  }
+
+  private func formatExpirationDateFull(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "EEEE, MMMM d, yyyy 'at' h:mm:ss a"
+    formatter.timeZone = TimeZone.current
+    let timeZoneAbbreviation = formatter.timeZone.abbreviation() ?? TimeZone.current.identifier
     return "\(formatter.string(from: date)) (\(timeZoneAbbreviation))"
   }
 
@@ -268,9 +336,9 @@ struct SubscriptionsView: View {
         try await AppStore.showManageSubscriptions(in: windowScene)
 
         // Refresh subscription status after the sheet is dismissed
-        await storeManager.updatePurchasedProducts()
-        await subscriptionManager.updateSubscriptionStatus()
-        detectCurrentProduct()
+        isRefreshing = true
+        await refreshSubscriptionStatus()
+        isRefreshing = false
       } catch {
         print("Failed to show manage subscriptions: \(error)")
       }
