@@ -14,8 +14,22 @@ enum AppEnvironment {
     case testFlight
     case appStore
 
-    /// The current app environment
+    // MARK: - Production Simulation
+
+    /// When true, the app behaves as if it's running in production (App Store)
+    /// This is only effective in non-production environments (Debug/TestFlight)
+    static var simulateProductionEnvironment: Bool = false
+
+    /// The current app environment (considering simulation)
     static var current: AppEnvironment {
+        if simulateProductionEnvironment && isActuallyNonProduction {
+            return .appStore
+        }
+        return actualEnvironment
+    }
+
+    /// The actual app environment (ignoring simulation)
+    static var actualEnvironment: AppEnvironment {
         #if DEBUG
         return .debug
         #else
@@ -24,6 +38,15 @@ enum AppEnvironment {
         } else {
             return .appStore
         }
+        #endif
+    }
+
+    /// Whether the app is actually running in a non-production environment (ignoring simulation)
+    static var isActuallyNonProduction: Bool {
+        #if DEBUG
+        return true
+        #else
+        return isTestFlight
         #endif
     }
 
@@ -67,8 +90,11 @@ enum AppEnvironment {
         }
     }
 
-    /// Whether the app is running in production (App Store)
+    /// Whether the app is running in production (App Store) - considers simulation
     static var isAppStore: Bool {
+        if simulateProductionEnvironment && isActuallyNonProduction {
+            return true
+        }
         #if DEBUG
         return false
         #else
@@ -76,13 +102,21 @@ enum AppEnvironment {
         #endif
     }
 
-    /// Whether the app is running in debug mode
+    /// Whether the app is running in debug mode - considers simulation
     static var isDebug: Bool {
+        if simulateProductionEnvironment {
+            return false
+        }
         #if DEBUG
         return true
         #else
         return false
         #endif
+    }
+
+    /// Whether we're currently simulating production in a non-production environment
+    static var isSimulatingProduction: Bool {
+        simulateProductionEnvironment && isActuallyNonProduction
     }
 
     /// Human-readable description of the current environment
@@ -150,7 +184,7 @@ enum AppEnvironment {
         case .debug, .testFlight:
             return "Submit Testing Feedback"
         case .appStore:
-            return "Write a Review"
+            return "Write a Review on App Store"
         }
     }
 
@@ -158,9 +192,9 @@ enum AppEnvironment {
     static var feedbackButtonIcon: String {
         switch current {
         case .debug, .testFlight:
-            return "bubble.left.and.exclamationmark.bubble.right"
+            return "bubble.left.and.exclamationmark.bubble.right.fill"
         case .appStore:
-            return "star"
+            return "star.fill"
         }
     }
 }

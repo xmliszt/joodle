@@ -78,6 +78,9 @@ struct SettingsView: View {
   @State private var importMessage = ""
   @State private var showImportAlert = false
 
+  // Debug: Simulate production environment - bound to AppEnvironment
+  @State private var simulateProductionEnvironment = AppEnvironment.simulateProductionEnvironment
+
   // MARK: - Computed Bindings
   private var viewModeBinding: Binding<ViewMode> {
     Binding(
@@ -111,10 +114,10 @@ struct SettingsView: View {
       themeColorSection
       interactionSection
       freePlanLimitsSection
-      subscriptionSection
-      dataManagementSection
       tutorialSection
       onboardingSection
+      subscriptionSection
+      dataManagementSection
       feedbackSection
       developerOptionsSection
     }
@@ -158,11 +161,11 @@ struct SettingsView: View {
     .sheet(isPresented: $showAppStats) {
       AppStatsView()
     }
-    #if DEBUG
+#if DEBUG
     .sheet(isPresented: $showDataSeeder) {
       DebugDataSeederView()
     }
-    #endif
+#endif
     .sheet(isPresented: $showPaywall) {
       StandalonePaywallView()
     }
@@ -332,7 +335,7 @@ struct SettingsView: View {
             Text("\(currentJoodleCount) / \(SubscriptionManager.freeJoodlesAllowed)")
               .foregroundStyle(
                 currentJoodleCount >= SubscriptionManager.freeJoodlesAllowed ? .red :
-                .secondary
+                    .secondary
               )
               .font(.system(size: 14))
           }
@@ -342,17 +345,17 @@ struct SettingsView: View {
         Button {
           showPaywall = true
         } label: {
-            HStack {
-              Text("Anniversary reminders")
-              Spacer()
-              Text("\(reminderManager.reminders.count) / 5")
-                .foregroundStyle(
-                  reminderManager.hasReachedFreeLimit ? .red : .secondary
-                )
-                .font(.system(size: 14))
-            }
+          HStack {
+            Text("Anniversary reminders")
+            Spacer()
+            Text("\(reminderManager.reminders.count) / 5")
+              .foregroundStyle(
+                reminderManager.hasReachedFreeLimit ? .red : .secondary
+              )
+              .font(.system(size: 14))
           }
-          .foregroundStyle(.primary)
+        }
+        .foregroundStyle(.primary)
       } header: {
         Text("Limits")
       } footer: {
@@ -366,58 +369,58 @@ struct SettingsView: View {
 
   @ViewBuilder
   private var subscriptionSection: some View {
-    Section("Super Subscription") {
-        if subscriptionManager.isSubscribed {
-          // Detailed subscription status card
-          Button {
-            showSubscriptions = true
-          } label: {
-            VStack(alignment: .leading, spacing: 4) {
-              HStack {
-                HStack(spacing: 4) {
-                  Image(systemName: "crown.fill")
-                    .foregroundStyle(.appAccent)
-                    .font(.body)
-                  Text("Joodle Super")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                  .font(.caption)
-                  .foregroundColor(.secondary)
-              }
-
-              if let statusMessage = subscriptionManager.subscriptionStatusMessage {
-                // Trial or cancellation status
-                Text(statusMessage)
-                  .font(.subheadline)
-                  .foregroundColor(.secondary)
-                  .frame(maxWidth: .infinity, alignment: .leading)
-              } else {
-                // Active subscription with no issues
-                Text("You have full access to all features")
-                  .font(.subheadline)
-                  .foregroundColor(.secondary)
-                  .frame(maxWidth: .infinity, alignment: .leading)
-              }
-            }
-            .padding(.vertical, 4)
-          }
-        } else {
-          // No subscription - show simple upgrade button
-          Button {
-            showPaywall = true
-          } label: {
+    Section {
+      if subscriptionManager.isSubscribed {
+        // Detailed subscription status card
+        Button {
+          showSubscriptions = true
+        } label: {
+          VStack(alignment: .leading, spacing: 4) {
             HStack {
-              Text("Unlock Joodle Super")
+              HStack(spacing: 4) {
+                Image(systemName: "crown.fill")
+                  .foregroundStyle(.appAccent)
+                  .font(.body)
+                Text("Joodle Super")
+                  .font(.headline)
+                  .foregroundColor(.primary)
+              }
               Spacer()
               Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundColor(.secondary)
             }
+
+            if let statusMessage = subscriptionManager.subscriptionStatusMessage {
+              // Trial or cancellation status
+              Text(statusMessage)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+              // Active subscription with no issues
+              Text("You have full access to all features")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
           }
-          .foregroundColor(.primary)
+          .padding(.vertical, 4)
+        }
+      } else {
+        // No subscription - show simple upgrade button
+        Button {
+          showPaywall = true
+        } label: {
+          HStack {
+            Text("Unlock Joodle Super")
+            Spacer()
+            Image(systemName: "chevron.right")
+              .font(.caption)
+              .foregroundColor(.secondary)
+          }
+        }
+        .foregroundColor(.primary)
       }
 
       // Redeem Promo Code - available for all users
@@ -445,49 +448,49 @@ struct SettingsView: View {
 
   @ViewBuilder
   private var dataManagementSection: some View {
-    Section("Data Management") {
-        NavigationLink {
-          iCloudSyncView()
-        } label: {
-          HStack {
-            Text("Sync to iCloud")
-            Spacer()
+    Section {
+      NavigationLink {
+        iCloudSyncView()
+      } label: {
+        HStack {
+          Text("Sync to iCloud")
+          Spacer()
 
-            // Show premium badge if not subscribed
-            if !subscriptionManager.hasICloudSync {
-              PremiumFeatureBadge()
-            } else if needsRestartForSync {
-              // Show restart required warning
-              Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
+          // Show premium badge if not subscribed
+          if !subscriptionManager.hasICloudSync {
+            PremiumFeatureBadge()
+          } else if needsRestartForSync {
+            // Show restart required warning
+            Image(systemName: "exclamationmark.triangle.fill")
+              .foregroundStyle(.orange)
+              .font(.caption)
+          } else if cloudSyncManager.isSyncing && subscriptionManager.hasICloudSync {
+            // Show syncing indicator
+            HStack(spacing: 6) {
+              Text("Syncing")
                 .font(.caption)
-            } else if cloudSyncManager.isSyncing && subscriptionManager.hasICloudSync {
-              // Show syncing indicator
-              HStack(spacing: 6) {
-                Text("Syncing")
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-                ProgressView()
-                  .scaleEffect(0.6)
-              }
-            } else if !cloudSyncManager.canSync {
-              Image(systemName: "xmark.circle.fill")
-                .foregroundStyle(.red)
-                .font(.caption)
-            } else if userPreferences.isCloudSyncEnabled && CloudSyncManager.shared.isCloudAvailable {
-              Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-                .font(.caption)
+                .foregroundStyle(.secondary)
+              ProgressView()
+                .scaleEffect(0.6)
             }
+          } else if !cloudSyncManager.canSync {
+            Image(systemName: "xmark.circle.fill")
+              .foregroundStyle(.red)
+              .font(.caption)
+          } else if userPreferences.isCloudSyncEnabled && CloudSyncManager.shared.isCloudAvailable {
+            Image(systemName: "checkmark.circle.fill")
+              .foregroundStyle(.green)
+              .font(.caption)
           }
         }
-        Button(action: { exportData() }) {
-          Text("Backup locally")
-        }
+      }
+      Button(action: { exportData() }) {
+        Text("Backup locally")
+      }
 
-        Button(action: { showFileImporter = true }) {
-          Text("Restore from local backup")
-        }
+      Button(action: { showFileImporter = true }) {
+        Text("Restore from local backup")
+      }
     }
   }
 
@@ -534,26 +537,60 @@ struct SettingsView: View {
     }
   }
 
+  /// Returns true if the app is running in a non-production environment (Debug or TestFlight)
+  /// Uses AppEnvironment for consistency across the app
+  private var isNonProductionEnvironment: Bool {
+    !AppEnvironment.isAppStore
+  }
+
+  /// Returns true if the app is running in a production App Store environment
+  private var isProductionEnvironment: Bool {
+    AppEnvironment.isAppStore
+  }
+
+  /// Returns true if we're simulating production but not actually in production
+  private var isSimulatingProduction: Bool {
+    AppEnvironment.isSimulatingProduction
+  }
+
   @ViewBuilder
   private var onboardingSection: some View {
-    Section {
-      Button("Revisit Onboarding") {
-        showOnboarding = true
+    if isNonProductionEnvironment {
+      Section {
+        Button("Revisit Onboarding") {
+          showOnboarding = true
+        }
       }
     }
   }
 
   @ViewBuilder
   private var feedbackSection: some View {
+    // Feedback & Reviews Section - only in production
     Section {
-        Button {
-          openFeedback()
-        } label: {
+      Button {
+        openFeedback()
+      } label: {
+        HStack {
+          Image(systemName: AppEnvironment.feedbackButtonIcon)
+            .foregroundColor(.primary)
+            .frame(width: 24)
+          Text(AppEnvironment.feedbackButtonTitle)
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+      if isProductionEnvironment {
+
+        Link(destination: URL(string: "https://tinyurl.com/joodle-feedback")!) {
           HStack {
-            Image(systemName: AppEnvironment.feedbackButtonIcon)
-              .foregroundColor(.appAccent)
+            Image(systemName: "bubble.left.and.bubble.right.fill")
+              .foregroundColor(.primary)
               .frame(width: 24)
-            Text(AppEnvironment.feedbackButtonTitle)
+            Text("Submit Your Feedback to Us")
               .foregroundColor(.primary)
             Spacer()
             Image(systemName: "arrow.up.right")
@@ -561,6 +598,99 @@ struct SettingsView: View {
               .foregroundColor(.secondary)
           }
         }
+      }
+    }
+
+    // Community & Social Section
+    Section {
+      Link(destination: URL(string: "mailto:joodle@liyuxuan.dev")!) {
+        HStack {
+          Image(systemName: "envelope.front.fill")
+            .foregroundColor(.primary)
+            .frame(width: 20)
+          Text("Email support")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+      
+      Link(destination: URL(string: "https://liyuxuan.dev")!) {
+        HStack {
+          Image(systemName: "globe.fill")
+            .foregroundColor(.primary)
+            .frame(width: 20)
+          Text("Visit developer website")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+      
+      Link(destination: URL(string: "https://discord.gg/9QUWBJ3p")!) {
+        HStack {
+          Image("Social/discord")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 24)
+          Text("Join Discord community")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+
+      Link(destination: URL(string: "https://x.com/xmliszt")!) {
+        HStack {
+          Image("Social/twitter")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 24)
+          Text("Follow me on X")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+    }
+
+    // Legal Section
+    Section {
+      Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!) {
+        HStack {
+          Image(systemName: "hand.raised.fill")
+            .foregroundColor(.primary)
+            .frame(width: 24)
+          Text("Privacy Policy")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+
+      Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!) {
+        HStack {
+          Image(systemName: "text.document.fill")
+            .foregroundColor(.primary)
+            .frame(width: 24)
+          Text("Terms of Service")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
     } footer: {
       Text("Version \(AppEnvironment.fullVersionString)")
         .font(.caption2)
@@ -570,8 +700,8 @@ struct SettingsView: View {
 
   @ViewBuilder
   private var developerOptionsSection: some View {
-    if AppEnvironment.isDebug {
-      Section("Developer Options") {
+    if AppEnvironment.isDebug && !simulateProductionEnvironment {
+      Section {
         Button("App Stats") {
           showAppStats = true
         }
@@ -588,6 +718,19 @@ struct SettingsView: View {
           cloudStore.synchronize()
           print("DEBUG: iCloud KVS sync history cleared!")
         }
+
+        Toggle("Simulate Production Environment", isOn: Binding(
+          get: { AppEnvironment.simulateProductionEnvironment },
+          set: { newValue in
+            AppEnvironment.simulateProductionEnvironment = newValue
+            simulateProductionEnvironment = newValue
+          }
+        ))
+      } header: {
+        Text("Developer Options")
+      } footer: {
+        Text("When enabled, the app will behave as if it's running in production (App Store release).")
+          .font(.caption)
       }
 
       Section("Subscription Testing") {
@@ -604,6 +747,20 @@ struct SettingsView: View {
       }
       .sheet(isPresented: $showSubscriptionTesting) {
         SubscriptionTestingView()
+      }
+    }
+
+    // Exit simulation button - only shows when simulating production in a non-production environment
+    if isSimulatingProduction {
+      Section {
+        Button("Exit Production Simulation") {
+          AppEnvironment.simulateProductionEnvironment = false
+          simulateProductionEnvironment = false
+        }
+        .foregroundColor(.orange)
+      } footer: {
+        Text("You are currently simulating production environment. Tap to return to development mode.")
+          .font(.caption)
       }
     }
   }
