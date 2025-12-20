@@ -218,35 +218,17 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
       isSubscribed: isSubscribed
     )
 
-    // Update widget based on countdown timing
+    // Update widget at midnight since we only show day-level countdown
+    // (no hours/minutes/seconds - just "Tomorrow" for <= 1 day)
     let calendar = Calendar.current
     let nextUpdate: Date
 
     // If not subscribed, update more frequently to catch subscription changes
     if !isSubscribed {
       nextUpdate = calendar.date(byAdding: .minute, value: 15, to: currentDate) ?? currentDate
-    } else if let annivData = anniversaryData {
-      let components = calendar.dateComponents(
-        [.year, .month, .day, .hour, .minute],
-        from: currentDate,
-        to: annivData.date
-      )
-
-      // If less than a day away, update more frequently
-      if let days = components.day, days == 0 {
-        // Update every minute for same-day countdowns
-        nextUpdate = calendar.date(byAdding: .minute, value: 1, to: currentDate) ?? currentDate
-      } else {
-        // Update at midnight for longer countdowns
-        nextUpdate =
-          calendar.date(
-            byAdding: .day,
-            value: 1,
-            to: calendar.startOfDay(for: currentDate)
-          ) ?? currentDate
-      }
     } else {
-      // No anniversary found, update at midnight
+      // Update at midnight for all countdowns since we show day-level precision
+      // or "Tomorrow" for sub-day countdowns
       nextUpdate =
         calendar.date(
           byAdding: .day,

@@ -403,9 +403,10 @@ struct EntryEditingView: View {
       .onDisappear {
         stopTimer()
       }
-      /// On receive timer interval, update the current time if we still need updates (every 1 second)
-      .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { _ in
+      /// Timer for countdown updates (no longer needed since we show "Tomorrow" for <= 1 day)
+      .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in
         // Only update if timer is active and we still need updates
+        // Note: needsRealTimeUpdates now returns false, so this is effectively disabled
         guard isTimerActive && needsRealTimeUpdates else { return }
         currentTime = Date()
       }
@@ -675,12 +676,13 @@ struct EntryEditingView: View {
 // MARK: - Private Methods
 
 /// Start the timer if needed
+/// Note: Timer is no longer needed since we show "Tomorrow" for <= 1 day
+/// instead of hours/minutes/seconds countdown
 private func startTimerIfNeeded() {
   // Skip in mock mode
   guard !isMockMode else { return }
 
-  // Always activate timer for future dates within 24 hours
-  // countdownText will handle nil entry checks
+  // No real-time updates needed since we show "Tomorrow" for sub-day countdowns
   guard isFuture && needsRealTimeUpdates else { return }
   currentTime = Date()
   isTimerActive = true
@@ -692,7 +694,7 @@ private func stopTimer() {
 }
 
 /// Check if we need real-time updates for the countdown text
-/// Uses shared CountdownHelper to determine if within 24 hours
+/// Returns false since we show "Tomorrow" for <= 1 day (no hours/minutes/seconds)
 private var needsRealTimeUpdates: Bool {
   guard let date else { return false }
   return CountdownHelper.needsRealTimeUpdates(from: Date(), to: date)
