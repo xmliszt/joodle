@@ -344,12 +344,9 @@ struct DotPositionTweakerView: View {
 #Preview("🎯 Dot Tweaker - Widget Screenshots") {
     NavigationStack {
         DotPositionTweakerView(screenshots: [
-          ScreenshotItem(image: Image("Help/Standby1"), dots: [TapDot(x: 802, y: 304)], orientation: .landscape),
-          ScreenshotItem(image: Image("Help/Standby2"), dots: [TapDot(x: 118, y: 67)], orientation: .landscape),
-          ScreenshotItem(image: Image("Help/Standby3"), dots: [TapDot(x: 314, y: 306)], orientation: .landscape),
-          ScreenshotItem(image: Image("Help/Standby4"), dots: [TapDot(x: 823, y: 481)], orientation: .landscape),
-          ScreenshotItem(image: Image("Help/Standby5"), dots: [TapDot(x: 621, y: 296)], orientation: .landscape),
-          ScreenshotItem(image: Image("Help/Standby6"), orientation: .landscape)
+          ScreenshotItem(image: Image("Help/SiriShortcut1"), dots: [TapDot(x: 306, y: 758)]),
+          ScreenshotItem(image: Image("Help/SiriShortcut2"), dots: [TapDot(x: 237, y: 215)]),
+          ScreenshotItem(image: Image("Help/SiriShortcut3"))
         ])
     }
 }

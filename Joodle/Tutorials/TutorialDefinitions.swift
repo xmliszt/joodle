@@ -67,6 +67,21 @@ enum TutorialDefinitions {
     description: "Long press, tap the + button, search for \"Joodle\", and add a widget. Some widgets are configurable. Tap the widget while in edit mode to configure.",
     isPremiumFeature: true
   )
+  
+  /// Tutorial for accessing Joodle from Siri Shortcut
+  static let siriShortcuts = TutorialData(
+    id: "siri-shortcut",
+    title: "Quick access from Siri Shortcuts",
+    icon: "magnifyingglass",
+    shortDescription: "Quickly jump to today or upcoming anniversary via Siri Shortcuts",
+    screenshots: [
+      ScreenshotItem(image: Image("Help/SiriShortcut1"), dots: [TapDot(x: 306, y: 758)]),
+      ScreenshotItem(image: Image("Help/SiriShortcut2"), dots: [TapDot(x: 237, y: 215)]),
+      ScreenshotItem(image: Image("Help/SiriShortcut3"))
+    ],
+    description: "Open Spotlight Search by swiping down on home screen. Search for \"Joodle\". Tap on any quick action.",
+    isPremiumFeature: true
+  )
 
   // MARK: - All Tutorials
 
@@ -74,7 +89,8 @@ enum TutorialDefinitions {
   static let allTutorials: [TutorialData] = [
     homeScreenWidgets,
     lockScreenWidgets,
-    standbyWidgets
+    standbyWidgets,
+    siriShortcuts
   ]
 }
 
