@@ -1,7 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "NormalView.png",
+      "filename" : "Normal Light.png",
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Normal Dark.png",
       "idiom" : "universal"
     }
   ],

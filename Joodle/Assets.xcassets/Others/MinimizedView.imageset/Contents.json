@@ -1,7 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "MinimizedView.png",
+      "filename" : "Minimized Light.png",
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Minimized Dark.png",
       "idiom" : "universal"
     }
   ],
