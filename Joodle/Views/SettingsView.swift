@@ -51,6 +51,8 @@ struct SettingsView: View {
   @StateObject private var storeKitManager = StoreKitManager.shared
   @StateObject private var reminderManager = ReminderManager.shared
   @State private var showOnboarding = false
+  @State private var dailyReminderTime: Date = UserPreferences.shared.dailyReminderTime
+  @State private var showNotificationDeniedAlert = false
   @State private var showPlaceholderGenerator = false
   @State private var showPaywall = false
   @State private var showSubscriptions = false
@@ -113,6 +115,7 @@ struct SettingsView: View {
       appearanceSection
       themeColorSection
       interactionSection
+      dailyReminderSection
       freePlanLimitsSection
       tutorialSection
       onboardingSection
@@ -319,6 +322,65 @@ struct SettingsView: View {
       } footer: {
         Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration")
       }
+    }
+  }
+
+  @ViewBuilder
+  private var dailyReminderSection: some View {
+    Section {
+      HStack {
+        Text("Daily reminder")
+        Spacer()
+        DatePicker(
+          "",
+          selection: $dailyReminderTime,
+          displayedComponents: .hourAndMinute
+        )
+        .labelsHidden()
+        .datePickerStyle(.compact)
+        .onChange(of: dailyReminderTime) { _, newTime in
+          userPreferences.dailyReminderTime = newTime
+          reminderManager.updateDailyReminderTime(newTime)
+        }
+        Toggle("", isOn: Binding(
+          get: { userPreferences.isDailyReminderEnabled },
+          set: { newValue in
+            if newValue {
+              // Enabling - check permission
+              Task {
+                let success = await reminderManager.enableDailyReminder(at: dailyReminderTime)
+                await MainActor.run {
+                  if success {
+                    userPreferences.isDailyReminderEnabled = true
+                  } else {
+                    // Permission denied - show alert
+                    showNotificationDeniedAlert = true
+                  }
+                }
+              }
+            } else {
+              // Disabling
+              userPreferences.isDailyReminderEnabled = false
+              reminderManager.disableDailyReminder()
+            }
+          }
+        ))
+        .labelsHidden()
+      }
+    } header: {
+      Text("Reminder")
+    } footer: {
+      Text("Get a daily notification to capture your moment in Joodle")
+    }
+    .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
+      Button("Open Settings") {
+        if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+          UIApplication.shared.open(url)
+        }
+      }
+      Button("Cancel", role: .cancel) { }
+    } message: {
+      Text("Please enable notifications in Settings to receive daily reminders.")
     }
   }
 

@@ -12,6 +12,7 @@ struct ReminderSheet: View {
     @State private var selectedTime: Date
     @State private var showPaywall = false
     @State private var showPastTimeAlert = false
+    @State private var showNotificationDeniedAlert = false
 
     private var isMockMode: Bool {
         mockStore != nil
@@ -107,8 +108,35 @@ struct ReminderSheet: View {
                         mockStore?.setReminder(for: dateString, at: combinedReminderDate)
                         dismiss()
                     } else {
-                        // Real mode - use ReminderManager
+                        // Real mode - check notification permission first, then use ReminderManager
                         Task {
+                            // Check notification permission status
+                            let status = await reminderManager.checkNotificationStatus()
+
+                            switch status {
+                            case .notDetermined:
+                                // Request permission
+                                let granted = await reminderManager.requestNotificationPermissionAsync()
+                                if !granted {
+                                    await MainActor.run {
+                                        showNotificationDeniedAlert = true
+                                    }
+                                    return
+                                }
+                            case .denied:
+                                // Permission was denied - show alert
+                                await MainActor.run {
+                                    showNotificationDeniedAlert = true
+                                }
+                                return
+                            case .authorized, .provisional, .ephemeral:
+                                // Already authorized - continue
+                                break
+                            @unknown default:
+                                break
+                            }
+
+                            // Now add the reminder
                             let success = await reminderManager.addReminder(for: dateString, at: combinedReminderDate, entryBody: entryBody)
                             await MainActor.run {
                                 if success {
@@ -160,13 +188,18 @@ struct ReminderSheet: View {
             } message: {
                 Text("The selected time has already passed. Please choose a future time for your reminder.")
             }
-        }
-        .onAppear {
-            // Only request permission in real mode
-            if !isMockMode {
-                reminderManager.requestNotificationPermission()
+            .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Please enable notifications in Settings to receive reminders.")
             }
         }
+
     }
 }
 

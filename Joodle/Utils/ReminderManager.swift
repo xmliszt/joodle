@@ -3,6 +3,11 @@ import Foundation
 import SwiftUI
 import Combine
 
+// MARK: - Daily Reminder Constants
+private enum DailyReminderConstants {
+    static let notificationIdentifier = "daily_joodle_reminder"
+}
+
 struct Reminder: Codable, Identifiable, Equatable {
     var id: String { dateString }
     let dateString: String
@@ -387,5 +392,116 @@ class ReminderManager: ObservableObject {
     func checkNotificationStatus() async -> UNAuthorizationStatus {
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         return settings.authorizationStatus
+    }
+
+    // MARK: - Daily Reminder
+
+    /// Request notification permission and return whether it was granted
+    func requestNotificationPermissionAsync() async -> Bool {
+        do {
+            let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+            return granted
+        } catch {
+            print("Error requesting notification permission: \(error)")
+            return false
+        }
+    }
+
+    /// Enable daily reminder with permission check
+    /// - Parameter time: The time for the daily reminder
+    /// - Returns: True if enabled successfully, false if permission was denied
+    func enableDailyReminder(at time: Date) async -> Bool {
+        // Check current authorization status
+        let status = await checkNotificationStatus()
+
+        switch status {
+        case .notDetermined:
+            // Request permission
+            let granted = await requestNotificationPermissionAsync()
+            if !granted {
+                return false
+            }
+        case .denied:
+            // Permission was denied - can't enable
+            return false
+        case .authorized, .provisional, .ephemeral:
+            // Already authorized
+            break
+        @unknown default:
+            break
+        }
+
+        // Schedule the notification
+        scheduleDailyReminder(at: time)
+
+        return true
+    }
+
+    /// Disable daily reminder
+    func disableDailyReminder() {
+        cancelDailyReminder()
+    }
+
+    /// Update daily reminder time (reschedules if enabled)
+    func updateDailyReminderTime(_ time: Date) {
+        if UserPreferences.shared.isDailyReminderEnabled {
+            // Reschedule with new time
+            scheduleDailyReminder(at: time)
+        }
+    }
+
+    /// Schedule the daily reminder notification
+    private func scheduleDailyReminder(at time: Date) {
+        // Cancel existing daily reminder first
+        cancelDailyReminder()
+
+        let content = UNMutableNotificationContent()
+        content.title = "Time to Joodle!"
+        content.body = "Capture today's moment in Joodle."
+        content.sound = .default
+
+        // Use userInfo to indicate this is a daily reminder that should navigate to today
+        content.userInfo = ["isDailyReminder": true]
+
+        // Extract hour and minute from the time
+        let timeComponents = Calendar.current.dateComponents([.hour, .minute], from: time)
+
+        // Create a repeating trigger for daily at the specified time
+        var dateComponents = DateComponents()
+        dateComponents.hour = timeComponents.hour
+        dateComponents.minute = timeComponents.minute
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+
+        // Use today's date string as identifier so the existing handler navigates to today
+        // But we need a consistent identifier for cancellation, so use a special one
+        let request = UNNotificationRequest(
+            identifier: DailyReminderConstants.notificationIdentifier,
+            content: content,
+            trigger: trigger
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ [ReminderManager] Error scheduling daily reminder: \(error)")
+            } else {
+                print("✅ [ReminderManager] Daily reminder scheduled for \(timeComponents.hour ?? 0):\(String(format: "%02d", timeComponents.minute ?? 0))")
+            }
+        }
+    }
+
+    /// Cancel the daily reminder notification
+    private func cancelDailyReminder() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: [DailyReminderConstants.notificationIdentifier]
+        )
+        print("🗑️ [ReminderManager] Daily reminder cancelled")
+    }
+
+    /// Restore daily reminder on app launch if it was enabled
+    func restoreDailyReminderIfNeeded() {
+        if UserPreferences.shared.isDailyReminderEnabled {
+            scheduleDailyReminder(at: UserPreferences.shared.dailyReminderTime)
+        }
     }
 }

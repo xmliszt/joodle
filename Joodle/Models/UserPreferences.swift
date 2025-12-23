@@ -16,6 +16,9 @@ enum Pref {
   static let enableHaptic = Key(key: "enable_haptic", default: true)
   static let isCloudSyncEnabled = Key(key: "is_cloud_sync_enabled", default: false)
   static let accentColor = Key(key: "accent_color", default: ThemeColor.defaultColor)
+  static let isDailyReminderEnabled = Key(key: "is_daily_reminder_enabled", default: false)
+  // Default to 9:00 AM - stored as seconds from midnight
+  static let dailyReminderTimeSeconds = Key(key: "daily_reminder_time_seconds", default: 9 * 3600)
 
   // Add new preferences here - just specify the default!
   // static let newSetting = Key(default: "defaultValue")
@@ -38,6 +41,8 @@ enum Pref {
     enableHaptic.key,
     isCloudSyncEnabled.key,
     accentColor.key,
+    isDailyReminderEnabled.key,
+    dailyReminderTimeSeconds.key,
   ]
 }
 
@@ -90,6 +95,34 @@ final class UserPreferences {
       syncToCloudIfEnabled()
       // Notify the app to update the accent color
       NotificationCenter.default.post(name: .didChangeAccentColor, object: nil)
+    }
+  }
+  var isDailyReminderEnabled: Bool = Pref.isDailyReminderEnabled.defaultValue {
+    didSet {
+      _isDailyReminderEnabledWatcher = isDailyReminderEnabled
+      syncToCloudIfEnabled()
+    }
+  }
+  var dailyReminderTimeSeconds: Int = Pref.dailyReminderTimeSeconds.defaultValue {
+    didSet {
+      _dailyReminderTimeSecondsWatcher = dailyReminderTimeSeconds
+      syncToCloudIfEnabled()
+    }
+  }
+
+  /// Convenience computed property to get/set daily reminder time as Date
+  var dailyReminderTime: Date {
+    get {
+      let hour = dailyReminderTimeSeconds / 3600
+      let minute = (dailyReminderTimeSeconds % 3600) / 60
+      var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+      components.hour = hour
+      components.minute = minute
+      return Calendar.current.date(from: components) ?? Date()
+    }
+    set {
+      let components = Calendar.current.dateComponents([.hour, .minute], from: newValue)
+      dailyReminderTimeSeconds = (components.hour ?? 9) * 3600 + (components.minute ?? 0) * 60
     }
   }
 
@@ -147,6 +180,16 @@ final class UserPreferences {
     }
   }
 
+  private var _isDailyReminderEnabledWatcher: Bool {
+    get { get(Pref.isDailyReminderEnabled) }
+    set { set(Pref.isDailyReminderEnabled, newValue) }
+  }
+
+  private var _dailyReminderTimeSecondsWatcher: Int {
+    get { get(Pref.dailyReminderTimeSeconds) }
+    set { set(Pref.dailyReminderTimeSeconds, newValue) }
+  }
+
   // MARK: - Step 5: Add your property to load during initialization
   init() {
     // Load initial values from UserDefaults
@@ -155,6 +198,8 @@ final class UserPreferences {
     enableHaptic = _enableHapticWatcher
     isCloudSyncEnabled = _isCloudSyncEnabledWatcher
     accentColor = _accentColorWatcher
+    isDailyReminderEnabled = _isDailyReminderEnabledWatcher
+    dailyReminderTimeSeconds = _dailyReminderTimeSecondsWatcher
   }
 
   // MARK: - Reset Method (automatically uses all registered keys!)
@@ -169,6 +214,8 @@ final class UserPreferences {
     enableHaptic = Pref.enableHaptic.defaultValue
     isCloudSyncEnabled = Pref.isCloudSyncEnabled.defaultValue
     accentColor = Pref.accentColor.defaultValue
+    isDailyReminderEnabled = Pref.isDailyReminderEnabled.defaultValue
+    dailyReminderTimeSeconds = Pref.dailyReminderTimeSeconds.defaultValue
   }
 
   // MARK: - iCloud Sync Helper

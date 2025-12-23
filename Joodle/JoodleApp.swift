@@ -46,12 +46,21 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
-    // Handle the notification tap - the identifier is the dateString
-    let dateString = response.notification.request.identifier
-    print("📬 [AppDelegate] User tapped notification for: \(dateString)")
+    let identifier = response.notification.request.identifier
+    let userInfo = response.notification.request.content.userInfo
+    print("📬 [AppDelegate] User tapped notification: \(identifier)")
 
-    // Convert dateString to Date and navigate using the same pattern as AppShortcuts
-    if let date = DayEntry.stringToLocalDate(dateString) {
+    // Check if this is a daily reminder notification
+    if let isDailyReminder = userInfo["isDailyReminder"] as? Bool, isDailyReminder {
+      // Navigate to today's entry
+      print("📬 [AppDelegate] Daily reminder tapped - navigating to today")
+      NotificationCenter.default.post(
+        name: .navigateToDateFromShortcut,
+        object: nil,
+        userInfo: ["date": Date()]
+      )
+    } else if let date = DayEntry.stringToLocalDate(identifier) {
+      // Anniversary reminder - the identifier is the dateString
       NotificationCenter.default.post(
         name: .navigateToDateFromShortcut,
         object: nil,
@@ -187,6 +196,9 @@ struct JoodleApp: App {
 
     // Sync theme color to widgets on startup
     Self.syncThemeColorToWidgets()
+
+    // Restore daily reminder if it was enabled
+    ReminderManager.shared.restoreDailyReminderIfNeeded()
 
     // DEBUG: Seed test entries for 2023 and 2024
     #if DEBUG
