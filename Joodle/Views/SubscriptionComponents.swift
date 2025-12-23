@@ -13,18 +13,18 @@ import StoreKit
 struct FeatureRow: View {
   let icon: String
   let title: String
-
+  
   var body: some View {
     HStack(alignment: .center, spacing: 8) {
       Image(systemName: icon)
         .font(.system(size: 20))
         .foregroundColor(.appAccent)
         .frame(width: 32, height: 32)
-
+      
       Text(title)
         .font(.subheadline)
         .foregroundColor(.primary)
-
+      
       Spacer()
     }
     .padding(.horizontal, 16)
@@ -39,7 +39,7 @@ struct PricingCard: View {
   let badge: String?
   let isEligibleForIntroOffer: Bool
   let onSelect: () -> Void
-
+  
   var body: some View {
     Button(action: onSelect) {
       ZStack(alignment: .topTrailing) {
@@ -50,15 +50,15 @@ struct PricingCard: View {
                 Text(product.id.contains("yearly") ? "Joodle Super Yearly" : "Joodle Super Monthly")
                   .font(.title3.weight(.bold))
                   .foregroundColor(.primary)
-
+                
                 Spacer()
-
+                
                 // Selection indicator
                 ZStack {
                   Circle()
-                      .strokeBorder(isSelected ? .appAccent : .secondary.opacity(0.3), lineWidth: 2)
+                    .strokeBorder(isSelected ? .appAccent : .secondary.opacity(0.3), lineWidth: 2)
                     .frame(width: 24, height: 24)
-
+                  
                   if isSelected {
                     Circle()
                       .fill(.appAccent)
@@ -66,30 +66,29 @@ struct PricingCard: View {
                   }
                 }
               }
-
+              
+              // MARK: - Primary pricing (billed amount - most prominent per Apple guidelines)
               HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(product.displayPrice)
+                  .font(.title2.weight(.bold))
+                  .foregroundColor(.primary)
+                Text("/ \(product.id.contains("yearly") ? "year" : "month")")
+                  .font(.subheadline)
+                  .foregroundColor(.secondary)
+              }
+              
+              // MARK: - Secondary info (calculated monthly price & trial - subordinate position)
+              HStack(spacing: 4) {
                 if product.id.contains("yearly") {
-                  Text(yearlyMonthlyPrice())
-                    .font(.title2.weight(.bold))
-                    .foregroundColor(.primary)
-                  Text("/ month")
-                    .font(.subheadline)
+                  // Show calculated monthly price in subordinate position
+                  Text("Only \(yearlyMonthlyPrice()) / month")
+                    .font(.caption)
                     .foregroundColor(.secondary)
                 } else {
-                  Text(product.displayPrice)
-                    .font(.title2.weight(.bold))
-                    .foregroundColor(.primary)
-                  Text("/ month")
-                    .font(.subheadline)
+                  Text("\(product.displayPrice) / month")
+                    .font(.caption)
                     .foregroundColor(.secondary)
                 }
-              }
-
-              HStack(spacing: 4) {
-                Text("Billed \(product.id.contains("yearly") ? "yearly" : "monthly") at \(product.displayPrice)")
-                  .font(.caption)
-                  .foregroundColor(.secondary)
-
                 if let trialText = trialPeriodText {
                   Text("•")
                     .font(.caption)
@@ -112,7 +111,7 @@ struct PricingCard: View {
                 .strokeBorder(isSelected ? .appAccent : Color.clear, lineWidth: 2)
             )
         )
-
+        
         // Badge - overlaid on top
         if let badge = badge {
           Text(badge)
@@ -130,12 +129,12 @@ struct PricingCard: View {
     }
     .buttonStyle(PlainButtonStyle())
   }
-
+  
   private func yearlyMonthlyPrice() -> String {
     let monthlyEquivalent = product.price / 12
     return monthlyEquivalent.formatted(product.priceFormatStyle)
   }
-
+  
   /// Returns the formatted trial period text for this product (e.g., "7-day", "1-month", "3-month")
   /// Returns nil if user is not eligible for introductory offer (e.g., already used free trial)
   private var trialPeriodText: String? {
@@ -143,15 +142,15 @@ struct PricingCard: View {
     guard isEligibleForIntroOffer else {
       return nil
     }
-
+    
     guard let subscription = product.subscription,
           let introOffer = subscription.introductoryOffer else {
       return nil
     }
-
+    
     return formatTrialPeriod(introOffer.period)
   }
-
+  
   /// Formats a subscription period into a user-friendly string
   private func formatTrialPeriod(_ period: Product.SubscriptionPeriod) -> String {
     switch period.unit {
