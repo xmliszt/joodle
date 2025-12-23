@@ -64,19 +64,14 @@ struct RandomJoodleProvider: TimelineProvider {
       isSubscribed: isSubscribed
     )
 
-    // Update widget more frequently to catch subscription changes
-    // Every 15 minutes if not subscribed, midnight if subscribed
+    // Update widget at midnight for the new day
+    // Subscription changes are handled by WidgetCenter.reloadAllTimelines() in the main app
     let calendar = Calendar.current
-    let nextUpdate: Date
-    if isSubscribed {
-      nextUpdate = calendar.date(
-        byAdding: .day,
-        value: 1,
-        to: calendar.startOfDay(for: currentDate)
-      )!
-    } else {
-      nextUpdate = calendar.date(byAdding: .minute, value: 15, to: currentDate)!
-    }
+    let nextUpdate = calendar.date(
+      byAdding: .day,
+      value: 1,
+      to: calendar.startOfDay(for: currentDate)
+    )!
 
     let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
     completion(timeline)
