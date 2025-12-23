@@ -328,9 +328,30 @@ struct SettingsView: View {
   @ViewBuilder
   private var dailyReminderSection: some View {
     Section {
-      HStack {
-        Text("Daily reminder")
-        Spacer()
+      // First row: Label and Toggle
+      Toggle(isOn: Binding(
+        get: { userPreferences.isDailyReminderEnabled },
+        set: { newValue in
+          if newValue {
+            // Enabling - check permission
+            Task {
+              let success = await reminderManager.enableDailyReminder(at: dailyReminderTime)
+              await MainActor.run {
+                if success {
+                  userPreferences.isDailyReminderEnabled = true
+                } else {
+                  // Permission denied - show alert
+                  showNotificationDeniedAlert = true
+                }
+              }
+            }
+          } else {
+            // Disabling
+            userPreferences.isDailyReminderEnabled = false
+            reminderManager.disableDailyReminder()
+          }
+        }
+      )) {
         DatePicker(
           "",
           selection: $dailyReminderTime,
@@ -342,35 +363,11 @@ struct SettingsView: View {
           userPreferences.dailyReminderTime = newTime
           reminderManager.updateDailyReminderTime(newTime)
         }
-        Toggle("", isOn: Binding(
-          get: { userPreferences.isDailyReminderEnabled },
-          set: { newValue in
-            if newValue {
-              // Enabling - check permission
-              Task {
-                let success = await reminderManager.enableDailyReminder(at: dailyReminderTime)
-                await MainActor.run {
-                  if success {
-                    userPreferences.isDailyReminderEnabled = true
-                  } else {
-                    // Permission denied - show alert
-                    showNotificationDeniedAlert = true
-                  }
-                }
-              }
-            } else {
-              // Disabling
-              userPreferences.isDailyReminderEnabled = false
-              reminderManager.disableDailyReminder()
-            }
-          }
-        ))
-        .labelsHidden()
       }
     } header: {
-      Text("Reminder")
+      Text("Daily Reminder")
     } footer: {
-      Text("Get a daily notification to capture your moment in Joodle")
+      Text("Get a daily notification to capture your moment")
     }
     .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
       Button("Open Settings") {
