@@ -616,8 +616,8 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
         }
       }
-      
-      Link(destination: URL(string: "https://liyuxuan.dev")!) {
+
+      Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle")!) {
         HStack {
           Image(systemName: "globe.fill")
             .foregroundColor(.primary)
@@ -630,7 +630,7 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
         }
       }
-      
+
       Link(destination: URL(string: "https://discord.gg/9QUWBJ3p")!) {
         HStack {
           Image("Social/discord")
