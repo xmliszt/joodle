@@ -9,7 +9,7 @@ struct OnboardingCompletionView: View {
             Spacer()
 
             VStack(spacing: 48) {
-                Image("MushroomIcon")
+                Image("LaunchIcon")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 200, height: 200)

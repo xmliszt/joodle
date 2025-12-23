@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "Joodle Icon Light.jpg",
+      "filename" : "Joodle App Icon Light.jpg",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "Joodle Icon Dark.jpg",
+      "filename" : "Joodle App Icon Dark.jpg",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,13 +25,13 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "Joodle Icon Light 1.jpg",
+      "filename" : "Joodle App Icon Light 1.jpg",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
     },
     {
-      "filename" : "Joodle Icon Light 2.jpg",
+      "filename" : "Joodle App Icon Light 2.jpg",
       "idiom" : "universal",
       "platform" : "watchos",
       "size" : "1024x1024"

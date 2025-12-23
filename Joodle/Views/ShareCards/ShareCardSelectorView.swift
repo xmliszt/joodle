@@ -111,7 +111,7 @@ struct ShareCardSelectorView: View {
         // Watermark toggle - only visible for Joodle Super users
         Toggle(isOn: $showWatermark) {
           HStack(spacing: 8) {
-            Image("MushroomIcon")
+            Image("LaunchIcon")
               .resizable()
               .scaledToFit()
               .frame(width: 44, height: 44)

@@ -1,7 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "LaunchIcon.png",
+      "filename" : "Joodle Icon Light.png",
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Joodle Icon Dark.png",
       "idiom" : "universal"
     }
   ],

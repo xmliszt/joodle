@@ -23,7 +23,7 @@ struct MushroomWatermarkView: View {
         if alignment == .bottomTrailing {
           Spacer()
         }
-        Image("MushroomIcon")
+        Image("LaunchIcon")
           .resizable()
           .scaledToFit()
           .frame(width: 128 * scale, height: 128 * scale)
