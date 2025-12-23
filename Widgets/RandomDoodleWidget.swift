@@ -401,7 +401,7 @@ struct RandomJoodleWidget: Widget {
       RandomJoodleWidgetView(entry: entry)
     }
     .configurationDisplayName("Random Joodle")
-    .description("Random Joodle From Your Collection. Refreshed Daily.")
+    .description("Random Joodle from your collection. Refreshed daily.")
     .supportedFamilies([.systemSmall, .systemLarge, .accessoryCircular])
   }
 }

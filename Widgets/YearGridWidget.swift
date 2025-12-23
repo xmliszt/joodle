@@ -345,7 +345,7 @@ struct YearGridWidget: Widget {
         }
     }
     .configurationDisplayName("Year Progress")
-    .description("View your year progress at a simple glance.")
+    .description("View your year progress at a glance.")
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }
@@ -361,7 +361,7 @@ struct YearGridJoodleWidget: Widget {
         }
     }
     .configurationDisplayName("Year Progress (Joodles)")
-    .description("View your year progress with your Joodles.")
+    .description("View your year progress with Joodles.")
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }
