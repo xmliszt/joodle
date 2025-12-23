@@ -86,12 +86,13 @@ enum TutorialDefinitions {
   // MARK: - All Tutorials
 
   /// Array of all available tutorials for display in Settings
-  static let allTutorials: [TutorialData] = [
+  static let widgetTutorials: [TutorialData] = [
     homeScreenWidgets,
     lockScreenWidgets,
-    standbyWidgets,
-    siriShortcuts
+    standbyWidgets
   ]
+  
+  static let siriShortcutTutorial: TutorialData = siriShortcuts
 }
 
 // MARK: - Tutorial Data Model

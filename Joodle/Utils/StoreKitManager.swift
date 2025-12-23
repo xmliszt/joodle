@@ -238,7 +238,7 @@ class StoreKitManager: NSObject, ObservableObject {
         }
     }
 
-    // MARK: - Restore Purchases
+    // MARK: - Restore Purchase
 
     func restorePurchases() async {
         isLoading = true
@@ -253,8 +253,8 @@ class StoreKitManager: NSObject, ObservableObject {
             await updatePurchasedProducts()
             debugLogger.logRestoreSuccess(productIDs: purchasedProductIDs)
         } catch {
-            errorMessage = "Failed to restore purchases: \(error.localizedDescription)"
-            debugPrint("Failed to restore purchases: \(error)")
+            errorMessage = "Failed to restore purchase: \(error.localizedDescription)"
+            debugPrint("Failed to restore purchase: \(error)")
             debugLogger.logRestoreFailed(error)
         }
 

@@ -97,7 +97,7 @@ struct SubscriptionsView: View {
 
   /// Refreshes subscription status from StoreKit
   /// - Parameter forceSync: If true, calls AppStore.sync() to force sync with App Store servers.
-  ///   Only use for manual "Restore Purchases" - it triggers Apple ID sign-in prompts.
+  ///   Only use for manual "Restore Purchase" - it triggers Apple ID sign-in prompts.
   private func refreshSubscriptionStatus(forceSync: Bool = false) async {
     if forceSync {
       // Only call AppStore.sync() for manual restore - it triggers sign-in prompts

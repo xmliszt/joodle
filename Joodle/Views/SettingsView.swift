@@ -59,9 +59,12 @@ struct SettingsView: View {
   @State private var showAppStats = false
   @State private var showDataSeeder = false
   @State private var currentJoodleCount: Int = 0
-  @State private var selectedTutorialStep: TutorialStepType?
+
   @State private var showSubscriptionTesting = false
   @State private var showRedeemCode = false
+  @State private var showFaq = false
+  @State private var showShareSheet = false
+  @State private var showDeviceIdentifierAlert = false
 
   // Theme color change state
   @State private var pendingThemeColor: ThemeColor?
@@ -116,11 +119,12 @@ struct SettingsView: View {
       themeColorSection
       interactionSection
       dailyReminderSection
+      dataManagementSection
       freePlanLimitsSection
-      tutorialSection
       onboardingSection
       subscriptionSection
-      dataManagementSection
+      systemSettingsSection
+      needHelpSection
       feedbackSection
       developerOptionsSection
     }
@@ -153,11 +157,7 @@ struct SettingsView: View {
     .fullScreenCover(isPresented: $showOnboarding) {
       OnboardingFlowView()
     }
-    .fullScreenCover(item: $selectedTutorialStep) { stepType in
-      InteractiveTutorialView(stepType: stepType) {
-        selectedTutorialStep = nil
-      }
-    }
+
     .sheet(isPresented: $showPlaceholderGenerator) {
       PlaceholderGeneratorView()
     }
@@ -226,7 +226,7 @@ struct SettingsView: View {
 
   @ViewBuilder
   private var defaultViewSection: some View {
-    Section("Default View") {
+    Section {
       VStack(spacing: 0) {
         // Preview image with morph transition
         ZStack {
@@ -263,12 +263,14 @@ struct SettingsView: View {
           .pickerStyle(.palette)
         }
       }
+    } header: {
+      Text("Default View Mode")
     }
   }
 
   @ViewBuilder
   private var appearanceSection: some View {
-    Section("Appearance") {
+    Section {
       if #available(iOS 26.0, *) {
         Picker("Color Scheme", selection: colorSchemeBinding) {
           Text("System").tag(nil as ColorScheme?)
@@ -285,6 +287,8 @@ struct SettingsView: View {
         }
         .pickerStyle(.palette)
       }
+    } header: {
+      Text("Appearance")
     }
   }
 
@@ -315,7 +319,7 @@ struct SettingsView: View {
     if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
       Section {
         Toggle(isOn: hapticBinding) {
-          Text("Haptic feedback")
+          Text("Haptic Feedback")
         }
       } header: {
         Text("Interactions")
@@ -382,6 +386,51 @@ struct SettingsView: View {
   }
 
   @ViewBuilder
+  private var systemSettingsSection: some View {
+    Section {
+      Button {
+        if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+          UIApplication.shared.open(url)
+        }
+      } label: {
+        HStack {
+          Image(systemName: "bell.badge.fill")
+            .foregroundColor(.primary)
+            .frame(width: 24)
+          Text("Notifications")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+
+      Button {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+          UIApplication.shared.open(url)
+        }
+      } label: {
+        HStack {
+          Image(systemName: "gear")
+            .foregroundColor(.primary)
+            .frame(width: 24)
+          Text("App Settings")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+    } header: {
+      Text("Settings")
+    } footer: {
+      Text("In the Joodle app settings, you can manage photos permission, manage Siri and search, and customize notification appearance.")
+    }
+  }
+
+  @ViewBuilder
   private var freePlanLimitsSection: some View {
     if !subscriptionManager.isSubscribed {
       Section {
@@ -389,7 +438,7 @@ struct SettingsView: View {
           showPaywall = true
         } label: {
           HStack {
-            Text("Joodle entries")
+            Text("Joodle Entries")
             Spacer()
             Text("\(currentJoodleCount) / \(SubscriptionManager.freeJoodlesAllowed)")
               .foregroundStyle(
@@ -405,7 +454,7 @@ struct SettingsView: View {
           showPaywall = true
         } label: {
           HStack {
-            Text("Anniversary reminders")
+            Text("Anniversary Reminders")
             Spacer()
             Text("\(reminderManager.reminders.count) / 5")
               .foregroundStyle(
@@ -416,7 +465,7 @@ struct SettingsView: View {
         }
         .foregroundStyle(.primary)
       } header: {
-        Text("Limits")
+        Text("Free Plan Limits")
       } footer: {
         HStack (spacing: 8) {
           Text("Unlock unlimited access with Joodle Super")
@@ -472,7 +521,14 @@ struct SettingsView: View {
           showPaywall = true
         } label: {
           HStack {
-            Text("Unlock Joodle Super")
+            HStack {
+              HStack(spacing: 4) {
+                Image(systemName: "crown.fill")
+                  .foregroundStyle(.appAccent)
+                  .font(.body)
+                Text("Unlock Joodle Super")
+              }
+            }
             Spacer()
             Image(systemName: "chevron.right")
               .font(.caption)
@@ -487,14 +543,23 @@ struct SettingsView: View {
         showRedeemCode = true
       } label: {
         HStack {
-          Text("Redeem Promo Code")
+          HStack {
+            HStack(spacing: 4) {
+              Image(systemName: "ticket.fill")
+                .foregroundStyle(.primary)
+                .font(.body)
+              Text("Redeem Promo Code")
+            }
+          }
           Spacer()
-          Image(systemName: "ticket")
+          Image(systemName: "arrow.up.right")
             .font(.caption)
             .foregroundColor(.secondary)
         }
       }
       .foregroundColor(.primary)
+    } header: {
+      Text("Membership")
     }
     .offerCodeRedemption(isPresented: $showRedeemCode) {_ in
       // Refresh subscription status after redemption
@@ -544,55 +609,14 @@ struct SettingsView: View {
         }
       }
       Button(action: { exportData() }) {
-        Text("Backup locally")
+        Text("Backup Locally")
       }
 
       Button(action: { showFileImporter = true }) {
-        Text("Restore from local backup")
-      }
-    }
-  }
-
-  @ViewBuilder
-  private var tutorialSection: some View {
-    Section {
-      // Interactive tutorials
-      ForEach(TutorialStepType.allCases) { stepType in
-        Button {
-          selectedTutorialStep = stepType
-        } label: {
-          HStack {
-            Label(stepType.title, systemImage: stepType.icon)
-              .foregroundColor(.textColor)
-            Spacer()
-            Image(systemName: "chevron.right")
-              .font(.caption)
-              .foregroundColor(.secondaryTextColor)
-          }
-        }
-      }
-
-      // Static widget tutorials
-      ForEach(TutorialDefinitions.allTutorials) { tutorial in
-        NavigationLink {
-          TutorialView(
-            title: tutorial.title,
-            screenshots: tutorial.screenshots,
-            description: tutorial.description
-          )
-        } label: {
-          HStack {
-            Label(tutorial.title, systemImage: tutorial.icon)
-              .foregroundColor(.primary)
-            Spacer()
-            if !SubscriptionManager.shared.isSubscribed && tutorial.isPremiumFeature  {
-              PremiumFeatureBadge()
-            }
-          }
-        }
+        Text("Restore From Local Backup")
       }
     } header: {
-      Text("Learn Core Features")
+      Text("Data Management")
     }
   }
 
@@ -613,20 +637,129 @@ struct SettingsView: View {
   }
 
   @ViewBuilder
+  private var contactUsMailURL: URL? {
+    let email = "joodle@liyuxuan.dev"
+    let subject = "Feedback on Joodle"
+    let iOSVersion = UIDevice.current.systemVersion
+    let body = "\n\n\n\n\nJoodle \(AppEnvironment.fullVersionString) - iOS \(iOSVersion)\nID: \(deviceIdentifier)"
+
+    let subjectEncoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+    let bodyEncoded = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+
+    return URL(string: "mailto:\(email)?subject=\(subjectEncoded)&body=\(bodyEncoded)")
+  }
+
+  private var needHelpSection: some View {
+    Section {
+      NavigationLink {
+        LearnCoreFeaturesView()
+      } label: {
+        HStack {
+          Image(systemName: "book.fill")
+            .foregroundColor(.primary)
+            .frame(width: 24)
+          Text("Learn Core Features")
+            .foregroundColor(.primary)
+        }
+      }
+
+      NavigationLink {
+        FaqView()
+      } label: {
+        HStack {
+          Image(systemName: "questionmark.circle.fill")
+            .foregroundColor(.primary)
+            .frame(width: 24)
+          Text("Frequently Asked Questions")
+            .foregroundColor(.primary)
+        }
+      }
+
+      if let mailURL = contactUsMailURL {
+        Link(destination: mailURL) {
+          HStack {
+            Image(systemName: "envelope.fill")
+              .foregroundColor(.primary)
+              .frame(width: 24)
+            Text("Contact Us")
+              .foregroundColor(.primary)
+            Spacer()
+            Image(systemName: "arrow.up.right")
+              .font(.caption)
+              .foregroundColor(.secondary)
+          }
+        }
+      }
+    } header: {
+      Text("Need Help?")
+    }
+  }
+
+  @ViewBuilder
   private var onboardingSection: some View {
     if isNonProductionEnvironment {
       Section {
         Button("Revisit Onboarding") {
           showOnboarding = true
         }
+      } header: {
+        Text("Onboarding")
+      } footer: {
+        Text("Revisit Onboarding is only available in beta builds.")
       }
     }
   }
 
   @ViewBuilder
   private var feedbackSection: some View {
-    // Feedback & Reviews Section - only in production
+    // Community & Social Section
     Section {
+      Link(destination: URL(string: "https://discord.gg/9QUWBJ3p")!) {
+        HStack {
+          Image("Social/discord")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 24)
+          Text("Join Discord Community")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+
+      Link(destination: URL(string: "https://x.com/xmliszt")!) {
+        HStack {
+          Image("Social/twitter")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 24)
+          Text("Follow on X")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+
+      Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle")!) {
+        HStack {
+          Image(systemName: "globe.fill")
+            .foregroundColor(.primary)
+            .frame(width: 20)
+          Text("Visit Developer Website")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+
+      /// Sandbox: TestFlight feedback
+      /// Production: Submit a review
       Button {
         openFeedback()
       } label: {
@@ -642,14 +775,15 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
         }
       }
-      if isProductionEnvironment {
 
+      /// External notion form to collection production feedback
+      if isProductionEnvironment {
         Link(destination: URL(string: "https://tinyurl.com/joodle-feedback")!) {
           HStack {
             Image(systemName: "bubble.left.and.bubble.right.fill")
               .foregroundColor(.primary)
               .frame(width: 24)
-            Text("Submit Your Feedback to Us")
+            Text("Submit Your Feedback")
               .foregroundColor(.primary)
             Spacer()
             Image(systemName: "arrow.up.right")
@@ -658,67 +792,31 @@ struct SettingsView: View {
           }
         }
       }
-    }
 
-    // Community & Social Section
-    Section {
-      Link(destination: URL(string: "mailto:joodle@liyuxuan.dev")!) {
+      /// Recommend Joodle
+      Button {
+        showShareSheet = true
+      } label: {
         HStack {
-          Image(systemName: "envelope.front.fill")
+          Image(systemName: "heart.fill")
             .foregroundColor(.primary)
-            .frame(width: 20)
-          Text("Email support")
-            .foregroundColor(.primary)
-          Spacer()
-          Image(systemName: "arrow.up.right")
-            .font(.caption)
-            .foregroundColor(.secondary)
-        }
-      }
-
-      Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle")!) {
-        HStack {
-          Image(systemName: "globe.fill")
-            .foregroundColor(.primary)
-            .frame(width: 20)
-          Text("Visit developer website")
-            .foregroundColor(.primary)
-          Spacer()
-          Image(systemName: "arrow.up.right")
-            .font(.caption)
-            .foregroundColor(.secondary)
-        }
-      }
-
-      Link(destination: URL(string: "https://discord.gg/9QUWBJ3p")!) {
-        HStack {
-          Image("Social/discord")
-            .resizable()
-            .scaledToFit()
             .frame(width: 24)
-          Text("Join Discord community")
+          Text("Recommend Joodle")
             .foregroundColor(.primary)
           Spacer()
-          Image(systemName: "arrow.up.right")
+          Image(systemName: "square.and.arrow.up")
             .font(.caption)
             .foregroundColor(.secondary)
         }
+      }
+      .sheet(isPresented: $showShareSheet) {
+        let shareText = "Hey! I've found a gem journaling app that allows you to draw your days! Joodle, that's what it's called, is made for people like you and I. Check it out here:"
+        let shareURL = URL(string: "https://liyuxuan.dev/apps/joodle")!
+        ShareSheet(items: [shareText, shareURL])
       }
 
-      Link(destination: URL(string: "https://x.com/xmliszt")!) {
-        HStack {
-          Image("Social/twitter")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 24)
-          Text("Follow me on X")
-            .foregroundColor(.primary)
-          Spacer()
-          Image(systemName: "arrow.up.right")
-            .font(.caption)
-            .foregroundColor(.secondary)
-        }
-      }
+    } header: {
+      Text("Get Involved")
     }
 
     // Legal Section
@@ -750,11 +848,67 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
         }
       }
-    } footer: {
-      Text("Version \(AppEnvironment.fullVersionString)")
-        .font(.caption2)
-        .frame(maxWidth: .infinity, alignment: .leading)
+    } header: {
+      Text("Legal")
     }
+
+    // App Branding Footer
+    Section {
+      EmptyView()
+    } footer: {
+      VStack(spacing: 8) {
+        // Logo and App Name
+        HStack(spacing: 8) {
+          Image("LaunchIcon")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 32, height: 32)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+          Text("Joodle")
+            .font(.title2)
+            .fontWeight(.semibold)
+          + Text("®")
+            .font(.caption)
+            .fontWeight(.semibold)
+            .baselineOffset(10)
+        }
+
+        // Version
+        Text("v.\(AppEnvironment.fullVersionString)")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+
+        // Copyright
+        Text("© \(currentYear) Li Yuxuan. All Rights Reserved.")
+          .font(.caption2)
+          .foregroundStyle(.secondary)
+      }
+      .frame(maxWidth: .infinity)
+      .padding(.top, 16)
+      .onLongPressGesture {
+        showDeviceIdentifierAlert = true
+      }
+      .alert("Share identifier with joodle@liyuxuan.dev to help debug purchase issues:", isPresented: $showDeviceIdentifierAlert) {
+        Button("Copy to Clipboard") {
+          UIPasteboard.general.string = deviceIdentifier
+        }
+        Button("Cancel", role: .cancel) { }
+      } message: {
+        Text(deviceIdentifier)
+      }
+    }
+  }
+
+  private var currentYear: String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy"
+    return formatter.string(from: Date())
+  }
+
+  private var deviceIdentifier: String {
+    let vendorId = UIDevice.current.identifierForVendor?.uuidString ?? "Unknown"
+    let appId = Bundle.main.bundleIdentifier ?? "Unknown"
+    return "\(vendorId):\(appId)"
   }
 
   @ViewBuilder
@@ -789,7 +943,6 @@ struct SettingsView: View {
         Text("Developer Options")
       } footer: {
         Text("When enabled, the app will behave as if it's running in production (App Store release).")
-          .font(.caption)
       }
 
       Section("Subscription Testing") {
@@ -819,7 +972,6 @@ struct SettingsView: View {
         .foregroundColor(.orange)
       } footer: {
         Text("You are currently simulating production environment. Tap to return to development mode.")
-          .font(.caption)
       }
     }
   }
@@ -1455,6 +1607,82 @@ struct JSONDocument: FileDocument {
   func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
     let file = FileWrapper(regularFileWithContents: data)
     return file
+  }
+}
+
+// MARK: - Learn Core Features View
+struct LearnCoreFeaturesView: View {
+  @StateObject private var subscriptionManager = SubscriptionManager.shared
+  @State private var selectedTutorialStep: TutorialStepType?
+
+  var body: some View {
+    List {
+      // Interactive tutorials
+      Section {
+        ForEach(TutorialStepType.allCases) { stepType in
+          Button {
+            selectedTutorialStep = stepType
+          } label: {
+            HStack {
+              Label(stepType.title, systemImage: stepType.icon)
+                .foregroundColor(.textColor)
+              Spacer()
+              Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondaryTextColor)
+            }
+          }
+        }
+      } header: {
+        Text("Interactive Tutorials")
+      }
+
+      // Static widget tutorials
+      Section {
+        ForEach(TutorialDefinitions.widgetTutorials) { tutorial in
+          NavigationLink {
+            TutorialView(
+              title: tutorial.title,
+              screenshots: tutorial.screenshots,
+              description: tutorial.description
+            )
+          } label: {
+            HStack {
+              Label(tutorial.title, systemImage: tutorial.icon)
+                .foregroundColor(.primary)
+              Spacer()
+              if !subscriptionManager.isSubscribed && tutorial.isPremiumFeature {
+                PremiumFeatureBadge()
+              }
+            }
+          }
+        }
+      } header: {
+        Text("Widget Tutorials")
+      }
+
+      Section {
+        NavigationLink {
+          TutorialView(
+            title: TutorialDefinitions.siriShortcutTutorial.title,
+            screenshots: TutorialDefinitions.siriShortcutTutorial.screenshots,
+            description: TutorialDefinitions.siriShortcutTutorial.description
+          )
+        } label: {
+          HStack {
+            Label(TutorialDefinitions.siriShortcutTutorial.title, systemImage: TutorialDefinitions.siriShortcutTutorial.icon)
+              .foregroundColor(.primary)
+          }
+        }
+      }
+    }
+    .navigationTitle("Learn Core Features")
+    .navigationBarTitleDisplayMode(.inline)
+    .fullScreenCover(item: $selectedTutorialStep) { stepType in
+      InteractiveTutorialView(stepType: stepType) {
+        selectedTutorialStep = nil
+      }
+    }
   }
 }
 

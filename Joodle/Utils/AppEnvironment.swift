@@ -184,7 +184,7 @@ enum AppEnvironment {
         case .debug, .testFlight:
             return "Submit Testing Feedback"
         case .appStore:
-            return "Write a Review on App Store"
+            return "Write a Review"
         }
     }
 

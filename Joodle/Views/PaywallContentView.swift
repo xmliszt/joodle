@@ -512,7 +512,7 @@ struct PaywallContentView: View {
         }
       }
 
-      // Restore Purchases
+      // Restore Purchase
       restorePurchasesButton
     }
     .padding(.horizontal, 24)
@@ -589,7 +589,7 @@ struct PaywallContentView: View {
         }
       }
     } label: {
-      Text("Restore Purchases")
+      Text("Restore Purchase")
         .font(.caption)
         .foregroundColor(.secondary)
     }

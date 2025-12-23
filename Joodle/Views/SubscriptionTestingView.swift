@@ -25,7 +25,7 @@ struct SubscriptionTestingView: View {
     case introOffer = "Introductory Offer"
     case renewal = "Renewal Testing"
     case interrupted = "Interrupted Purchase"
-    case restore = "Restore Purchases"
+    case restore = "Restore Purchase"
     case billingIssues = "Billing Issues"
     case priceIncrease = "Price Increase"
     case manageSubscription = "Manage Subscription"
@@ -123,7 +123,7 @@ struct SubscriptionTestingView: View {
             showRedeemCode = true
           }
 
-          Button("Restore Purchases") {
+          Button("Restore Purchase") {
             Task {
               await storeKitManager.restorePurchases()
             }
@@ -362,12 +362,12 @@ struct SubscriptionTestingView: View {
         testStepView(steps: [
           "Test with NO purchases:",
           "1. Delete all transactions",
-          "2. Tap 'Restore Purchases' button above",
+          "2. Tap 'Restore Purchase' button above",
           "3. Verify: App handles gracefully (no crash, appropriate message)",
           "",
           "Test WITH purchases:",
           "1. Make a purchase, then revoke locally",
-          "2. Tap 'Restore Purchases'",
+          "2. Tap 'Restore Purchase'",
           "3. Verify: Subscription restored correctly"
         ])
 
