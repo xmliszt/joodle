@@ -746,9 +746,9 @@ struct SettingsView: View {
 
       Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle")!) {
         HStack {
-          Image(systemName: "globe.fill")
+          Image(systemName: "globe.americas.fill")
             .foregroundColor(.primary)
-            .frame(width: 20)
+            .frame(width: 24)
           Text("Visit Developer Website")
             .foregroundColor(.primary)
           Spacer()
