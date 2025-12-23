@@ -420,9 +420,10 @@ struct SmallAnniversaryView: View {
 
       // Countdown text at bottom
       Text(CountdownHelper.countdownText(from: currentDate, to: anniversaryData.date))
-        .font(.system(size: 12))
+        .font(.system(size: 10))
         .foregroundColor(.secondary)
         .padding(.horizontal, 8)
+        .multilineTextAlignment(.center)
     }
     .containerBackground(for: .widget) {
       Color(UIColor.systemBackground)
