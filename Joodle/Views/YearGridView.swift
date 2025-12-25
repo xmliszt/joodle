@@ -35,6 +35,12 @@ struct YearGridView: View {
   /// The id of the selected item
   let selectedItemId: String?
 
+  // MARK: Animation State
+  /// Tracks whether the entry animation has completed
+  @State private var hasAnimated = false
+  /// Animation trigger ID that changes when viewMode changes
+  @State private var animationTriggerID = UUID()
+
   // MARK: Cached Computed Properties
   /// Pre-computed layout metrics to avoid repeated calculations
   private var layoutMetrics: LayoutMetrics {
@@ -89,6 +95,11 @@ struct YearGridView: View {
               isEmpty: entry == nil
             )
 
+            // Calculate random animation delay for organic staggered effect
+            // Use item id hash to generate consistent random delay per item
+            let hashValue = abs(item.id.hashValue)
+            let animationDelay = Double(hashValue % 500) / 1000.0  // 0 to 0.5 seconds random delay
+
             Group {
               if hasDrawing {
                 // Show drawing instead of dot with specific frame sizes
@@ -103,6 +114,23 @@ struct YearGridView: View {
                   useThumbnail: true
                 )
                 .frame(width: viewMode.dotSize, height: viewMode.dotSize)
+                // Jelly bounce animation from bottom for drawings
+                .offset(y: hasAnimated ? 0 : 50)
+                .scaleEffect(
+                  x: hasAnimated ? 1.0 : 0.6,
+                  y: hasAnimated ? 1.0 : 0.1,
+                  anchor: .bottom
+                )
+                .opacity(hasAnimated ? 1.0 : 0.0)
+                .animation(
+                  .spring(
+                    response: 0.4,
+                    dampingFraction: 0.35,
+                    blendDuration: 0
+                  )
+                  .delay(animationDelay),
+                  value: hasAnimated
+                )
               } else {
                 // Show regular dot
                 DotView(
@@ -116,7 +144,7 @@ struct YearGridView: View {
               }
             }
             // Stable identity based on date
-            .id(item.id)
+            .id("\(item.id)-\(animationTriggerID)")
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -128,6 +156,20 @@ struct YearGridView: View {
         trailing: GRID_HORIZONTAL_PADDING)
     )
     .frame(maxWidth: .infinity, alignment: .top)
+    .onAppear {
+      // Trigger initial animation
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        hasAnimated = true
+      }
+    }
+    .onChange(of: viewMode) { _, _ in
+      // Reset and replay animation when view mode changes
+      hasAnimated = false
+      animationTriggerID = UUID()
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        hasAnimated = true
+      }
+    }
   }
 
   // MARK: Functions
@@ -239,7 +281,7 @@ struct YearGridView: View {
 
     // Linear interpolation from MAX_SCALE at distance 0 to 1.0 at MAX_SCALE_DISTANCE
     let scaleFactor = 1.0 - (distance / MAX_SCALE_DISTANCE)
-    
+
     // If it is non-drawing dot view, we magnify the scale effect
     return (1.0 + (MAX_SCALE - 1.0) * scaleFactor) * (
       isEmpty ? 1.5 : 1
