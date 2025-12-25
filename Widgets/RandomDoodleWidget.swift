@@ -13,11 +13,28 @@ struct SeededRandomNumberGenerator: RandomNumberGenerator {
   private var state: UInt64
 
   init(seed: UInt64) {
-    self.state = seed
+    // Use SplitMix64 to properly mix the seed into initial state
+    // This ensures even similar seeds (consecutive dates) produce very different states
+    self.state = Self.splitMix64(seed)
+
+    // Warm up the generator by discarding first few values
+    // This further decorrelates outputs from similar seeds
+    for _ in 0..<4 {
+      _ = next()
+    }
+  }
+
+  /// SplitMix64 hash function for seed mixing
+  /// Ensures small changes in input produce large changes in output
+  private static func splitMix64(_ seed: UInt64) -> UInt64 {
+    var z = seed &+ 0x9E3779B97F4A7C15
+    z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+    z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+    return z ^ (z >> 31)
   }
 
   mutating func next() -> UInt64 {
-    // Simple xorshift64 algorithm
+    // Xorshift64 algorithm
     state ^= state << 13
     state ^= state >> 7
     state ^= state << 17
