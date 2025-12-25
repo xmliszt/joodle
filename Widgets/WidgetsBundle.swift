@@ -13,6 +13,7 @@ struct WidgetsBundle: WidgetBundle {
   var body: some Widget {
     YearGridWidget()
     YearGridJoodleWidget()
+    YearGridJoodleNoEmptyDotsWidget()
     TodayDoodleWidget()
     RandomJoodleWidget()
     AnniversaryWidget()

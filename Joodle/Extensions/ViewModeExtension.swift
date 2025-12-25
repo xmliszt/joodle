@@ -40,8 +40,8 @@ extension ViewMode: CaseIterable {
 extension ViewMode {
   var dotSize: CGFloat {
     switch self {
-    case .now: return 12.0
-    case .year: return 8.0
+    case .now: return 6.0
+    case .year: return 4.0
     }
   }
 

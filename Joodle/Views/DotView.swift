@@ -35,6 +35,11 @@ struct DotView: View {
         if dotStyle == .future { return .textColor.opacity(0.15) }
         return .textColor
     }
+  
+    private var computedSize: CGFloat {
+        if withEntry { return size * 2 }
+        return size
+    }
 
     // MARK: view
     var body: some View {
@@ -42,14 +47,14 @@ struct DotView: View {
             // Base dot that maintains layout - fixed size container
             Circle()
                 .fill(Color.clear)
-                .frame(width: size, height: size)
+                .frame(width: computedSize, height: computedSize)
 
             // Visual dot that can scale without affecting layout
             if highlighted {
                 if #available(iOS 26.0, *) {
                     Circle()
                         .fill(dotColor)
-                        .frame(width: size * scale, height: size * scale)
+                        .frame(width: computedSize * scale, height: computedSize * scale)
                         .glassEffect(.regular.tint(.appSecondary).interactive())
                         .animation(
                             .springFkingSatifying,
@@ -59,7 +64,7 @@ struct DotView: View {
                     // Fallback on earlier versions
                     Circle()
                         .fill(dotColor)
-                        .frame(width: size * scale, height: size * scale)
+                        .frame(width: computedSize * scale, height: computedSize * scale)
                         .animation(
                             .springFkingSatifying,
                             value: scale
@@ -69,7 +74,7 @@ struct DotView: View {
                 // Non-highlighted dot (no glass effect)
                 Circle()
                     .fill(dotColor)
-                    .frame(width: size * scale, height: size * scale)
+                    .frame(width: computedSize * scale, height: computedSize * scale)
                     .animation(
                         .springFkingSatifying,
                         value: scale
@@ -80,7 +85,7 @@ struct DotView: View {
             if withEntry {
                 Circle()
                     .stroke(ringColor, lineWidth: size * 0.15 * scale)
-                    .frame(width: size * 1.5 * scale, height: size * 1.5 * scale)
+                    .frame(width: computedSize * 1.5 * scale, height: computedSize * 1.5 * scale)
                     .animation(
                         .springFkingSatifying,
                         value: scale

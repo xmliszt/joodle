@@ -13,7 +13,8 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   case detailed = "Detailed"
   case anniversary = "Anniversary"
   case yearGridDots = "Year Grid"
-  case yearGridJoodles = "Year Joodles"
+  case yearGridJoodles = "Year Grid with Joodles"
+  case yearGridJoodlesOnly = "Year Grid with Joodles Only"
 
   var id: String { rawValue }
 
@@ -29,8 +30,10 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     case .anniversary:
       return "square"
     case .yearGridDots:
-      return "square.grid.3x3"
+      return "square.grid.3x3.fill"
     case .yearGridJoodles:
+      return "square.grid.3x3.fill"
+    case .yearGridJoodlesOnly:
       return "square.grid.3x3.fill"
     }
   }
@@ -49,13 +52,15 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return "Year progress with dots"
     case .yearGridJoodles:
       return "Year progress with Joodles"
+    case .yearGridJoodlesOnly:
+      return "Year progress with Joodles only"
     }
   }
 
   /// Whether this style requires year data instead of single day entry
   var isYearGridStyle: Bool {
     switch self {
-    case .yearGridDots, .yearGridJoodles:
+    case .yearGridDots, .yearGridJoodles, .yearGridJoodlesOnly:
       return true
     default:
       return false
@@ -69,42 +74,16 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
 
   /// Styles for year grid sharing
   static var yearGridStyles: [ShareCardStyle] {
-    [.yearGridDots, .yearGridJoodles]
+    [.yearGridDots, .yearGridJoodles, .yearGridJoodlesOnly]
   }
 
   /// Size for the actual share card, this is the dimension of the image saved.
   var cardSize: CGSize {
-    switch self {
-    case .minimal:
-      return CGSize(width: 1080, height: 1080)
-    case .excerpt:
-      return CGSize(width: 1080, height: 1080)
-    case .detailed:
-      return CGSize(width: 1080, height: 1080)
-    case .anniversary:
-      return CGSize(width: 1080, height: 1080)
-    case .yearGridDots:
-      return CGSize(width: 1080, height: 1080)
-    case .yearGridJoodles:
-      return CGSize(width: 1080, height: 1080)
-    }
+    return CGSize(width: 1080, height: 1080)
   }
 
   /// Size for the preview in the carousel, this is the display size on device
   var previewSize: CGSize {
-    switch self {
-    case .minimal:
-      return CGSize(width: 300, height: 300)
-    case .excerpt:
-      return CGSize(width: 300, height: 300)
-    case .detailed:
-      return CGSize(width: 300, height: 300)
-    case .anniversary:
-      return CGSize(width: 300, height: 300)
-    case .yearGridDots:
-      return CGSize(width: 300, height: 300)
-    case .yearGridJoodles:
-      return CGSize(width: 300, height: 300)
-    }
+    return CGSize(width: 300, height: 300)
   }
 }

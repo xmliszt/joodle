@@ -13,15 +13,16 @@ struct YearGridJoodlesView: View {
   let percentage: Double
   let entries: [ShareCardDayEntry]
   var showWatermark: Bool = true
+  var showEmptyDots: Bool = true
 
   // Base dimensions for 1080x1080 card
-  private let baseDotSize: CGFloat = 26
+  private let baseDotSize: CGFloat = 22
   private let baseHorizontalPadding: CGFloat = 60
   private let baseTopPadding: CGFloat = 60
   private let baseBottomPadding: CGFloat = 40
   private let baseHeaderSpacing: CGFloat = 32
   private let baseFontSize: CGFloat = 56
-  private let baseMinSpacing: CGFloat = 20
+  private let baseMinSpacing: CGFloat = 24
 
   private var dateItems: [ShareCardDateItem] {
     let calendar = Calendar.current
@@ -151,7 +152,8 @@ struct YearGridJoodlesView: View {
             size: dotSize,
             hasEntry: hasEntry,
             dotStyle: dotStyle,
-            drawingData: dayEntry?.drawingData // Render directly with current theme color
+            drawingData: dayEntry?.drawingData, // Render directly with current theme color
+            showEmpty: showEmptyDots
           )
         }
 

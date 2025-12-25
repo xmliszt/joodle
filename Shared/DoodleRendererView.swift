@@ -98,8 +98,10 @@ struct DoodleRendererView: View {
   let strokeMultiplier: CGFloat
 
   /// The scale factor for rendering (size * renderScale / CANVAS_SIZE)
-  /// Default is 2.0 to render at 2x for better quality
   let renderScale: CGFloat
+  
+  /// If false, the empty dot will be hidden
+  let showEmptyDot: Bool
 
   init(
     size: CGFloat,
@@ -109,7 +111,8 @@ struct DoodleRendererView: View {
     thumbnail: Data? = nil,
     strokeColor: Color,
     strokeMultiplier: CGFloat = 3.0,
-    renderScale: CGFloat = 2.0
+    renderScale: CGFloat = 2.0,
+    showEmptyDot: Bool = true
   ) {
     self.size = size
     self.hasEntry = hasEntry
@@ -119,6 +122,7 @@ struct DoodleRendererView: View {
     self.strokeColor = strokeColor
     self.strokeMultiplier = strokeMultiplier
     self.renderScale = renderScale
+    self.showEmptyDot = showEmptyDot
   }
 
   private var dotColor: Color {
@@ -147,14 +151,15 @@ struct DoodleRendererView: View {
         Image(uiImage: uiImage)
           .resizable()
           .aspectRatio(contentMode: .fit)
-          .frame(width: size * 2, height: size * 2)
+          .frame(width: size * renderScale, height: size * renderScale)
           .foregroundColor(strokeColor)
           .opacity(dotStyle.opacity)
       } else {
         // Fallback to simple circle dot
         Circle()
           .fill(dotColor)
-          .frame(width: size / 1.5, height: size / 1.5)
+          .frame(width: size / (4 / renderScale), height: size / (4 / renderScale))
+          .opacity(showEmptyDot ? 1 : 0)
       }
     }
     .frame(width: size, height: size)

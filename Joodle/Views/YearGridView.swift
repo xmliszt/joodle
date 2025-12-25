@@ -85,7 +85,8 @@ struct YearGridView: View {
             let scale = calculateScale(
               currentIndex: currentIndex,
               highlightedIndex: highlightedIndex,
-              dotsPerRow: viewMode.dotsPerRow
+              dotsPerRow: viewMode.dotsPerRow,
+              isEmpty: entry == nil
             )
 
             Group {
@@ -199,7 +200,7 @@ struct YearGridView: View {
   }
 
   /// Calculate scale for a dot based on its distance from the highlighted dot
-  private func calculateScale(currentIndex: Int, highlightedIndex: Int?, dotsPerRow: Int) -> CGFloat
+  private func calculateScale(currentIndex: Int, highlightedIndex: Int?, dotsPerRow: Int, isEmpty: Bool) -> CGFloat
   {
     // If no highlighted dot, return default scale
     guard let highlightedIndex = highlightedIndex else {
@@ -238,7 +239,11 @@ struct YearGridView: View {
 
     // Linear interpolation from MAX_SCALE at distance 0 to 1.0 at MAX_SCALE_DISTANCE
     let scaleFactor = 1.0 - (distance / MAX_SCALE_DISTANCE)
-    return 1.0 + (MAX_SCALE - 1.0) * scaleFactor
+    
+    // If it is non-drawing dot view, we magnify the scale effect
+    return (1.0 + (MAX_SCALE - 1.0) * scaleFactor) * (
+      isEmpty ? 1.5 : 1
+    )
   }
 }
 

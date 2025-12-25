@@ -84,12 +84,12 @@ struct ShareCardSelectorView: View {
             VStack(spacing: 8) {
               HStack(spacing: 8) {
                 Text(selectedStyle.rawValue)
-                  .font(.system(size: 17))
+                  .font(.system(size: 16).bold())
                   .foregroundColor(.textColor)
               }
 
               Text(selectedStyle.description)
-                .font(.system(size: 15))
+                .font(.system(size: 14))
                 .foregroundColor(.secondaryTextColor)
             }
             .animation(.springFkingSatifying, value: selectedStyle)

@@ -115,10 +115,12 @@ struct WidgetDayEntry {
 struct YearGridWidgetView: View {
   var entry: YearGridProvider.Entry
   var showJoodles: Bool
+  var showEmptyDots: Bool
+  
   @Environment(\.widgetFamily) var widgetFamily
 
   private var dotSize: CGFloat {
-    widgetFamily == .systemMedium ? 4.5 : 7.5
+    widgetFamily == .systemMedium ? 4.5 : 6.5
   }
 
   private var horizontalPadding: CGFloat {
@@ -133,7 +135,7 @@ struct YearGridWidgetView: View {
   private func calculateDotsPerRow(availableWidth: CGFloat) -> Int {
     // Calculate how many dots can fit in the available width
     // Formula: (availableWidth + spacing) / (dotSize + spacing)
-    let minSpacing: CGFloat = widgetFamily == .systemMedium ? 4.0 : 6.0
+    let minSpacing: CGFloat = widgetFamily == .systemMedium ? 4.0 : 7.0
     let dotsPerRow = Int((availableWidth + minSpacing) / (dotSize + minSpacing))
     return max(1, dotsPerRow)
   }
@@ -257,7 +259,8 @@ struct YearGridWidgetView: View {
             thumbnail: showJoodles ? dayEntry?.thumbnail : nil,
             strokeColor: themeColor,
             strokeMultiplier: 2.0,
-            renderScale: 2.0
+            renderScale: showJoodles ? 2.0 : 3.0,
+            showEmptyDot: showEmptyDots
           )
           .frame(width: dotSize, height: dotSize)
         }
@@ -334,7 +337,7 @@ struct YearGridWidget: Widget {
 
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
-      YearGridWidgetView(entry: entry, showJoodles: false)
+      YearGridWidgetView(entry: entry, showJoodles: false, showEmptyDots: true)
         .containerBackground(for: .widget) {
           Color(UIColor.systemBackground)
         }
@@ -350,7 +353,7 @@ struct YearGridJoodleWidget: Widget {
 
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
-      YearGridWidgetView(entry: entry, showJoodles: true)
+      YearGridWidgetView(entry: entry, showJoodles: true, showEmptyDots: true)
         .containerBackground(for: .widget) {
           Color(UIColor.systemBackground)
         }
@@ -360,3 +363,20 @@ struct YearGridJoodleWidget: Widget {
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }
+
+struct YearGridJoodleNoEmptyDotsWidget: Widget {
+  let kind: String = "YearGridJoodleNoEmptyDotsWidget"
+
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
+      YearGridWidgetView(entry: entry, showJoodles: true, showEmptyDots: false)
+        .containerBackground(for: .widget) {
+          Color(UIColor.systemBackground)
+        }
+    }
+    .configurationDisplayName("Year Progress (Joodles Only)")
+    .description("View your year progress with Joodles. Empty days are hidden.")
+    .supportedFamilies([.systemMedium, .systemLarge])
+  }
+}
+

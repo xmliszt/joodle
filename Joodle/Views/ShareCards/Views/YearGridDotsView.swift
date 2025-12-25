@@ -46,6 +46,7 @@ struct ShareCardDotView: View {
   let dotStyle: DoodleDotStyle
   var thumbnail: Data? = nil
   var drawingData: Data? = nil
+  var showEmpty: Bool = true
 
   var body: some View {
     DoodleRendererView(
@@ -56,7 +57,8 @@ struct ShareCardDotView: View {
       thumbnail: thumbnail,
       strokeColor: .appAccent,
       strokeMultiplier: 3.0,
-      renderScale: 2.0
+      renderScale: 2.0,
+      showEmptyDot: showEmpty
     )
   }
 }
