@@ -18,6 +18,7 @@ struct DailyReminderConfigView: View {
     @State private var showNotificationDeniedAlert = false
     @State private var isRequestingPermission = false
     @State private var wiggleTrigger = false
+    @State private var hasRequestedPermissionOnAppear = false
 
     init(viewModel: OnboardingViewModel) {
         self.viewModel = viewModel
@@ -166,6 +167,14 @@ struct DailyReminderConfigView: View {
                 }
             }
         }
+        .task {
+            // For first-time users with reminder enabled by default,
+            // auto-prompt for notification permission
+            if !viewModel.isRevisitingOnboarding && enableReminder && !hasRequestedPermissionOnAppear {
+                hasRequestedPermissionOnAppear = true
+                await requestNotificationPermissionOnAppear()
+            }
+        }
     }
 
     private func handleToggleChange(_ newValue: Bool) {
@@ -189,6 +198,42 @@ struct DailyReminderConfigView: View {
         } else {
             // Disabling
             enableReminder = false
+        }
+    }
+
+    private func requestNotificationPermissionOnAppear() async {
+        // Check current status first
+        let status = await reminderManager.checkNotificationStatus()
+
+        switch status {
+        case .notDetermined:
+            // Request permission automatically
+            isRequestingPermission = true
+            let success = await reminderManager.enableDailyReminder(at: reminderTime)
+            await MainActor.run {
+                isRequestingPermission = false
+                if success {
+                    enableReminder = true
+                    wiggleTrigger.toggle()
+                } else {
+                    // Permission denied - turn off the toggle and show alert
+                    enableReminder = false
+                    showNotificationDeniedAlert = true
+                }
+            }
+        case .denied:
+            // Already denied - turn off toggle and show alert
+            await MainActor.run {
+                enableReminder = false
+                showNotificationDeniedAlert = true
+            }
+        case .authorized, .provisional, .ephemeral:
+            // Already authorized - schedule the reminder
+            await MainActor.run {
+                wiggleTrigger.toggle()
+            }
+        @unknown default:
+            break
         }
     }
 
