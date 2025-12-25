@@ -131,6 +131,7 @@ struct TodayDoodleWidgetView: View {
       .widgetURL(URL(string: "joodle://date/\(Int(todayData.date.timeIntervalSince1970))"))
     } else {
       NoTodayDoodleView(family: family)
+        .widgetURL(URL(string: "joodle://date/\(Int(Date().timeIntervalSince1970))"))
     }
   }
 }
