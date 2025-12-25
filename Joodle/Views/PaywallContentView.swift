@@ -163,7 +163,7 @@ struct SliderCTAButton: View {
       }
     }
     .frame(maxWidth: maxWidth)
-    .opacity(isDragging ? 0.5 : 0.8)
+    .opacity(0.9)
     .animation(.easeInOut, value: isDragging)
   }
 
