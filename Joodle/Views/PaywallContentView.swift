@@ -320,13 +320,13 @@ struct PaywallContentView: View {
       }
     }
     .alert("Purchase Failed", isPresented: $showError) {
-      Button("Submit Feedback") {
-        openFeedback()
+      Button("Contact Support") {
+        openSupportEmail()
       }
       Button("OK", role: .cancel) {}
     } message: {
       if let error = errorMessage {
-        Text("\(error)\n\nIf this issue persists, please submit feedback, or contact the developer at me@liyuxuan.dev.")
+        Text("\(error)\n\nIf this issue persists, please contact the developer.")
       }
     }
     .onAppear {
@@ -703,6 +703,29 @@ struct PaywallContentView: View {
         UIApplication.shared.open(appStoreURL)
       }
     }
+  }
+
+  private var deviceIdentifier: String {
+    let vendorId = UIDevice.current.identifierForVendor?.uuidString ?? "Unknown"
+    let appId = Bundle.main.bundleIdentifier ?? "Unknown"
+    return "\(vendorId):\(appId)"
+  }
+
+  private var supportMailURL: URL? {
+    let email = "joodle@liyuxuan.dev"
+    let subject = "Support Request - Purchase Issue"
+    let iOSVersion = UIDevice.current.systemVersion
+    let body = "\n\n\n\n\nJoodle \(AppEnvironment.fullVersionString) - iOS \(iOSVersion)\nID: \(deviceIdentifier)"
+
+    let subjectEncoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+    let bodyEncoded = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+
+    return URL(string: "mailto:\(email)?subject=\(subjectEncoded)&body=\(bodyEncoded)")
+  }
+
+  private func openSupportEmail() {
+    guard let url = supportMailURL else { return }
+    UIApplication.shared.open(url)
   }
 
   private func savingsBadgeText() -> String? {
