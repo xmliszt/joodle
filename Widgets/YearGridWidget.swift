@@ -82,7 +82,7 @@ struct YearGridProvider: TimelineProvider {
 
     return widgetEntries.map { entry in
       WidgetDayEntry(
-        date: entry.date,
+        dateString: entry.dateString,
         hasText: entry.hasText,
         hasDrawing: entry.hasDrawing,
         thumbnail: entry.thumbnail,
@@ -101,11 +101,28 @@ struct YearGridEntry: TimelineEntry {
 }
 
 struct WidgetDayEntry {
-  let date: Date
+  /// The timezone-agnostic date string in "yyyy-MM-dd" format
+  let dateString: String
   let hasText: Bool
   let hasDrawing: Bool
   let thumbnail: Data?
   let drawingData: Data?
+
+  /// Computed display date from dateString (for UI components that need Date)
+  var date: Date {
+    let components = dateString.split(separator: "-")
+    if components.count == 3,
+       let year = Int(components[0]),
+       let month = Int(components[1]),
+       let day = Int(components[2]) {
+      var dateComponents = DateComponents()
+      dateComponents.year = year
+      dateComponents.month = month
+      dateComponents.day = day
+      return Calendar.current.date(from: dateComponents) ?? Date()
+    }
+    return Date()
+  }
 
   var hasEntry: Bool {
     return hasText || hasDrawing
@@ -116,7 +133,7 @@ struct YearGridWidgetView: View {
   var entry: YearGridProvider.Entry
   var showJoodles: Bool
   var showEmptyDots: Bool
-  
+
   @Environment(\.widgetFamily) var widgetFamily
 
   private var dotSize: CGFloat {
@@ -179,11 +196,9 @@ struct YearGridWidgetView: View {
     var lookup: [String: WidgetDayEntry] = [:]
     lookup.reserveCapacity(entry.entries.count)
 
-    let calendar = Calendar.current
+    // Use dateString directly as the key (timezone-agnostic)
     for dayEntry in entry.entries {
-      let components = calendar.dateComponents([.year, .month, .day], from: dayEntry.date)
-      let key = String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 1, components.day ?? 1)
-      lookup[key] = dayEntry
+      lookup[dayEntry.dateString] = dayEntry
     }
     return lookup
   }
@@ -379,4 +394,3 @@ struct YearGridJoodleNoEmptyDotsWidget: Widget {
     .supportedFamilies([.systemMedium, .systemLarge])
   }
 }
-

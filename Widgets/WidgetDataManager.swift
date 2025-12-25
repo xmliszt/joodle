@@ -33,20 +33,105 @@ struct WidgetSubscriptionStatus: Codable {
 /// Data model for encoding/decoding entries to share with widget
 /// Note: Drawing data is included optionally for widgets that need to display the actual drawing
 struct WidgetEntryData: Codable {
-  let date: Date
+  /// The calendar date string "yyyy-MM-dd" - timezone agnostic
+  /// This is the SINGLE SOURCE OF TRUTH for the entry's date
+  let dateString: String
   let hasText: Bool
   let hasDrawing: Bool
   let drawingData: Data?
   let thumbnail: Data?
   let body: String?
 
-  init(date: Date, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil, thumbnail: Data? = nil, body: String? = nil) {
-    self.date = date
+  /// Computed property for display purposes - converts dateString to Date in current timezone
+  /// Use this when UI components require a Date object
+  var date: Date {
+    // Parse dateString components and create Date at start of day in current timezone
+    let components = dateString.split(separator: "-")
+    if components.count == 3,
+       let year = Int(components[0]),
+       let month = Int(components[1]),
+       let day = Int(components[2]) {
+      var dateComponents = DateComponents()
+      dateComponents.year = year
+      dateComponents.month = month
+      dateComponents.day = day
+      dateComponents.hour = 0
+      dateComponents.minute = 0
+      dateComponents.second = 0
+      return Calendar.current.date(from: dateComponents) ?? Date()
+    }
+    return Date()
+  }
+
+  /// Preferred initializer using dateString for timezone-agnostic storage
+  init(dateString: String, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil, thumbnail: Data? = nil, body: String? = nil) {
+    self.dateString = dateString
     self.hasText = hasText
     self.hasDrawing = hasDrawing
     self.drawingData = drawingData
     self.thumbnail = thumbnail
     self.body = body
+  }
+
+  /// Legacy initializer for backward compatibility during migration
+  /// Converts Date to dateString using current timezone at the moment of creation
+  init(date: Date, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil, thumbnail: Data? = nil, body: String? = nil) {
+    // Convert Date to dateString using current timezone
+    let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+    self.dateString = String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 1, components.day ?? 1)
+    self.hasText = hasText
+    self.hasDrawing = hasDrawing
+    self.drawingData = drawingData
+    self.thumbnail = thumbnail
+    self.body = body
+  }
+
+  // MARK: - Codable Migration Support
+
+  private enum CodingKeys: String, CodingKey {
+    case dateString
+    case date  // Legacy key for backward compatibility
+    case hasText
+    case hasDrawing
+    case drawingData
+    case thumbnail
+    case body
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+
+    // Try to decode dateString first (new format)
+    if let dateString = try container.decodeIfPresent(String.self, forKey: .dateString) {
+      self.dateString = dateString
+    }
+    // Fall back to decoding legacy Date and converting to dateString
+    else if let legacyDate = try container.decodeIfPresent(Date.self, forKey: .date) {
+      let components = Calendar.current.dateComponents([.year, .month, .day], from: legacyDate)
+      self.dateString = String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 1, components.day ?? 1)
+    }
+    // Default to today if neither exists (shouldn't happen)
+    else {
+      let components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+      self.dateString = String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 1, components.day ?? 1)
+    }
+
+    self.hasText = try container.decode(Bool.self, forKey: .hasText)
+    self.hasDrawing = try container.decode(Bool.self, forKey: .hasDrawing)
+    self.drawingData = try container.decodeIfPresent(Data.self, forKey: .drawingData)
+    self.thumbnail = try container.decodeIfPresent(Data.self, forKey: .thumbnail)
+    self.body = try container.decodeIfPresent(String.self, forKey: .body)
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    // Only encode dateString (new format) - don't encode legacy date
+    try container.encode(dateString, forKey: .dateString)
+    try container.encode(hasText, forKey: .hasText)
+    try container.encode(hasDrawing, forKey: .hasDrawing)
+    try container.encodeIfPresent(drawingData, forKey: .drawingData)
+    try container.encodeIfPresent(thumbnail, forKey: .thumbnail)
+    try container.encodeIfPresent(body, forKey: .body)
   }
 }
 

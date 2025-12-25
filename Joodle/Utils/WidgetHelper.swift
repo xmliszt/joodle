@@ -31,25 +31,8 @@ struct WidgetSubscriptionStatus: Codable {
   }
 }
 
-/// Data model for encoding/decoding entries to share with widget
-/// Note: Drawing data is included optionally for widgets that need to display the actual drawing
-struct WidgetEntryData: Codable {
-  let date: Date
-  let hasText: Bool
-  let hasDrawing: Bool
-  let drawingData: Data?
-  let thumbnail: Data?
-  let body: String?
-
-  init(date: Date, hasText: Bool, hasDrawing: Bool, drawingData: Data? = nil, thumbnail: Data? = nil, body: String? = nil) {
-    self.date = date
-    self.hasText = hasText
-    self.hasDrawing = hasDrawing
-    self.drawingData = drawingData
-    self.thumbnail = thumbnail
-    self.body = body
-  }
-}
+// Note: WidgetEntryData is defined in Widgets/WidgetDataManager.swift
+// This file uses the same model via App Group shared storage
 
 /// Helper class for updating widget data from the main app
 ///
@@ -151,23 +134,51 @@ class WidgetHelper {
       return
     }
 
-    // Convert DayEntry to WidgetEntryData
+    // Convert DayEntry to widget-compatible dictionaries
     // Include both drawingData (for larger widgets) and thumbnails (for year grid dots)
-    // Use displayDate which is timezone-agnostic (stable noon UTC)
-    let widgetEntries = entries.map { entry in
-      return WidgetEntryData(
-        date: entry.displayDate,
-        hasText: !entry.body.isEmpty,
-        hasDrawing: entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true),
-        drawingData: entry.drawingData,
-        thumbnail: entry.drawingThumbnail20,
-        body: entry.body.isEmpty ? nil : entry.body
+    // Use dateString which is timezone-agnostic (the SINGLE SOURCE OF TRUTH)
+    let widgetEntries: [[String: Any]] = entries.map { entry in
+      var dict: [String: Any] = [
+        "dateString": entry.dateString,
+        "hasText": !entry.body.isEmpty,
+        "hasDrawing": entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true)
+      ]
+      if let drawingData = entry.drawingData {
+        dict["drawingData"] = drawingData
+      }
+      if let thumbnail = entry.drawingThumbnail20 {
+        dict["thumbnail"] = thumbnail
+      }
+      if !entry.body.isEmpty {
+        dict["body"] = entry.body
+      }
+      return dict
+    }
+
+    // Convert to Codable format for storage
+    struct WidgetEntryStorage: Codable {
+      let dateString: String
+      let hasText: Bool
+      let hasDrawing: Bool
+      let drawingData: Data?
+      let thumbnail: Data?
+      let body: String?
+    }
+
+    let storageEntries = widgetEntries.map { dict in
+      WidgetEntryStorage(
+        dateString: dict["dateString"] as? String ?? "",
+        hasText: dict["hasText"] as? Bool ?? false,
+        hasDrawing: dict["hasDrawing"] as? Bool ?? false,
+        drawingData: dict["drawingData"] as? Data,
+        thumbnail: dict["thumbnail"] as? Data,
+        body: dict["body"] as? String
       )
     }
 
     // Encode and save to shared UserDefaults
     do {
-      let data = try JSONEncoder().encode(widgetEntries)
+      let data = try JSONEncoder().encode(storageEntries)
       sharedDefaults.set(data, forKey: entriesKey)
       sharedDefaults.synchronize()
 

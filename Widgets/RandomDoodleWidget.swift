@@ -133,10 +133,17 @@ struct RandomJoodleProvider: TimelineProvider {
     let today = calendar.startOfDay(for: Date())
     let oneYearAgo = calendar.date(byAdding: .day, value: -365, to: today)!
 
+    // Get today's dateString and one year ago dateString for comparison (timezone-agnostic)
+    let todayComponents = calendar.dateComponents([.year, .month, .day], from: today)
+    let todayString = String(format: "%04d-%02d-%02d", todayComponents.year ?? 0, todayComponents.month ?? 1, todayComponents.day ?? 1)
+    let oneYearAgoComponents = calendar.dateComponents([.year, .month, .day], from: oneYearAgo)
+    let oneYearAgoString = String(format: "%04d-%02d-%02d", oneYearAgoComponents.year ?? 0, oneYearAgoComponents.month ?? 1, oneYearAgoComponents.day ?? 1)
+
+    // Filter using dateString comparison (timezone-agnostic)
     let JoodleEntries = entries.filter { entry in
-      let entryDate = calendar.startOfDay(for: entry.date)
-      return entry.hasDrawing && entry.drawingData != nil && entryDate >= oneYearAgo
-      && entryDate <= today
+      return entry.hasDrawing && entry.drawingData != nil
+        && entry.dateString >= oneYearAgoString
+        && entry.dateString <= todayString
     }
 
     guard !JoodleEntries.isEmpty else {
@@ -157,7 +164,7 @@ struct RandomJoodleProvider: TimelineProvider {
     let selectedEntry = JoodleEntries[randomIndex]
 
     return JoodleData(
-      date: selectedEntry.date,
+      dateString: selectedEntry.dateString,
       drawingData: selectedEntry.drawingData!
     )
   }
@@ -176,8 +183,25 @@ struct RandomJoodleEntry: TimelineEntry {
 }
 
 struct JoodleData {
-  let date: Date
+  /// The timezone-agnostic date string in "yyyy-MM-dd" format
+  let dateString: String
   let drawingData: Data
+
+  /// Computed display date from dateString (for UI components that need Date)
+  var date: Date {
+    let components = dateString.split(separator: "-")
+    if components.count == 3,
+       let year = Int(components[0]),
+       let month = Int(components[1]),
+       let day = Int(components[2]) {
+      var dateComponents = DateComponents()
+      dateComponents.year = year
+      dateComponents.month = month
+      dateComponents.day = day
+      return Calendar.current.date(from: dateComponents) ?? Date()
+    }
+    return Date()
+  }
 }
 
 struct PathData: Codable {
@@ -221,7 +245,7 @@ struct RandomJoodleWidgetView: View {
         if let Joodle = entry.Joodle {
           JoodleView(drawingData: Joodle.drawingData, family: family, themeColor: themeColor)
             .padding(family == .systemLarge ? 48 : 24)
-            .widgetURL(URL(string: "joodle://date/\(Int(Joodle.date.timeIntervalSince1970))"))
+            .widgetURL(URL(string: "joodle://date/\(Joodle.dateString)"))
             .containerBackground(for: .widget) {
               Color(UIColor.systemBackground)
             }
@@ -229,7 +253,7 @@ struct RandomJoodleWidgetView: View {
           // Show not found status
           NotFoundView(prompt: entry.prompt, family: family)
             .padding(8)
-            .widgetURL(URL(string: "joodle://date/\(Int(Date().timeIntervalSince1970))"))
+            .widgetURL(URL(string: "joodle://today"))
             .containerBackground(for: .widget) {
               Color(UIColor.systemBackground)
             }
@@ -298,7 +322,7 @@ struct LockScreenCircularView: View {
         JoodleView(drawingData: Joodle.drawingData, family: family, themeColor: themeColor)
           .padding(8)
       }
-      .widgetURL(URL(string: "joodle://date/\(Int(Joodle.date.timeIntervalSince1970))"))
+      .widgetURL(URL(string: "joodle://date/\(Joodle.dateString)"))
       .containerBackground(for: .widget) {
         Color.clear
       }
@@ -312,7 +336,7 @@ struct LockScreenCircularView: View {
           .font(.system(size: 24))
           .foregroundStyle(.secondary)
       }
-      .widgetURL(URL(string: "joodle://date/\(Int(Date().timeIntervalSince1970))"))
+      .widgetURL(URL(string: "joodle://today"))
       .containerBackground(for: .widget) {
         Color.clear
       }
@@ -423,9 +447,11 @@ struct RandomJoodleWidget: Widget {
 } timeline: {
   // Preview with a Joodle (subscribed)
   let mockDrawingData = createMockDrawingData()
+  let todayComponents = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+  let todayString = String(format: "%04d-%02d-%02d", todayComponents.year ?? 0, todayComponents.month ?? 1, todayComponents.day ?? 1)
   RandomJoodleEntry(
     date: Date(),
-    Joodle: JoodleData(date: Date(), drawingData: mockDrawingData),
+    Joodle: JoodleData(dateString: todayString, drawingData: mockDrawingData),
     prompt: "Draw something",
     isSubscribed: true
   )
@@ -440,9 +466,11 @@ struct RandomJoodleWidget: Widget {
   // Preview with a Joodle from 5 days ago (subscribed)
   let mockDrawingData = createMockDrawingData()
   let fiveDaysAgo = Calendar.current.date(byAdding: .day, value: -5, to: Date())!
+  let fiveDaysAgoComponents = Calendar.current.dateComponents([.year, .month, .day], from: fiveDaysAgo)
+  let fiveDaysAgoString = String(format: "%04d-%02d-%02d", fiveDaysAgoComponents.year ?? 0, fiveDaysAgoComponents.month ?? 1, fiveDaysAgoComponents.day ?? 1)
   RandomJoodleEntry(
     date: Date(),
-    Joodle: JoodleData(date: fiveDaysAgo, drawingData: mockDrawingData),
+    Joodle: JoodleData(dateString: fiveDaysAgoString, drawingData: mockDrawingData),
     prompt: "Draw something",
     isSubscribed: true
   )
@@ -456,9 +484,11 @@ struct RandomJoodleWidget: Widget {
 } timeline: {
   // Preview with a Joodle (subscribed)
   let mockDrawingData = createMockDrawingData()
+  let todayComponents = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+  let todayString = String(format: "%04d-%02d-%02d", todayComponents.year ?? 0, todayComponents.month ?? 1, todayComponents.day ?? 1)
   RandomJoodleEntry(
     date: Date(),
-    Joodle: JoodleData(date: Date(), drawingData: mockDrawingData),
+    Joodle: JoodleData(dateString: todayString, drawingData: mockDrawingData),
     prompt: "Draw something",
     isSubscribed: true
   )

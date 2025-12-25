@@ -18,8 +18,14 @@ struct MockDayEntry: Identifiable, Equatable {
     var body: String
     var drawingData: Data?
 
+    /// Type-safe calendar date accessor
+    var calendarDate: CalendarDate? {
+        CalendarDate(dateString: dateString)
+    }
+
+    /// Display date for UI components that need Date
     var date: Date {
-        DayEntry.stringToLocalDate(dateString) ?? Date()
+        calendarDate?.displayDate ?? Date()
     }
 
     init(dateString: String, body: String = "", drawingData: Data? = nil) {
@@ -29,7 +35,13 @@ struct MockDayEntry: Identifiable, Equatable {
     }
 
     init(date: Date, body: String = "", drawingData: Data? = nil) {
-        self.dateString = DayEntry.dateToString(date)
+        self.dateString = CalendarDate.from(date).dateString
+        self.body = body
+        self.drawingData = drawingData
+    }
+
+    init(calendarDate: CalendarDate, body: String = "", drawingData: Data? = nil) {
+        self.dateString = calendarDate.dateString
         self.body = body
         self.drawingData = drawingData
     }
@@ -112,8 +124,13 @@ class MockDataStore: ObservableObject {
 
     /// Get entry for a specific date
     func getEntry(for date: Date) -> MockDayEntry? {
-        let dateString = DayEntry.dateToString(date)
+        let dateString = CalendarDate.from(date).dateString
         return entries.first { $0.dateString == dateString }
+    }
+
+    /// Get entry for a specific CalendarDate
+    func getEntry(for calendarDate: CalendarDate) -> MockDayEntry? {
+        return entries.first { $0.dateString == calendarDate.dateString }
     }
 
     /// Get entry for a specific date string

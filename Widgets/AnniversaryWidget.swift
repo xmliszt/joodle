@@ -18,14 +18,30 @@ private let kRandomAnniversaryID = "random_anniversary"
 
 struct AnniversaryEntryEntity: AppEntity {
   let id: String
-  let date: Date?
+  /// The timezone-agnostic date string in "yyyy-MM-dd" format
+  let dateString: String?
   let preview: String
 
+  /// Computed display date from dateString (for UI components that need Date)
+  var date: Date? {
+    guard let dateString = dateString else { return nil }
+    let components = dateString.split(separator: "-")
+    guard components.count == 3,
+          let year = Int(components[0]),
+          let month = Int(components[1]),
+          let day = Int(components[2]) else { return nil }
+    var dateComponents = DateComponents()
+    dateComponents.year = year
+    dateComponents.month = month
+    dateComponents.day = day
+    return Calendar.current.date(from: dateComponents)
+  }
+
   var displayRepresentation: DisplayRepresentation {
-    if let date = date {
+    if let dateString = dateString {
       // Regular anniversary with date
       return DisplayRepresentation(
-        title: "\(formatDate(date))",
+        title: "\(formatDateString(dateString))",
         subtitle: "\(preview)"
       )
     } else {
@@ -37,7 +53,8 @@ struct AnniversaryEntryEntity: AppEntity {
   static var typeDisplayRepresentation: TypeDisplayRepresentation = "Anniversary"
   static var defaultQuery = AnniversaryEntryQuery()
 
-  private func formatDate(_ date: Date) -> String {
+  private func formatDateString(_ dateString: String) -> String {
+    guard let date = self.date else { return dateString }
     let formatter = DateFormatter()
     formatter.dateStyle = .medium
     formatter.timeStyle = .none
@@ -53,7 +70,7 @@ struct AnniversaryEntryQuery: EntityQuery, EntityStringQuery {
   {
     let randomEntity = AnniversaryEntryEntity(
       id: kRandomAnniversaryID,
-      date: nil,
+      dateString: nil,
       preview: "🎲 Random anniversary (changes daily)"
     )
 
@@ -71,7 +88,7 @@ struct AnniversaryEntryQuery: EntityQuery, EntityStringQuery {
   func suggestedEntities() async throws -> [AnniversaryEntryEntity] {
     let randomEntity = AnniversaryEntryEntity(
       id: kRandomAnniversaryID,
-      date: nil,
+      dateString: nil,
       preview: "🎲 Random anniversary (changes daily)"
     )
     return [randomEntity] + loadFutureAnniversaries()
@@ -80,7 +97,7 @@ struct AnniversaryEntryQuery: EntityQuery, EntityStringQuery {
   func entities(matching string: String) async throws -> [AnniversaryEntryEntity] {
     let randomEntity = AnniversaryEntryEntity(
       id: kRandomAnniversaryID,
-      date: nil,
+      dateString: nil,
       preview: "🎲 Random anniversary (changes daily)"
     )
 
@@ -112,26 +129,26 @@ struct AnniversaryEntryQuery: EntityQuery, EntityStringQuery {
 
   private func loadFutureAnniversaries() -> [AnniversaryEntryEntity] {
     let entries = WidgetDataManager.shared.loadAllEntries()
-    let calendar = Calendar.current
-    let now = Date()
-    let today = calendar.startOfDay(for: now)
+
+    // Get today's dateString for comparison (timezone-agnostic)
+    let todayComponents = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+    let todayString = String(format: "%04d-%02d-%02d", todayComponents.year ?? 0, todayComponents.month ?? 1, todayComponents.day ?? 1)
 
     // Filter future entries that have either text or drawing
+    // Using dateString comparison ensures timezone-agnostic behavior
     let futureEntries = entries.filter { entry in
-      let entryDate = calendar.startOfDay(for: entry.date)
-      return entryDate > today && (entry.hasText || entry.hasDrawing)
+      entry.dateString > todayString && (entry.hasText || entry.hasDrawing)
     }
 
-    // Sort by date (nearest first)
-    let sortedEntries = futureEntries.sorted { $0.date < $1.date }
+    // Sort by dateString (lexicographic order works for yyyy-MM-dd format)
+    let sortedEntries = futureEntries.sorted { $0.dateString < $1.dateString }
 
-    // Convert to entities
+    // Convert to entities using dateString as the stable identifier
     return sortedEntries.map { entry in
       let preview = makePreview(for: entry)
-      let id = String(Int(entry.date.timeIntervalSince1970))
       return AnniversaryEntryEntity(
-        id: id,
-        date: entry.date,
+        id: entry.dateString,  // Use dateString as stable ID
+        dateString: entry.dateString,
         preview: preview
       )
     }
@@ -235,14 +252,13 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
   {
     let entries = WidgetDataManager.shared.loadAllEntries()
 
-    // Filter future entries that have either text or drawing
-    let calendar = Calendar.current
-    let now = Date()
+    // Get today's dateString for comparison (timezone-agnostic)
+    let todayComponents = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+    let todayString = String(format: "%04d-%02d-%02d", todayComponents.year ?? 0, todayComponents.month ?? 1, todayComponents.day ?? 1)
 
+    // Filter future entries using dateString comparison (timezone-agnostic)
     let futureEntries = entries.filter { entry in
-      let entryDate = calendar.startOfDay(for: entry.date)
-      let today = calendar.startOfDay(for: now)
-      return entryDate > today && (entry.hasText || entry.hasDrawing)
+      entry.dateString > todayString && (entry.hasText || entry.hasDrawing)
     }
 
     guard !futureEntries.isEmpty else {
@@ -251,24 +267,23 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
 
     // If user selected a specific entry (not random or nil), use that
     if let selectedEntry = configuration.selectedEntry,
-       selectedEntry.id != kRandomAnniversaryID {
-      let targetDay = calendar.startOfDay(for: selectedEntry.date!)
-      if let matchingEntry = futureEntries.first(where: {
-        calendar.startOfDay(for: $0.date) == targetDay
-      }) {
+       selectedEntry.id != kRandomAnniversaryID,
+       let targetDateString = selectedEntry.dateString {
+      // Match by dateString (timezone-agnostic)
+      if let matchingEntry = futureEntries.first(where: { $0.dateString == targetDateString }) {
         return AnniversaryData(
-          date: matchingEntry.date,
+          dateString: matchingEntry.dateString,
           text: matchingEntry.body,
           drawingData: matchingEntry.drawingData
         )
       }
 
       // Selected entry has passed - automatically select the next closest anniversary
-      // Sort by date and pick the earliest one
-      let sortedEntries = futureEntries.sorted { $0.date < $1.date }
+      // Sort by dateString and pick the earliest one
+      let sortedEntries = futureEntries.sorted { $0.dateString < $1.dateString }
       if let nextEntry = sortedEntries.first {
         return AnniversaryData(
-          date: nextEntry.date,
+          dateString: nextEntry.dateString,
           text: nextEntry.body,
           drawingData: nextEntry.drawingData
         )
@@ -281,7 +296,7 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
     }
 
     return AnniversaryData(
-      date: selectedEntry.date,
+      dateString: selectedEntry.dateString,
       text: selectedEntry.body,
       drawingData: selectedEntry.drawingData
     )
@@ -298,16 +313,33 @@ struct AnniversaryEntry: TimelineEntry {
 }
 
 struct AnniversaryData {
-  let date: Date
+  /// The timezone-agnostic date string in "yyyy-MM-dd" format
+  let dateString: String
   let text: String?
   let drawingData: Data?
 
+  /// Computed display date from dateString (for UI components that need Date)
+  var date: Date {
+    let components = dateString.split(separator: "-")
+    if components.count == 3,
+       let year = Int(components[0]),
+       let month = Int(components[1]),
+       let day = Int(components[2]) {
+      var dateComponents = DateComponents()
+      dateComponents.year = year
+      dateComponents.month = month
+      dateComponents.day = day
+      return Calendar.current.date(from: dateComponents) ?? Date()
+    }
+    return Date()
+  }
+
   var hasText: Bool {
-    text != nil && !(text?.isEmpty ?? true)
+    text != nil && !text!.isEmpty
   }
 
   var hasDrawing: Bool {
-    drawingData != nil && !(drawingData?.isEmpty ?? true)
+    drawingData != nil && !drawingData!.isEmpty
   }
 }
 
@@ -338,7 +370,7 @@ struct AnniversaryWidgetView: View {
           NoAnniversaryView(family: family)
         }
       }
-      .widgetURL(URL(string: "joodle://date/\(Int(anniversaryData.date.timeIntervalSince1970))"))
+      .widgetURL(URL(string: "joodle://date/\(anniversaryData.dateString)"))
     } else {
       NoAnniversaryView(family: family)
     }
@@ -638,15 +670,22 @@ struct AnniversaryWidget: Widget {
 
 // MARK: - Previews
 
+/// Helper to create a dateString for a future date
+private func futureDateString(daysFromNow: Int) -> String {
+  let futureDate = Calendar.current.date(byAdding: .day, value: daysFromNow, to: Date())!
+  let components = Calendar.current.dateComponents([.year, .month, .day], from: futureDate)
+  return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 1, components.day ?? 1)
+}
+
 #Preview("Small - Drawing", as: .systemSmall) {
   AnniversaryWidget()
 } timeline: {
-  let futureDate = Calendar.current.date(byAdding: .day, value: 30, to: Date())!
+  let futureDateStr = futureDateString(daysFromNow: 30)
 
   AnniversaryEntry(
     date: Date(),
     anniversaryData: AnniversaryData(
-      date: futureDate,
+      dateString: futureDateStr,
       text: nil,
       drawingData: createMockDrawingData()
     ),
@@ -658,7 +697,7 @@ struct AnniversaryWidget: Widget {
   AnniversaryEntry(
     date: Date(),
     anniversaryData: AnniversaryData(
-      date: futureDate,
+      dateString: futureDateStr,
       text: "This is a special anniversary!",
       drawingData: nil
     ),
@@ -678,13 +717,13 @@ struct AnniversaryWidget: Widget {
 #Preview("Medium", as: .systemMedium) {
   AnniversaryWidget()
 } timeline: {
-  let futureDate = Calendar.current.date(byAdding: .day, value: 30, to: Date())!
+  let futureDateStr = futureDateString(daysFromNow: 30)
 
   // Preview with drawing
   AnniversaryEntry(
     date: Date(),
     anniversaryData: AnniversaryData(
-      date: futureDate,
+      dateString: futureDateStr,
       text: nil,
       drawingData: createMockDrawingData()
     ),
@@ -696,7 +735,7 @@ struct AnniversaryWidget: Widget {
   AnniversaryEntry(
     date: Date(),
     anniversaryData: AnniversaryData(
-      date: futureDate,
+      dateString: futureDateStr,
       text: "This is a special anniversary!",
       drawingData: nil
     ),
@@ -708,7 +747,7 @@ struct AnniversaryWidget: Widget {
   AnniversaryEntry(
     date: Date(),
     anniversaryData: AnniversaryData(
-      date: futureDate,
+      dateString: futureDateStr,
       text: "Parents coming to Singapore! Finally!",
       drawingData: createMockDrawingData()
     ),
@@ -728,13 +767,13 @@ struct AnniversaryWidget: Widget {
 #Preview("Large", as: .systemLarge) {
   AnniversaryWidget()
 } timeline: {
-  let futureDate = Calendar.current.date(byAdding: .day, value: 30, to: Date())!
+  let futureDateStr = futureDateString(daysFromNow: 30)
 
   // Preview with drawing
   AnniversaryEntry(
     date: Date(),
     anniversaryData: AnniversaryData(
-      date: futureDate,
+      dateString: futureDateStr,
       text: nil,
       drawingData: createMockDrawingData()
     ),
@@ -746,7 +785,7 @@ struct AnniversaryWidget: Widget {
   AnniversaryEntry(
     date: Date(),
     anniversaryData: AnniversaryData(
-      date: futureDate,
+      dateString: futureDateStr,
       text:
         "This is a special anniversary that I want to remember forever! This is a special anniversary that I want to remember forever! This is a special anniversary that I want to remember forever! This is a special anniversary that I want to remember forever! This is a special anniversary that I want to remember forever!",
       drawingData: nil

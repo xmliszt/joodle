@@ -1,5 +1,5 @@
 //
-//  Item.swift
+//  DayEntryModel.swift
 //  Joodle
 //
 //  Created by Li Yuxuan on 10/8/25.
@@ -11,7 +11,8 @@ import SwiftData
 @Model
 final class DayEntry {
   /// The unique identifier for this entry in "yyyy-MM-dd" format
-  /// This is timezone-agnostic - once set, it represents that calendar day forever
+  /// This is the SINGLE SOURCE OF TRUTH for the entry's date - timezone-agnostic.
+  /// Once set, it represents that calendar day forever, regardless of timezone changes.
   /// Note: Uniqueness is enforced in code during creation, not via @Attribute(.unique)
   /// to allow lightweight schema migration from older versions without dateString
   var dateString: String = ""
@@ -20,6 +21,7 @@ final class DayEntry {
 
   /// Legacy timestamp - kept for backward compatibility and sorting
   /// For new entries, this is set to noon UTC of the dateString date
+  /// DO NOT use this for date identification - use dateString or calendarDate instead
   var createdAt: Date = Date()
 
   var drawingData: Data?
@@ -33,14 +35,32 @@ final class DayEntry {
   // DO NOT USE - it is deprecated and will be removed
   var drawingThumbnail1080: Data?
 
+  // MARK: - Initialization
+
+  /// Creates a new DayEntry for a specific calendar date (preferred initializer)
+  /// - Parameters:
+  ///   - body: The text content of the entry
+  ///   - calendarDate: The timezone-agnostic calendar date for this entry
+  ///   - drawingData: Optional drawing data
+  init(body: String, calendarDate: CalendarDate, drawingData: Data? = nil) {
+    self.body = body
+    self.dateString = calendarDate.dateString
+    // Store as noon UTC to avoid any edge-case timezone issues with the legacy Date field
+    self.createdAt = Self.stringToDate(calendarDate.dateString) ?? calendarDate.displayDate
+    self.drawingData = drawingData
+    self.drawingThumbnail20 = nil
+    self.drawingThumbnail200 = nil
+  }
+
   /// Creates a new DayEntry for a specific date
   /// - Parameters:
   ///   - body: The text content of the entry
   ///   - date: The date this entry represents (will be converted to dateString using local calendar)
   ///   - drawingData: Optional drawing data
+  /// - Note: Prefer using `init(body:calendarDate:drawingData:)` for new code
   init(body: String, createdAt date: Date, drawingData: Data? = nil) {
     self.body = body
-    self.dateString = Self.dateToString(date)
+    self.dateString = CalendarDate.from(date).dateString
     // Store as noon UTC to avoid any edge-case timezone issues with the legacy Date field
     self.createdAt = Self.stringToDate(self.dateString) ?? date
     self.drawingData = drawingData
@@ -48,17 +68,70 @@ final class DayEntry {
     self.drawingThumbnail200 = nil
   }
 
-  // MARK: - Date String Conversion Helpers
+  // MARK: - CalendarDate Integration
 
-  /// Shared DateFormatter for consistent date string formatting
-  /// Uses a fixed format that's not affected by locale or timezone for storage
-  private static let dateFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "yyyy-MM-dd"
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = TimeZone.current // Use current timezone when creating entries
-    return formatter
-  }()
+  /// Type-safe accessor for the calendar date (preferred for all date operations)
+  /// Returns nil only if dateString is malformed (should not happen in practice)
+  var calendarDate: CalendarDate? {
+    CalendarDate(dateString: dateString)
+  }
+
+  /// Returns a Date representation of this entry's date (at start of day in user's current timezone)
+  /// Use this for display purposes, countdown calculations, and when you need a Date object
+  var displayDate: Date {
+    calendarDate?.displayDate ?? createdAt
+  }
+
+  /// Returns a formatted display string for the date in "d MMMM yyyy" format (e.g., "25 December 2025")
+  var dateToDisplayString: String {
+    calendarDate?.displayString ?? dateString
+  }
+
+  /// Returns the year component of this entry
+  var year: Int {
+    calendarDate?.year ?? Calendar.current.component(.year, from: createdAt)
+  }
+
+  /// Returns the month component of this entry (1-12)
+  var month: Int {
+    calendarDate?.month ?? Calendar.current.component(.month, from: createdAt)
+  }
+
+  /// Returns the day component of this entry (1-31)
+  var day: Int {
+    calendarDate?.day ?? Calendar.current.component(.day, from: createdAt)
+  }
+
+  /// Check if this entry is for today
+  var isToday: Bool {
+    calendarDate?.isToday ?? false
+  }
+
+  /// Check if this entry is for a future date
+  var isFuture: Bool {
+    calendarDate?.isFuture ?? false
+  }
+
+  /// Check if this entry is for a past date
+  var isPast: Bool {
+    calendarDate?.isPast ?? true
+  }
+
+  /// Checks if this entry matches a given CalendarDate
+  /// - Parameter calendarDate: The calendar date to compare against
+  /// - Returns: True if this entry represents the same calendar day
+  func matches(calendarDate: CalendarDate) -> Bool {
+    return dateString == calendarDate.dateString
+  }
+
+  /// Checks if this entry matches a given date (using dateString comparison)
+  /// - Parameter date: The date to compare against
+  /// - Returns: True if this entry represents the same calendar day
+  func matches(date: Date) -> Bool {
+    return dateString == CalendarDate.from(date).dateString
+  }
+
+  // MARK: - Date String Conversion Helpers (Legacy Support)
 
   /// UTC DateFormatter for creating stable Date objects from dateString
   private static let utcDateFormatter: DateFormatter = {
@@ -72,10 +145,9 @@ final class DayEntry {
   /// Converts a Date to a dateString using the current calendar/timezone
   /// - Parameter date: The date to convert
   /// - Returns: A string in "yyyy-MM-dd" format representing the local calendar date
+  /// - Note: Prefer using `CalendarDate.from(date).dateString` for new code
   static func dateToString(_ date: Date) -> String {
-    // Optimized implementation using Calendar directly to avoid expensive DateFormatter creation
-    let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
-    return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 1, components.day ?? 1)
+    CalendarDate.from(date).dateString
   }
 
   /// Converts a dateString back to a Date (at noon UTC for internal storage stability)
@@ -89,85 +161,30 @@ final class DayEntry {
   /// This is appropriate for countdown calculations and display
   /// - Parameter dateString: A string in "yyyy-MM-dd" format
   /// - Returns: A Date representing start of day in current timezone, or nil if parsing fails
+  /// - Note: Prefer using `CalendarDate(dateString:)?.displayDate` for new code
   static func stringToLocalDate(_ dateString: String) -> Date? {
-    let components = dateString.split(separator: "-")
-    guard components.count == 3,
-          let year = Int(components[0]),
-          let month = Int(components[1]),
-          let day = Int(components[2]) else {
-      return nil
-    }
-
-    var dateComponents = DateComponents()
-    dateComponents.year = year
-    dateComponents.month = month
-    dateComponents.day = day
-    dateComponents.hour = 0
-    dateComponents.minute = 0
-    dateComponents.second = 0
-
-    return Calendar.current.date(from: dateComponents)
-  }
-
-  /// Returns a Date representation of this entry's date (at start of day in user's current timezone)
-  /// Use this for display purposes, countdown calculations, and when you need a Date object
-  var displayDate: Date {
-    Self.stringToLocalDate(dateString) ?? createdAt
-  }
-
-  /// Returns a formatted display string for the date in "d MMMM yyyy" format (e.g., "25 December 2025")
-  var dateToDisplayString: String {
-    Self.formatDateStringForDisplay(dateString)
+    CalendarDate(dateString: dateString)?.displayDate
   }
 
   /// Converts a dateString to a display-friendly format (e.g., "25 December 2025")
   /// - Parameter dateString: A string in "yyyy-MM-dd" format
   /// - Returns: A formatted string in "d MMMM yyyy" format
+  /// - Note: Prefer using `CalendarDate(dateString:)?.displayString` for new code
   static func formatDateStringForDisplay(_ dateString: String) -> String {
-    guard let date = stringToLocalDate(dateString) else {
-      return dateString
-    }
-    let formatter = DateFormatter()
-    formatter.dateFormat = "d MMMM yyyy"
-    return formatter.string(from: date)
-  }
-
-  /// Returns the year component of this entry
-  var year: Int {
-    let components = dateString.split(separator: "-")
-    return Int(components[0]) ?? Calendar.current.component(.year, from: createdAt)
-  }
-
-  /// Returns the month component of this entry (1-12)
-  var month: Int {
-    let components = dateString.split(separator: "-")
-    return Int(components[1]) ?? Calendar.current.component(.month, from: createdAt)
-  }
-
-  /// Returns the day component of this entry (1-31)
-  var day: Int {
-    let components = dateString.split(separator: "-")
-    return Int(components[2]) ?? Calendar.current.component(.day, from: createdAt)
-  }
-
-  /// Checks if this entry matches a given date (using dateString comparison)
-  /// - Parameter date: The date to compare against
-  /// - Returns: True if this entry represents the same calendar day
-  func matches(date: Date) -> Bool {
-    return dateString == Self.dateToString(date)
+    CalendarDate(dateString: dateString)?.displayString ?? dateString
   }
 
   // MARK: - Find or Create Entry
 
-  /// Finds an existing entry for the given date, or creates a new one if none exists.
+  /// Finds an existing entry for the given calendar date, or creates a new one if none exists.
   /// This is the preferred method to get/create entries to avoid duplicates.
   /// If multiple entries exist for the same date, they will be merged and duplicates deleted.
   /// - Parameters:
-  ///   - date: The date to find or create an entry for
+  ///   - calendarDate: The calendar date to find or create an entry for
   ///   - modelContext: The SwiftData model context
   /// - Returns: The single entry for this date (existing or newly created)
-  static func findOrCreate(for date: Date, in modelContext: ModelContext) -> DayEntry {
-    let targetDateString = dateToString(date)
+  static func findOrCreate(for calendarDate: CalendarDate, in modelContext: ModelContext) -> DayEntry {
+    let targetDateString = calendarDate.dateString
     let predicate = #Predicate<DayEntry> { entry in
       entry.dateString == targetDateString
     }
@@ -178,7 +195,7 @@ final class DayEntry {
 
       if existingEntries.isEmpty {
         // No entry exists - create new one
-        let newEntry = DayEntry(body: "", createdAt: date)
+        let newEntry = DayEntry(body: "", calendarDate: calendarDate)
         modelContext.insert(newEntry)
         try? modelContext.save()
         return newEntry
@@ -192,11 +209,23 @@ final class DayEntry {
     } catch {
       print("DayEntry.findOrCreate: Failed to fetch entries: \(error)")
       // Fallback: create new entry
-      let newEntry = DayEntry(body: "", createdAt: date)
+      let newEntry = DayEntry(body: "", calendarDate: calendarDate)
       modelContext.insert(newEntry)
       try? modelContext.save()
       return newEntry
     }
+  }
+
+  /// Finds an existing entry for the given date, or creates a new one if none exists.
+  /// This is the preferred method to get/create entries to avoid duplicates.
+  /// If multiple entries exist for the same date, they will be merged and duplicates deleted.
+  /// - Parameters:
+  ///   - date: The date to find or create an entry for (converted to CalendarDate using current timezone)
+  ///   - modelContext: The SwiftData model context
+  /// - Returns: The single entry for this date (existing or newly created)
+  /// - Note: Prefer using `findOrCreate(for:CalendarDate, in:)` for new code
+  static func findOrCreate(for date: Date, in modelContext: ModelContext) -> DayEntry {
+    findOrCreate(for: CalendarDate.from(date), in: modelContext)
   }
 
   /// Merges multiple entries for the same date into one, deleting duplicates

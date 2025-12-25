@@ -182,6 +182,9 @@ struct JoodleApp: App {
     // Run dateString migration synchronously for existing entries
     Self.runDateStringMigration(container: container)
 
+    // Validate all dateStrings are properly formatted
+    Self.runDateStringValidation(container: container)
+
     // Run duplicate entry cleanup migration
     Self.runDuplicateEntryCleanup(container: container)
 
@@ -282,6 +285,36 @@ struct JoodleApp: App {
         }
       } catch {
         print("DateStringMigration: Failed during startup: \(error)")
+      }
+    }
+  }
+
+  /// Validates all dateStrings are properly formatted and fixes any malformed ones
+  /// This ensures timezone-agnostic date handling works correctly
+  private static func runDateStringValidation(container: ModelContainer) {
+    Task.detached {
+      let context = ModelContext(container)
+      let descriptor = FetchDescriptor<DayEntry>()
+
+      do {
+        let allEntries = try context.fetch(descriptor)
+        var fixedCount = 0
+
+        for entry in allEntries {
+          // Validate dateString format using CalendarDate
+          if CalendarDate(dateString: entry.dateString) == nil {
+            // Invalid dateString - regenerate from createdAt using CalendarDate
+            entry.dateString = CalendarDate.from(entry.createdAt).dateString
+            fixedCount += 1
+          }
+        }
+
+        if fixedCount > 0 {
+          try context.save()
+          print("DateStringValidation: Fixed \(fixedCount) invalid dateStrings")
+        }
+      } catch {
+        print("DateStringValidation: Failed - \(error)")
       }
     }
   }
@@ -497,15 +530,28 @@ struct JoodleApp: App {
       return
     }
 
-    // Handle URL scheme: joodle://date/{timestamp}
+    // Handle URL scheme: joodle://date/{dateString or timestamp}
+    // Supports both new dateString format (yyyy-MM-dd) and legacy timestamp format
     if url.host == "date" {
-      // Extract timestamp from path
       let pathComponents = url.pathComponents
-      if pathComponents.count >= 2,
-         let timestamp = TimeInterval(pathComponents[1]) {
-        let date = Date(timeIntervalSince1970: timestamp)
-        NavigationHelper.navigateToDate(date, selectedDateBinding: $selectedDateFromWidget)
+      if pathComponents.count >= 2 {
+        let identifier = pathComponents[1]
+
+        // Try parsing as dateString (yyyy-MM-dd) first
+        if let calendarDate = CalendarDate(dateString: identifier) {
+          NavigationHelper.navigateToDate(calendarDate.displayDate, selectedDateBinding: $selectedDateFromWidget)
+        }
+        // Fall back to legacy timestamp format
+        else if let timestamp = TimeInterval(identifier) {
+          let date = Date(timeIntervalSince1970: timestamp)
+          NavigationHelper.navigateToDate(date, selectedDateBinding: $selectedDateFromWidget)
+        }
       }
+    }
+
+    // Handle URL scheme: joodle://today
+    if url.host == "today" {
+      NavigationHelper.navigateToDate(Date(), selectedDateBinding: $selectedDateFromWidget)
     }
   }
 }

@@ -56,13 +56,14 @@ struct TodayDoodleProvider: TimelineProvider {
 
   private func getTodayEntry() -> TodayDoodleData? {
     let entries = WidgetDataManager.shared.loadAllEntries()
-    let calendar = Calendar.current
-    let today = calendar.startOfDay(for: Date())
 
-    // Find today's entry
+    // Get today's dateString for comparison (timezone-agnostic)
+    let todayComponents = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+    let todayString = String(format: "%04d-%02d-%02d", todayComponents.year ?? 0, todayComponents.month ?? 1, todayComponents.day ?? 1)
+
+    // Find today's entry using dateString comparison (timezone-agnostic)
     let todayEntry = entries.first { entry in
-      let entryDate = calendar.startOfDay(for: entry.date)
-      return entryDate == today && (entry.hasText || entry.hasDrawing)
+      entry.dateString == todayString && (entry.hasText || entry.hasDrawing)
     }
 
     guard let entry = todayEntry else {
@@ -70,7 +71,7 @@ struct TodayDoodleProvider: TimelineProvider {
     }
 
     return TodayDoodleData(
-      date: entry.date,
+      dateString: entry.dateString,
       text: entry.body,
       drawingData: entry.drawingData
     )
@@ -86,16 +87,33 @@ struct TodayDoodleEntry: TimelineEntry {
 }
 
 struct TodayDoodleData {
-  let date: Date
+  /// The timezone-agnostic date string in "yyyy-MM-dd" format
+  let dateString: String
   let text: String?
   let drawingData: Data?
 
+  /// Computed display date from dateString (for UI components that need Date)
+  var date: Date {
+    let components = dateString.split(separator: "-")
+    if components.count == 3,
+       let year = Int(components[0]),
+       let month = Int(components[1]),
+       let day = Int(components[2]) {
+      var dateComponents = DateComponents()
+      dateComponents.year = year
+      dateComponents.month = month
+      dateComponents.day = day
+      return Calendar.current.date(from: dateComponents) ?? Date()
+    }
+    return Date()
+  }
+
   var hasText: Bool {
-    text != nil && !(text?.isEmpty ?? true)
+    text != nil && !text!.isEmpty
   }
 
   var hasDrawing: Bool {
-    drawingData != nil && !(drawingData?.isEmpty ?? true)
+    drawingData != nil && !drawingData!.isEmpty
   }
 }
 
@@ -128,10 +146,10 @@ struct TodayDoodleWidgetView: View {
           NoTodayDoodleView(family: family)
         }
       }
-      .widgetURL(URL(string: "joodle://date/\(Int(todayData.date.timeIntervalSince1970))"))
+      .widgetURL(URL(string: "joodle://date/\(todayData.dateString)"))
     } else {
       NoTodayDoodleView(family: family)
-        .widgetURL(URL(string: "joodle://date/\(Int(Date().timeIntervalSince1970))"))
+        .widgetURL(URL(string: "joodle://today"))
     }
   }
 }
