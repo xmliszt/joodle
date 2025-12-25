@@ -51,7 +51,6 @@ struct SettingsView: View {
   @StateObject private var storeKitManager = StoreKitManager.shared
   @StateObject private var reminderManager = ReminderManager.shared
   @State private var showOnboarding = false
-  @State private var dailyReminderTime: Date = UserPreferences.shared.dailyReminderTime
   @State private var showNotificationDeniedAlert = false
   @State private var showPlaceholderGenerator = false
   @State private var showPaywall = false
@@ -109,6 +108,16 @@ struct SettingsView: View {
     Binding(
       get: { userPreferences.enableHaptic },
       set: { userPreferences.enableHaptic = $0 }
+    )
+  }
+
+  private var dailyReminderTimeBinding: Binding<Date> {
+    Binding(
+      get: { userPreferences.dailyReminderTime },
+      set: { newTime in
+        userPreferences.dailyReminderTime = newTime
+        reminderManager.updateDailyReminderTime(newTime)
+      }
     )
   }
 
@@ -339,7 +348,7 @@ struct SettingsView: View {
           if newValue {
             // Enabling - check permission
             Task {
-              let success = await reminderManager.enableDailyReminder(at: dailyReminderTime)
+              let success = await reminderManager.enableDailyReminder(at: userPreferences.dailyReminderTime)
               await MainActor.run {
                 if success {
                   userPreferences.isDailyReminderEnabled = true
@@ -358,15 +367,11 @@ struct SettingsView: View {
       )) {
         DatePicker(
           "",
-          selection: $dailyReminderTime,
+          selection: dailyReminderTimeBinding,
           displayedComponents: .hourAndMinute
         )
         .labelsHidden()
         .datePickerStyle(.compact)
-        .onChange(of: dailyReminderTime) { _, newTime in
-          userPreferences.dailyReminderTime = newTime
-          reminderManager.updateDailyReminderTime(newTime)
-        }
       }
     } header: {
       Text("Daily Reminder")

@@ -10,6 +10,7 @@ enum OnboardingStep: Hashable, CaseIterable {
     case featureIntroWidgets       // Feature intro: Widgets (kept - can't be interactive)
     case paywall                   // Subscription choice
     case icloudConfig              // iCloud sync configuration (only for subscribers)
+    case dailyReminder             // Daily reminder configuration
     case onboardingCompletion      // Completion step
 }
 
@@ -95,13 +96,16 @@ class OnboardingViewModel: ObservableObject {
                 // User subscribed, show iCloud config
                 navigationPath.append(OnboardingStep.icloudConfig)
             } else {
-                // User skipped subscription, go to completion
-                navigationPath.append(OnboardingStep.onboardingCompletion)
+                // User skipped subscription, go to daily reminder
+                navigationPath.append(OnboardingStep.dailyReminder)
             }
 
         case .icloudConfig:
-            // After iCloud config, always go to completion
-            // Restart check will happen after onboarding completes
+            // After iCloud config, go to daily reminder setup
+            navigationPath.append(OnboardingStep.dailyReminder)
+
+        case .dailyReminder:
+            // After daily reminder config, go to completion
             navigationPath.append(OnboardingStep.onboardingCompletion)
 
         case .onboardingCompletion:

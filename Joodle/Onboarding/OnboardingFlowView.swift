@@ -25,6 +25,8 @@ struct OnboardingFlowView: View {
                         PaywallView(viewModel: viewModel)
                     case .icloudConfig:
                         iCloudConfigView(viewModel: viewModel)
+                    case .dailyReminder:
+                        DailyReminderConfigView(viewModel: viewModel)
                     case .onboardingCompletion:
                         OnboardingCompletionView(viewModel: viewModel)
                     }
