@@ -115,6 +115,23 @@ final class DayEntry {
     Self.stringToLocalDate(dateString) ?? createdAt
   }
 
+  /// Returns a formatted display string for the date in "d MMMM yyyy" format (e.g., "25 December 2025")
+  var dateToDisplayString: String {
+    Self.formatDateStringForDisplay(dateString)
+  }
+
+  /// Converts a dateString to a display-friendly format (e.g., "25 December 2025")
+  /// - Parameter dateString: A string in "yyyy-MM-dd" format
+  /// - Returns: A formatted string in "d MMMM yyyy" format
+  static func formatDateStringForDisplay(_ dateString: String) -> String {
+    guard let date = stringToLocalDate(dateString) else {
+      return dateString
+    }
+    let formatter = DateFormatter()
+    formatter.dateFormat = "d MMMM yyyy"
+    return formatter.string(from: date)
+  }
+
   /// Returns the year component of this entry
   var year: Int {
     let components = dateString.split(separator: "-")

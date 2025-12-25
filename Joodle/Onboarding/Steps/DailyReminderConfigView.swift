@@ -42,14 +42,14 @@ struct DailyReminderConfigView: View {
                         .frame(width: 100, height: 100)
 
                   if #available(iOS 18.0, *) {
-                    Image(systemName: enableReminder ? "bell.badge.fill" : "bell.slash")
+                    Image(systemName: enableReminder ? "bell.badge.waveform.fill" : "bell.slash")
                       .font(.system(size: 48))
                       .foregroundStyle(.appAccent)
                       .contentTransition(.symbolEffect(.replace))
                       .symbolEffect(.wiggle.byLayer, options: .nonRepeating, value: wiggleTrigger)
                   } else {
                     // Fallback on earlier versions
-                    Image(systemName: enableReminder ? "bell.badge.fill" : "bell.slash")
+                    Image(systemName: enableReminder ? "bell.badge.waveform.fill" : "bell.slash")
                       .font(.system(size: 48))
                       .foregroundStyle(.appAccent)
                       .contentTransition(.symbolEffect(.replace))

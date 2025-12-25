@@ -9,7 +9,7 @@ struct ExcerptView: View {
 
   private var dateString: String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "EEE, yyyy MMM dd"
+    formatter.dateFormat = "EEE, dd MMM yyyy"
     return formatter.string(from: date)
   }
 

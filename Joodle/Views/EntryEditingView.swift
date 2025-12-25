@@ -468,7 +468,7 @@ struct EntryEditingView: View {
                         Image(systemName: "bell.badge.waveform.fill")
                           .symbolEffect(.wiggle.byLayer, options: .nonRepeating)
                       } else {
-                        Image(systemName: "bell.fill")
+                        Image(systemName: "bell")
                       }
                     }
                     .circularGlassButton(tintColor: hasReminder ? .appAccent : nil)
@@ -542,7 +542,7 @@ struct EntryEditingView: View {
         // Center - Date and weekday/countdown
         VStack(alignment: .center) {
           if let date {
-            Text(date, style: .date)
+            Text(DayEntry.formatDateStringForDisplay(DayEntry.dateToString(date)))
               .font(.headline)
               .foregroundColor(.textColor)
           }

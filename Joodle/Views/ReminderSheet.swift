@@ -156,7 +156,7 @@ struct ReminderSheet: View {
                 .padding(.horizontal)
             }
             .padding(.top, 20)
-            .navigationTitle(dateString)
+            .navigationTitle(DayEntry.formatDateStringForDisplay(dateString))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
