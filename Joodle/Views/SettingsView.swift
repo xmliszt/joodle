@@ -923,7 +923,7 @@ struct SettingsView: View {
         }
 
         // Version
-        Text("v.\(AppEnvironment.fullVersionString)")
+        Text("VERSION \(AppEnvironment.fullVersionString)")
           .font(.caption)
           .foregroundStyle(.secondary)
 

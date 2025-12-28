@@ -57,12 +57,11 @@ struct ChangelogDetailView: View {
     NavigationStack {
         ChangelogDetailView(
             entry: ChangelogEntry(
-                version: "1.0.55",
+                version: "1.0",
                 major: 1,
                 minor: 0,
-                build: 55,
                 date: Date(),
-                headerImageURL: URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.54.png"),
+                headerImageURL: URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.png"),
                 markdownContent: """
                 ## ✨ What's New
 

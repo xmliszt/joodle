@@ -9,16 +9,16 @@ import Foundation
 
 enum ChangelogData {
     /// All changelog entries auto-discovered from Changelogs folder
-    /// Files must be named: {major}.{minor}.{build}_{year}-{month}-{day}.md
-    /// Example: 1.0.55_2025-12-28.md
+    /// Files must be named: {major}.{minor}_{year}-{month}-{day}.md
+    /// Example: 1.1_2025-12-28.md
     static let entries: [ChangelogEntry] = discoverChangelogs()
 
     // MARK: - Optional Header Images
     // Add header image URLs for specific versions here
-    // Key: version string (e.g., "1.0.55"), Value: remote image URL
+    // Key: version string (e.g., "1.1"), Value: remote image URL
     private static let headerImages: [String: URL] = [
-        "1.0.55": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.55.png")!,
-        "1.0.54": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.54.png")!,
+        "1.1": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.1.png")!,
+        "1.0": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.png")!,
     ]
 
     /// Get the header image URL for a specific version
@@ -26,7 +26,7 @@ enum ChangelogData {
         headerImages[version]
     }
 
-    /// Get changelog for a specific version (e.g., "1.0.55")
+    /// Get changelog for a specific version (e.g., "1.1")
     static func entry(for version: String) -> ChangelogEntry? {
         entries.first { $0.version == version }
     }
@@ -96,7 +96,7 @@ enum ChangelogData {
     }
 
     /// Parses a changelog file from directory path
-    /// Filename format: {major}.{minor}.{build}_{year}-{month}-{day}.md
+    /// Filename format: {major}.{minor}_{year}-{month}-{day}.md
     private static func parseChangelogFile(filename: String, directory: String) -> ChangelogEntry? {
         let url = URL(fileURLWithPath: directory).appendingPathComponent(filename)
         return parseChangelogFile(filename: filename, url: url)
@@ -114,15 +114,14 @@ enum ChangelogData {
             return nil
         }
 
-        let versionString = String(parts[0])  // e.g., "1.0.55"
+        let versionString = String(parts[0])  // e.g., "1.1"
         let dateString = String(parts[1])     // e.g., "2025-12-28"
 
-        // Parse version components
+        // Parse version components (major.minor only)
         let versionParts = versionString.split(separator: ".")
-        guard versionParts.count == 3,
+        guard versionParts.count == 2,
               let major = Int(versionParts[0]),
-              let minor = Int(versionParts[1]),
-              let build = Int(versionParts[2]) else {
+              let minor = Int(versionParts[1]) else {
             print("Warning: Invalid version format in: \(filename)")
             return nil
         }
@@ -164,7 +163,6 @@ enum ChangelogData {
             version: versionString,
             major: major,
             minor: minor,
-            build: build,
             date: date,
             headerImageURL: headerImage(for: versionString),
             markdownContent: content

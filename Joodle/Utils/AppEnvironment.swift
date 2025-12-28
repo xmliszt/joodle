@@ -146,10 +146,10 @@ enum AppEnvironment {
         "\(appVersion) (\(buildNumber))"
     }
 
-    /// Raw version string for internal comparisons (e.g., "1.0.42")
-    /// Combines marketing version and build number with dot separator
+    /// Raw version string for internal comparisons (e.g., "1.0")
+    /// Uses only major.minor version for changelog matching
     static var rawVersionString: String {
-        "\(appVersion).\(buildNumber)"
+        appVersion
     }
 
     /// Bundle identifier

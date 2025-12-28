@@ -12,7 +12,7 @@ struct ChangelogEntry: Identifiable, Hashable {
     /// Unique identifier (uses version string)
     let id: String
 
-    /// Full version string (e.g., "1.0.55")
+    /// Full version string (e.g., "1.0", "1.1")
     let version: String
 
     /// Major version number
@@ -20,9 +20,6 @@ struct ChangelogEntry: Identifiable, Hashable {
 
     /// Minor version number
     let minor: Int
-
-    /// Build number
-    let build: Int
 
     /// Release date
     let date: Date
@@ -35,12 +32,12 @@ struct ChangelogEntry: Identifiable, Hashable {
 
     // MARK: - Formatted Display Properties
 
-    /// Formatted version for display: "1.0 (55)"
+    /// Formatted version for display: "1.0"
     var displayVersion: String {
-        "\(major).\(minor) (\(build))"
+        "\(major).\(minor)"
     }
 
-    /// Formatted header line: "DECEMBER 25, 2025 · VERSION 1.0 (55)"
+    /// Formatted header line: "DECEMBER 25, 2025 · VERSION 1.0"
     var displayHeader: String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMMM d, yyyy"
@@ -52,7 +49,6 @@ struct ChangelogEntry: Identifiable, Hashable {
         version: String,
         major: Int,
         minor: Int,
-        build: Int,
         date: Date,
         headerImageURL: URL? = nil,
         markdownContent: String
@@ -61,7 +57,6 @@ struct ChangelogEntry: Identifiable, Hashable {
         self.version = version
         self.major = major
         self.minor = minor
-        self.build = build
         self.date = date
         self.headerImageURL = headerImageURL
         self.markdownContent = markdownContent
