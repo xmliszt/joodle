@@ -48,7 +48,7 @@ final class ChangelogManager {
         }
 
         // Show if never seen OR if last seen version differs from current
-        guard let lastSeen = lastSeenVersion else {
+      guard lastSeenVersion != nil else {
             print("   ✅ Showing: No last seen version (first time)")
             return true
         }

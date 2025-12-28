@@ -29,7 +29,6 @@ struct ChangelogDetailView: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         case .failure:
                             EmptyView()
                         case .empty:
@@ -40,6 +39,8 @@ struct ChangelogDetailView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .padding()
                 }
 
                 // Markdown Content
@@ -49,8 +50,6 @@ struct ChangelogDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(entry.displayVersion)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -63,7 +62,7 @@ struct ChangelogDetailView: View {
                 minor: 0,
                 build: 55,
                 date: Date(),
-                headerImageURL: nil,
+                headerImageURL: URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.54.png"),
                 markdownContent: """
                 ## ✨ What's New
 

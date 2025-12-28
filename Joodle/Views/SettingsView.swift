@@ -689,6 +689,18 @@ struct SettingsView: View {
   private var needHelpSection: some View {
     Section {
       NavigationLink {
+        ChangelogListView()
+      } label: {
+        HStack {
+          Image(systemName: "sparkles")
+            .foregroundColor(.primary)
+            .frame(width: 24)
+          Text("What's New")
+            .foregroundColor(.primary)
+        }
+      }
+      
+      NavigationLink {
         LearnCoreFeaturesView()
       } label: {
         HStack {
@@ -708,18 +720,6 @@ struct SettingsView: View {
             .foregroundColor(.primary)
             .frame(width: 24)
           Text("Frequently Asked Questions")
-            .foregroundColor(.primary)
-        }
-      }
-      
-      NavigationLink {
-        ChangelogListView()
-      } label: {
-        HStack {
-          Image(systemName: "sparkles")
-            .foregroundColor(.primary)
-            .frame(width: 24)
-          Text("What's New")
             .foregroundColor(.primary)
         }
       }

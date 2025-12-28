@@ -486,7 +486,13 @@ struct JoodleApp: App {
       .tint(accentColor.color)
       .sheet(item: $changelogEntry, onDismiss: {
         changelogEntry = nil
-      }) { ChangelogModalView(entry: $0) }
+      }) { entry in
+        NavigationStack {
+          ChangelogDetailView(entry: entry)
+            .navigationTitle("What's New")
+            .navigationBarTitleDisplayMode(.large)
+        }
+      }
       .onChange(of: changelogEntry) { oldValue, newValue in
         // Mark as seen when changelog is dismissed (newValue is nil, oldValue was shown)
         if newValue == nil && oldValue != nil {

@@ -13,6 +13,19 @@ enum ChangelogData {
     /// Example: 1.0.55_2025-12-28.md
     static let entries: [ChangelogEntry] = discoverChangelogs()
 
+    // MARK: - Optional Header Images
+    // Add header image URLs for specific versions here
+    // Key: version string (e.g., "1.0.55"), Value: remote image URL
+    private static let headerImages: [String: URL] = [
+        "1.0.55": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.55.png")!,
+        "1.0.54": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.54.png")!,
+    ]
+
+    /// Get the header image URL for a specific version
+    static func headerImage(for version: String) -> URL? {
+        headerImages[version]
+    }
+
     /// Get changelog for a specific version (e.g., "1.0.55")
     static func entry(for version: String) -> ChangelogEntry? {
         entries.first { $0.version == version }
@@ -153,6 +166,7 @@ enum ChangelogData {
             minor: minor,
             build: build,
             date: date,
+            headerImageURL: headerImage(for: versionString),
             markdownContent: content
         )
     }

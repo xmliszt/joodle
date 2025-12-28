@@ -14,7 +14,11 @@ struct ChangelogListView: View {
   var body: some View {
     List {
       ForEach(entries) { entry in
-        NavigationLink(destination: ChangelogDetailView(entry: entry)) {
+        NavigationLink(destination:
+                        ChangelogDetailView(entry: entry)
+          .navigationTitle("Version \(entry.displayVersion)")
+          .navigationBarTitleDisplayMode(.inline)
+        ) {
           HStack {
             VStack(alignment: .leading, spacing: 4) {
               Text("Version \(entry.displayVersion)")
