@@ -131,6 +131,7 @@ struct SettingsView: View {
       dataManagementSection
       freePlanLimitsSection
       onboardingSection
+      labSection
       subscriptionSection
       systemSettingsSection
       needHelpSection
@@ -477,6 +478,36 @@ struct SettingsView: View {
           PremiumFeatureBadge()
         }
       }
+    }
+  }
+
+  @State private var showExperimentalFeatures = false
+
+  @ViewBuilder
+  private var labSection: some View {
+    Section {
+      Button {
+        showExperimentalFeatures = true
+      } label: {
+        HStack {
+          Label {
+            Text("Experimental Features")
+          } icon: {
+            Image(systemName: "flask.fill")
+              .foregroundStyle(.primary)
+          }
+          Spacer()
+          Image(systemName: "chevron.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+      .foregroundColor(.primary)
+    } header: {
+      Text("Labs")
+    }
+    .navigationDestination(isPresented: $showExperimentalFeatures) {
+      ExperimentalFeaturesView()
     }
   }
 
@@ -1676,6 +1707,18 @@ struct LearnCoreFeaturesView: View {
         } label: {
           HStack {
             Label(TutorialDefinitions.siriShortcutTutorial.title, systemImage: TutorialDefinitions.siriShortcutTutorial.icon)
+              .foregroundColor(.primary)
+          }
+        }
+        NavigationLink {
+          TutorialView(
+            title: TutorialDefinitions.experimentalFeaturesTutotrial.title,
+            screenshots: TutorialDefinitions.experimentalFeaturesTutotrial.screenshots,
+            description: TutorialDefinitions.experimentalFeaturesTutotrial.description
+          )
+        } label: {
+          HStack {
+            Label(TutorialDefinitions.experimentalFeaturesTutotrial.title, systemImage: TutorialDefinitions.experimentalFeaturesTutotrial.icon)
               .foregroundColor(.primary)
           }
         }

@@ -20,6 +20,9 @@ enum Pref {
   // Default to 9:00 AM - stored as seconds from midnight
   static let dailyReminderTimeSeconds = Key(key: "daily_reminder_time_seconds", default: 9 * 3600)
 
+  // Experimental features
+  static let enableTimeBackdrop = Key(key: "enable_time_backdrop", default: false)
+
   // Add new preferences here - just specify the default!
   // static let newSetting = Key(default: "defaultValue")
 
@@ -43,6 +46,7 @@ enum Pref {
     accentColor.key,
     isDailyReminderEnabled.key,
     dailyReminderTimeSeconds.key,
+    enableTimeBackdrop.key,
   ]
 }
 
@@ -106,6 +110,14 @@ final class UserPreferences {
   var dailyReminderTimeSeconds: Int = Pref.dailyReminderTimeSeconds.defaultValue {
     didSet {
       _dailyReminderTimeSecondsWatcher = dailyReminderTimeSeconds
+      syncToCloudIfEnabled()
+    }
+  }
+
+  // Experimental features
+  var enableTimeBackdrop: Bool = Pref.enableTimeBackdrop.defaultValue {
+    didSet {
+      _enableTimeBackdropWatcher = enableTimeBackdrop
       syncToCloudIfEnabled()
     }
   }
@@ -190,6 +202,11 @@ final class UserPreferences {
     set { set(Pref.dailyReminderTimeSeconds, newValue) }
   }
 
+  private var _enableTimeBackdropWatcher: Bool {
+    get { get(Pref.enableTimeBackdrop) }
+    set { set(Pref.enableTimeBackdrop, newValue) }
+  }
+
   // MARK: - Step 5: Add your property to load during initialization
   init() {
     // Load initial values from UserDefaults
@@ -200,6 +217,7 @@ final class UserPreferences {
     accentColor = _accentColorWatcher
     isDailyReminderEnabled = _isDailyReminderEnabledWatcher
     dailyReminderTimeSeconds = _dailyReminderTimeSecondsWatcher
+    enableTimeBackdrop = _enableTimeBackdropWatcher
   }
 
   // MARK: - Reset Method (automatically uses all registered keys!)
@@ -216,6 +234,7 @@ final class UserPreferences {
     accentColor = Pref.accentColor.defaultValue
     isDailyReminderEnabled = Pref.isDailyReminderEnabled.defaultValue
     dailyReminderTimeSeconds = Pref.dailyReminderTimeSeconds.defaultValue
+    enableTimeBackdrop = Pref.enableTimeBackdrop.defaultValue
   }
 
   // MARK: - iCloud Sync Helper

@@ -71,7 +71,7 @@ enum TutorialDefinitions {
   /// Tutorial for accessing Joodle from Siri Shortcut
   static let siriShortcuts = TutorialData(
     id: "siri-shortcut",
-    title: "Quick access from Siri Shortcuts",
+    title: "Quick Access From Siri Shortcuts",
     icon: "magnifyingglass",
     shortDescription: "Quickly jump to today or upcoming anniversary via Siri Shortcuts",
     screenshots: [
@@ -80,6 +80,21 @@ enum TutorialDefinitions {
       ScreenshotItem(image: Image("Help/SiriShortcut3"))
     ],
     description: "Open Spotlight Search by swiping down on home screen. Search for \"Joodle\". Tap on any quick action.",
+    isPremiumFeature: true
+  )
+  
+  /// Tutorial for accessing experimental features
+  static let experimentalFeatures = TutorialData(
+    id: "access-experimental-features",
+    title: "Early Access to Experimental Features",
+    icon: "flask",
+    shortDescription: "Get early access to experimental features",
+    screenshots: [
+      ScreenshotItem(image: Image("Help/SiriShortcut1"), dots: [TapDot(x: 306, y: 758)]),
+      ScreenshotItem(image: Image("Help/SiriShortcut2"), dots: [TapDot(x: 237, y: 215)]),
+      ScreenshotItem(image: Image("Help/SiriShortcut3"))
+    ],
+    description: "In \"Settings\", go to \"Lab\" section, then tap on \"Experimental Features\".",
     isPremiumFeature: true
   )
 
@@ -93,6 +108,7 @@ enum TutorialDefinitions {
   ]
   
   static let siriShortcutTutorial: TutorialData = siriShortcuts
+  static let experimentalFeaturesTutotrial: TutorialData = experimentalFeatures
 }
 
 // MARK: - Tutorial Data Model

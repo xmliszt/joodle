@@ -136,6 +136,11 @@
 			path = Shared;
 			sourceTree = "<group>";
 		};
+		FAFABCCE2F01268C0018FA14 /* Videos */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Videos;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -195,6 +200,7 @@
 				FA85D4532EB7AECA007D82EE /* Widgets */,
 				FA85D44E2EB7AECA007D82EE /* Frameworks */,
 				FADC35842E48C2E1007AE111 /* Products */,
+				FAFABCCE2F01268C0018FA14 /* Videos */,
 				FABB3D8E2EBF4E7300C8CCBA /* Fonts */,
 			);
 			sourceTree = "<group>";
@@ -254,6 +260,7 @@
 				FABB3D8E2EBF4E7300C8CCBA /* Fonts */,
 				FADC35852E48C2E1007AE111 /* Joodle */,
 				FAE73C552EC0D32800AFCED7 /* Shared */,
+				FAFABCCE2F01268C0018FA14 /* Videos */,
 			);
 			name = Joodle;
 			packageProductDependencies = (

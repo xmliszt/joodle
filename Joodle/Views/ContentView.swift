@@ -90,17 +90,19 @@ struct ContentView: View {
     let candidates = entries.filter { $0.matches(date: date) }
     return candidates.first(where: { ($0.drawingData?.isEmpty == false) || !$0.body.isEmpty }) ?? candidates.first
   }
-  
+
   private var isBottomViewVisible: Bool {
     selectedDateItem != nil
   }
 
   var body: some View {
     ZStack {
-      // Time-passing water backdrop (hide when bottom view is visible)
-      TimePassingBackdropView(isVisible: !isBottomViewVisible)
-        .ignoresSafeArea()
-      
+      // Time-passing water backdrop (hide when bottom view is visible or disabled in settings)
+      if userPreferences.enableTimeBackdrop {
+        TimePassingBackdropView(isVisible: !isBottomViewVisible)
+          .ignoresSafeArea()
+      }
+
       GeometryReader { geometry in
         // Calculate spacing for the grid based on geometry values
         let itemsSpacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: viewMode)
