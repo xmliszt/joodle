@@ -1,0 +1,69 @@
+//
+//  ChangelogEntry.swift
+//  Joodle
+//
+//  Created by Claude on 2025.
+//
+
+import Foundation
+
+/// Represents a single changelog entry for a specific app version
+struct ChangelogEntry: Identifiable, Hashable {
+    /// Unique identifier (uses version string)
+    let id: String
+
+    /// Full version string (e.g., "1.0.55")
+    let version: String
+
+    /// Major version number
+    let major: Int
+
+    /// Minor version number
+    let minor: Int
+
+    /// Build number
+    let build: Int
+
+    /// Release date
+    let date: Date
+
+    /// Optional remote image URL displayed below the header
+    let headerImageURL: URL?
+
+    /// Markdown formatted changelog content
+    let markdownContent: String
+
+    // MARK: - Formatted Display Properties
+
+    /// Formatted version for display: "1.0 (55)"
+    var displayVersion: String {
+        "\(major).\(minor) (\(build))"
+    }
+
+    /// Formatted header line: "DECEMBER 25, 2025 · VERSION 1.0 (55)"
+    var displayHeader: String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM d, yyyy"
+        let dateString = dateFormatter.string(from: date).uppercased()
+        return "\(dateString) · VERSION \(displayVersion)"
+    }
+
+    init(
+        version: String,
+        major: Int,
+        minor: Int,
+        build: Int,
+        date: Date,
+        headerImageURL: URL? = nil,
+        markdownContent: String
+    ) {
+        self.id = version
+        self.version = version
+        self.major = major
+        self.minor = minor
+        self.build = build
+        self.date = date
+        self.headerImageURL = headerImageURL
+        self.markdownContent = markdownContent
+    }
+}

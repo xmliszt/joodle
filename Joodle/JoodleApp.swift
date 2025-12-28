@@ -168,6 +168,8 @@ struct JoodleApp: App {
   @State private var showLaunchScreen = true
   @State private var hasSetupObservers = false
   @State private var showPendingRestartAlert = false
+  @State private var showChangelog = false
+  @State private var changelogEntry: ChangelogEntry?
 
   /// Use the singleton container - never recreate during app lifecycle
   private let modelContainer = ModelContainerManager.shared.container
@@ -475,12 +477,21 @@ struct JoodleApp: App {
             .onAppear {
               DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 showLaunchScreen = false
+                // Check for changelog after launch screen dismisses
+                checkForChangelog()
               }
             }
         }
       }
       .preferredColorScheme(colorScheme)
       .tint(accentColor.color)
+      .sheet(isPresented: $showChangelog) {
+        if let entry = changelogEntry {
+          ChangelogModalView(entry: entry) {
+            showChangelog = false
+          }
+        }
+      }
     }
     .modelContainer(modelContainer)
   }
@@ -509,6 +520,19 @@ struct JoodleApp: App {
       // Small delay to let the UI settle after onboarding dismisses
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
         showPendingRestartAlert = true
+      }
+    }
+  }
+
+  private func checkForChangelog() {
+    // Only show changelog after onboarding is complete
+    guard hasCompletedOnboarding else { return }
+
+    // Small delay to ensure app is fully ready
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+      if let entry = ChangelogManager.shared.changelogToShow {
+        changelogEntry = entry
+        showChangelog = true
       }
     }
   }

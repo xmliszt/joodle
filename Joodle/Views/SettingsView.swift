@@ -134,6 +134,7 @@ struct SettingsView: View {
       labSection
       subscriptionSection
       systemSettingsSection
+      whatsNewSection
       needHelpSection
       feedbackSection
       developerOptionsSection
@@ -685,6 +686,22 @@ struct SettingsView: View {
     return URL(string: "mailto:\(email)?subject=\(subjectEncoded)&body=\(bodyEncoded)")
   }
 
+  private var whatsNewSection: some View {
+    Section {
+      NavigationLink {
+        ChangelogListView()
+      } label: {
+        HStack {
+          Image(systemName: "sparkles")
+            .foregroundColor(.primary)
+            .frame(width: 24)
+          Text("What's New")
+            .foregroundColor(.primary)
+        }
+      }
+    }
+  }
+
   private var needHelpSection: some View {
     Section {
       NavigationLink {
@@ -966,6 +983,11 @@ struct SettingsView: View {
           cloudStore.removeObject(forKey: "cloud_sync_was_enabled")
           cloudStore.synchronize()
           print("DEBUG: iCloud KVS sync history cleared!")
+        }
+
+        Button("Reset Changelog State") {
+          ChangelogManager.shared.resetChangelogState()
+          print("DEBUG: Changelog state reset - will show on next launch")
         }
 
         Toggle("Simulate Production Environment", isOn: Binding(
