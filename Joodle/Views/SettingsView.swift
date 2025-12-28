@@ -134,7 +134,6 @@ struct SettingsView: View {
       labSection
       subscriptionSection
       systemSettingsSection
-      whatsNewSection
       needHelpSection
       feedbackSection
       developerOptionsSection
@@ -686,21 +685,6 @@ struct SettingsView: View {
     return URL(string: "mailto:\(email)?subject=\(subjectEncoded)&body=\(bodyEncoded)")
   }
 
-  private var whatsNewSection: some View {
-    Section {
-      NavigationLink {
-        ChangelogListView()
-      } label: {
-        HStack {
-          Image(systemName: "sparkles")
-            .foregroundColor(.primary)
-            .frame(width: 24)
-          Text("What's New")
-            .foregroundColor(.primary)
-        }
-      }
-    }
-  }
 
   private var needHelpSection: some View {
     Section {
@@ -724,6 +708,18 @@ struct SettingsView: View {
             .foregroundColor(.primary)
             .frame(width: 24)
           Text("Frequently Asked Questions")
+            .foregroundColor(.primary)
+        }
+      }
+      
+      NavigationLink {
+        ChangelogListView()
+      } label: {
+        HStack {
+          Image(systemName: "sparkles")
+            .foregroundColor(.primary)
+            .frame(width: 24)
+          Text("What's New")
             .foregroundColor(.primary)
         }
       }

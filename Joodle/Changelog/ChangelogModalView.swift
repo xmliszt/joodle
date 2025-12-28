@@ -12,6 +12,20 @@ struct ChangelogModalView: View {
     let entry: ChangelogEntry
     let onDismiss: () -> Void
 
+    private var attributedContent: AttributedString {
+        do {
+            return try AttributedString(
+                markdown: entry.markdownContent,
+                options: AttributedString.MarkdownParsingOptions(
+                    interpretedSyntax: .inlineOnlyPreservingWhitespace
+                )
+            )
+        } catch {
+            print("⚠️ [Changelog] Failed to parse markdown: \(error)")
+            return AttributedString(entry.markdownContent)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -45,7 +59,8 @@ struct ChangelogModalView: View {
                     }
 
                     // Markdown Content
-                    Text(LocalizedStringKey(entry.markdownContent))
+                    let _ = print("📝 [Changelog] Rendering content (\(entry.markdownContent.count) chars): \(String(entry.markdownContent.prefix(100)))...")
+                    Text(attributedContent)
                         .font(.body)
                         .textSelection(.enabled)
                 }
@@ -56,7 +71,6 @@ struct ChangelogModalView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        ChangelogManager.shared.markCurrentVersionAsSeen()
                         onDismiss()
                     } label: {
                         Image(systemName: "xmark.circle.fill")

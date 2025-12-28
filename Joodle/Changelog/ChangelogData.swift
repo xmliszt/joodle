@@ -140,6 +140,13 @@ enum ChangelogData {
             return nil
         }
 
+        print("📄 [Changelog] Loaded '\(filename)' - content length: \(content.count) chars")
+        if content.isEmpty {
+            print("   ⚠️ Warning: Content is empty!")
+        } else {
+            print("   Preview: \(String(content.prefix(50)))...")
+        }
+
         return ChangelogEntry(
             version: versionString,
             major: major,

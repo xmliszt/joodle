@@ -23,34 +23,57 @@ final class ChangelogManager {
 
     /// Check if we should show changelog for current version
     var shouldShowChangelog: Bool {
-      print("\(AppEnvironment.fullVersionString) | \(ChangelogData.entry(for: AppEnvironment.fullVersionString)?.version ?? "n/a")")
+        let currentVersion = AppEnvironment.rawVersionString
+        let hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
+        let changelogEntry = ChangelogData.entry(for: currentVersion)
+        let availableVersions = ChangelogData.entries.map { $0.version }
+
+        print("📋 [Changelog Debug]")
+        print("   Current app version: '\(currentVersion)'")
+        print("   Available changelog versions: \(availableVersions)")
+        print("   Changelog entry for current: \(changelogEntry?.version ?? "nil")")
+        print("   Has completed onboarding: \(hasCompletedOnboarding)")
+        print("   Last seen version: \(lastSeenVersion ?? "nil")")
+
         // Don't show during first launch (onboarding handles that)
-        guard defaults.bool(forKey: "hasCompletedOnboarding") else {
+        guard hasCompletedOnboarding else {
+            print("   ❌ Skipping: Onboarding not completed")
             return false
         }
 
         // Check if there's a changelog for current version
-        guard ChangelogData.entry(for: AppEnvironment.fullVersionString) != nil else {
+        guard changelogEntry != nil else {
+            print("   ❌ Skipping: No changelog found for version '\(currentVersion)'")
             return false
         }
 
         // Show if never seen OR if last seen version differs from current
         guard let lastSeen = lastSeenVersion else {
-          return true
+            print("   ✅ Showing: No last seen version (first time)")
+            return true
         }
 
-        return !hasSeenChangelog(for: AppEnvironment.fullVersionString)
+        let alreadySeen = hasSeenChangelog(for: currentVersion)
+        print("   Already seen this version: \(alreadySeen)")
+
+        if alreadySeen {
+            print("   ❌ Skipping: Already seen this changelog")
+        } else {
+            print("   ✅ Showing: New version changelog")
+        }
+
+        return !alreadySeen
     }
 
     /// Get the changelog entry to display (if any)
     var changelogToShow: ChangelogEntry? {
         guard shouldShowChangelog else { return nil }
-        return ChangelogData.entry(for: AppEnvironment.fullVersionString)
+        return ChangelogData.entry(for: AppEnvironment.rawVersionString)
     }
 
     /// Mark current version's changelog as seen
     func markCurrentVersionAsSeen() {
-        lastSeenVersion = AppEnvironment.fullVersionString
+        lastSeenVersion = AppEnvironment.rawVersionString
     }
 
     /// Check if a specific version's changelog has been seen

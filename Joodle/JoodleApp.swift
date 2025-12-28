@@ -168,7 +168,6 @@ struct JoodleApp: App {
   @State private var showLaunchScreen = true
   @State private var hasSetupObservers = false
   @State private var showPendingRestartAlert = false
-  @State private var showChangelog = false
   @State private var changelogEntry: ChangelogEntry?
 
   /// Use the singleton container - never recreate during app lifecycle
@@ -485,11 +484,15 @@ struct JoodleApp: App {
       }
       .preferredColorScheme(colorScheme)
       .tint(accentColor.color)
-      .sheet(isPresented: $showChangelog) {
-        if let entry = changelogEntry {
-          ChangelogModalView(entry: entry) {
-            showChangelog = false
-          }
+      .fullScreenCover(item: $changelogEntry) { entry in
+        ChangelogModalView(entry: entry) {
+          changelogEntry = nil
+        }
+      }
+      .onChange(of: changelogEntry) { oldValue, newValue in
+        // Mark as seen when changelog is dismissed (newValue is nil, oldValue was shown)
+        if newValue == nil && oldValue != nil {
+          ChangelogManager.shared.markCurrentVersionAsSeen()
         }
       }
     }
@@ -532,7 +535,6 @@ struct JoodleApp: App {
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
       if let entry = ChangelogManager.shared.changelogToShow {
         changelogEntry = entry
-        showChangelog = true
       }
     }
   }
