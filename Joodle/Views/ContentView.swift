@@ -90,9 +90,17 @@ struct ContentView: View {
     let candidates = entries.filter { $0.matches(date: date) }
     return candidates.first(where: { ($0.drawingData?.isEmpty == false) || !$0.body.isEmpty }) ?? candidates.first
   }
+  
+  private var isBottomViewVisible: Bool {
+    selectedDateItem != nil
+  }
 
   var body: some View {
     ZStack {
+      // Time-passing water backdrop (hide when bottom view is visible)
+      TimePassingBackdropView(isVisible: !isBottomViewVisible)
+        .ignoresSafeArea()
+      
       GeometryReader { geometry in
         // Calculate spacing for the grid based on geometry values
         let itemsSpacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: viewMode)
@@ -100,126 +108,126 @@ struct ContentView: View {
         ZStack(alignment: .top) {
           ResizableSplitView(
             top: {
-              // Full-screen scrollable year grid
+              // Full-screen scrollable year grid with time-passing backdrop
               ScrollViewReader { scrollProxy in
                 ScrollView(showsIndicators: false) {
-                  // Add spacer at top to account for header overlay
-                  Spacer()
-                    .frame(height: headerHeight)
-                    .id("topSpacer")
+                // Add spacer at top to account for header overlay
+                Spacer()
+                  .frame(height: headerHeight)
+                  .id("topSpacer")
 
-                  YearGridView(
-                    year: selectedYear,
-                    viewMode: viewMode,
-                    dotsSpacing: itemsSpacing,
-                    items: itemsInYear,
-                    entries: entries,
-                    highlightedItemId: isScrubbing ? highlightedId : nil,
-                    selectedItemId: selectedDateItem?.id
-                  )
-                  .overlay(
-                    LongPressScrubRecognizer(
-                      isScrubbing: $isScrubbing,
-                      minimumPressDuration: 0.1,
-                      allowableMovement: 20,
-                      onBegan: { location in
-                        // Called when long press threshold is reached
-                        // convert location to SwiftUI geometry coords if needed
-                        highlightedId = nil
-                        isScrubbing = true  // if you want to keep using GestureState, you may need to change to @State
-                        // Deselect any currently selected item
-                        selectedDateItem = nil
-                        // play haptic and compute the initial highlightedId
-                        let newId = getItemId(at: location, for: geometry)
-                        if highlightedId == nil { Haptic.play(with: .medium) }
-                        highlightedId = newId
-                      },
-                      onChanged: { location in
-                        // Finger moved while long-press is active
-                        let newId = getItemId(at: location, for: geometry)
-                        if newId != highlightedId { Haptic.play() }
-                        highlightedId = newId
-                      },
-                      onEnded: { location in
-                        // Long-press ended -> finalize selection
-                        if let highlightedId, let item = getItem(from: highlightedId) {
-                          selectDateItem(item: item, scrollProxy: scrollProxy)
-                        }
-                        highlightedId = nil
-                        isScrubbing = false
-                      }
-                    )
-                    .allowsHitTesting(true)
-                  )
-                  .onTapGesture { location in
-                    // If scrubbing was active, ignore this (scrub handles selection on end)
-                    if isScrubbing { return }
-                    guard let itemId = getItemId(at: location, for: geometry),
-                          let item = getItem(from: itemId)
-                    else { return }
-                    selectDateItem(item: item, scrollProxy: scrollProxy)
-                    Haptic.play()
-                  }
-                  .simultaneousGesture(
-                    MagnificationGesture()
-                      .onChanged { handlePinchChanged(value: $0) }
-                      .onEnded { handlePinchEnded(value: $0) }
-                  )
-                }
-                // Scrolling is now disabled if we are *actively* scrubbing OR pinching
-                .background(.backgroundColor)
-                // When view mode change, rebuild hit testing grid
-                .onChange(of: viewMode) {
-                  hitTestingGrid = []  // Clear grid to trigger rebuild
-                  gridMetrics = nil
-
-                  if let selectedDateItem {
-                    // Delay scroll to allow grid animation to complete
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                      scrollToRelevantDate(
-                        itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
-                    }
-                  } else {
-                    // Delay scroll to allow grid animation to complete
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                      scrollToTodayOrTop(scrollProxy: scrollProxy)
-                    }
-                  }
-
-                }
-                // When year changes, scroll to relevant date and rebuild hit testing grid
-                .onChange(of: selectedYear) {
-                  hitTestingGrid = []  // Clear grid to trigger rebuild
-                  gridMetrics = nil
-                  // Deselect any selected date item
-                  selectedDateItem = nil
-
-                  DispatchQueue.main.async {
-                    scrollToTodayOrTop(scrollProxy: scrollProxy)
-                  }
-                }
-                // Initial scroll to today's dot for both modes
-                .onAppear {
-                  yearGridViewSize = geometry.size
-                  self.scrollProxy = scrollProxy
-
-                  DispatchQueue.main.async {
-                    scrollToTodayOrTop(scrollProxy: scrollProxy)
-
-                    // Auto-select today on launch
-                    let currentYear = Calendar.current.component(.year, from: Date())
-                    if selectedYear == currentYear {
-                      let targetId = getRelevantDateId(date: Date())
-                      if let item = getItem(from: targetId) {
+                YearGridView(
+                  year: selectedYear,
+                  viewMode: viewMode,
+                  dotsSpacing: itemsSpacing,
+                  items: itemsInYear,
+                  entries: entries,
+                  highlightedItemId: isScrubbing ? highlightedId : nil,
+                  selectedItemId: selectedDateItem?.id
+                )
+                .overlay(
+                  LongPressScrubRecognizer(
+                    isScrubbing: $isScrubbing,
+                    minimumPressDuration: 0.1,
+                    allowableMovement: 20,
+                    onBegan: { location in
+                      // Called when long press threshold is reached
+                      // convert location to SwiftUI geometry coords if needed
+                      highlightedId = nil
+                      isScrubbing = true  // if you want to keep using GestureState, you may need to change to @State
+                      // Deselect any currently selected item
+                      selectedDateItem = nil
+                      // play haptic and compute the initial highlightedId
+                      let newId = getItemId(at: location, for: geometry)
+                      if highlightedId == nil { Haptic.play(with: .medium) }
+                      highlightedId = newId
+                    },
+                    onChanged: { location in
+                      // Finger moved while long-press is active
+                      let newId = getItemId(at: location, for: geometry)
+                      if newId != highlightedId { Haptic.play() }
+                      highlightedId = newId
+                    },
+                    onEnded: { location in
+                      // Long-press ended -> finalize selection
+                      if let highlightedId, let item = getItem(from: highlightedId) {
                         selectDateItem(item: item, scrollProxy: scrollProxy)
                       }
+                      highlightedId = nil
+                      isScrubbing = false
+                    }
+                  )
+                  .allowsHitTesting(true)
+                )
+                .onTapGesture { location in
+                  // If scrubbing was active, ignore this (scrub handles selection on end)
+                  if isScrubbing { return }
+                  guard let itemId = getItemId(at: location, for: geometry),
+                        let item = getItem(from: itemId)
+                  else { return }
+                  selectDateItem(item: item, scrollProxy: scrollProxy)
+                  Haptic.play()
+                }
+                .simultaneousGesture(
+                  MagnificationGesture()
+                    .onChanged { handlePinchChanged(value: $0) }
+                    .onEnded { handlePinchEnded(value: $0) }
+                )
+              }
+              // Scrolling is now disabled if we are *actively* scrubbing OR pinching
+                .background(.backgroundColor.opacity(isBottomViewVisible ? 1 : 0.2))
+              // When view mode change, rebuild hit testing grid
+              .onChange(of: viewMode) {
+                hitTestingGrid = []  // Clear grid to trigger rebuild
+                gridMetrics = nil
+
+                if let selectedDateItem {
+                  // Delay scroll to allow grid animation to complete
+                  DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    scrollToRelevantDate(
+                      itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
+                  }
+                } else {
+                  // Delay scroll to allow grid animation to complete
+                  DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    scrollToTodayOrTop(scrollProxy: scrollProxy)
+                  }
+                }
+
+              }
+              // When year changes, scroll to relevant date and rebuild hit testing grid
+              .onChange(of: selectedYear) {
+                hitTestingGrid = []  // Clear grid to trigger rebuild
+                gridMetrics = nil
+                // Deselect any selected date item
+                selectedDateItem = nil
+
+                DispatchQueue.main.async {
+                  scrollToTodayOrTop(scrollProxy: scrollProxy)
+                }
+              }
+              // Initial scroll to today's dot for both modes
+              .onAppear {
+                yearGridViewSize = geometry.size
+                self.scrollProxy = scrollProxy
+
+                DispatchQueue.main.async {
+                  scrollToTodayOrTop(scrollProxy: scrollProxy)
+
+                  // Auto-select today on launch
+                  let currentYear = Calendar.current.component(.year, from: Date())
+                  if selectedYear == currentYear {
+                    let targetId = getRelevantDateId(date: Date())
+                    if let item = getItem(from: targetId) {
+                      selectDateItem(item: item, scrollProxy: scrollProxy)
                     }
                   }
                 }
-                .onDisappear {
-                  self.scrollProxy = nil
-                }
-                .scrollDisabled(isScrubbing || isPinching)
+              }
+              .onDisappear {
+                self.scrollProxy = nil
+              }
+              .scrollDisabled(isScrubbing || isPinching)
               }
             },
             bottom: {
@@ -269,7 +277,6 @@ struct ContentView: View {
             }
           )
         }
-        .background(.backgroundColor)
       }
       .ignoresSafeArea(.all, edges: .bottom)
       // Present drawing canvas
