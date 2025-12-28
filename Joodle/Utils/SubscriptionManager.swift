@@ -101,6 +101,9 @@ class SubscriptionManager: ObservableObject {
 
             // Check premium theme color on launch - reset to default if not subscribed
             await checkAndResetPremiumThemeColorIfNeeded()
+
+            // Check experimental features on launch - disable if not subscribed
+            await checkAndDisableExperimentalFeaturesIfNeeded()
         }
 
         // Set up periodic expiration check (local check, very lightweight)
@@ -362,6 +365,12 @@ class SubscriptionManager: ObservableObject {
             WidgetHelper.shared.updateThemeColor()
         }
 
+        // Disable experimental features
+        if UserPreferences.shared.enableTimeBackdrop {
+            print("   Disabling experimental feature: Time Passing Water Backdrop")
+            UserPreferences.shared.enableTimeBackdrop = false
+        }
+
         let needsContainerRecreation = UserPreferences.shared.isCloudSyncEnabled
 
         if needsContainerRecreation {
@@ -420,6 +429,17 @@ class SubscriptionManager: ObservableObject {
             cloudStore.set(false, forKey: "is_cloud_sync_enabled_backup")
             cloudStore.set(false, forKey: "cloud_sync_was_enabled")
             cloudStore.synchronize()
+        }
+    }
+
+    // MARK: - Experimental Features Check
+
+    func checkAndDisableExperimentalFeaturesIfNeeded() async {
+        guard !isSubscribed else { return }
+
+        if UserPreferences.shared.enableTimeBackdrop {
+            print("🧪 Non-subscriber has experimental features enabled - disabling")
+            UserPreferences.shared.enableTimeBackdrop = false
         }
     }
 
