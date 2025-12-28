@@ -492,6 +492,8 @@ struct JoodleApp: App {
             .navigationTitle("What's New")
             .navigationBarTitleDisplayMode(.large)
         }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
       }
       .onChange(of: changelogEntry) { oldValue, newValue in
         // Mark as seen when changelog is dismissed (newValue is nil, oldValue was shown)

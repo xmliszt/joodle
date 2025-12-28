@@ -9,7 +9,7 @@ import CoreMotion
 import SwiftUI
 
 /// Manages device motion data for gyroscope-based UI effects
-/// Thread-safe singleton that provides device roll angle for water level tilting
+/// Thread-safe singleton that provides device roll angle for liquid level tilting
 @MainActor
 final class MotionManager: ObservableObject {
   static let shared = MotionManager()

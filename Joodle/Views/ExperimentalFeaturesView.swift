@@ -47,13 +47,13 @@ struct ExperimentalFeaturesView: View {
 
       // MARK: - Time Passing Water Backdrop
       Section {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 24) {
           // Video Demo
           LoopingVideoPlayerView(videoName: "PassingTimeWaterBackdrop", videoExtension: "mp4")
             .frame(height: 300)
             .frame(maxWidth: .infinity)
             .background(.black)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
           // Toggle with premium badge
           Toggle(isOn: Binding(
@@ -62,11 +62,8 @@ struct ExperimentalFeaturesView: View {
           )) {
             HStack {
               VStack(alignment: .leading, spacing: 4) {
-                Text("Time Passing Water Backdrop")
+                Text("Passing Time Backdrop")
                   .font(.body)
-                Text("Shows an animated water level that drains throughout the day in the background. Water level reacts to the tilting of your device.")
-                  .font(.caption)
-                  .foregroundColor(.secondary)
               }
 
               if !subscriptionManager.isSubscribed {
@@ -77,9 +74,8 @@ struct ExperimentalFeaturesView: View {
           }
           .disabled(!subscriptionManager.isSubscribed)
         }
-        .padding(.vertical, 4)
-      } header: {
-        Text("Visual Effects")
+      } footer: {
+        Text("Shows an animated water level that drains throughout the day in the background. Water level reacts to the tilting of your device.")
       }
 
       // MARK: - About Section
@@ -87,10 +83,11 @@ struct ExperimentalFeaturesView: View {
         VStack(alignment: .leading, spacing: 12) {
           Label {
             Text("About Experimental Features")
-              .font(.headline)
+              .font(.subheadline)
           } icon: {
-            Image(systemName: "flask.fill")
-              .foregroundStyle(.appAccent)
+            Image(systemName: "flask")
+              .foregroundStyle(.primary)
+              .scaledToFit()
           }
 
           Text("Experimental features are fun little projects that we are testing. These features may affect performance or battery life.")

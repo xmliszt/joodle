@@ -15,11 +15,13 @@ struct ChangelogDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 // Header with date and version
-                Text(entry.displayHeader)
+              VStack(alignment: .leading) {
+                  Text(entry.displayHeader)
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
                     .tracking(0.5)
+                }
 
                 // Optional Header Image
                 if let imageURL = entry.headerImageURL {
@@ -29,6 +31,7 @@ struct ChangelogDetailView: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: 300)
                         case .failure:
                             EmptyView()
                         case .empty:
@@ -38,7 +41,7 @@ struct ChangelogDetailView: View {
                             EmptyView()
                         }
                     }
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, alignment: .center)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .padding()
                 }
@@ -47,13 +50,15 @@ struct ChangelogDetailView: View {
                 Text(LocalizedStringKey(entry.markdownContent))
                     .font(.body)
                     .textSelection(.enabled)
+                    .multilineTextAlignment(.leading)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
         }
     }
 }
 
-#Preview {
+#Preview ("Without Image") {
     NavigationStack {
         ChangelogDetailView(
             entry: ChangelogEntry(
@@ -62,7 +67,34 @@ struct ChangelogDetailView: View {
                 minor: 0,
                 build: 54,
                 date: Date(),
-                headerImageURL: URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.54.png"),
+                headerImageURL: nil,
+                markdownContent: """
+                ## ✨ What's New
+
+                - **Feature 1**: Description of feature 1
+                - **Feature 2**: Description of feature 2
+
+                ## 🐛 Bug Fixes
+
+                - Fixed an issue with sync
+                - Improved performance
+                """
+            )
+        )
+    }
+}
+
+
+#Preview ("With Image") {
+    NavigationStack {
+        ChangelogDetailView(
+            entry: ChangelogEntry(
+                version: "1.0.54",
+                major: 1,
+                minor: 0,
+                build: 54,
+                date: Date(),
+                headerImageURL: URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.58.png"),
                 markdownContent: """
                 ## ✨ What's New
 
