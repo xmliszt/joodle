@@ -54,6 +54,11 @@ struct TimePassingBackdropView: View {
         // including landscape and upside-down without blowing up like tan() would
         let tiltOffset = CGFloat(sin(motionManager.tiltAngle)) * geometry.size.width * 0.5
 
+        // Calculate effective water height including tilt and wave amplitude
+        // This ensures the visibility animation covers the full visible water area
+        let maxTiltHeight = abs(tiltOffset) + primaryWaveAmplitude
+        let effectiveWaterHeight = geometry.size.height * fillLevel + maxTiltHeight
+
         ZStack {
           // Water fill with wave top
           WaterWaveShape(
@@ -80,8 +85,7 @@ struct TimePassingBackdropView: View {
           .fill(Color.appAccent.opacity(0.4))
         }
         // Apply vertical offset to push water down when hidden
-        // Use actual water height (fillLevel * height) so animation distance matches visible water
-        .offset(y: geometry.size.height * fillLevel * (visibilityOffset ?? (isVisible ? 0.0 : 1.0)))
+        .offset(y: effectiveWaterHeight * (visibilityOffset ?? (isVisible ? 0.0 : 1.0)))
       }
     }
     .opacity(isVisible ? 0.2 : 0.0)
