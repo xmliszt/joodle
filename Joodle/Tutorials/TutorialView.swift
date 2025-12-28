@@ -276,122 +276,13 @@ struct DotPositionTweakerView: View {
     }
 }
 
-// MARK: - Previews
-
-#Preview("Basic Tutorial") {
-    NavigationStack {
-        TutorialView(
-            title: "Home Screen Widgets",
-            screenshots: [
-                ScreenshotItem(
-                    image: Image("Help/Widget1")
-                )
-            ],
-            description: "Learn how to add Joodle widgets to your home screen"
-        )
-    }
-}
-
-#Preview("Tutorial with Multiple Screenshots") {
-    NavigationStack {
-        TutorialView(
-            title: "Home Screen Widgets",
-            screenshots: [
-                ScreenshotItem(image: Image("Help/Widget1")),
-                ScreenshotItem(image: Image("Help/Widget2")),
-                ScreenshotItem(image: Image("Help/Widget3"))
-            ],
-            description: "Follow these steps to add widgets"
-        )
-    }
-}
-
-#Preview("Tutorial without Description") {
-    NavigationStack {
-        TutorialView(
-            title: "Quick Guide",
-            screenshots: [
-                ScreenshotItem(image: Image("Help/Widget1"))
-            ]
-        )
-    }
-}
-
-#Preview("In Settings Navigation") {
-    NavigationStack {
-        List {
-            Section("Tutorials") {
-                NavigationLink {
-                    TutorialView(
-                        title: "Home Screen Widgets",
-                        screenshots: [
-                            ScreenshotItem(image: Image("Help/Widget1")),
-                            ScreenshotItem(image: Image("Help/Widget2"))
-                        ],
-                        description: "Add Joodle to your home screen"
-                    )
-                } label: {
-                    Label("Home Screen Widgets", systemImage: "square.grid.2x2")
-                }
-            }
-        }
-        .navigationTitle("Settings")
-    }
-}
-
 // MARK: - Dot Position Tweaker Previews
-
 #Preview("🎯 Dot Tweaker - Widget Screenshots") {
     NavigationStack {
         DotPositionTweakerView(screenshots: [
-          ScreenshotItem(image: Image("Help/SiriShortcut1"), dots: [TapDot(x: 306, y: 758)]),
-          ScreenshotItem(image: Image("Help/SiriShortcut2"), dots: [TapDot(x: 237, y: 215)]),
-          ScreenshotItem(image: Image("Help/SiriShortcut3"))
-        ])
-    }
-}
-
-#Preview("🎯 Dot Tweaker - Single Screenshot") {
-    NavigationStack {
-        DotPositionTweakerView(screenshots: [
-            ScreenshotItem(image: Image("Help/Widget1"))
-        ])
-    }
-}
-
-#Preview("🎯 Dot Tweaker - With Existing Dots") {
-    NavigationStack {
-        DotPositionTweakerView(screenshots: [
-            ScreenshotItem(
-                image: Image("Help/Widget1"),
-                dots: [
-                    TapDot(x: 300, y: 1100)
-                ]
-            )
-        ])
-    }
-}
-
-#Preview("🎯 Dot Tweaker - Landscape Screenshot") {
-    NavigationStack {
-        DotPositionTweakerView(screenshots: [
-            ScreenshotItem(
-                image: Image("Onboarding/WidgetsStandby1"),
-                orientation: .landscape
-            )
-        ])
-    }
-}
-
-#Preview("🎯 Dot Tweaker - Mixed Orientations") {
-    NavigationStack {
-        DotPositionTweakerView(screenshots: [
-            ScreenshotItem(image: Image("Help/Widget1")),
-            ScreenshotItem(
-                image: Image("Onboarding/WidgetsStandby1"),
-                orientation: .landscape
-            ),
-            ScreenshotItem(image: Image("Help/Widget2"))
+          ScreenshotItem(image: Image("Help/ExperimentalFeature1"), dots: [TapDot(x: 376, y: 163)]),
+          ScreenshotItem(image: Image("Help/ExperimentalFeature2"), dots: [TapDot(x: 352, y: 591)]),
+          ScreenshotItem(image: Image("Help/ExperimentalFeature3"), dots: [TapDot(x: 496, y: 726)])
         ])
     }
 }

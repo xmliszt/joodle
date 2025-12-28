@@ -139,6 +139,9 @@ struct SettingsView: View {
       developerOptionsSection
     }
     .background(NavigationGestureEnabler(isEnabled: !showThemeOverlay))
+    .navigationDestination(isPresented: $showExperimentalFeatures) {
+      ExperimentalFeaturesView()
+    }
     .navigationTitle("Settings")
     .navigationBarTitleDisplayMode(.inline)
     .preferredColorScheme(userPreferences.preferredColorScheme)
@@ -505,9 +508,6 @@ struct SettingsView: View {
       .foregroundColor(.primary)
     } header: {
       Text("Labs")
-    }
-    .navigationDestination(isPresented: $showExperimentalFeatures) {
-      ExperimentalFeaturesView()
     }
   }
 
@@ -1697,29 +1697,24 @@ struct LearnCoreFeaturesView: View {
         Text("Widget Tutorials")
       }
 
+      // Static other tutorials
       Section {
-        NavigationLink {
-          TutorialView(
-            title: TutorialDefinitions.siriShortcutTutorial.title,
-            screenshots: TutorialDefinitions.siriShortcutTutorial.screenshots,
-            description: TutorialDefinitions.siriShortcutTutorial.description
-          )
-        } label: {
-          HStack {
-            Label(TutorialDefinitions.siriShortcutTutorial.title, systemImage: TutorialDefinitions.siriShortcutTutorial.icon)
-              .foregroundColor(.primary)
-          }
-        }
-        NavigationLink {
-          TutorialView(
-            title: TutorialDefinitions.experimentalFeaturesTutotrial.title,
-            screenshots: TutorialDefinitions.experimentalFeaturesTutotrial.screenshots,
-            description: TutorialDefinitions.experimentalFeaturesTutotrial.description
-          )
-        } label: {
-          HStack {
-            Label(TutorialDefinitions.experimentalFeaturesTutotrial.title, systemImage: TutorialDefinitions.experimentalFeaturesTutotrial.icon)
-              .foregroundColor(.primary)
+        ForEach(TutorialDefinitions.otherTutorials) { tutorial in
+          NavigationLink {
+            TutorialView(
+              title: tutorial.title,
+              screenshots: tutorial.screenshots,
+              description: tutorial.description
+            )
+          } label: {
+            HStack {
+              Label(tutorial.title, systemImage: tutorial.icon)
+                .foregroundColor(.primary)
+              Spacer()
+              if !subscriptionManager.isSubscribed && tutorial.isPremiumFeature {
+                PremiumFeatureBadge()
+              }
+            }
           }
         }
       }
