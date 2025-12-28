@@ -484,11 +484,9 @@ struct JoodleApp: App {
       }
       .preferredColorScheme(colorScheme)
       .tint(accentColor.color)
-      .fullScreenCover(item: $changelogEntry) { entry in
-        ChangelogModalView(entry: entry) {
-          changelogEntry = nil
-        }
-      }
+      .sheet(item: $changelogEntry, onDismiss: {
+        changelogEntry = nil
+      }) { ChangelogModalView(entry: $0) }
       .onChange(of: changelogEntry) { oldValue, newValue in
         // Mark as seen when changelog is dismissed (newValue is nil, oldValue was shown)
         if newValue == nil && oldValue != nil {

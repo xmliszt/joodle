@@ -10,7 +10,6 @@ import SwiftUI
 /// Modal view displayed automatically when user updates to a new version
 struct ChangelogModalView: View {
     let entry: ChangelogEntry
-    let onDismiss: () -> Void
 
     private var attributedContent: AttributedString {
         do {
@@ -68,17 +67,7 @@ struct ChangelogModalView: View {
             }
             .navigationTitle(entry.displayVersion)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        onDismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.appTextPrimary)
-                    }
-                }
-            }
+            .navigationBarBackButtonHidden()
         }
     }
 }
@@ -103,7 +92,6 @@ struct ChangelogModalView: View {
             - Fixed a crash
             - Fixed another issue
             """
-        ),
-        onDismiss: {}
+        )
     )
 }
