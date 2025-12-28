@@ -23,7 +23,7 @@ final class ChangelogManager {
 
     /// Check if we should show changelog for current version
     var shouldShowChangelog: Bool {
-        let currentVersion = AppEnvironment.rawVersionString
+        let currentVersion = AppEnvironment.fullVersionString
         let hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
         let changelogEntry = ChangelogData.entry(for: currentVersion)
         let availableVersions = ChangelogData.entries.map { $0.version }
@@ -68,12 +68,12 @@ final class ChangelogManager {
     /// Get the changelog entry to display (if any)
     var changelogToShow: ChangelogEntry? {
         guard shouldShowChangelog else { return nil }
-        return ChangelogData.entry(for: AppEnvironment.rawVersionString)
+        return ChangelogData.entry(for: AppEnvironment.fullVersionString)
     }
 
     /// Mark current version's changelog as seen
     func markCurrentVersionAsSeen() {
-        lastSeenVersion = AppEnvironment.rawVersionString
+        lastSeenVersion = AppEnvironment.fullVersionString
     }
 
     /// Check if a specific version's changelog has been seen

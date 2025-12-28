@@ -141,15 +141,9 @@ enum AppEnvironment {
         Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
     }
 
-    /// Full version string (e.g., "1.0.0 (42)")
+    /// Full version string (e.g., "1.0.42")
     static var fullVersionString: String {
-        "\(appVersion) (\(buildNumber))"
-    }
-
-    /// Raw version string for internal comparisons (e.g., "1.0")
-    /// Uses only major.minor version for changelog matching
-    static var rawVersionString: String {
-        appVersion
+        "\(appVersion).\(buildNumber)"
     }
 
     /// Bundle identifier
