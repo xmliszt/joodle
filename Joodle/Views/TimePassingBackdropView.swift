@@ -23,6 +23,10 @@ struct TimePassingBackdropView: View {
   /// Timer for updating time
   @State private var timer: Timer?
 
+  /// Animated visibility offset for water rising/draining effect (0 = fully visible, 1 = fully hidden below screen)
+  /// Initialized based on isVisible state
+  @State private var visibilityOffset: Double?
+
   /// Wave animation parameters
   private let primaryWaveAmplitude: CGFloat = 8
   private let secondaryWaveAmplitude: CGFloat = 5
@@ -32,6 +36,12 @@ struct TimePassingBackdropView: View {
   /// Wave animation speed (seconds per full cycle)
   private let waveAnimationDuration: Double = 3.0
 
+  /// Duration for water rising animation (appearing)
+  private let waterRiseDuration: Double = 2.5
+
+  /// Duration for water draining animation (disappearing)
+  private let waterDrainDuration: Double = 0.8
+
   var body: some View {
     TimelineView(.animation) { timeline in
       let elapsedTime = timeline.date.timeIntervalSinceReferenceDate
@@ -39,8 +49,10 @@ struct TimePassingBackdropView: View {
 
       GeometryReader { geometry in
         let fillLevel = 1.0 - dayProgress
-        // Use roll for tilt, with a multiplier for visible effect
-        let tiltOffset = CGFloat(motionManager.roll) * geometry.size.width * 0.25
+        // Use tiltAngle for tilt - based on gravity.x, independent of forward/backward pitch
+        // sin(tiltAngle) gives bounded tilt effect (-1 to 1) that works at all orientations
+        // including landscape and upside-down without blowing up like tan() would
+        let tiltOffset = CGFloat(sin(motionManager.tiltAngle)) * geometry.size.width * 0.5
 
         ZStack {
           // Water fill with wave top
@@ -67,15 +79,24 @@ struct TimePassingBackdropView: View {
           )
           .fill(Color.appAccent.opacity(0.4))
         }
+        // Apply vertical offset to push water down when hidden
+        // Use actual water height (fillLevel * height) so animation distance matches visible water
+        .offset(y: geometry.size.height * fillLevel * (visibilityOffset ?? (isVisible ? 0.0 : 1.0)))
       }
     }
-    .opacity(isVisible ? 1.0 : 0.0)
-    .animation(.easeInOut(duration: 0.3), value: isVisible)
+    .opacity(isVisible ? 0.2 : 0.0)
     .onAppear {
+      // Set initial offset based on visibility without animation
+      if visibilityOffset == nil {
+        visibilityOffset = isVisible ? 0.0 : 1.0
+      }
       startUpdates()
     }
     .onDisappear {
       stopUpdates()
+    }
+    .onChange(of: isVisible) { _, newValue in
+      animateVisibilityChange(visible: newValue)
     }
   }
 
@@ -107,6 +128,21 @@ struct TimePassingBackdropView: View {
 
     withAnimation(.linear(duration: 0.5)) {
       dayProgress = secondsSinceMidnight / totalSecondsInDay
+    }
+  }
+
+  /// Animate the water rising or draining based on visibility change
+  private func animateVisibilityChange(visible: Bool) {
+    if visible {
+      // Water rises up from bottom - slower, gentle easing
+      withAnimation(.easeOut(duration: waterRiseDuration)) {
+        visibilityOffset = 0.0
+      }
+    } else {
+      // Water drains down - slightly faster
+      withAnimation(.easeIn(duration: waterDrainDuration)) {
+        visibilityOffset = 1.0
+      }
     }
   }
 }

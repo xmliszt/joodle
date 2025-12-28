@@ -17,20 +17,16 @@ final class MotionManager: ObservableObject {
   private let motionManager = CMMotionManager()
   private var referenceCount = 0
 
-  /// Device roll angle in radians (-π to π)
+  /// Device tilt angle based on gravity's X component in radians (-π/2 to π/2)
+  /// Uses asin(gravity.x) for stable readings independent of forward/backward pitch
+  /// No discontinuities - works smoothly at all orientations including landscape and upside-down
   /// Positive = tilted right, Negative = tilted left
-  @Published private(set) var roll: Double = 0.0
-
-  /// Device pitch angle in radians
-  @Published private(set) var pitch: Double = 0.0
+  @Published private(set) var tiltAngle: Double = 0.0
 
   /// Whether motion updates are currently active
   @Published private(set) var isActive: Bool = false
 
-  /// Maximum tilt angle to apply (in radians) - clamps extreme tilts
-  private let maxTiltAngle: Double = .pi / 4  // 45 degrees
-
-  /// Smoothing factor for roll updates (0-1, lower = smoother)
+  /// Smoothing factor for tilt updates (0-1, lower = smoother)
   private let smoothingFactor: Double = 0.15
 
   private init() {}
@@ -77,27 +73,30 @@ final class MotionManager: ObservableObject {
   }
 
   /// Process incoming motion data with smoothing
+  /// Uses gravity vector for stable tilt detection independent of forward/backward pitch
   private func processMotionUpdate(_ motion: CMDeviceMotion) {
-    let attitude = motion.attitude
+    let gravity = motion.gravity
 
-    // Get roll from device attitude
-    // Roll represents rotation around the Y axis (left-right tilt when holding phone upright)
-    let newRoll = attitude.roll
-
-    // Clamp to max tilt angle
-    let clampedRoll = max(-maxTiltAngle, min(maxTiltAngle, newRoll))
+    // Calculate tilt angle using asin(gravity.x)
+    // gravity.x directly measures left-right tilt:
+    // - 0 when device has no left-right tilt (portrait or upside-down)
+    // - 1 when tilted 90° right (landscape, right edge down)
+    // - -1 when tilted 90° left (landscape, left edge down)
+    //
+    // Using asin() converts this to an angle (-π/2 to π/2):
+    // - No discontinuities at any orientation
+    // - Independent of forward/backward pitch (gravity.z doesn't affect gravity.x)
+    // - Works smoothly through landscape and upside-down orientations
+    let clampedGravityX = max(-1.0, min(1.0, gravity.x))
+    let newTiltAngle = asin(clampedGravityX)
 
     // Apply exponential smoothing for fluid motion
-    roll = roll + (clampedRoll - roll) * smoothingFactor
-
-    // Also track pitch for potential future use
-    pitch = attitude.pitch
+    tiltAngle = tiltAngle + (newTiltAngle - tiltAngle) * smoothingFactor
   }
 
   /// Reset motion values to neutral
   func reset() {
-    roll = 0.0
-    pitch = 0.0
+    tiltAngle = 0.0
   }
 
   deinit {
