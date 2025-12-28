@@ -97,9 +97,6 @@ final class ChangelogManager {
         return 0
     }
 
-    // MARK: - Debug Helpers
-
-    #if DEBUG
     /// Reset changelog state for testing
     func resetChangelogState() {
         lastSeenVersion = nil
@@ -109,5 +106,4 @@ final class ChangelogManager {
     func setLastSeenVersion(_ version: String?) {
         lastSeenVersion = version
     }
-    #endif
 }

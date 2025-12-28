@@ -699,7 +699,7 @@ struct SettingsView: View {
             .foregroundColor(.primary)
         }
       }
-      
+
       NavigationLink {
         LearnCoreFeaturesView()
       } label: {
@@ -763,7 +763,7 @@ struct SettingsView: View {
   private var feedbackSection: some View {
     // Community & Social Section
     Section {
-      Link(destination: URL(string: "https://discord.gg/9QUWBJ3p")!) {
+      Link(destination: URL(string: "https://discord.gg/WnQSdZqBjk")!) {
         HStack {
           Image("Social/discord")
             .resizable()
