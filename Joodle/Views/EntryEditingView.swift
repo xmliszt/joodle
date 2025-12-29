@@ -279,11 +279,8 @@ struct EntryEditingView: View {
                   DrawingDisplayView(
                     entry: tempEntry,
                     displaySize: 200,
-                    dotStyle: .present,
-                    accent: true,
-                    highlighted: false,
-                    scale: 1.0,
-                    useThumbnail: false
+                    animateDrawing: true,
+                    animationDuration: 5
                   )
                   .frame(width: 200, height: 200)
                   .background(.appSurface)
@@ -292,11 +289,8 @@ struct EntryEditingView: View {
                   DrawingDisplayView(
                     entry: entry,
                     displaySize: 200,
-                    dotStyle: .present,
-                    accent: true,
-                    highlighted: false,
-                    scale: 1.0,
-                    useThumbnail: false
+                    animateDrawing: true,
+                    animationDuration: 5
                   )
                   .frame(width: 200, height: 200)
                   .background(.appSurface)
