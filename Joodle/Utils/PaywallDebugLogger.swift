@@ -107,7 +107,7 @@ final class PaywallDebugLogger: ObservableObject {
         if count > 0 {
             log(.success, "Loaded \(count) products", details: productIDs.joined(separator: ", "))
         } else {
-            log(.warning, "No products loaded", details: "Expected: dev.liyuxuan.joodle.super.monthly, dev.liyuxuan.joodle.super.yearly")
+            log(.warning, "No products loaded", details: "Expected: dev.liyuxuan.joodle.pro.monthly, dev.liyuxuan.joodle.pro.yearly")
         }
     }
 
@@ -233,8 +233,8 @@ final class PaywallDebugLogger: ObservableObject {
         - Warnings: \(warningCount)
 
         Expected Product IDs:
-        - dev.liyuxuan.joodle.super.monthly
-        - dev.liyuxuan.joodle.super.yearly
+        - dev.liyuxuan.joodle.pro.monthly
+        - dev.liyuxuan.joodle.pro.yearly
         """
     }
     #else

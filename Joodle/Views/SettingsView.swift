@@ -477,7 +477,7 @@ struct SettingsView: View {
         Text("Free Plan Limits")
       } footer: {
         HStack (spacing: 8) {
-          Text("Unlock unlimited access with Joodle Super")
+          Text("Unlock unlimited access with Joodle Pro")
           PremiumFeatureBadge()
         }
       }
@@ -525,7 +525,7 @@ struct SettingsView: View {
                 Image(systemName: "crown.fill")
                   .foregroundStyle(.appAccent)
                   .font(.body)
-                Text("Joodle Super")
+                Text("Joodle Pro")
                   .font(.headline)
                   .foregroundColor(.primary)
               }
@@ -562,7 +562,7 @@ struct SettingsView: View {
                 Image(systemName: "crown.fill")
                   .foregroundStyle(.appAccent)
                   .font(.body)
-                Text("Unlock Joodle Super")
+                Text("Unlock Joodle Pro")
               }
             }
             Spacer()

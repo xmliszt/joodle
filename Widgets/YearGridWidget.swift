@@ -332,7 +332,7 @@ struct YearGridWidgetLockedView: View {
         )
 
       VStack(spacing: 4) {
-        Text("Joodle Super")
+        Text("Joodle Pro")
           .font(widgetFamily == .systemLarge ? .headline : .caption.bold())
           .foregroundColor(.primary)
 

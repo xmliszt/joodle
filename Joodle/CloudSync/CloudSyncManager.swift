@@ -366,7 +366,7 @@ final class CloudSyncManager {
     // Check subscription first
     guard SubscriptionManager.shared.hasICloudSync else {
       hasError = true
-      errorMessage = "iCloud Sync requires Joodle Super subscription."
+      errorMessage = "iCloud Sync requires Joodle Pro subscription."
       return false
     }
 
@@ -425,7 +425,7 @@ final class CloudSyncManager {
   /// Reason why sync cannot be enabled (for UI display)
   var syncBlockedReason: String? {
     if !SubscriptionManager.shared.hasICloudSync {
-      return "Requires Joodle Super"
+      return "Requires Joodle Pro"
     }
     if !isSystemCloudEnabled {
       return "iCloud disabled in Settings"
@@ -518,7 +518,7 @@ final class CloudSyncManager {
 
   var statusMessage: String {
     if !SubscriptionManager.shared.hasICloudSync {
-      return "Requires Joodle Super"
+      return "Requires Joodle Pro"
     } else if !isSystemCloudEnabled {
       return "iCloud Documents disabled in Settings"
     } else if !isCloudAvailable {
@@ -535,7 +535,7 @@ final class CloudSyncManager {
   /// Detailed sync status message for UI display
   var syncStatusMessage: String {
     if !SubscriptionManager.shared.hasICloudSync {
-      return "iCloud Sync is a Joodle Super feature. Upgrade to sync your Joodles across devices."
+      return "iCloud Sync is a Joodle Pro feature. Upgrade to sync your Joodles across devices."
     } else if needsSystemSettingsChange {
       return "iCloud is disabled in iOS Settings. Enable it in \"Settings → [Your Name] → iCloud → Saved to iCloud -> Joodle\" to sync."
     } else if systemCloudEnabled && !appCloudEnabled {

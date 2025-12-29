@@ -399,7 +399,7 @@ struct AnniversaryWidgetLockedView: View {
         )
 
       VStack(spacing: 4) {
-        Text("Joodle Super")
+        Text("Joodle Pro")
           .font(family == .systemLarge ? .headline : .caption.bold())
           .foregroundColor(.primary)
 

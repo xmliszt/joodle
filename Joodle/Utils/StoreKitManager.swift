@@ -26,8 +26,8 @@ class StoreKitManager: NSObject, ObservableObject {
     @Published var currentProductID: String?  // The actual currently active subscription product
 
     private let productIDs: [String] = [
-        "dev.liyuxuan.joodle.super.monthly",
-        "dev.liyuxuan.joodle.super.yearly"
+        "dev.liyuxuan.joodle.pro.monthly",
+        "dev.liyuxuan.joodle.pro.yearly"
     ]
 
     private var updateListenerTask: Task<Void, Never>?

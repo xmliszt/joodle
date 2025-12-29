@@ -24,7 +24,7 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 787842666.43162596,
+    "_lastSynchronizedDate" : 788683301.03974199,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "SGP",
@@ -74,7 +74,7 @@
       "localizations" : [
 
       ],
-      "name" : "Joodle Super",
+      "name" : "Joodle Pro",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -85,24 +85,24 @@
           ],
           "displayPrice" : "5.98",
           "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "6756226596",
+          "groupNumber" : 2,
+          "internalID" : "6757140768",
           "introductoryOffer" : {
-            "internalID" : "851B1C12",
+            "internalID" : "B4FAE927",
             "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P1W"
           },
           "localizations" : [
             {
-              "description" : "Unlimited doodles, widgets, iCloud sync, and more",
-              "displayName" : "Joodle Super Monthly",
+              "description" : "Unlock all features for a month",
+              "displayName" : "Joodle Pro Monthly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "dev.liyuxuan.joodle.super.monthly",
+          "productID" : "dev.liyuxuan.joodle.pro.monthly",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Super Monthly",
+          "referenceName" : "Joodle Pro Monthly",
           "subscriptionGroupID" : "21852566",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
@@ -114,40 +114,28 @@
 
           ],
           "codeOffers" : [
-            {
-              "eligibility" : [
-                "existing",
-                "new",
-                "expired"
-              ],
-              "internalID" : "3B080ED7",
-              "isStackable" : true,
-              "numberOfPeriods" : 1,
-              "paymentMode" : "free",
-              "referenceName" : "Super Yearly 1 Year Free",
-              "subscriptionPeriod" : "P1Y"
-            }
+
           ],
-          "displayPrice" : "39.98",
-          "familyShareable" : false,
-          "groupNumber" : 2,
-          "internalID" : "6756226848",
+          "displayPrice" : "49.98",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "6757140365",
           "introductoryOffer" : {
-            "internalID" : "90D32676",
+            "internalID" : "7804D380",
             "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P2W"
           },
           "localizations" : [
             {
-              "description" : "Unlimited doodles, widgets, iCloud sync, and more",
-              "displayName" : "Joodle Super Yearly",
+              "description" : "Unlock all features for a year",
+              "displayName" : "Joodle Pro Yearly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "dev.liyuxuan.joodle.super.yearly",
+          "productID" : "dev.liyuxuan.joodle.pro.yearly",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "Super Yearly",
+          "referenceName" : "Joodle Pro Yearly",
           "subscriptionGroupID" : "21852566",
           "type" : "RecurringSubscription",
           "winbackOffers" : [

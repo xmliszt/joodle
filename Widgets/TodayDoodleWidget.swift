@@ -173,7 +173,7 @@ struct TodayDoodleWidgetLockedView: View {
           Text("Unlock")
             .font(.system(size: 8))
             .foregroundColor(.primary)
-          Text("Super")
+          Text("Pro")
             .font(.system(size: 8))
             .foregroundColor(.primary)
         }
@@ -191,7 +191,7 @@ struct TodayDoodleWidgetLockedView: View {
           )
 
         VStack(spacing: 4) {
-          Text("Joodle Super")
+          Text("Joodle Pro")
             .font(family == .systemLarge ? .headline : .caption.bold())
             .foregroundColor(.primary)
 

@@ -70,11 +70,6 @@ struct DrawingCanvasView: View {
   var body: some View {
     ZStack {
       VStack(spacing: 16) {
-        // Show remaining Joodles indicator for free users (not in mock mode)
-        if !isMockMode && !subscriptionManager.isSubscribed {
-          remainingJoodlesHeader
-        }
-
         SharedCanvasView(
           paths: $paths,
           pathMetadata: $pathMetadata,
@@ -99,15 +94,15 @@ struct DrawingCanvasView: View {
           .circularGlassButton()
         }
         .disabled(!canEditOrCreate)
-        .overlay {
-          // Show lock overlay when access is denied (not in mock mode)
-          if !isMockMode && !canEditOrCreate {
-            accessDeniedOverlay
-          }
-        }
       }
       .padding(20)
       .background(.backgroundColor)
+      .overlay {
+        // Show lock overlay when access is denied (not in mock mode)
+        if !isMockMode && !canEditOrCreate {
+          accessDeniedOverlay
+        }
+      }
     }
     .onAppear {
       if !isMockMode {
@@ -139,43 +134,6 @@ struct DrawingCanvasView: View {
   }
 
   // MARK: - Access Control UI
-
-  private var remainingJoodlesHeader: some View {
-    let totalCount = subscriptionManager.fetchTotalJoodleCount(in: modelContext)
-    let remaining = subscriptionManager.remainingJoodles(currentTotalCount: totalCount)
-
-    return HStack(spacing: 6) {
-      Image(systemName: remaining > 0 ? "scribble" : "lock.fill")
-        .font(.caption)
-
-      if remaining > 0 {
-        Text("\(remaining) Joodles left")
-          .font(.caption)
-      } else {
-        Text("Limit reached")
-          .font(.caption)
-      }
-
-      Spacer()
-
-      Button {
-        showPaywall = true
-      } label: {
-        Text("Upgrade")
-          .font(.caption.bold())
-          .foregroundStyle(.appAccentContrast)
-      }
-      .buttonStyle(.borderedProminent)
-      .buttonBorderShape(.capsule)
-      .controlSize(.mini)
-    }
-    .foregroundColor(.secondary)
-    .padding(.horizontal, 16)
-    .padding(.vertical, 8)
-    .background(.appBorder.opacity(0.2))
-    .cornerRadius(24)
-  }
-
   private var accessDeniedOverlay: some View {
     VStack(spacing: 16) {
       Image(systemName: "lock.fill")
@@ -189,7 +147,7 @@ struct DrawingCanvasView: View {
           .foregroundColor(.appTextPrimary)
           .multilineTextAlignment(.center)
 
-        Text("Upgrade to Joodle Super for unlimited Joodles")
+        Text("Upgrade to Joodle Pro for unlimited Joodles")
           .font(.subheadline)
           .foregroundColor(.appTextPrimary.opacity(0.8))
           .multilineTextAlignment(.center)

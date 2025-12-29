@@ -58,7 +58,7 @@ struct SubscriptionsView: View {
           .scaleEffect(1.5)
       }
     }
-    .navigationTitle("Joodle Super")
+    .navigationTitle("Joodle Pro")
     .navigationBarTitleDisplayMode(.inline)
     .onAppear {
       Task {
@@ -143,7 +143,7 @@ struct SubscriptionsView: View {
         .foregroundColor(subscriptionManager.isSubscribed ? .appAccent : .appBorder)
 
       if subscriptionManager.isSubscribed {
-        Text("Joodle Super")
+        Text("Joodle Pro")
           .font(.system(size: 28, weight: .bold))
 
         Text("You have full access to all features. Thank you for your support!")
@@ -266,7 +266,7 @@ struct SubscriptionsView: View {
           .multilineTextAlignment(.leading)
           .padding(.horizontal, 32)
       } else if !subscriptionManager.willAutoRenew {
-        Text("You'll continue to have access to Joodle Super until \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "your subscription expires"). After that, you'll lose access to all premium features. Re-subscribe to continue enjoying Joodle Super after your current period ends.")
+        Text("You'll continue to have access to Joodle Pro until \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "your subscription expires"). After that, you'll lose access to all premium features. Re-subscribe to continue enjoying Joodle Pro after your current period ends.")
           .font(.caption2)
           .foregroundColor(.secondary)
           .multilineTextAlignment(.leading)

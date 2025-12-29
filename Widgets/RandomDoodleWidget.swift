@@ -286,7 +286,7 @@ struct WidgetLockedView: View {
 
       if family != .accessoryCircular {
         VStack(spacing: 4) {
-          Text("Joodle Super")
+          Text("Joodle Pro")
             .font(family == .systemLarge ? .headline : .caption.bold())
             .foregroundColor(.primary)
 
@@ -301,7 +301,7 @@ struct WidgetLockedView: View {
           Text("Unlock")
             .font(.system(size: 8))
             .foregroundColor(.primary)
-          Text("Super")
+          Text("Pro")
             .font(.system(size: 8))
             .foregroundColor(.primary)
         }

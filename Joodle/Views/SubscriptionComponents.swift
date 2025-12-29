@@ -47,7 +47,7 @@ struct PricingCard: View {
           HStack {
             VStack(alignment: .leading, spacing: 8) {
               HStack {
-                Text(product.id.contains("yearly") ? "Joodle Super Yearly" : "Joodle Super Monthly")
+                Text(product.id.contains("yearly") ? "Joodle Pro Yearly" : "Joodle Pro Monthly")
                   .font(.title3.weight(.bold))
                   .foregroundColor(.primary)
                 

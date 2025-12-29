@@ -26,7 +26,7 @@ struct ShareCardSelectorView: View {
   @State private var shareItem: ShareItem?
   @State private var previewColorScheme: ColorScheme = (UserPreferences.shared.preferredColorScheme ?? .light)
 
-  // Watermark toggle - only available for Joodle Super users
+  // Watermark toggle - only available for Joodle Pro users
   @State private var showWatermark: Bool = true
 
   // Cache rendered preview images for each style, color scheme, and watermark setting
@@ -37,8 +37,8 @@ struct ShareCardSelectorView: View {
   @State private var yearEntries: [ShareCardDayEntry] = []
   @State private var yearPercentage: Double = 0.0
 
-  /// Check if user is a Joodle Super subscriber
-  private var isJoodleSuper: Bool {
+  /// Check if user is a Joodle Pro subscriber
+  private var isJoodlePro: Bool {
     SubscriptionManager.shared.isSubscribed
   }
 
@@ -117,13 +117,13 @@ struct ShareCardSelectorView: View {
               .frame(width: 44, height: 44)
             Text("Show Watermark")
               .font(.system(size: 14))
-            if !isJoodleSuper && !SubscriptionManager.shared.hasWatermarkRemoval {
+            if !isJoodlePro && !SubscriptionManager.shared.hasWatermarkRemoval {
               PremiumFeatureBadge()
             }
           }
         }
-        // Not super user cannot edit
-        .disabled(!isJoodleSuper)
+        // Not Pro user cannot edit
+        .disabled(!isJoodlePro)
         .toggleStyle(SwitchToggleStyle(tint: .appAccent))
         .padding(.horizontal, 32)
         .onChange(of: showWatermark) { _, _ in
@@ -250,7 +250,7 @@ struct ShareCardSelectorView: View {
   /// Determines whether watermark should be shown based on subscription status
   /// Non-subscribers always see watermark, subscribers can toggle it off
   private var shouldShowWatermark: Bool {
-    if isJoodleSuper {
+    if isJoodlePro {
       return showWatermark
     } else {
       return true // Non-subscribers always have watermark

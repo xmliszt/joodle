@@ -276,7 +276,7 @@ struct PremiumLockedOverlayModifier: ViewModifier {
                                 .font(.title)
                                 .foregroundColor(.appAccentContrast)
 
-                            Text("Joodle Super")
+                            Text("Joodle Pro")
                                 .font(.caption.bold())
                                 .foregroundColor(.appAccentContrast)
                         }
@@ -326,7 +326,7 @@ struct PremiumFeatureBadge: View {
         HStack(spacing: 2) {
             Image(systemName: "crown.fill")
                 .font(.system(size: 8))
-            Text("SUPER")
+            Text("PRO")
                 .font(.system(size: 7, weight: .bold))
         }
         .foregroundColor(.appAccentContrast)
@@ -445,7 +445,7 @@ struct SubscriptionExpiredAlert: ViewModifier {
                     )
                 }
             } message: {
-                Text("Your Joodle Super subscription has ended. Some features are now limited.")
+                Text("Your Joodle Pro subscription has ended. Some features are now limited.")
             }
     }
 }

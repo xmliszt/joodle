@@ -25,7 +25,7 @@ struct ExperimentalFeaturesView: View {
                 .font(.title2)
 
               VStack(alignment: .leading, spacing: 4) {
-                Text("Experimental features are available with Joodle Super. Upgrade to unlock.")
+                Text("Experimental features are available with Joodle Pro. Upgrade to unlock.")
                   .font(.caption)
                   .foregroundStyle(.secondary)
                   .fixedSize(horizontal: false, vertical: true)
@@ -35,7 +35,7 @@ struct ExperimentalFeaturesView: View {
             Button {
               showPaywall = true
             } label: {
-              Text("Upgrade to Joodle Super")
+              Text("Upgrade to Joodle Pro")
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)

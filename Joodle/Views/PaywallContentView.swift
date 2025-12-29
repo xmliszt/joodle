@@ -29,8 +29,8 @@ struct PaywallConfiguration {
 
 /// A slide-to-unlock style CTA button with mode toggle
 struct SliderCTAButton: View {
-  /// Whether the slider is in "Super" mode (true) or "Free" mode (false)
-  @Binding var isSuperMode: Bool
+  /// Whether the slider is in "Pro" mode (true) or "Free" mode (false)
+  @Binding var isProMode: Bool
 
   /// Whether the user can toggle between modes by tapping the thumb
   let allowModeToggle: Bool
@@ -103,7 +103,7 @@ struct SliderCTAButton: View {
   private var trackBackground: some View {
     ZStack {
       // Base gradient/color
-      if isSuperMode {
+      if isProMode {
         LinearGradient(
           colors: [Color.appAccent.opacity(0.2), Color.appAccent.opacity(0.5)],
           startPoint: .leading,
@@ -157,9 +157,9 @@ struct SliderCTAButton: View {
         ProgressView()
           .progressViewStyle(CircularProgressViewStyle())
       } else {
-        Text(isSuperMode ? trialButtonText : "Continue for Free")
+        Text(isProMode ? trialButtonText : "Continue for Free")
           .font(.headline)
-          .foregroundColor(isSuperMode ? .appTextPrimary : .appTextSecondary)
+          .foregroundColor(isProMode ? .appTextPrimary : .appTextSecondary)
       }
     }
     .frame(maxWidth: maxWidth)
@@ -171,7 +171,7 @@ struct SliderCTAButton: View {
     if let trialText = trialPeriodText {
       return "Start \(trialText) Free Trial"
     }
-    return "Subscribe to Joodle Super"
+    return "Subscribe to Joodle Pro"
   }
 
   private func startShimmerAnimation() {
@@ -223,7 +223,7 @@ struct SliderCTAButton: View {
     guard allowModeToggle else { return }
 
     withAnimation(.springFkingSatifying) {
-      isSuperMode.toggle()
+      isProMode.toggle()
     }
   }
 
@@ -265,7 +265,7 @@ struct SliderCTAButton: View {
   }
 
   private var thumbBackground: some ShapeStyle {
-    if isSuperMode {
+    if isProMode {
       return AnyShapeStyle(
         LinearGradient(
           colors: [Color.appAccent.opacity(0.5), Color.appAccent],
@@ -279,9 +279,9 @@ struct SliderCTAButton: View {
   }
 
   private var thumbIcon: some View {
-    Image(systemName: isSuperMode ? "crown.fill" : "arrow.right")
+    Image(systemName: isProMode ? "crown.fill" : "arrow.right")
       .font(.system(size: 24, weight: .semibold))
-      .foregroundColor(isSuperMode ? .white : .appBackground)
+      .foregroundColor(isProMode ? .white : .appBackground)
   }
 }
 
@@ -297,7 +297,7 @@ struct PaywallContentView: View {
   @State private var isPurchasing = false
   @State private var showError = false
   @State private var errorMessage: String?
-  @State private var useSuperMode = true
+  @State private var useProMode = true
 
   var body: some View {
     ScrollView {
@@ -343,7 +343,7 @@ struct PaywallContentView: View {
 
   private var headerSection: some View {
     VStack(spacing: 8) {
-      Text("Get Joodle Super")
+      Text("Get Joodle Pro")
         .font(.system(size: 34, weight: .bold))
         .multilineTextAlignment(.center)
 
@@ -449,7 +449,7 @@ struct PaywallContentView: View {
     VStack(alignment: .leading, spacing: 4) {
       Text("Debug Info:")
         .font(.caption2.bold())
-      Text("Product IDs: dev.liyuxuan.joodle.super.monthly, dev.liyuxuan.joodle.super.yearly")
+      Text("Product IDs: dev.liyuxuan.joodle.pro.monthly, dev.liyuxuan.joodle.pro.yearly")
         .font(.caption2)
       if let error = storeManager.errorMessage {
         Text("Error: \(error)")
@@ -504,7 +504,7 @@ struct PaywallContentView: View {
         mainCTAButton
 
         // Price disclaimer
-        if useSuperMode,
+        if useProMode,
            let selectedID = selectedProductID,
            let product = storeManager.products.first(where: { $0.id == selectedID }) {
           Text("Then \(product.displayPrice) / \(product.id.contains("monthly") ? "month" : "year"). Cancel anytime.")
@@ -523,7 +523,7 @@ struct PaywallContentView: View {
   @ViewBuilder
   private var mainCTAButton: some View {
     SliderCTAButton(
-      isSuperMode: .constant(true),
+      isProMode: .constant(true),
       allowModeToggle: false,
       isLoading: isPurchasing || storeManager.hasActiveSubscription,
       trialPeriodText: selectedTrialPeriodText,
@@ -566,7 +566,7 @@ struct PaywallContentView: View {
   }
 
   private func handleSlideComplete() {
-    if useSuperMode {
+    if useProMode {
       // Handle purchase
       if let selectedID = selectedProductID,
          let product = storeManager.products.first(where: { $0.id == selectedID }) {
@@ -752,10 +752,10 @@ struct PaywallContentView: View {
   ))
 }
 
-#Preview("Slider CTA - Super Mode") {
+#Preview("Slider CTA - Pro Mode") {
   VStack(spacing: 40) {
     SliderCTAButton(
-      isSuperMode: .constant(true),
+      isProMode: .constant(true),
       allowModeToggle: true,
       isLoading: false,
       trialPeriodText: "3-Month",
@@ -764,7 +764,7 @@ struct PaywallContentView: View {
     .padding(.horizontal, 24)
 
     SliderCTAButton(
-      isSuperMode: .constant(false),
+      isProMode: .constant(false),
       allowModeToggle: true,
       isLoading: false,
       trialPeriodText: nil,

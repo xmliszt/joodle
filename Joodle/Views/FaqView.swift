@@ -63,9 +63,9 @@ enum FaqData {
         FaqItem(
             title: "I want to share the Joodle subscription with my family",
             content: """
-            With Family Sharing, you and up to five other family members can share access to Joodle Super.
+            With Family Sharing, you and up to five other family members can share access to Joodle Pro.
 
-            Only Joodle Super Yearly subscription is eligible for Family Sharing.
+            Only Joodle Pro Yearly subscription is eligible for Family Sharing.
 
             **How to set up Family Sharing**:
 
@@ -74,22 +74,22 @@ enum FaqData {
             3. Tap **Family Sharing**, then tap **Set Up Your Family**.
             4. Follow the onscreen instructions to set up your family and invite your family members.
 
-            Joodle Super subscription sometimes isn't enabled by default.
+            Joodle Pro subscription sometimes isn't enabled by default.
 
             **If this is the case, follow these steps**:
 
             1. Open the Joodle app.
             2. Go to **Settings**.
-            3. Scroll down until you see **Unlock Joodle Super** and tap it.
+            3. Scroll down until you see **Unlock Joodle Pro** and tap it.
             4. Tap **Restore Purchase** below the subscribe slider.
 
             A connection with your iCloud account can be unstable. If this happens, sign out of your iCloud account on all included devices, sign back in, and try again.
             """
         ),
         FaqItem(
-            title: "What features are included in Joodle Super?",
+            title: "What features are included in Joodle Pro?",
             content: """
-            **Joodle Super unlocks the full Joodle experience**:
+            **Joodle Pro unlocks the full Joodle experience**:
 
             • **Unlimited Joodles** - Create as many daily entries as you want (free plan limited to 30)
             • **iCloud Sync** - Keep your Joodles in sync across all your Apple devices
@@ -98,7 +98,7 @@ enum FaqData {
             • **All Theme Colors** - Access to the complete color palette
             • **Watermark-Free Sharing** - Share your Joodle cards without the watermark
 
-            You can try Joodle Super free for 7 days before being charged.
+            You can try Joodle Pro free for 7 days before being charged.
             """
         )
     ]
@@ -111,7 +111,7 @@ enum FaqData {
             content: """
             **To enable iCloud Sync, you need to**:
 
-            1. Subscribe to **Joodle Super** (iCloud Sync is a premium feature)
+            1. Subscribe to **Joodle Pro** (iCloud Sync is a premium feature)
             2. Make sure you're signed into iCloud on your device
             3. Enable iCloud for Joodle in your device's **Settings → [Your Name] → iCloud → Saved to iCloud → Joodle**
             4. Enable sync in the Joodle app under **Settings → iCloud Sync**
@@ -126,7 +126,7 @@ enum FaqData {
             content: """
             **If your Joodles aren't appearing on other devices, try these steps**:
 
-            1. **Check your subscription** - iCloud Sync requires Joodle Super
+            1. **Check your subscription** - iCloud Sync requires Joodle Pro
             2. **Verify iCloud is enabled** - Go to device Settings → [Your Name] → iCloud → Saved to iCloud → Joodle must be ON
             3. **Check network connection** - Sync requires an active internet connection
             4. **Same Apple ID** - Ensure all devices are signed into the same iCloud account
@@ -213,7 +213,7 @@ enum FaqData {
 
             You'll receive a notification on that date every year.
 
-            **Note**: Free users can set up to 5 reminders. Joodle Super subscribers get unlimited reminders.
+            **Note**: Free users can set up to 5 reminders. Joodle Pro subscribers get unlimited reminders.
 
             **To manage reminders**: You can view and delete your reminders by tapping on the **bell icon** from individual day entry.
             """
@@ -234,7 +234,7 @@ enum FaqData {
 
             **To delete text**: Simply select and delete the text in the text field.
 
-            **Note**: Free users can only edit their first 30 Joodles. Joodle Super removes this limitation.
+            **Note**: Free users can only edit their first 30 Joodles. Joodle Pro removes this limitation.
             """
         ),
         FaqItem(
@@ -277,7 +277,7 @@ enum FaqData {
             • **Anniversary** - Countdown to your next anniversary reminder
             • **Year Grid** - A mini view of your year's Joodles
 
-            **Note**: Widgets are a Joodle Super feature. Free users will see a locked widget prompting them to upgrade.
+            **Note**: Widgets are a Joodle Pro feature. Free users will see a locked widget prompting them to upgrade.
             """
         ),
         FaqItem(
@@ -347,7 +347,7 @@ enum FaqData {
 
             To remove the watermark:
 
-            1. Subscribe to **Joodle Super**
+            1. Subscribe to **Joodle Pro**
             2. When sharing, you can toggle off the watermark above the share button.
             """
         ),
