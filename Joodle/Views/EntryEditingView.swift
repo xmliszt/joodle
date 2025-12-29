@@ -280,7 +280,7 @@ struct EntryEditingView: View {
                     entry: tempEntry,
                     displaySize: 200,
                     animateDrawing: true,
-                    animationDuration: 5
+                    animationDuration: 3.0
                   )
                   .frame(width: 200, height: 200)
                   .background(.appSurface)
@@ -290,7 +290,7 @@ struct EntryEditingView: View {
                     entry: entry,
                     displaySize: 200,
                     animateDrawing: true,
-                    animationDuration: 5
+                    animationDuration: 3.0
                   )
                   .frame(width: 200, height: 200)
                   .background(.appSurface)
