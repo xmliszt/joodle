@@ -25,25 +25,11 @@ struct ChangelogDetailView: View {
 
                 // Optional Header Image
                 if let imageURL = entry.headerImageURL {
-                    AsyncImage(url: imageURL) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: 300)
-                        case .failure:
-                            EmptyView()
-                        case .empty:
-                            ProgressView()
-                                .frame(height: 200)
-                        @unknown default:
-                            EmptyView()
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .padding()
+                    AnimatedImageView(url: imageURL)
+                        .frame(maxWidth: 300)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .padding()
                 }
 
                 // Markdown Content

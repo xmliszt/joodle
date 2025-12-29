@@ -17,8 +17,9 @@ enum ChangelogData {
     // Add header image URLs for specific versions here
     // Key: version string (e.g., "1.0.55"), Value: remote image URL
     private static let headerImages: [String: URL] = [
+      "1.0.61": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.61.gif")!,
         "1.0.58": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.58.png")!,
-        "1.0.54": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.54.png")!,
+        "1.0.54": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.54.png")!
     ]
 
     /// Get the header image URL for a specific version
