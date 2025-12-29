@@ -1004,7 +1004,8 @@ private struct TutorialHeaderView: View {
                                         dotStyle: .present,
                                         accent: true,
                                         highlighted: false,
-                                        scale: 1.0
+                                        scale: 1.0,
+                                        useThumbnail: true
                                     )
                                     .frame(width: drawingSize, height: drawingSize)
                                     .animation(.interactiveSpring, value: highlightedEntry)

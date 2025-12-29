@@ -64,10 +64,11 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
       let bottomHeight = _geometry.size.height * (1 - splitPosition)
 
       ZStack {
-        // Background color
+        // Background color - animate opacity based on splitPosition for smooth transition
+        // Map splitPosition 1.0->0.5 to opacity 0.0->1.0
         Color.appAccent
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .opacity(splitPosition == 1.0 ? 0.0 : 1.0)
+          .opacity(splitPosition >= 1.0 ? 0.0 : min(1.0, (1.0 - splitPosition) * 2))
 
         VStack(spacing: 0) {
           // Top View - YearGridView

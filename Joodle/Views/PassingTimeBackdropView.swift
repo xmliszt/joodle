@@ -11,7 +11,7 @@ import SwiftUI
 /// - The water level starts full at 00:00:00 and drains throughout the day
 /// - Features animated wave effects on the water surface
 /// - Responds to device tilt via gyroscope for realistic water behavior
-struct TimePassingBackdropView: View {
+struct PassingTimeBackdropView: View {
   @StateObject private var motionManager = MotionManager.shared
 
   /// Whether the backdrop should be visible
@@ -23,10 +23,6 @@ struct TimePassingBackdropView: View {
   /// Timer for updating time
   @State private var timer: Timer?
 
-  /// Animated visibility offset for water rising/draining effect (0 = fully visible, 1 = fully hidden below screen)
-  /// Initialized based on isVisible state
-  @State private var visibilityOffset: Double?
-
   /// Wave animation parameters
   private let primaryWaveAmplitude: CGFloat = 8
   private let secondaryWaveAmplitude: CGFloat = 5
@@ -36,29 +32,19 @@ struct TimePassingBackdropView: View {
   /// Wave animation speed (seconds per full cycle)
   private let waveAnimationDuration: Double = 3.0
 
-  /// Duration for water rising animation (appearing)
-  private let waterRiseDuration: Double = 2.5
-
-  /// Duration for water draining animation (disappearing)
-  private let waterDrainDuration: Double = 0.8
-
   var body: some View {
-    TimelineView(.animation) { timeline in
-      let elapsedTime = timeline.date.timeIntervalSinceReferenceDate
-      let wavePhase = (elapsedTime / waveAnimationDuration) * .pi * 2
-
-      GeometryReader { geometry in
-        let fillLevel = 1.0 - dayProgress
-        // Use tiltAngle for tilt - based on gravity.x, independent of forward/backward pitch
-        // sin(tiltAngle) gives bounded tilt effect (-1 to 1) that works at all orientations
-        // including landscape and upside-down without blowing up like tan() would
-        let tiltOffset = CGFloat(sin(motionManager.tiltAngle)) * geometry.size.width * 0.5
-
-        // Calculate effective water height including tilt and wave amplitude
-        // This ensures the visibility animation covers the full visible water area
-        let maxTiltHeight = abs(tiltOffset) + primaryWaveAmplitude
-        let effectiveWaterHeight = geometry.size.height * fillLevel + maxTiltHeight
-
+    GeometryReader { geometry in
+      let fillLevel = 1.0 - dayProgress
+      
+      // Use tiltAngle for tilt - based on gravity.x, independent of forward/backward pitch
+      // sin(tiltAngle) gives bounded tilt effect (-1 to 1) that works at all orientations
+      // including landscape and upside-down without blowing up like tan() would
+      let tiltOffset = CGFloat(sin(motionManager.tiltAngle)) * geometry.size.width * 0.5
+      
+      TimelineView(.animation) { timeline in
+        let elapsedTime = timeline.date.timeIntervalSinceReferenceDate
+        let wavePhase = (elapsedTime / waveAnimationDuration) * .pi * 2
+        
         ZStack {
           // Water fill with wave top
           WaterWaveShape(
@@ -84,23 +70,14 @@ struct TimePassingBackdropView: View {
           )
           .fill(Color.appAccent.opacity(0.4))
         }
-        // Apply vertical offset to push water down when hidden
-        .offset(y: effectiveWaterHeight * (visibilityOffset ?? (isVisible ? 0.0 : 1.0)))
       }
     }
-    .opacity(isVisible ? 0.2 : 0.0)
+    .opacity(0.2)
     .onAppear {
-      // Set initial offset based on visibility without animation
-      if visibilityOffset == nil {
-        visibilityOffset = isVisible ? 0.0 : 1.0
-      }
       startUpdates()
     }
     .onDisappear {
       stopUpdates()
-    }
-    .onChange(of: isVisible) { _, newValue in
-      animateVisibilityChange(visible: newValue)
     }
   }
 
@@ -132,21 +109,6 @@ struct TimePassingBackdropView: View {
 
     withAnimation(.linear(duration: 0.5)) {
       dayProgress = secondsSinceMidnight / totalSecondsInDay
-    }
-  }
-
-  /// Animate the water rising or draining based on visibility change
-  private func animateVisibilityChange(visible: Bool) {
-    if visible {
-      // Water rises up from bottom - slower, gentle easing
-      withAnimation(.easeOut(duration: waterRiseDuration)) {
-        visibilityOffset = 0.0
-      }
-    } else {
-      // Water drains down - slightly faster
-      withAnimation(.easeIn(duration: waterDrainDuration)) {
-        visibilityOffset = 1.0
-      }
     }
   }
 }
@@ -236,8 +198,7 @@ struct WaterWaveShape: Shape {
 #Preview("Time Passing Backdrop") {
   ZStack {
     Color.backgroundColor
-
-    TimePassingBackdropView()
+    PassingTimeBackdropView()
   }
   .ignoresSafeArea()
 }
@@ -245,8 +206,7 @@ struct WaterWaveShape: Shape {
 #Preview("Hidden State") {
   ZStack {
     Color.backgroundColor
-
-    TimePassingBackdropView(isVisible: false)
+    PassingTimeBackdropView(isVisible: false)
   }
   .ignoresSafeArea()
 }
@@ -254,7 +214,6 @@ struct WaterWaveShape: Shape {
 #Preview("50% Progress") {
   ZStack {
     Color.backgroundColor
-
     GeometryReader { geometry in
       WaterWaveShape(
         progress: 0.5,
@@ -274,7 +233,6 @@ struct WaterWaveShape: Shape {
 #Preview("25% Progress - Morning") {
   ZStack {
     Color.backgroundColor
-
     GeometryReader { geometry in
       WaterWaveShape(
         progress: 0.75,
