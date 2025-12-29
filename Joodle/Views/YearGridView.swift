@@ -117,7 +117,7 @@ struct YearGridView: View {
                 // Jelly bounce animation from bottom for drawings
                 .offset(y: hasAnimated ? 0 : 50)
                 .scaleEffect(
-                  x: hasAnimated ? 1.0 : 0.6,
+                  x: hasAnimated ? 1.0 : 0.1,
                   y: hasAnimated ? 1.0 : 0.1,
                   anchor: .bottom
                 )
