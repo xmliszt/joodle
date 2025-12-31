@@ -11,6 +11,12 @@ import SwiftUI
 /// Metadata for a drawing path
 struct PathMetadata {
   let isDot: Bool
+  let length: CGFloat  // Length of the stroke in points (0 for dots)
+
+  init(isDot: Bool, length: CGFloat = 0) {
+    self.isDot = isDot
+    self.length = length
+  }
 }
 
 /// A path with its associated metadata
@@ -100,9 +106,17 @@ class DrawingPathCache: ObservableObject {
             }
           }
         }
+        // Calculate stroke length from points
+        let strokeLength: CGFloat
+        if shouldRenderAsDot {
+          strokeLength = 0
+        } else {
+          strokeLength = Self.calculatePathLength(from: pathData.points)
+        }
+
         return PathWithMetadata(
           path: path,
-          metadata: PathMetadata(isDot: shouldRenderAsDot)
+          metadata: PathMetadata(isDot: shouldRenderAsDot, length: strokeLength)
         )
       }
     } catch {
@@ -145,6 +159,19 @@ class DrawingPathCache: ObservableObject {
         accessOrder.removeFirst()
       }
     }
+  }
+
+  /// Calculate the total length of a path from its points
+  private static func calculatePathLength(from points: [CGPoint]) -> CGFloat {
+    guard points.count >= 2 else { return 0 }
+
+    var totalLength: CGFloat = 0
+    for i in 1..<points.count {
+      let dx = points[i].x - points[i-1].x
+      let dy = points[i].y - points[i-1].y
+      totalLength += sqrt(dx * dx + dy * dy)
+    }
+    return totalLength
   }
 
   /// Clear the entire cache (useful for memory pressure)

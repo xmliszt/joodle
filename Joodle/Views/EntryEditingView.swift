@@ -72,7 +72,7 @@ struct EntryEditingView: View {
       return minDrawingSize + (maxDrawingSize - minDrawingSize) * progress
     }
   }
-  
+
   private var textContentHeight: CGFloat {
     let minHeight: CGFloat = 100
     let maxHeight = max(minHeight, 180)
@@ -333,8 +333,7 @@ struct EntryEditingView: View {
                   DrawingDisplayView(
                     entry: tempEntry,
                     displaySize: drawingDisplaySize,
-                    animateDrawing: true,
-                    animationDuration: 3.0
+                    animateDrawing: true
                   )
                   .frame(width: drawingDisplaySize, height: drawingDisplaySize)
                   .background(.appSurface)
@@ -344,8 +343,7 @@ struct EntryEditingView: View {
                   DrawingDisplayView(
                     entry: entry,
                     displaySize: drawingDisplaySize,
-                    animateDrawing: true,
-                    animationDuration: 3.0
+                    animateDrawing: true
                   )
                   .frame(width: drawingDisplaySize, height: drawingDisplaySize)
                   .background(.appSurface)

@@ -16,7 +16,11 @@ struct DrawingDisplayView: View {
   let scale: CGFloat
   let useThumbnail: Bool  // Use pre-rendered thumbnail for performance
   let animateDrawing: Bool  // Animate path drawing replay
-  let animationDuration: Double  // Total duration for drawing animation
+
+  // Animation timing constants
+  private static let maxAnimationDuration: Double = 3.0  // Maximum total animation duration
+  private static let durationPerPixel: Double = 0.2 / 50.0  // 0.2 seconds per 20 pixels
+  private static let minStrokeDuration: Double = 0.05  // Minimum duration for very short strokes/dots
 
   @State private var pathsWithMetadata: [PathWithMetadata] = []
   @State private var isVisible = false
@@ -31,6 +35,49 @@ struct DrawingDisplayView: View {
   // Use shared cache for drawing paths
   private let pathCache = DrawingPathCache.shared
 
+  /// Calculate per-stroke durations based on stroke lengths
+  /// Returns array of durations and total animation duration
+  private var strokeTimingInfo: (durations: [Double], totalDuration: Double, cumulativeEndTimes: [Double]) {
+    guard !pathsWithMetadata.isEmpty else {
+      return ([], 0, [])
+    }
+
+    // Calculate raw duration for each stroke based on length
+    var rawDurations: [Double] = pathsWithMetadata.map { pathWithMetadata in
+      if pathWithMetadata.metadata.isDot {
+        return Self.minStrokeDuration
+      } else {
+        let lengthBasedDuration = Double(pathWithMetadata.metadata.length) * Self.durationPerPixel
+        return max(Self.minStrokeDuration, lengthBasedDuration)
+      }
+    }
+
+    let rawTotal = rawDurations.reduce(0, +)
+
+    // If total exceeds max, scale down all durations proportionally
+    if rawTotal > Self.maxAnimationDuration {
+      let scaleFactor = Self.maxAnimationDuration / rawTotal
+      rawDurations = rawDurations.map { $0 * scaleFactor }
+    }
+
+    let totalDuration = min(rawTotal, Self.maxAnimationDuration)
+
+    // Calculate cumulative end times for each stroke
+    var cumulativeEndTimes: [Double] = []
+    var cumulative: Double = 0
+    for duration in rawDurations {
+      cumulative += duration
+      cumulativeEndTimes.append(cumulative)
+    }
+
+    return (rawDurations, totalDuration, cumulativeEndTimes)
+  }
+
+  /// Calculated total animation duration based on stroke lengths
+  private var calculatedAnimationDuration: Double {
+    return strokeTimingInfo.totalDuration
+  }
+
   init(
     entry: DayEntry?,
     displaySize: CGFloat,
@@ -39,8 +86,7 @@ struct DrawingDisplayView: View {
     highlighted: Bool = false,
     scale: CGFloat = 1.0,
     useThumbnail: Bool = false,
-    animateDrawing: Bool = false,
-    animationDuration: Double = 1.5
+    animateDrawing: Bool = false
   ) {
     self.entry = entry
     self.displaySize = displaySize
@@ -50,7 +96,6 @@ struct DrawingDisplayView: View {
     self.scale = scale
     self.useThumbnail = useThumbnail
     self.animateDrawing = animateDrawing
-    self.animationDuration = animationDuration
   }
 
   private var foregroundColor: Color {
@@ -81,7 +126,7 @@ struct DrawingDisplayView: View {
           let currentProgress: CGFloat = {
             if isAnimatingDrawing, let startTime = animationStartTime {
               let elapsed = timeline.date.timeIntervalSince(startTime)
-              let progress = min(1.0, CGFloat(elapsed / animationDuration))
+              let progress = min(1.0, CGFloat(elapsed / calculatedAnimationDuration))
               // Apply easeOut curve: 1 - (1 - t)^2
               let eased = 1.0 - pow(1.0 - progress, 2)
               return eased
@@ -96,26 +141,38 @@ struct DrawingDisplayView: View {
             // Scale the context to render at display size
             context.scaleBy(x: canvasScale, y: canvasScale)
 
-            // Calculate how many paths to show based on animation progress
-            let totalPaths = pathsWithMetadata.count
+            // Get timing info for length-based animation
+            let timingInfo = strokeTimingInfo
+            let totalDuration = timingInfo.totalDuration
+            let cumulativeEndTimes = timingInfo.cumulativeEndTimes
+            let durations = timingInfo.durations
+
+            // Calculate current elapsed time based on progress
             let effectiveProgress = animateDrawing ? currentProgress : 1.0
-            let pathsToShow = animateDrawing ? Int(ceil(effectiveProgress * CGFloat(totalPaths))) : totalPaths
+            let currentElapsedTime = effectiveProgress * CGFloat(totalDuration)
 
             for (index, pathWithMetadata) in pathsWithMetadata.enumerated() {
-              // Skip paths that haven't been "drawn" yet
-              guard index < pathsToShow else { break }
+              // Determine start time for this stroke
+              let strokeStartTime: CGFloat = index == 0 ? 0 : CGFloat(cumulativeEndTimes[index - 1])
+              let strokeEndTime = CGFloat(cumulativeEndTimes[index])
+
+              // Skip paths that haven't started yet
+              guard currentElapsedTime > strokeStartTime || !animateDrawing else { continue }
 
               let path = pathWithMetadata.path
 
               // Calculate trim for the current path being drawn
               let pathProgress: CGFloat
-              if animateDrawing && index == pathsToShow - 1 && totalPaths > 0 {
-                // This is the path currently being drawn - calculate partial progress
-                let progressPerPath = 1.0 / CGFloat(totalPaths)
-                let pathStartProgress = CGFloat(index) * progressPerPath
-                let progressInCurrentPath = (effectiveProgress - pathStartProgress) / progressPerPath
-                pathProgress = min(1.0, max(0.0, progressInCurrentPath))
+              if animateDrawing && currentElapsedTime < strokeEndTime {
+                // This stroke is currently being drawn
+                let strokeDuration = CGFloat(durations[index])
+                let timeIntoStroke = currentElapsedTime - strokeStartTime
+                pathProgress = min(1.0, max(0.0, timeIntoStroke / strokeDuration))
+              } else if animateDrawing && currentElapsedTime < strokeStartTime {
+                // This stroke hasn't started yet
+                pathProgress = 0.0
               } else {
+                // Stroke is complete
                 pathProgress = 1.0
               }
 
@@ -262,8 +319,7 @@ struct DrawingDisplayView: View {
   DrawingDisplayView(
     entry: nil,
     displaySize: 200,
-    animateDrawing: true,
-    animationDuration: 2.0
+    animateDrawing: true
   )
   .frame(width: 200, height: 200)
   .background(.gray.opacity(0.1))
