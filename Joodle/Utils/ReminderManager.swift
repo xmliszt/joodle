@@ -1,6 +1,7 @@
 import Foundation
 @preconcurrency import UserNotifications
 import SwiftUI
+import SwiftData
 import Combine
 
 // MARK: - Daily Reminder Constants
@@ -210,6 +211,8 @@ class ReminderManager: ObservableObject {
                 Task { @MainActor in
                     self?.cleanupOutdatedReminders()
                     self?.syncFromCloud()
+                    // Refresh daily reminder - reschedules for next occurrence if user hasn't drawn today
+                    self?.refreshDailyReminderIfNeeded()
                 }
             }
             .store(in: &cancellables)
@@ -455,8 +458,14 @@ class ReminderManager: ObservableObject {
         // Cancel existing daily reminder first
         cancelDailyReminder()
 
+        // Check if user has already created content for today - if so, don't schedule
+        if hasTodayEntry() {
+            print("📝 [ReminderManager] User already has today's entry - skipping daily reminder")
+            return
+        }
+
         let content = UNMutableNotificationContent()
-        content.title = "Time to Joodle!"
+        content.title = "Time to Joodle 🌸"
         content.body = "Capture today's moment in Joodle."
         content.sound = .default
 
@@ -464,17 +473,31 @@ class ReminderManager: ObservableObject {
         content.userInfo = ["isDailyReminder": true]
 
         // Extract hour and minute from the time
-        let timeComponents = Calendar.current.dateComponents([.hour, .minute], from: time)
+        let calendar = Calendar.current
+        let timeComponents = calendar.dateComponents([.hour, .minute], from: time)
 
-        // Create a repeating trigger for daily at the specified time
-        var dateComponents = DateComponents()
-        dateComponents.hour = timeComponents.hour
-        dateComponents.minute = timeComponents.minute
+        // Calculate the next trigger date
+        // If the reminder time has already passed today, schedule for tomorrow
+        let now = Date()
+        var triggerDateComponents = calendar.dateComponents([.year, .month, .day], from: now)
+        triggerDateComponents.hour = timeComponents.hour
+        triggerDateComponents.minute = timeComponents.minute
+        triggerDateComponents.second = 0
 
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        guard var triggerDate = calendar.date(from: triggerDateComponents) else {
+            print("❌ [ReminderManager] Failed to calculate trigger date")
+            return
+        }
 
-        // Use today's date string as identifier so the existing handler navigates to today
-        // But we need a consistent identifier for cancellation, so use a special one
+        // If the trigger time has already passed today, schedule for tomorrow
+        if triggerDate <= now {
+            triggerDate = calendar.date(byAdding: .day, value: 1, to: triggerDate) ?? triggerDate
+        }
+
+        // Use a non-repeating trigger so we can check daily if user has drawn
+        let finalTriggerComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: triggerDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: finalTriggerComponents, repeats: false)
+
         let request = UNNotificationRequest(
             identifier: DailyReminderConstants.notificationIdentifier,
             content: content,
@@ -485,9 +508,55 @@ class ReminderManager: ObservableObject {
             if let error = error {
                 print("❌ [ReminderManager] Error scheduling daily reminder: \(error)")
             } else {
-                print("✅ [ReminderManager] Daily reminder scheduled for \(timeComponents.hour ?? 0):\(String(format: "%02d", timeComponents.minute ?? 0))")
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
+                print("✅ [ReminderManager] Daily reminder scheduled for \(dateFormatter.string(from: triggerDate))")
             }
         }
+    }
+
+    /// Check if user has created content (drawing or text) for today
+    /// - Returns: True if today's entry has content, false otherwise
+    private func hasTodayEntry() -> Bool {
+        let container = ModelContainerManager.shared.container
+        let context = ModelContext(container)
+
+        // Use CalendarDate for timezone-agnostic "today" determination
+        let todayString = CalendarDate.today().dateString
+
+        let predicate = #Predicate<DayEntry> { entry in
+            entry.dateString == todayString
+        }
+
+        let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+
+        do {
+            let entries = try context.fetch(descriptor)
+
+            // Check if any entry has content (text or drawing)
+            for entry in entries {
+                let hasText = !entry.body.isEmpty
+                let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
+
+                if hasText || hasDrawing {
+                    return true
+                }
+            }
+
+            return false
+        } catch {
+            print("❌ [ReminderManager] Error checking today's entry: \(error)")
+            return false
+        }
+    }
+
+    /// Refresh the daily reminder - reschedules if needed based on whether user has drawn today
+    /// Call this when app comes to foreground or after saving a drawing
+    func refreshDailyReminderIfNeeded() {
+        guard UserPreferences.shared.isDailyReminderEnabled else { return }
+
+        // Reschedule - this will check if user has already drawn today
+        scheduleDailyReminder(at: UserPreferences.shared.dailyReminderTime)
     }
 
     /// Cancel the daily reminder notification

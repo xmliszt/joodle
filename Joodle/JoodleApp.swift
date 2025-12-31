@@ -59,6 +59,10 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         object: nil,
         userInfo: ["date": Date()]
       )
+      // Reschedule for tomorrow (will check if user draws today before sending)
+      Task { @MainActor in
+        ReminderManager.shared.refreshDailyReminderIfNeeded()
+      }
     } else if let date = DayEntry.stringToLocalDate(identifier) {
       // Anniversary reminder - the identifier is the dateString
       NotificationCenter.default.post(

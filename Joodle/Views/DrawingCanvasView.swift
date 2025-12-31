@@ -501,6 +501,12 @@ struct DrawingCanvasView: View {
     }
 
     try? modelContext.save()
+
+    // If this is today's entry, refresh the daily reminder
+    // (cancels pending notification since user already drew today)
+    if CalendarDate.from(date).isToday {
+      ReminderManager.shared.refreshDailyReminderIfNeeded()
+    }
   }
 
 

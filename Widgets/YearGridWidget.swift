@@ -65,16 +65,19 @@ struct YearGridProvider: TimelineProvider {
     let year = calendar.component(.year, from: now)
 
     guard
-      let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1)),
-      let endOfYear = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1))
+      let startOfYear = calendar.date(from: DateComponents(year: year, month: 1, day: 1))
     else {
       return 0.0
     }
 
-    let totalSeconds = endOfYear.timeIntervalSince(startOfYear)
-    let elapsedSeconds = now.timeIntervalSince(startOfYear)
+    // Get total days in the year
+    let daysInYear = calendar.range(of: .day, in: .year, for: startOfYear)?.count ?? 365
 
-    return (elapsedSeconds / totalSeconds) * 100.0
+    // Get current day of year (1-indexed, so Jan 1 = 1)
+    let currentDayOfYear = calendar.ordinality(of: .day, in: .year, for: now) ?? 1
+
+    // Calculate progress: on the last day (e.g., day 365 of 365), this gives 100%
+    return (Double(currentDayOfYear) / Double(daysInYear)) * 100.0
   }
 
   private func loadEntries() -> [WidgetDayEntry] {

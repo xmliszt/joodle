@@ -514,7 +514,7 @@ struct EntryEditingView: View {
                         Image(systemName: "bell.badge.waveform.fill")
                       }
                     } else {
-                      Image(systemName: "bell.fill")
+                      Image(systemName: "bell")
                     }
                   }
                   .circularGlassButton(tintColor: hasReminder ? .appAccent : nil)
@@ -748,6 +748,12 @@ func saveNote(text: String, for date: Date) {
     }
 
     try? modelContext.save()
+
+    // If this is today's entry and has content, refresh the daily reminder
+    // (cancels pending notification since user already added content today)
+    if !text.isEmpty && CalendarDate.from(date).isToday {
+      ReminderManager.shared.refreshDailyReminderIfNeeded()
+    }
     return
   }
 
@@ -758,6 +764,12 @@ func saveNote(text: String, for date: Date) {
 
   // Save the context to persist changes
   try? modelContext.save()
+
+  // If this is today's entry, refresh the daily reminder
+  // (cancels pending notification since user already added content today)
+  if CalendarDate.from(date).isToday {
+    ReminderManager.shared.refreshDailyReminderIfNeeded()
+  }
 }
 
 private func confirmAndDismiss() {
