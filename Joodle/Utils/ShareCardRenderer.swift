@@ -165,7 +165,7 @@ class ShareCardRenderer {
   func renderYearGridCard(
     style: ShareCardStyle,
     year: Int,
-    percentage: Double,
+    percentage: Double?,
     entries: [ShareCardDayEntry],
     colorScheme: ColorScheme,
     showWatermark: Bool = true
@@ -231,7 +231,7 @@ class ShareCardRenderer {
   private func createYearGridCardView(
     style: ShareCardStyle,
     year: Int,
-    percentage: Double,
+    percentage: Double?,
     entries: [ShareCardDayEntry],
     showWatermark: Bool
   ) -> some View {

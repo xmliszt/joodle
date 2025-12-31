@@ -66,7 +66,7 @@ struct ShareCardDotView: View {
 struct YearGridDotsView: View {
   private let cardStyle: ShareCardStyle = .yearGridDots
   let year: Int
-  let percentage: Double
+  let percentage: Double?
   let entries: [ShareCardDayEntry]
   var showWatermark: Bool = true
 
@@ -156,9 +156,11 @@ struct YearGridDotsView: View {
 
             Spacer()
 
-            Text(String(format: "%.1f%%", percentage))
-              .font(.system(size: fontSize, weight: .semibold))
-              .foregroundColor(.appAccent)
+            if let percentage = percentage {
+              Text(String(format: "%.1f%%", percentage))
+                .font(.system(size: fontSize, weight: .semibold))
+                .foregroundColor(.appAccent)
+            }
           }
           .padding(.horizontal, horizontalPadding)
 

@@ -37,6 +37,21 @@ struct ShareCardSelectorView: View {
   @State private var yearEntries: [ShareCardDayEntry] = []
   @State private var yearPercentage: Double = 0.0
 
+  /// Check if the selected year is the current year
+  private var isCurrentYear: Bool {
+    switch mode {
+    case .yearGrid(let year):
+      return year == Calendar.current.component(.year, from: Date())
+    default:
+      return false
+    }
+  }
+
+  /// Returns the percentage only if it's the current year, otherwise nil
+  private var displayPercentage: Double? {
+    isCurrentYear ? yearPercentage : nil
+  }
+
   /// Check if user is a Joodle Pro subscriber
   private var isJoodlePro: Bool {
     SubscriptionManager.shared.isSubscribed
@@ -319,7 +334,7 @@ struct ShareCardSelectorView: View {
         image = ShareCardRenderer.shared.renderYearGridCard(
           style: style,
           year: year,
-          percentage: yearPercentage,
+          percentage: displayPercentage,
           entries: yearEntries,
           colorScheme: previewColorScheme,
           showWatermark: watermarkSetting
@@ -394,7 +409,7 @@ struct ShareCardSelectorView: View {
         image = ShareCardRenderer.shared.renderYearGridCard(
           style: selectedStyle,
           year: year,
-          percentage: yearPercentage,
+          percentage: displayPercentage,
           entries: yearEntries,
           colorScheme: previewColorScheme,
           showWatermark: watermarkSetting

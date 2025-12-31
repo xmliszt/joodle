@@ -297,7 +297,7 @@ struct EntryEditingView: View {
               }
               .compositingGroup()  // required for destinationOut to work
               .frame(height: 40)
-              .padding(.top, -32)
+              .padding(.top, -40)
               .allowsHitTesting(false)
             }
             .overlay(alignment: .bottom) {
