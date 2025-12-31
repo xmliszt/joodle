@@ -11,6 +11,7 @@ import SwiftUI
 let GRID_HORIZONTAL_PADDING: CGFloat = 40
 let MAX_SCALE: CGFloat = 1.5
 let MAX_SCALE_DISTANCE: CGFloat = 2.5
+let WEEKDAY_LABELS: [String] = ["S", "M", "T", "W", "T", "F", "S"]
 
 struct DateItem: Identifiable, Equatable {
   var id: String
@@ -189,6 +190,28 @@ struct YearGridView: View {
         trailing: GRID_HORIZONTAL_PADDING)
     )
     .frame(maxWidth: .infinity, alignment: .top)
+    .overlay(alignment: .top) {
+      // Weekday labels row - only show in .now mode (7 days per row = calendar week)
+      // Positioned above the grid using negative offset so it doesn't affect layout
+      // Hidden by header space on top, revealed when user pulls down
+      if viewMode == .now {
+        HStack(alignment: .center, spacing: dotsSpacing) {
+          ForEach(0..<7, id: \.self) { index in
+            Color.clear
+              .frame(width: viewMode.dotSize, height: viewMode.dotSize)
+              .overlay {
+                Text(WEEKDAY_LABELS[index])
+                  .font(.system(size: 10, weight: .medium))
+                  .foregroundStyle(.secondary)
+                  .fixedSize()
+              }
+          }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, GRID_HORIZONTAL_PADDING)
+        .offset(y: -(dotsSpacing + 10)) // Position above the first row of dots
+      }
+    }
     .onAppear {
       // Trigger initial animation
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
