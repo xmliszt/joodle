@@ -125,7 +125,8 @@ struct EntryEditingView: View {
   /// Check if reminder exists for current date
   private var hasReminder: Bool {
     guard let date = date else { return false }
-    let dateString = DayEntry.dateToString(date)
+    // Use CalendarDate for timezone-agnostic date string
+    let dateString = CalendarDate.from(date).dateString
     if isMockMode {
       return mockStore?.hasReminder(for: dateString) ?? false
     }
@@ -416,7 +417,7 @@ struct EntryEditingView: View {
       .sheet(isPresented: showReminderSheetBinding ?? $_showReminderSheetInternal) {
         if let date {
           ReminderSheet(
-            dateString: DayEntry.dateToString(date),
+            dateString: CalendarDate.from(date).dateString,
             entryBody: isMockMode ? mockEntry?.body : entry?.body,
             mockStore: mockStore
           )
@@ -536,7 +537,7 @@ struct EntryEditingView: View {
         // Center - Date and weekday/countdown
         VStack(alignment: .center) {
           if let date {
-            Text(DayEntry.formatDateStringForDisplay(DayEntry.dateToString(date)))
+            Text(CalendarDate.from(date).displayStringWithoutYear)
               .font(.headline)
               .foregroundColor(.textColor)
           }
@@ -702,7 +703,8 @@ private func deleteEntry() {
 
   // Remove any associated reminder
   if let date = date {
-    let dateString = DayEntry.dateToString(date)
+    // Use CalendarDate for timezone-agnostic date string
+    let dateString = CalendarDate.from(date).dateString
     reminderManager.removeReminder(for: dateString)
   }
 

@@ -64,9 +64,8 @@ struct OpenNextAnniversaryIntent: AppIntent {
     let container = ModelContainerManager.shared.container
     let context = ModelContext(container)
 
-    let calendar = Calendar.current
-    let today = calendar.startOfDay(for: Date())
-    let todayString = DayEntry.dateToString(today)
+    // Use CalendarDate for timezone-agnostic "today" determination
+    let todayString = CalendarDate.today().dateString
 
     // Fetch all entries with dateString greater than today
     let predicate = #Predicate<DayEntry> { entry in

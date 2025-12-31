@@ -156,7 +156,7 @@ struct ReminderSheet: View {
                 .padding(.horizontal)
             }
             .padding(.top, 20)
-            .navigationTitle(DayEntry.formatDateStringForDisplay(dateString))
+            .navigationTitle(CalendarDate(dateString: dateString)?.displayStringWithoutYear ?? dateString)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -234,11 +234,11 @@ private extension View {
 // MARK: - Preview
 
 #Preview("No Reminder") {
-    ReminderSheet(dateString: DayEntry.dateToString(Date()))
+    ReminderSheet(dateString: CalendarDate.today().dateString)
 }
 
 #Preview("With Entry Body") {
-    ReminderSheet(dateString: DayEntry.dateToString(Date().addingTimeInterval(86400)), entryBody: "Meeting with the team to discuss project updates")
+    ReminderSheet(dateString: CalendarDate.from(Date().addingTimeInterval(86400)).dateString, entryBody: "Meeting with the team to discuss project updates")
 }
 
 #Preview("Mock Mode - Tutorial") {
@@ -247,7 +247,7 @@ private extension View {
 
         var body: some View {
             ReminderSheet(
-                dateString: DayEntry.dateToString(Date().addingTimeInterval(86400)),
+                dateString: CalendarDate.from(Date().addingTimeInterval(86400)).dateString,
                 entryBody: "Test entry for tutorial",
                 mockStore: mockStore
             )

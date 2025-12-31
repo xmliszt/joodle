@@ -175,7 +175,8 @@ struct YearGridJoodlesView: View {
   }
 
   private func getEntryForDate(_ date: Date) -> ShareCardDayEntry? {
-    let dateString = DayEntry.dateToString(date)
+    // Use CalendarDate for timezone-agnostic date string
+    let dateString = CalendarDate.from(date).dateString
     return entriesByDateKey[dateString]
   }
 }
@@ -208,7 +209,8 @@ func createMockYearEntriesWithJoodles(year: Int, entryCount: Int) -> [ShareCardD
 
   for dayOffset in daysWithEntries {
     let date = calendar.date(byAdding: .day, value: dayOffset, to: startOfYear)!
-    let dateString = DayEntry.dateToString(date)
+    // Use CalendarDate for timezone-agnostic date string
+    let dateString = CalendarDate.from(date).dateString
     entries.append(ShareCardDayEntry(
       dateString: dateString,
       date: date,

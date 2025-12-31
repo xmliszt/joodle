@@ -146,6 +146,12 @@ struct CalendarDate: Hashable, Comparable, Codable, Sendable {
     formatter.dateFormat = "d MMMM yyyy"
     return formatter.string(from: displayDate)
   }
+  
+  var displayStringWithoutYear: String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "d MMMM"
+    return formatter.string(from: displayDate)
+  }
 
   /// Get the weekday name for this date (e.g., "Monday")
   var weekdayName: String {

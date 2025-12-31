@@ -161,11 +161,11 @@ class OnboardingViewModel: ObservableObject {
             return
         }
 
-        let today = Date()
-        let todayDateString = DayEntry.dateToString(today)
+        // Use CalendarDate for timezone-agnostic "today" determination
+        let todayCalendarDate = CalendarDate.today()
 
         // Use findOrCreate to get the single entry for this date (merges duplicates if any)
-        let entryToUpdate = DayEntry.findOrCreate(for: today, in: context)
+        let entryToUpdate = DayEntry.findOrCreate(for: todayCalendarDate, in: context)
         let isNewJoodle = entryToUpdate.drawingData == nil || entryToUpdate.drawingData?.isEmpty == true
 
         // If this is a revisit onboarding, check Joodle limits
@@ -204,12 +204,11 @@ class OnboardingViewModel: ObservableObject {
 
         // Update the entry with drawing data
         entryToUpdate.drawingData = data
-        print("OnboardingViewModel: \(isNewJoodle ? "Creating new" : "Updating existing") entry for \(todayDateString)")
 
         // Save immediately
         do {
             try context.save()
-            print("OnboardingViewModel: Drawing saved successfully for \(todayDateString)")
+          print("OnboardingViewModel: Drawing saved successfully for \(todayCalendarDate.dateString)")
         } catch {
             print("OnboardingViewModel: Failed to save drawing: \(error)")
         }

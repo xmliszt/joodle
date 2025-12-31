@@ -477,7 +477,7 @@ struct InteractiveTutorialView: View {
         .sheet(isPresented: $showReminderSheet) {
             if let date = mockStore.selectedDateItem?.date {
                 ReminderSheet(
-                    dateString: DayEntry.dateToString(date),
+                    dateString: CalendarDate.from(date).dateString,
                     entryBody: mockStore.selectedEntry?.body,
                     mockStore: mockStore
                 )

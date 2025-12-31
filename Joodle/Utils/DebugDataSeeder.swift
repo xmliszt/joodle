@@ -149,7 +149,8 @@ final class DebugDataSeeder {
     }
 
     private func createEntryIfNeeded(for date: Date, in context: ModelContext) async -> Bool {
-        let dateString = DayEntry.dateToString(date)
+        // Use CalendarDate for timezone-agnostic date string
+        let dateString = CalendarDate.from(date).dateString
 
         // Delete any existing entry for this date first
         let predicate = #Predicate<DayEntry> { entry in

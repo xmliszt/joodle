@@ -219,8 +219,8 @@ struct YearGridView: View {
 
   /// Find the entry for a given date using pre-built lookup
   private func getEntryForDate(_ date: Date, from lookup: [String: DayEntry]) -> DayEntry? {
-    // Use the timezone-agnostic date string conversion
-    let key = DayEntry.dateToString(date)
+    // Use CalendarDate for timezone-agnostic date string
+    let key = CalendarDate.from(date).dateString
     return lookup[key]
   }
 
