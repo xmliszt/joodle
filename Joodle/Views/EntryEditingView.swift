@@ -37,6 +37,67 @@ struct EntryEditingView: View {
   @State private var _showReminderSheetInternal = false
   @StateObject private var reminderManager = ReminderManager.shared
 
+  /// Track the view's top Y position in global coordinate space for dynamic drawing sizing
+  @State private var topYPosition: CGFloat = 0
+  /// Track the screen height for calculating split ratio
+  @State private var screenHeight: CGFloat = 0
+  /// Track the container width for calculating max drawing size
+  @State private var containerWidth: CGFloat = 0
+
+  /// Calculate dynamic drawing size based on the view's top Y position
+  /// At 0.5 split (top Y at ~50% of screen), use 160x160
+  /// At 0.15 split (top Y at ~15% of screen), use full width
+  private var drawingDisplaySize: CGFloat {
+    let minDrawingSize: CGFloat = 160
+    let padding: CGFloat = 40 // 20 padding on each side
+    let maxDrawingSize = max(minDrawingSize, containerWidth - padding)
+
+    guard screenHeight > 0 else { return 160 }
+
+    // Use absolute Y position thresholds instead of ratio
+    // This accounts for safe area insets and drag handle offset
+    // Compact threshold: when top Y is around half screen height (~420pt on iPhone)
+    // Expanded threshold: when top Y is near top of screen (~150pt to account for safe area + handle)
+    let compactYThreshold: CGFloat = screenHeight * 0.48
+    let expandedYThreshold: CGFloat = screenHeight * 0.18
+
+    if topYPosition >= compactYThreshold {
+      return minDrawingSize
+    } else if topYPosition <= expandedYThreshold {
+      return maxDrawingSize
+    } else {
+      // Linear interpolation between 160 and maxDrawingSize
+      // As topYPosition goes from compactYThreshold to expandedYThreshold, progress goes from 0 to 1
+      let progress = (compactYThreshold - topYPosition) / (compactYThreshold - expandedYThreshold)
+      return minDrawingSize + (maxDrawingSize - minDrawingSize) * progress
+    }
+  }
+  
+  private var textContentHeight: CGFloat {
+    let minHeight: CGFloat = 100
+    let maxHeight = max(minHeight, 180)
+
+    guard screenHeight > 0 else { return minHeight }
+
+    // Use absolute Y position thresholds instead of ratio
+    // This accounts for safe area insets and drag handle offset
+    // Compact threshold: when top Y is around half screen height (~420pt on iPhone)
+    // Expanded threshold: when top Y is near top of screen (~150pt to account for safe area + handle)
+    let compactYThreshold: CGFloat = screenHeight * 0.48
+    let expandedYThreshold: CGFloat = screenHeight * 0.18
+
+    if topYPosition >= compactYThreshold {
+      return minHeight
+    } else if topYPosition <= expandedYThreshold {
+      return maxHeight
+    } else {
+      // Linear interpolation between 160 and maxDrawingSize
+      // As topYPosition goes from compactYThreshold to expandedYThreshold, progress goes from 0 to 1
+      let progress = (compactYThreshold - topYPosition) / (compactYThreshold - expandedYThreshold)
+      return minHeight + (maxHeight - minHeight) * progress
+    }
+  }
+
   /// Computed property that uses binding if provided, otherwise uses internal state
   private var showReminderSheet: Bool {
     get {
@@ -61,14 +122,6 @@ struct EntryEditingView: View {
   private var mockEntry: MockDayEntry? {
     guard let mockStore = mockStore, let date = date else { return nil }
     return mockStore.getEntry(for: date)
-  }
-
-  /// Text content to display - from mock or real entry
-  private var displayTextContent: String {
-    if isMockMode {
-      return mockEntry?.body ?? ""
-    }
-    return textContent
   }
 
   /// Drawing data to display - from mock or real entry
@@ -151,11 +204,11 @@ struct EntryEditingView: View {
                 .lineSpacing(4)
                 .foregroundColor(.textColor)
                 .background(.backgroundColor)
-                .frame(minHeight: 40, maxHeight: 175)
+                .frame(height: textContentHeight)
                 .disableAutocorrection(false)
                 .autocapitalization(.sentences)
                 .focused($isTextFieldFocused)
-              // Nudge to align with placeholder text
+                // Nudge to align with placeholder text
                 .padding(.top, -8)
                 .padding(.horizontal, -5)
                 .onDisappear {
@@ -225,7 +278,7 @@ struct EntryEditingView: View {
               }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, 24)
+            .padding(.bottom, 12)
             // MARK: Overlay gradient
             .overlay(alignment: .top) {
               ZStack {
@@ -244,7 +297,7 @@ struct EntryEditingView: View {
               }
               .compositingGroup()  // required for destinationOut to work
               .frame(height: 40)
-              .padding(.top, -40)
+              .padding(.top, -32)
               .allowsHitTesting(false)
             }
             .overlay(alignment: .bottom) {
@@ -269,7 +322,7 @@ struct EntryEditingView: View {
 
             // Drawing content
             if let drawingData = displayDrawingData, !drawingData.isEmpty {
-              VStack(alignment: .leading, spacing: 8) {
+              VStack(alignment: .center, spacing: 8) {
                 if isMockMode {
                   // In mock mode, create a temporary DayEntry for display
                   let tempEntry = DayEntry(
@@ -279,25 +332,28 @@ struct EntryEditingView: View {
                   )
                   DrawingDisplayView(
                     entry: tempEntry,
-                    displaySize: 200,
+                    displaySize: drawingDisplaySize,
                     animateDrawing: true,
                     animationDuration: 3.0
                   )
-                  .frame(width: 200, height: 200)
+                  .frame(width: drawingDisplaySize, height: drawingDisplaySize)
                   .background(.appSurface)
                   .clipShape(RoundedRectangle(cornerRadius: 20))
+                  .animation(.springFkingSatifying, value: drawingDisplaySize)
                 } else {
                   DrawingDisplayView(
                     entry: entry,
-                    displaySize: 200,
+                    displaySize: drawingDisplaySize,
                     animateDrawing: true,
                     animationDuration: 3.0
                   )
-                  .frame(width: 200, height: 200)
+                  .frame(width: drawingDisplaySize, height: drawingDisplaySize)
                   .background(.appSurface)
                   .clipShape(RoundedRectangle(cornerRadius: 20))
+                  .animation(.springFkingSatifying, value: drawingDisplaySize)
                 }
               }
+              .frame(maxWidth: .infinity)
               .contentShape(Rectangle())
               .onTapGesture {
                 onOpenDrawingCanvas?()
@@ -309,11 +365,23 @@ struct EntryEditingView: View {
           .padding(.vertical, 40)
         }
         .scrollDismissesKeyboard(.never)
-
-        Spacer()
       }
       .padding(20)
-      .background(.backgroundColor)
+      .background(
+        GeometryReader { geometry in
+          Color.backgroundColor
+            .onAppear {
+              let frame = geometry.frame(in: .global)
+              topYPosition = frame.minY
+              screenHeight = UIScreen.main.bounds.height
+              containerWidth = frame.width
+            }
+            .onChange(of: geometry.frame(in: .global)) { _, newFrame in
+              topYPosition = newFrame.minY
+              containerWidth = newFrame.width
+            }
+        }
+      )
       .contentShape(Rectangle()) // Ensure the background is tappable
       .onTapGesture {
         if isTextFieldFocused {

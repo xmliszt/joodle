@@ -54,7 +54,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   /// Any value beyond this will be considered dismissed
   private let DISMISS_POSITION: CGFloat = 0.8
   /// Snap position includes 1.0, which means topView will be occupying the fullscreen
-  @State private var SNAP_POSITIONS: [CGFloat] = [0.5, 0.75, 1.0]
+  @State private var SNAP_POSITIONS: [CGFloat] = [0.15, 0.5, 0.75, 1.0]
   /// Compensate corner radius so it is just a bit smaller than device actual radius
   private let CORNER_RADIUS_COMPENSATION: CGFloat = 5
 
@@ -252,7 +252,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             // Only restore split position if bottom view is still present
             // Otherwise keep it at 1.0 to properly dismiss the bottom view
             splitPosition = hasBottomView ? 0.5 : 1.0
-            SNAP_POSITIONS = [0.5, 0.75, 1.0]
+            SNAP_POSITIONS = [0.15, 0.5, 0.75, 1.0]
             isDraggable = true
           }
           // Keyboard is shown
@@ -260,8 +260,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             isKeyboardVisible = true
             MIN_SPLIT_POSITION = 0
             MAX_SPLIT_POSITION = 0.5
-            splitPosition = 0.25
-            SNAP_POSITIONS = [0.25]
+            splitPosition = 0.15
+            SNAP_POSITIONS = [0.15]
             // Prevent drag
             isDraggable = false
           }
