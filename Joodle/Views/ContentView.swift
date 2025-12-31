@@ -18,9 +18,10 @@ struct ContentView: View {
   @Query private var entries: [DayEntry]
   @StateObject private var subscriptionManager = SubscriptionManager.shared
 
-  @Binding var selectedDateFromWidget: Date?
+  /// Data provider for the grid (abstracts data source for shared JoodleGridInteractionView)
+  @StateObject private var dataProvider = AppDataProvider()
 
-  @State private var selectedDateItem: DateItem?
+  @Binding var selectedDateFromWidget: Date?
 
   // --- GESTURE STATE ---
   // Tracks what the user is currently doing
@@ -29,18 +30,15 @@ struct ContentView: View {
   @State private var highlightedId: String?
   // --- END GESTURE STATE ---
 
-  @State private var isScrollingDisabled = false  // Kept for pinching
-  @State private var viewMode: ViewMode = UserPreferences.shared.defaultViewMode
   @State private var yearGridViewSize: CGSize = .zero
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
 
-  @State private var selectedYear = Calendar.current.component(.year, from: Date())
   @State private var navigateToSettings = false
   @State private var hideDynamicIslandView = false
   private let headerHeight: CGFloat = 100.0
 
-  // Hit testing optimization
+  // Hit testing optimization (O(1) lookup)
   @State private var hitTestingGrid: [[String?]] = []
   @State private var gridMetrics: GridMetrics?
 
@@ -58,23 +56,8 @@ struct ContentView: View {
 
   // MARK: Computed
 
-  /// Flattened array of items to be displayed in the year grid.
-  private var itemsInYear: [DateItem] {
-    let calendar = Calendar.current
-    let startOfYear = calendar.date(from: DateComponents(year: selectedYear, month: 1, day: 1))!
-    let daysCount = daysInYear
-
-    return (0..<daysCount).map { dayOffset in
-      let date = calendar.date(byAdding: .day, value: dayOffset, to: startOfYear)!
-      return DateItem(
-        id: "\(Int(date.timeIntervalSince1970))",
-        date: date
-      )
-    }
-  }
-
   private var currentHighlightedItem: DateItem? {
-    highlightedId.flatMap { getItem(from: $0) }
+    highlightedId.flatMap { dataProvider.getItem(from: $0) }
   }
 
   private var currentHighlightedEntry: DayEntry? {
@@ -86,21 +69,18 @@ struct ContentView: View {
 
   /// Compute selectedEntry on-the-fly to avoid binding propagation issues
   private var selectedEntry: DayEntry? {
-    guard let date = selectedDateItem?.date else { return nil }
+    guard let date = dataProvider.selectedDateItem?.date else { return nil }
     let candidates = entries.filter { $0.matches(date: date) }
     return candidates.first(where: { ($0.drawingData?.isEmpty == false) || !$0.body.isEmpty }) ?? candidates.first
   }
 
   private var isBottomViewVisible: Bool {
-    selectedDateItem != nil
+    dataProvider.selectedDateItem != nil
   }
 
   var body: some View {
     ZStack {
       GeometryReader { geometry in
-        // Calculate spacing for the grid based on geometry values
-        let itemsSpacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: viewMode)
-
         ZStack(alignment: .top) {
           ResizableSplitView(
             top: {
@@ -124,70 +104,33 @@ struct ContentView: View {
                       .frame(height: headerHeight)
                       .id("topSpacer")
 
-                    YearGridView(
-                      year: selectedYear,
-                      viewMode: viewMode,
-                      dotsSpacing: itemsSpacing,
-                      items: itemsInYear,
-                      entries: entries,
-                      highlightedItemId: isScrubbing ? highlightedId : nil,
-                      selectedItemId: selectedDateItem?.id
+                    // Use shared JoodleGridInteractionView with optimized hit testing
+                    JoodleGridInteractionView(
+                      dataProvider: dataProvider,
+                      additionalEntries: entries,
+                      geometry: geometry,
+                      isScrubbing: $isScrubbing,
+                      highlightedId: highlightedId,
+                      callbacks: createGridCallbacks(geometry: geometry, scrollProxy: scrollProxy),
+                      minimumPressDuration: 0.1,
+                      allowsHitTesting: true,
+                      overlayContent: nil,
+                      customHitTestFunction: { location in
+                        getItemId(at: location, for: geometry)
+                      }
                     )
-                    .overlay(
-                      LongPressScrubRecognizer(
-                        isScrubbing: $isScrubbing,
-                        minimumPressDuration: 0.1,
-                        allowableMovement: 20,
-                        onBegan: { location in
-                          // Called when long press threshold is reached
-                          // convert location to SwiftUI geometry coords if needed
-                          highlightedId = nil
-                          isScrubbing = true  // if you want to keep using GestureState, you may need to change to @State
-                          // Deselect any currently selected item
-                          selectedDateItem = nil
-                          // play haptic and compute the initial highlightedId
-                          let newId = getItemId(at: location, for: geometry)
-                          if highlightedId == nil { Haptic.play(with: .medium) }
-                          highlightedId = newId
-                        },
-                        onChanged: { location in
-                          // Finger moved while long-press is active
-                          let newId = getItemId(at: location, for: geometry)
-                          if newId != highlightedId { Haptic.play() }
-                          highlightedId = newId
-                        },
-                        onEnded: { location in
-                          // Long-press ended -> finalize selection
-                          if let highlightedId, let item = getItem(from: highlightedId) {
-                            selectDateItem(item: item, scrollProxy: scrollProxy)
-                          }
-                          highlightedId = nil
-                          isScrubbing = false
-                        }
-                      )
-                      .allowsHitTesting(true)
-                    )
-                    .onTapGesture { location in
-                      // If scrubbing was active, ignore this (scrub handles selection on end)
-                      if isScrubbing { return }
-                      guard let itemId = getItemId(at: location, for: geometry),
-                            let item = getItem(from: itemId)
-                      else { return }
-                      selectDateItem(item: item, scrollProxy: scrollProxy)
-                      Haptic.play()
-                    }
                     .simultaneousGesture(
                       MagnificationGesture()
                         .onChanged { handlePinchChanged(value: $0) }
                         .onEnded { handlePinchEnded(value: $0) }
                     )
                   }
-                  // When view mode change, rebuild hit testing grid
-                  .onChange(of: viewMode) {
+                  // When view mode changes, rebuild hit testing grid
+                  .onChange(of: dataProvider.viewMode) {
                     hitTestingGrid = []  // Clear grid to trigger rebuild
                     gridMetrics = nil
 
-                    if let selectedDateItem {
+                    if let selectedDateItem = dataProvider.selectedDateItem {
                       // Delay scroll to allow grid animation to complete
                       DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                         scrollToRelevantDate(
@@ -199,14 +142,13 @@ struct ContentView: View {
                         scrollToTodayOrTop(scrollProxy: scrollProxy)
                       }
                     }
-
                   }
                   // When year changes, scroll to relevant date and rebuild hit testing grid
-                  .onChange(of: selectedYear) {
+                  .onChange(of: dataProvider.selectedYear) {
                     hitTestingGrid = []  // Clear grid to trigger rebuild
                     gridMetrics = nil
                     // Deselect any selected date item
-                    selectedDateItem = nil
+                    dataProvider.clearSelection()
 
                     DispatchQueue.main.async {
                       scrollToTodayOrTop(scrollProxy: scrollProxy)
@@ -222,9 +164,9 @@ struct ContentView: View {
 
                       // Auto-select today on launch
                       let currentYear = Calendar.current.component(.year, from: Date())
-                      if selectedYear == currentYear {
-                        let targetId = getRelevantDateId(date: Date())
-                        if let item = getItem(from: targetId) {
+                      if dataProvider.selectedYear == currentYear {
+                        let targetId = dataProvider.getRelevantDateId(for: Date())
+                        if let item = dataProvider.getItem(from: targetId) {
                           selectDateItem(item: item, scrollProxy: scrollProxy)
                         }
                       }
@@ -239,13 +181,13 @@ struct ContentView: View {
             },
             bottom: {
               EntryEditingView(
-                date: selectedDateItem?.date,
+                date: dataProvider.selectedDateItem?.date,
                 onOpenDrawingCanvas: {
                   Haptic.play()
                   showDrawingCanvas = true
                 },
                 onFocusChange: { isFocused in
-                  guard isFocused, let selectedDateItem, let scrollProxy else { return }
+                  guard isFocused, let selectedDateItem = dataProvider.selectedDateItem, let scrollProxy else { return }
 
                   DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     scrollToRelevantDate(
@@ -253,21 +195,21 @@ struct ContentView: View {
                   }
                 }
               )
-            }, hasBottomView: selectedDateItem != nil,
+            }, hasBottomView: dataProvider.selectedDateItem != nil,
             onBottomDismissed: {
-              selectedDateItem = nil
+              dataProvider.clearSelection()
             },
             onTopViewHeightChange: { newHeight in
               yearGridViewSize.height = newHeight
               // Scroll after height change is complete, only do so if there is item selected.
-              guard let selectedDateItem, let scrollProxy else { return }
+              guard let selectedDateItem = dataProvider.selectedDateItem, let scrollProxy else { return }
               DispatchQueue.main.async {
                 scrollToRelevantDate(
                   itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
               }
             }
           )
-          .frame(alignment: .top)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
           .ignoresSafeArea(.container, edges: .bottom)
 
           // Floating header with blur backdrop
@@ -275,9 +217,12 @@ struct ContentView: View {
             highlightedEntry: currentHighlightedEntry,
             geometry: geometry,
             highlightedItem: currentHighlightedItem,
-            selectedYear: $selectedYear,
-            viewMode: viewMode,
-            onToggleViewMode: { toggleViewMode(to: viewMode == .now ? .year : .now) },
+            selectedYear: Binding(
+              get: { dataProvider.selectedYear },
+              set: { dataProvider.selectedYear = $0 }
+            ),
+            viewMode: dataProvider.viewMode,
+            onToggleViewMode: { toggleViewMode(to: dataProvider.viewMode == .now ? .year : .now) },
             onSettingsAction: {
               UIApplication.shared.hideKeyboard()
               navigateToSettings = true
@@ -295,7 +240,7 @@ struct ContentView: View {
         )
       ) {
         DrawingCanvasView(
-          date: selectedDateItem!.date,
+          date: dataProvider.selectedDateItem!.date,
           entry: selectedEntry,
           onDismiss: {
             showDrawingCanvas = false
@@ -303,7 +248,7 @@ struct ContentView: View {
           isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland
         )
         .padding(.top, 32)
-        .disabled(selectedDateItem == nil)
+        .disabled(dataProvider.selectedDateItem == nil)
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(UIDevice.screenCornerRadius)
@@ -328,12 +273,12 @@ struct ContentView: View {
       }
 
       // Dynamic island drawing canvas view
-      if UIDevice.hasDynamicIsland && selectedDateItem != nil {
+      if UIDevice.hasDynamicIsland && dataProvider.selectedDateItem != nil {
         DynamicIslandExpandedView(
           isExpanded: $showDrawingCanvas,
           content: {
             DrawingCanvasView(
-              date: selectedDateItem!.date,
+              date: dataProvider.selectedDateItem!.date,
               entry: selectedEntry,
               onDismiss: {
                 showDrawingCanvas = false
@@ -347,7 +292,7 @@ struct ContentView: View {
             showDrawingCanvas = false
           }
         )
-        .id("DynamicIslandExpandedView-\(selectedDateItem?.id ?? "none")")
+        .id("DynamicIslandExpandedView-\(dataProvider.selectedDateItem?.id ?? "none")")
       }
     }
     .alert("Subscription Ended", isPresented: $subscriptionManager.subscriptionJustExpired) {
@@ -388,9 +333,9 @@ struct ContentView: View {
       // Update selected year if needed
       let calendar = Calendar.current
       let year = calendar.component(.year, from: date)
-      let yearChanged = year != selectedYear
+      let yearChanged = year != dataProvider.selectedYear
       if yearChanged {
-        selectedYear = year
+        dataProvider.selectedYear = year
       }
 
       // Calculate item ID directly from date (ID = timestamp of start of day)
@@ -402,31 +347,52 @@ struct ContentView: View {
       // Use longer delay if year changed to allow view to re-render with new items
       let delay = yearChanged ? 0.3 : 0.1
       DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-        selectedDateItem = dateItem
+        dataProvider.selectDateItem(dateItem)
         scrollToRelevantDate(itemId: dateItem.id, scrollProxy: scrollProxy, anchor: .center)
       }
     }
   }
 
-  /// Number of days in the selected year
-  private var daysInYear: Int {
-    let calendar = Calendar.current
-    let startOfYear = calendar.date(from: DateComponents(year: selectedYear, month: 1, day: 1))!
-    let startOfNextYear = calendar.date(
-      from: DateComponents(year: selectedYear + 1, month: 1, day: 1))!
-    return calendar.dateComponents([.day], from: startOfYear, to: startOfNextYear).day!
+  // MARK: - Grid Interaction Callbacks
+
+  /// Create callbacks for JoodleGridInteractionView
+  private func createGridCallbacks(geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> GridInteractionCallbacks {
+    GridInteractionCallbacks(
+      onScrubbingBegan: { location in
+        highlightedId = nil
+        isScrubbing = true
+        dataProvider.clearSelection()
+
+        let newId = getItemId(at: location, for: geometry)
+        if highlightedId == nil { Haptic.play(with: .medium) }
+        highlightedId = newId
+      },
+      onScrubbingChanged: { location in
+        let newId = getItemId(at: location, for: geometry)
+        if newId != highlightedId { Haptic.play() }
+        highlightedId = newId
+      },
+      onScrubbingEnded: { _ in
+        if let highlightedId, let item = dataProvider.getItem(from: highlightedId) {
+          selectDateItem(item: item, scrollProxy: scrollProxy)
+        }
+        highlightedId = nil
+        isScrubbing = false
+      },
+      onTap: { location in
+        if isScrubbing { return }
+        guard let itemId = getItemId(at: location, for: geometry),
+              let item = dataProvider.getItem(from: itemId)
+        else { return }
+        selectDateItem(item: item, scrollProxy: scrollProxy)
+        Haptic.play()
+      }
+    )
   }
 
   /// Calculate spacing between dots based on view mode
   private func calculateSpacing(containerWidth: CGFloat, viewMode: ViewMode) -> CGFloat {
-    let gridWidth = containerWidth - (2 * GRID_HORIZONTAL_PADDING)
-    let totalDotsWidth = viewMode.dotSize * CGFloat(viewMode.dotsPerRow)
-    let availableSpace = gridWidth - totalDotsWidth
-    let spacing = availableSpace / CGFloat(viewMode.dotsPerRow - 1)
-
-    // Apply minimum spacing based on view mode
-    let minimumSpacing: CGFloat = viewMode == .now ? 4 : 2
-    return max(minimumSpacing, spacing)
+    CalendarGridHelper.calculateSpacing(containerWidth: containerWidth, viewMode: viewMode)
   }
 
   // MARK: User interactions
@@ -444,16 +410,17 @@ struct ContentView: View {
     highlightedId = nil
 
     // Pinch in: switch from "now" to "year" mode
-    if value < scaleThreshold && viewMode == .now {
+    if value < scaleThreshold && dataProvider.viewMode == .now {
       toggleViewMode(to: .year)
     }
     // Pinch out: switch from "year" to "now" mode
-    else if value > expandThreshold && viewMode == .year {
+    else if value > expandThreshold && dataProvider.viewMode == .year {
       toggleViewMode(to: .now)
     }
   }
 
-  // MARK: Utils
+  // MARK: - Hit Testing (O(1) Optimized)
+
   /// Get the item id for a particular CGPoint location using pre-calculated hit testing grid
   private func getItemId(at location: CGPoint, for geometry: GeometryProxy) -> String? {
     // Use fast O(1) lookup if grid is built
@@ -478,8 +445,8 @@ struct ContentView: View {
 
     // Account for dot centering - dots are positioned with their centers, so we need to
     // adjust hit testing to match. We need half spacing + half dot size + adjusted Y position
-    let spacing = calculateSpacing(containerWidth: yearGridViewSize.width, viewMode: viewMode)
-    let centeredY = adjustedY + (spacing / 2) + (viewMode.dotSize / 2)
+    let spacing = calculateSpacing(containerWidth: yearGridViewSize.width, viewMode: dataProvider.viewMode)
+    let centeredY = adjustedY + (spacing / 2) + (dataProvider.viewMode.dotSize / 2)
     let row = max(0, Int(floor(centeredY / metrics.rowHeight)))
     let col = max(0, Int(floor(adjustedX / metrics.colWidth)))
 
@@ -492,13 +459,13 @@ struct ContentView: View {
 
   /// Build hit testing grid for fast lookups
   private func buildHitTestingGrid(for geometry: GeometryProxy) {
-    let spacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: viewMode)
+    let spacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: dataProvider.viewMode)
     let containerWidth = geometry.size.width - (2 * GRID_HORIZONTAL_PADDING)
-    let totalSpacingWidth = CGFloat(viewMode.dotsPerRow - 1) * spacing
+    let totalSpacingWidth = CGFloat(dataProvider.viewMode.dotsPerRow - 1) * spacing
     let totalDotWidth = containerWidth - totalSpacingWidth
-    let itemSpacing = totalDotWidth / CGFloat(viewMode.dotsPerRow)
+    let itemSpacing = totalDotWidth / CGFloat(dataProvider.viewMode.dotsPerRow)
 
-    let rowHeight = viewMode.dotSize + spacing
+    let rowHeight = dataProvider.viewMode.dotSize + spacing
     let colWidth = itemSpacing + spacing
     let startX = itemSpacing / 2
 
@@ -511,79 +478,45 @@ struct ContentView: View {
       offsetY: 0  // No additional Y offset needed since we account for header in adjustTouchLocationForGrid
     )
 
-    // Calculate leading empty slots for calendar week alignment (only in .now mode)
-    let leadingOffset = viewMode == .now ? CalendarGridHelper.leadingEmptySlots(for: selectedYear) : 0
-    let totalVirtualItems = leadingOffset + itemsInYear.count
-
     // Build 2D grid accounting for leading empty slots
-    let numberOfRows = (totalVirtualItems + viewMode.dotsPerRow - 1) / viewMode.dotsPerRow
+    let numberOfRows = CalendarGridHelper.totalRows(
+      forItemCount: dataProvider.itemsInYear.count,
+      viewMode: dataProvider.viewMode,
+      year: dataProvider.selectedYear
+    )
     hitTestingGrid = Array(
-      repeating: Array(repeating: nil, count: viewMode.dotsPerRow), count: numberOfRows)
+      repeating: Array(repeating: nil, count: dataProvider.viewMode.dotsPerRow), count: numberOfRows)
 
-    for (index, item) in itemsInYear.enumerated() {
-      // Offset the index by leading empty slots to place items in correct grid positions
-      let virtualIndex = index + leadingOffset
-      let row = virtualIndex / viewMode.dotsPerRow
-      let col = virtualIndex % viewMode.dotsPerRow
+    for (index, item) in dataProvider.itemsInYear.enumerated() {
+      // Use CalendarGridHelper for grid position (accounts for leading empty slots)
+      let (row, col) = CalendarGridHelper.gridPosition(
+        forItemIndex: index,
+        viewMode: dataProvider.viewMode,
+        year: dataProvider.selectedYear
+      )
       hitTestingGrid[row][col] = item.id
     }
   }
 
   /// Legacy hit testing method (fallback)
   private func getItemIdLegacy(at location: CGPoint, for geometry: GeometryProxy) -> String? {
-    let gridWidth = geometry.size.width
-    let spacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: viewMode)
     let adjustedLocation = adjustTouchLocationForGrid(location)
-    let adjustedX = adjustedLocation.x
-    // Account for dot centering in legacy method too - half spacing + half dot size + adjusted Y
-    let adjustedY = adjustedLocation.y + (spacing / 2) + (viewMode.dotSize / 2)
 
-    let containerWidth = gridWidth - (2 * GRID_HORIZONTAL_PADDING)
-    let totalSpacingWidth = CGFloat(viewMode.dotsPerRow - 1) * spacing
-    let totalDotWidth = containerWidth - totalSpacingWidth
-    let itemSpacing = totalDotWidth / CGFloat(viewMode.dotsPerRow)
-    let startX = itemSpacing / 2
-
-    let rowHeight = viewMode.dotSize + spacing
-    let row = max(0, Int(floor(adjustedY / rowHeight)))
-
-    var closestCol = 0
-    var minDistance = CGFloat.greatestFiniteMagnitude
-
-    for col in 0..<viewMode.dotsPerRow {
-      let xPos = startX + CGFloat(col) * (itemSpacing + spacing)
-      let distance = abs(adjustedX - xPos)
-      if distance < minDistance {
-        minDistance = distance
-        closestCol = col
-      }
-    }
-
-    let col = max(0, min(viewMode.dotsPerRow - 1, closestCol))
-
-    // Calculate virtual index accounting for leading empty slots
-    let leadingOffset = viewMode == .now ? CalendarGridHelper.leadingEmptySlots(for: selectedYear) : 0
-    let virtualIndex = row * viewMode.dotsPerRow + col
-
-    // Convert virtual index to actual item index by subtracting leading offset
-    let itemIndex = virtualIndex - leadingOffset
-
-    // Check bounds: virtualIndex could be in leading empty slots (negative itemIndex)
-    // or past the end of actual items
-    guard itemIndex >= 0, itemIndex < itemsInYear.count else { return nil }
-
-    let item = itemsInYear[itemIndex]
-    return item.id
-  }
-
-  private func getItem(from itemId: String) -> DateItem? {
-    return itemsInYear.first { $0.id == itemId }
+    // Use CalendarGridHelper for hit testing (handles all grid math and calendar alignment)
+    return CalendarGridHelper.itemId(
+      at: adjustedLocation,
+      containerWidth: geometry.size.width,
+      viewMode: dataProvider.viewMode,
+      year: dataProvider.selectedYear,
+      items: dataProvider.itemsInYear,
+      horizontalPaddingAdjustment: false  // Already adjusted by adjustTouchLocationForGrid
+    )
   }
 
   private func selectDateItem(item: DateItem, scrollProxy: ScrollViewProxy) {
     // Don't create entry here - only create when user actually saves content
     // This prevents empty entries from being created just by selecting a date
-    selectedDateItem = item
+    dataProvider.selectDateItem(item)
     scrollToRelevantDate(itemId: item.id, scrollProxy: scrollProxy)
   }
 
@@ -591,7 +524,7 @@ struct ContentView: View {
   private func toggleViewMode(to newViewMode: ViewMode) {
     // Use a spring animation for morphing effect
     withAnimation(.springFkingSatifying) {
-      viewMode = newViewMode
+      dataProvider.toggleViewMode(to: newViewMode)
     }
   }
 
@@ -610,41 +543,18 @@ struct ContentView: View {
     let currentYear = Calendar.current.component(.year, from: Date())
 
     withAnimation(.springFkingSatifying) {
-      if selectedYear != currentYear {
+      if dataProvider.selectedYear != currentYear {
         // For non-current years, scroll to the top spacer to show first row properly
         scrollProxy.scrollTo("topSpacer", anchor: .top)
       } else {
-        let targetId = getRelevantDateId(date: Date())
+        let targetId = dataProvider.getRelevantDateId(for: Date())
         scrollProxy.scrollTo(targetId, anchor: .center)
       }
     }
   }
 
-  private func getDateFromId(_ id: String) -> Date {
-    guard let item = itemsInYear.first(where: { $0.id == id }) else {
-      fatalError("Invalid item ID: \(id)")
-    }
-    return item.date
-  }
-
   private func getFormattedDate(_ date: Date) -> String {
     return date.formatted(date: .abbreviated, time: .omitted)
-  }
-
-  /// Get the item ID for the most relevant date (today if in selected year, otherwise first day of year)
-  private func getRelevantDateId(date: Date) -> String {
-    let calendar = Calendar.current
-    let currentYear = calendar.component(.year, from: date)
-
-    // If we're viewing the current year, try to scroll to today
-    if selectedYear == currentYear {
-      if let dateItem = itemsInYear.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
-        return dateItem.id
-      }
-    }
-
-    // Otherwise, scroll to the first day of the selected year
-    return itemsInYear.first?.id ?? ""
   }
 
   /// Adjusts the touch location from the parent coordinate system to the grid's coordinate system

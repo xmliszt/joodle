@@ -336,60 +336,18 @@ struct InteractiveTutorialView: View {
                             VStack(spacing: 0) {
                                 Spacer().frame(height: 100)
 
-                                YearGridView(
-                                    year: mockStore.selectedYear,
-                                    viewMode: mockStore.viewMode,
-                                    dotsSpacing: itemsSpacing,
-                                    items: mockStore.itemsInYear,
-                                    entries: mockEntriesToDayEntries(),
-                                    highlightedItemId: isScrubbing ? highlightedId : nil,
-                                    selectedItemId: mockStore.selectedDateItem?.id
-                                )
-                                // Scrubbing gesture - overlay on YearGridView so location is relative to grid
-                                .overlay(
-                                    LongPressScrubRecognizer(
-                                        isScrubbing: $isScrubbing,
-                                        minimumPressDuration: 0.2,
-                                        allowableMovement: 20,
-                                        onBegan: { location in
-                                            highlightedId = nil
-                                            isScrubbing = true
-                                            coordinator.isUserScrubbing = true  // Hide highlight overlay
-                                            mockStore.clearSelection()
-                                            let newId = getItemId(at: location, geometry: geometry)
-                                            if highlightedId == nil { Haptic.play(with: .medium) }
-                                            highlightedId = newId
-                                        },
-                                        onChanged: { location in
-                                            let newId = getItemId(at: location, geometry: geometry)
-                                            if newId != highlightedId { Haptic.play() }
-                                            highlightedId = newId
-                                        },
-                                        onEnded: { location in
-                                            if let highlightedId, let item = getItem(from: highlightedId) {
-                                                mockStore.selectDate(item.date)
-                                            }
-                                            highlightedId = nil
-                                            isScrubbing = false
-                                            coordinator.isUserScrubbing = false  // Show highlight overlay again (if still on scrubbing step)
-                                        }
+                                // Use shared JoodleGridInteractionView for gesture handling
+                                JoodleGridInteractionView(
+                                    dataProvider: mockStore,
+                                    geometry: geometry,
+                                    isScrubbing: $isScrubbing,
+                                    highlightedId: highlightedId,
+                                    callbacks: createGridCallbacks(geometry: geometry),
+                                    minimumPressDuration: 0.2,
+                                    allowsHitTesting: true,
+                                    overlayContent: AnyView(
+                                        todayEntryAnchorOverlay(geometry: geometry, itemsSpacing: itemsSpacing)
                                     )
-                                    .allowsHitTesting(true)
-                                )
-                                // Tap gesture - allow taps to pass through when not scrubbing
-                                .onTapGesture { location in
-                                    handleGridTap(at: location, geometry: geometry)
-                                }
-                                // Pinch gesture
-                                .simultaneousGesture(
-                                    MagnificationGesture()
-                                        .onEnded { value in
-                                            handlePinchGesture(value: value)
-                                        }
-                                )
-                                // Register highlight anchor for today's entry
-                                .overlay(
-                                    todayEntryAnchorOverlay(geometry: geometry, itemsSpacing: itemsSpacing)
                                 )
 
                                 // Scroll anchor for today's entry - must be direct child of ScrollView content
@@ -491,14 +449,13 @@ struct InteractiveTutorialView: View {
     private func todayEntryAnchorOverlay(geometry: GeometryProxy, itemsSpacing: CGFloat) -> some View {
         let todayIndex = getTodayIndex()
         let dotSize = mockStore.viewMode.dotSize
-        let dotsPerRow = mockStore.viewMode.dotsPerRow
 
-        // Account for leading empty slots in calendar week alignment
-        let leadingOffset = mockStore.viewMode == .now ? CalendarGridHelper.leadingEmptySlots(for: mockStore.selectedYear) : 0
-        let virtualIndex = todayIndex + leadingOffset
-
-        let row = virtualIndex / dotsPerRow
-        let col = virtualIndex % dotsPerRow
+        // Use CalendarGridHelper for grid position calculation (accounts for leading empty slots)
+        let (row, col) = CalendarGridHelper.gridPosition(
+            forItemIndex: todayIndex,
+            viewMode: mockStore.viewMode,
+            year: mockStore.selectedYear
+        )
       let x = GRID_HORIZONTAL_PADDING + CGFloat(col) * (dotSize + itemsSpacing) - dotSize * 1.5
       let y = CGFloat(row) * (dotSize + itemsSpacing) - dotSize * 1.5
 
@@ -523,15 +480,18 @@ struct InteractiveTutorialView: View {
     private func calculateTodayEntryOffset(itemsSpacing: CGFloat) -> CGFloat {
         let todayIndex = getTodayIndex()
         let dotSize = mockStore.viewMode.dotSize
-        let dotsPerRow = mockStore.viewMode.dotsPerRow
 
-        // Account for leading empty slots in calendar week alignment
-        let leadingOffset = mockStore.viewMode == .now ? CalendarGridHelper.leadingEmptySlots(for: mockStore.selectedYear) : 0
-        let virtualIndex = todayIndex + leadingOffset
-        let totalVirtualItems = leadingOffset + mockStore.itemsInYear.count
-
-        let row = virtualIndex / dotsPerRow
-        let totalRows = (totalVirtualItems + dotsPerRow - 1) / dotsPerRow
+        // Use CalendarGridHelper for grid position calculation (accounts for leading empty slots)
+        let (row, _) = CalendarGridHelper.gridPosition(
+            forItemIndex: todayIndex,
+            viewMode: mockStore.viewMode,
+            year: mockStore.selectedYear
+        )
+        let totalRows = CalendarGridHelper.totalRows(
+            forItemCount: mockStore.itemsInYear.count,
+            viewMode: mockStore.viewMode,
+            year: mockStore.selectedYear
+        )
 
         // Calculate distance from today's row to bottom
         let rowsFromBottom = totalRows - row - 1
@@ -793,12 +753,45 @@ struct InteractiveTutorialView: View {
 
     private func handleGridTap(at location: CGPoint, geometry: GeometryProxy) {
         if isScrubbing { return }
-
         guard let itemId = getItemId(at: location, geometry: geometry),
               let item = getItem(from: itemId) else { return }
 
         mockStore.selectDate(item.date)
         Haptic.play()
+    }
+
+    /// Create grid interaction callbacks for JoodleGridInteractionView
+    private func createGridCallbacks(geometry: GeometryProxy) -> GridInteractionCallbacks {
+        GridInteractionCallbacks(
+            onScrubbingBegan: { location in
+                highlightedId = nil
+                isScrubbing = true
+                coordinator.isUserScrubbing = true  // Hide highlight overlay
+                mockStore.clearSelection()
+                let newId = getItemId(at: location, geometry: geometry)
+                if highlightedId == nil { Haptic.play(with: .medium) }
+                highlightedId = newId
+            },
+            onScrubbingChanged: { location in
+                let newId = getItemId(at: location, geometry: geometry)
+                if newId != highlightedId { Haptic.play() }
+                highlightedId = newId
+            },
+            onScrubbingEnded: { location in
+                if let highlightedId, let item = getItem(from: highlightedId) {
+                    mockStore.selectDate(item.date)
+                }
+                highlightedId = nil
+                isScrubbing = false
+                coordinator.isUserScrubbing = false  // Show highlight overlay again
+            },
+            onTap: { location in
+                handleGridTap(at: location, geometry: geometry)
+            },
+            onPinchEnded: { value in
+                handlePinchGesture(value: value)
+            }
+        )
     }
 
     private func handlePinchGesture(value: MagnificationGesture.Value) {
@@ -822,60 +815,20 @@ struct InteractiveTutorialView: View {
     // MARK: - Helper Methods
 
     private func calculateSpacing(containerWidth: CGFloat, viewMode: ViewMode) -> CGFloat {
-        let gridWidth = containerWidth - (2 * GRID_HORIZONTAL_PADDING)
-        let totalDotsWidth = viewMode.dotSize * CGFloat(viewMode.dotsPerRow)
-        let availableSpace = gridWidth - totalDotsWidth
-        let spacing = availableSpace / CGFloat(viewMode.dotsPerRow - 1)
-        let minimumSpacing: CGFloat = viewMode == .now ? 4 : 2
-        return max(minimumSpacing, spacing)
+        CalendarGridHelper.calculateSpacing(containerWidth: containerWidth, viewMode: viewMode)
     }
 
     /// Get item ID at a location - matches ContentView's implementation
     /// Location is relative to YearGridView (from LongPressScrubRecognizer overlay)
     private func getItemId(at location: CGPoint, geometry: GeometryProxy) -> String? {
-        let gridWidth = geometry.size.width
-        let spacing = calculateSpacing(containerWidth: gridWidth, viewMode: mockStore.viewMode)
-
-        // Adjust for horizontal padding (location is relative to YearGridView which has padding)
-        let adjustedX = location.x - GRID_HORIZONTAL_PADDING
-        // Account for dot centering: half spacing + half dot size
-        let adjustedY = location.y + (spacing / 2) + (mockStore.viewMode.dotSize / 2)
-
-        let containerWidth = gridWidth - (2 * GRID_HORIZONTAL_PADDING)
-        let totalSpacingWidth = CGFloat(mockStore.viewMode.dotsPerRow - 1) * spacing
-        let totalDotWidth = containerWidth - totalSpacingWidth
-        let itemSpacing = totalDotWidth / CGFloat(mockStore.viewMode.dotsPerRow)
-        let startX = itemSpacing / 2
-
-        let rowHeight = mockStore.viewMode.dotSize + spacing
-        let row = max(0, Int(floor(adjustedY / rowHeight)))
-
-        // Find closest column by distance (same as ContentView legacy method)
-        var closestCol = 0
-        var minDistance = CGFloat.greatestFiniteMagnitude
-
-        for col in 0..<mockStore.viewMode.dotsPerRow {
-            let xPos = startX + CGFloat(col) * (itemSpacing + spacing)
-            let distance = abs(adjustedX - xPos)
-            if distance < minDistance {
-                minDistance = distance
-                closestCol = col
-            }
-        }
-
-        let col = max(0, min(mockStore.viewMode.dotsPerRow - 1, closestCol))
-
-        // Calculate virtual index accounting for leading empty slots (calendar week alignment)
-        let leadingOffset = mockStore.viewMode == .now ? CalendarGridHelper.leadingEmptySlots(for: mockStore.selectedYear) : 0
-        let virtualIndex = row * mockStore.viewMode.dotsPerRow + col
-
-        // Convert virtual index to actual item index by subtracting leading offset
-        let itemIndex = virtualIndex - leadingOffset
-
-        // Check bounds: virtualIndex could be in leading empty slots (negative itemIndex)
-        // or past the end of actual items
-        guard itemIndex >= 0, itemIndex < mockStore.itemsInYear.count else { return nil }
-        return mockStore.itemsInYear[itemIndex].id
+        CalendarGridHelper.itemId(
+            at: location,
+            containerWidth: geometry.size.width,
+            viewMode: mockStore.viewMode,
+            year: mockStore.selectedYear,
+            items: mockStore.itemsInYear,
+            horizontalPaddingAdjustment: true
+        )
     }
 
     private func getItem(from itemId: String) -> DateItem? {
