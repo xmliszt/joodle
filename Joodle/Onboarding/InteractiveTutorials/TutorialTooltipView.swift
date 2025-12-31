@@ -176,7 +176,7 @@ struct TooltipBubble: View {
 
         TutorialTooltipView(
             tooltip: TutorialTooltip(
-                message: "Tap to set an anniversary reminder for this future date",
+                message: "Tap to set an anniversary alarm for this future date",
                 position: .above
             ),
             highlightFrame: CGRect(x: 171, y: 575, width: 50, height: 50),

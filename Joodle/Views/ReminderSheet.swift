@@ -84,7 +84,7 @@ struct ReminderSheet: View {
         NavigationStack {
             VStack(spacing: 32) {
                 // Time picker
-                DatePicker("Reminder Time", selection: $selectedTime, displayedComponents: .hourAndMinute)
+                DatePicker("Anniversary Alarm Time", selection: $selectedTime, displayedComponents: .hourAndMinute)
                     .datePickerStyle(.wheel)
                     .labelsHidden()
                     .frame(height: 120)
@@ -148,7 +148,7 @@ struct ReminderSheet: View {
                         }
                     }
                 } label: {
-                    Text(hasExistingReminder ? "Update Reminder" : "Set Reminder")
+                    Text(hasExistingReminder ? "Update Alarm" : "Set Alarm")
                         .frame(maxWidth: .infinity)
                         .font(.headline)
                 }
@@ -183,10 +183,10 @@ struct ReminderSheet: View {
             .sheet(isPresented: $showPaywall) {
                 StandalonePaywallView()
             }
-            .alert("Invalid Reminder Time", isPresented: $showPastTimeAlert) {
+            .alert("Invalid Alarm Time", isPresented: $showPastTimeAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("The selected time has already passed. Please choose a future time for your reminder.")
+                Text("The selected time has already passed. Please choose a future time for your anniversary alarm.")
             }
             .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
                 Button("Open Settings") {
@@ -196,7 +196,7 @@ struct ReminderSheet: View {
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("Please enable notifications in Settings to receive reminders.")
+                Text("Please enable notifications in Settings to receive notifications for the anniversary alarms.")
             }
         }
 

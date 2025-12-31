@@ -517,7 +517,7 @@ struct SettingsView: View {
           showPaywall = true
         } label: {
           HStack {
-            Text("Anniversary Reminders")
+            Text("Anniversary Alarms")
             Spacer()
             Text("\(reminderManager.reminders.count) / 5")
               .foregroundStyle(

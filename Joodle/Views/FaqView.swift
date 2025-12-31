@@ -94,7 +94,7 @@ enum FaqData {
             • **Unlimited Joodles** - Create as many daily entries as you want (free plan limited to 30)
             • **iCloud Sync** - Keep your Joodles in sync across all your Apple devices
             • **Home Screen Widgets** - Add beautiful widgets to see your Joodles at a glance
-            • **Unlimited Anniversary Reminders** - Set reminders for special days (free plan limited to 5)
+            • **Unlimited Anniversary Alarms** - Set alarms for special days (free plan limited to 5)
             • **All Theme Colors** - Access to the complete color palette
             • **Watermark-Free Sharing** - Share your Joodle cards without the watermark
 
@@ -201,21 +201,21 @@ enum FaqData {
             """
         ),
         FaqItem(
-            title: "How do I set anniversary reminders?",
+            title: "How do I set anniversary alarms?",
             content: """
-            **Anniversary reminders help you remember special days**:
+            **Anniversary alarm notifies you on your special day**:
 
-            1. Navigate to a future day you want to remember
+            1. Navigate to a future day you want to be reminded
             2. Add a drawing or note to that day
-            3. Tap the **bell icon** in the header
+            3. Tap the **alarm icon** in the header
             4. Set the time you'd like to be reminded
-            5. Tap **Set Reminder**
+            5. Tap **Set Alarm**
 
-            You'll receive a notification on that date every year.
+            You'll receive a notification on that day at the specific time you set.
 
-            **Note**: Free users can set up to 5 reminders. Joodle Pro subscribers get unlimited reminders.
+            **Note**: Free users can set up to 5 alarms. Joodle Pro subscribers get unlimited alarms.
 
-            **To manage reminders**: You can view and delete your reminders by tapping on the **bell icon** from individual day entry.
+            **To manage alarms**: You can view and delete your alarms by tapping on the **alarm icon** from individual day entry.
             """
         ),
         FaqItem(
@@ -274,7 +274,7 @@ enum FaqData {
 
             • **Today** - Shows today's Joodle
             • **Random Doodle** - Shows a random Joodle from your collection
-            • **Anniversary** - Countdown to your next anniversary reminder
+            • **Anniversary** - Countdown to your next anniversary day
             • **Year Grid** - A mini view of your year's Joodles
 
             **Note**: Widgets are a Joodle Pro feature. Free users will see a locked widget prompting them to upgrade.
@@ -357,9 +357,9 @@ enum FaqData {
 
     static let remindersFaqs: [FaqItem] = [
         FaqItem(
-            title: "Why am I not receiving reminder notifications?",
+            title: "Why am I not receiving anniversary alarm notifications?",
             content: """
-            **If your anniversary reminders aren't working, check these settings**:
+            **If your anniversary alarms aren't working, check these settings**:
 
             1. **System notifications must be enabled**:
                • Go to **Settings** (iOS) → **Notifications** → **Joodle**
@@ -382,31 +382,31 @@ enum FaqData {
             """
         ),
         FaqItem(
-            title: "How do I delete a reminder?",
+            title: "How do I delete an anniversary alarm?",
             content: """
-            **To remove an anniversary reminder**:
+            **To remove an anniversary alarm**:
 
-            1. Navigate to the day with the reminder
-            2. Tap the **bell icon** in the header
-            3. You'll see your existing reminder
+            1. Navigate to the day with the alarm
+            2. Tap the **alarm icon** in the header
+            3. You'll see your existing alarm
             4. Tap **Clear** on the top right corner
 
-            The reminder will be removed and you won't receive notifications for that date anymore.
+            The alarm will be removed and you won't receive notifications for that date anymore.
 
-            **Note**: Deleting a reminder doesn't delete the Joodle itself - your drawing and notes remain safe. If you delete the Joodle, any existing reminder will also be removed.
+            **Note**: Deleting a alarm doesn't delete the Joodle itself - your drawing and notes remain safe. If you delete the Joodle, any existing alarm will also be removed.
             """
         ),
         FaqItem(
-            title: "Can I change the time of a reminder?",
+            title: "Can I change the time of an anniversary alarm?",
             content: """
-            **To change when you receive a reminder notification**:
+            **To change when you receive an anniversary alarm notification**:
 
-            1. Navigate to the day with the existing reminder
-            2. Tap the **bell icon** in the header
+            1. Navigate to the day with the existing alarm
+            2. Tap the **alarm icon** in the header
             3. Adjust the time picker to your preferred time
-            4. Tap **Update Reminder**
+            4. Tap **Update Alarm**
 
-            The reminder will now notify you at the new time on that anniversary date.
+            The alarm will now notify you at the new time on that anniversary date.
             """
         )
     ]
@@ -417,7 +417,7 @@ enum FaqData {
         FaqSection(title: "Subscription", items: subscriptionFaqs),
         FaqSection(title: "iCloud Sync", items: iCloudSyncFaqs),
         FaqSection(title: "Getting Started", items: gettingStartedFaqs),
-        FaqSection(title: "Reminders", items: remindersFaqs),
+        FaqSection(title: "Anniversary Alarms", items: remindersFaqs),
         FaqSection(title: "Widgets", items: widgetsFaqs),
         FaqSection(title: "Sharing", items: sharingFaqs)
     ]

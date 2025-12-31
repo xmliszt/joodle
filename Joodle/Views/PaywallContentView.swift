@@ -367,8 +367,8 @@ struct PaywallContentView: View {
       )
 
       FeatureRow(
-        icon: "bell.badge.waveform.fill",
-        title: "Unlimited anniverary reminders"
+        icon: "alarm.waves.left.and.right.fill",
+        title: "Unlimited anniverary alarms"
       )
 
       FeatureRow(

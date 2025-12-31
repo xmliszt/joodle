@@ -98,7 +98,7 @@ struct TutorialSteps {
             type: .addReminder,
             highlightAnchor: .button(id: .bellIcon),
             tooltip: TutorialTooltip(
-                message: "Tap to set an anniversary reminder. Reminder can only be set if it is in the future.",
+                message: "Tap to set an anniversary alarm. Anniversary alarm can only be set if it is today or in the future.",
                 position: .above
             ),
             endCondition: .sheetDismissed,

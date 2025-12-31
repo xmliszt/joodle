@@ -27,7 +27,7 @@ enum TutorialStepType: String, CaseIterable, Identifiable {
         case .drawAndEdit: return "Draw and Edit Joodle"
         case .switchViewMode: return "Change View Mode"
         case .switchYear: return "Navigate Years"
-        case .addReminder: return "Set a Reminder"
+        case .addReminder: return "Set an Anniversary Alarm"
         }
     }
 
@@ -38,7 +38,7 @@ enum TutorialStepType: String, CaseIterable, Identifiable {
         case .drawAndEdit: return "paintbrush.pointed"
         case .switchViewMode: return "rectangle.compress.vertical"
         case .switchYear: return "calendar"
-        case .addReminder: return "bell"
+        case .addReminder: return "alarm"
         }
     }
 }

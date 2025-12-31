@@ -526,10 +526,10 @@ struct EntryEditingView: View {
                       setShowReminderSheet(true)
                     } label: {
                       if hasReminder {
-                        Image(systemName: "bell.badge.waveform.fill")
+                        Image(systemName: "alarm.waves.left.and.right.fill")
                           .symbolEffect(.wiggle.byLayer, options: .nonRepeating)
                       } else {
-                        Image(systemName: "bell")
+                        Image(systemName: "alarm")
                       }
                     }
                     .circularGlassButton(tintColor: hasReminder ? .appAccent : nil)
@@ -574,14 +574,14 @@ struct EntryEditingView: View {
                   } label: {
                     if hasReminder {
                       if #available(iOS 18.0, *) {
-                        Image(systemName: "bell.badge.waveform.fill")
+                        Image(systemName: "alarm.waves.left.and.right.fill")
                           .symbolEffect(.wiggle.byLayer, options: .nonRepeating)
                       } else {
                         // Fallback on earlier versions
-                        Image(systemName: "bell.badge.waveform.fill")
+                        Image(systemName: "alarm.waves.left.and.right.fill")
                       }
                     } else {
-                      Image(systemName: "bell")
+                      Image(systemName: "alarm")
                     }
                   }
                   .circularGlassButton(tintColor: hasReminder ? .appAccent : nil)
