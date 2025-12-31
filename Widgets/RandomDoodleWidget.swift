@@ -332,7 +332,7 @@ struct LockScreenCircularView: View {
           .strokeBorder(lineWidth: 2)
           .foregroundStyle(.secondary.opacity(0.3))
 
-        Image(systemName: "scribble")
+        Image(systemName: "scribble.variable")
           .font(.system(size: 24))
           .foregroundStyle(.secondary)
       }
@@ -418,7 +418,7 @@ struct NotFoundView: View {
 
   var body: some View {
     VStack(alignment: .center, spacing: 8) {
-      Image(systemName: "scribble")
+      Image(systemName: "scribble.variable")
         .font(.system(size: family == .systemLarge ? 50 : 32))
         .foregroundColor(.secondary.opacity(0.3))
       Text(prompt)

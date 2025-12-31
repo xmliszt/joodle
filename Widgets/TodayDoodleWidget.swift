@@ -227,11 +227,7 @@ struct CircularTodayDoodleView: View {
       }
     } else {
       ZStack {
-        Circle()
-          .strokeBorder(lineWidth: 2)
-          .foregroundStyle(.secondary.opacity(0.3))
-
-        Image(systemName: "pencil.tip")
+        Image(systemName: "scribble.variable")
           .font(.system(size: 24))
           .foregroundStyle(.secondary)
       }
@@ -297,7 +293,7 @@ struct MediumTodayDoodleView: View {
             .frame(width: 80, height: 80)
             .padding(10)
         } else {
-          Image(systemName: "scribble")
+          Image(systemName: "scribble.variable")
             .font(.system(size: 40))
             .foregroundColor(.secondary.opacity(0.3))
             .frame(width: 80, height: 80)
@@ -456,7 +452,7 @@ struct NoTodayDoodleView: View {
           .strokeBorder(lineWidth: 2)
           .foregroundStyle(.secondary.opacity(0.3))
 
-        Image(systemName: "pencil.tip")
+        Image(systemName: "scribble.variable")
           .font(.system(size: 24))
           .foregroundStyle(.secondary)
       }
@@ -465,7 +461,7 @@ struct NoTodayDoodleView: View {
       }
     } else {
       VStack(alignment: .center, spacing: 8) {
-        Image(systemName: "pencil.and.scribble")
+        Image(systemName: "scribble.variable")
           .font(.system(size: family == .systemSmall ? 32 : family == .systemMedium ? 40 : 48))
           .foregroundColor(.secondary.opacity(0.3))
         Text("No Joodle today")

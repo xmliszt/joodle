@@ -483,7 +483,7 @@ struct MediumAnniversaryView: View {
             .frame(width: 80, height: 80)
             .padding(10)
         } else {
-          Image(systemName: "scribble")
+          Image(systemName: "scribble.variable")
             .font(.system(size: 40))
             .foregroundColor(.secondary.opacity(0.3))
             .frame(width: 80, height: 80)

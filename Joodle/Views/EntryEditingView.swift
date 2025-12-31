@@ -655,7 +655,7 @@ struct EntryEditingView: View {
                   Button {
                     self.onOpenDrawingCanvas?()
                   } label: {
-                    Image(systemName: "scribble")
+                    Image(systemName: "scribble.variable")
                   }
                   .circularGlassButton()
                   .applyIf(tutorialMode) { view in
@@ -697,7 +697,7 @@ struct EntryEditingView: View {
                 Button {
                   self.onOpenDrawingCanvas?()
                 } label: {
-                  Image(systemName: "scribble")
+                  Image(systemName: "scribble.variable")
                 }
                 .circularGlassButton()
                 .applyIf(tutorialMode) { view in

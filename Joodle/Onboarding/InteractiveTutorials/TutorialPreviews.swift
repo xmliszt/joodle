@@ -365,7 +365,7 @@ struct MockUIElementsView: View {
                         Text(entry.dateString)
                         Spacer()
                         if entry.hasDrawing {
-                            Image(systemName: "scribble")
+                            Image(systemName: "scribble.variable")
                         }
                         if !entry.body.isEmpty {
                             Image(systemName: "text.alignleft")

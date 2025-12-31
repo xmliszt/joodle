@@ -400,7 +400,7 @@ struct RemainingJoodlesIndicator: View {
             let remaining = accessController.remainingJoodles(currentTotalCount: currentCount)
 
             HStack(spacing: 4) {
-                Image(systemName: remaining > 0 ? "scribble" : "lock.fill")
+                Image(systemName: remaining > 0 ? "scribble.variable" : "lock.fill")
                     .font(.caption)
 
                 if remaining > 0 {

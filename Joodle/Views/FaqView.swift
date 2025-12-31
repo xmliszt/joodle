@@ -183,7 +183,7 @@ enum FaqData {
 
             1. Open the app - you'll see the year grid view
             2. Tap on any day (dot) to select it
-            3. Tap the **pencil icon** to open the drawing canvas
+            3. Tap the **scribble icon** to open the drawing canvas
             4. Draw your Joodle using your finger
             5. Tap **tick** to save
 
@@ -224,7 +224,7 @@ enum FaqData {
             **To edit a Joodle**:
 
             1. Tap on the day entry you want to edit
-            2. Tap the **pencil icon** to modify the drawing
+            2. Tap the **scribble icon** to modify the drawing
             3. Or tap in the text area to edit your note
 
             **To clear a drawing**:
