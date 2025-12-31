@@ -391,7 +391,7 @@ struct SettingsView: View {
       } header: {
         Text("Interactions")
       } footer: {
-        Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration")
+        Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration.")
       }
     }
   }
@@ -434,7 +434,7 @@ struct SettingsView: View {
     } header: {
       Text("Daily Reminder")
     } footer: {
-      Text("Get a daily notification to capture your moment")
+      Text("Get a daily notification to capture your moment. Daily reminder will be skipped if today's entry has already been filled.")
     }
     .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
       Button("Open Settings") {
