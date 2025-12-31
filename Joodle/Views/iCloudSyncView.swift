@@ -537,9 +537,6 @@ struct TroubleshootingView: View {
   @State private var isRefreshing = false
   @State private var showRefreshSuccess = false
 
-  @State private var isResetting = false
-  @State private var showResetSuccess = false
-
   var body: some View {
     List {
       Section {
@@ -604,37 +601,22 @@ struct TroubleshootingView: View {
               ProgressView()
                 .padding(.trailing, 4)
             } else if showRefreshSuccess {
-              Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+              if syncManager.isCloudAvailable {
+                Image(systemName: "checkmark.icloud.fill")
+                  .foregroundStyle(.green)
+              } else {
+                Image(systemName: "xmark.icloud.fill")
+                  .foregroundStyle(.red)
+              }
             } else {
-              Image(systemName: "arrow.clockwise")
+              Image(systemName: "arrow.trianglehead.clockwise.icloud.fill")
             }
 
-            Text(isRefreshing ? "Checking..." : (showRefreshSuccess ? "Status Refreshed" : "Refresh iCloud Status"))
+            Text(isRefreshing ? "Checking..." : (showRefreshSuccess ? syncManager.isCloudAvailable ? "iCloud is Available" : "iCloud Unavailable" : "Refresh iCloud Availability"))
             Spacer()
           }
         }
-        .disabled(isRefreshing || isResetting)
-
-        Button {
-          resetSyncState()
-        } label: {
-          HStack {
-            if isResetting {
-              ProgressView()
-                .padding(.trailing, 4)
-            } else if showResetSuccess {
-              Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-            } else {
-              Image(systemName: "arrow.counterclockwise")
-            }
-
-            Text(isResetting ? "Resetting..." : (showResetSuccess ? "State Reset" : "Reset Sync State"))
-            Spacer()
-          }
-        }
-        .disabled(isRefreshing || isResetting)
+        .disabled(isRefreshing)
       } header: {
         Text("Manual Actions")
       }
@@ -656,23 +638,6 @@ struct TroubleshootingView: View {
       DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
         withAnimation {
           showRefreshSuccess = false
-        }
-      }
-    }
-  }
-
-  private func resetSyncState() {
-    isResetting = true
-
-    // Simulate processing time
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-      syncManager.reset()
-      isResetting = false
-      showResetSuccess = true
-
-      DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-        withAnimation {
-          showResetSuccess = false
         }
       }
     }
