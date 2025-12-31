@@ -62,6 +62,14 @@ struct YearGridView: View {
     Calendar.current.startOfDay(for: Date())
   }
 
+  /// Calculate the number of empty slots needed at the beginning of the grid
+  /// to align the first day of the year with the correct weekday column
+  private var leadingEmptySlots: Int {
+    // Only apply calendar alignment for .now mode (7 days per row = calendar week)
+    guard viewMode == .now else { return 0 }
+    return CalendarGridHelper.leadingEmptySlots(for: year)
+  }
+
   // MARK: View
   var body: some View {
     let entriesByDateKey = buildEntriesLookup()
@@ -69,82 +77,107 @@ struct YearGridView: View {
     // Find the index of the highlighted item for distance calculation
     let highlightedIndex = items.firstIndex { $0.id == highlightedItemId }
 
-    // Split items into rows for proper grid layout
-    let rows = stride(from: 0, to: items.count, by: viewMode.dotsPerRow).map { rowStart in
-      Array(items[rowStart..<min(rowStart + viewMode.dotsPerRow, items.count)])
+    // Calculate leading offset for calendar week alignment
+    let leadingOffset = leadingEmptySlots
+    let totalVirtualItems = leadingOffset + items.count
+
+    // Split into rows accounting for leading empty slots
+    let rows: [(virtualStart: Int, count: Int)] = stride(from: 0, to: totalVirtualItems, by: viewMode.dotsPerRow).map { rowStart in
+      (rowStart, min(viewMode.dotsPerRow, totalVirtualItems - rowStart))
     }
 
     VStack(spacing: dotsSpacing) {
-      ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, rowItems in
+      ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, rowInfo in
         HStack(alignment: .top, spacing: dotsSpacing) {
-          ForEach(Array(rowItems.enumerated()), id: \.element.id) { colIndex, item in
-            let dotStyle = getDotStyle(for: item.date)
-            let entry = getEntryForDate(item.date, from: entriesByDateKey)
-            let hasEntry = entry != nil && entry!.body.isEmpty == false
-            let hasDrawing = entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true)
-            let isHighlighted = highlightedItemId == item.id
+          ForEach(0..<rowInfo.count, id: \.self) { colIndex in
+            let virtualIndex = rowInfo.virtualStart + colIndex
+            let isEmptySlot = virtualIndex < leadingOffset
+            let itemIndex = isEmptySlot ? 0 : virtualIndex - leadingOffset
+            let item: DateItem? = isEmptySlot ? nil : items[itemIndex]
 
-            // Calculate current item index directly from row and column
-            let currentIndex = (rowIndex * viewMode.dotsPerRow) + colIndex
-
-            // Calculate scale based on distance from highlighted dot
-            let scale = calculateScale(
-              currentIndex: currentIndex,
-              highlightedIndex: highlightedIndex,
-              dotsPerRow: viewMode.dotsPerRow,
-              isEmpty: entry == nil
-            )
-
-            // Calculate random animation delay for organic staggered effect
-            // Use item id hash to generate consistent random delay per item
-            let hashValue = abs(item.id.hashValue)
-            let animationDelay = Double(hashValue % 500) / 1000.0  // 0 to 0.5 seconds random delay
+            // Use plain item ID for scroll targeting (ContentView uses this for scrollTo)
+            // Empty slots get a unique ID that won't be targeted by scroll
+            let scrollId = item?.id ?? "empty-\(virtualIndex)"
 
             Group {
-              if hasDrawing {
-                // Show drawing instead of dot with specific frame sizes
-                // Use thumbnail for performance optimization
-                DrawingDisplayView(
-                  entry: entry,
-                  displaySize: viewMode.drawingSize,
-                  dotStyle: dotStyle,
-                  accent: false,
-                  highlighted: isHighlighted || selectedItemId == item.id,
-                  scale: scale,
-                  useThumbnail: true
+              if let item = item {
+                // Actual item
+                let dotStyle = getDotStyle(for: item.date)
+                let entry = getEntryForDate(item.date, from: entriesByDateKey)
+                let hasEntry = entry != nil && entry!.body.isEmpty == false
+                let hasDrawing = entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true)
+                let isHighlighted = highlightedItemId == item.id
+
+                // Calculate current item index using virtual index for proper distance calculation
+                let currentIndex = virtualIndex
+
+                // Calculate scale based on distance from highlighted dot
+                // Adjust highlighted index to account for leading offset
+                let adjustedHighlightedIndex = highlightedIndex.map { $0 + leadingOffset }
+                let scale = calculateScale(
+                  currentIndex: currentIndex,
+                  highlightedIndex: adjustedHighlightedIndex,
+                  dotsPerRow: viewMode.dotsPerRow,
+                  isEmpty: entry == nil
                 )
-                .frame(width: viewMode.dotSize, height: viewMode.dotSize)
-                // Jelly bounce animation from bottom for drawings
-                .offset(y: hasAnimated ? 0 : 50)
-                .scaleEffect(
-                  x: hasAnimated ? 1.0 : 0.1,
-                  y: hasAnimated ? 1.0 : 0.1,
-                  anchor: .bottom
-                )
-                .opacity(hasAnimated ? 1.0 : 0.0)
-                .animation(
-                  .spring(
-                    response: 0.4,
-                    dampingFraction: 0.35,
-                    blendDuration: 0
-                  )
-                  .delay(animationDelay),
-                  value: hasAnimated
-                )
+
+                // Calculate random animation delay for organic staggered effect
+                // Use item id hash to generate consistent random delay per item
+                let hashValue = abs(item.id.hashValue)
+                let animationDelay = Double(hashValue % 500) / 1000.0  // 0 to 0.5 seconds random delay
+
+                Group {
+                  if hasDrawing {
+                    // Show drawing instead of dot with specific frame sizes
+                    // Use thumbnail for performance optimization
+                    DrawingDisplayView(
+                      entry: entry,
+                      displaySize: viewMode.drawingSize,
+                      dotStyle: dotStyle,
+                      accent: false,
+                      highlighted: isHighlighted || selectedItemId == item.id,
+                      scale: scale,
+                      useThumbnail: true
+                    )
+                    .frame(width: viewMode.dotSize, height: viewMode.dotSize)
+                    // Jelly bounce animation from bottom for drawings
+                    .offset(y: hasAnimated ? 0 : 50)
+                    .scaleEffect(
+                      x: hasAnimated ? 1.0 : 0.1,
+                      y: hasAnimated ? 1.0 : 0.1,
+                      anchor: .bottom
+                    )
+                    .opacity(hasAnimated ? 1.0 : 0.0)
+                    .animation(
+                      .spring(
+                        response: 0.4,
+                        dampingFraction: 0.35,
+                        blendDuration: 0
+                      )
+                      .delay(animationDelay),
+                      value: hasAnimated
+                    )
+                  } else {
+                    // Show regular dot
+                    DotView(
+                      size: viewMode.dotSize,
+                      highlighted: isHighlighted || selectedItemId == item.id,
+                      withEntry: hasEntry,
+                      dotStyle: dotStyle,
+                      scale: scale
+                    )
+                    .frame(width: viewMode.dotSize, height: viewMode.dotSize)
+                  }
+                }
               } else {
-                // Show regular dot
-                DotView(
-                  size: viewMode.dotSize,
-                  highlighted: isHighlighted || selectedItemId == item.id,
-                  withEntry: hasEntry,
-                  dotStyle: dotStyle,
-                  scale: scale
-                )
-                .frame(width: viewMode.dotSize, height: viewMode.dotSize)
+                // Empty slot - render invisible spacer
+                Color.clear
+                  .frame(width: viewMode.dotSize, height: viewMode.dotSize)
               }
             }
-            // Stable identity based on date
-            .id("\(item.id)-\(animationTriggerID)")
+            // Use plain item ID for scroll targeting - ContentView's scrollTo uses item.id
+            // Animation re-triggering is handled separately via hasAnimated state
+            .id(scrollId)
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

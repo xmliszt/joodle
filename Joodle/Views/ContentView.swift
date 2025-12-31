@@ -108,7 +108,7 @@ struct ContentView: View {
                 // Backdrop background color to cover the top handle area
                 Color(UIColor.systemBackground)
                   .frame(maxWidth: .infinity, maxHeight: .infinity)
-                
+
                 // Time-passing water backdrop (hide when bottom view is visible or disabled in settings)
                 if userPreferences.enableTimeBackdrop {
                   PassingTimeBackdropView(isVisible: !isBottomViewVisible)
@@ -123,7 +123,7 @@ struct ContentView: View {
                     Spacer()
                       .frame(height: headerHeight)
                       .id("topSpacer")
-                    
+
                     YearGridView(
                       year: selectedYear,
                       viewMode: viewMode,
@@ -186,7 +186,7 @@ struct ContentView: View {
                   .onChange(of: viewMode) {
                     hitTestingGrid = []  // Clear grid to trigger rebuild
                     gridMetrics = nil
-                    
+
                     if let selectedDateItem {
                       // Delay scroll to allow grid animation to complete
                       DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
@@ -199,7 +199,7 @@ struct ContentView: View {
                         scrollToTodayOrTop(scrollProxy: scrollProxy)
                       }
                     }
-                    
+
                   }
                   // When year changes, scroll to relevant date and rebuild hit testing grid
                   .onChange(of: selectedYear) {
@@ -207,7 +207,7 @@ struct ContentView: View {
                     gridMetrics = nil
                     // Deselect any selected date item
                     selectedDateItem = nil
-                    
+
                     DispatchQueue.main.async {
                       scrollToTodayOrTop(scrollProxy: scrollProxy)
                     }
@@ -216,10 +216,10 @@ struct ContentView: View {
                   .onAppear {
                     yearGridViewSize = geometry.size
                     self.scrollProxy = scrollProxy
-                    
+
                     DispatchQueue.main.async {
                       scrollToTodayOrTop(scrollProxy: scrollProxy)
-                      
+
                       // Auto-select today on launch
                       let currentYear = Calendar.current.component(.year, from: Date())
                       if selectedYear == currentYear {
@@ -511,14 +511,20 @@ struct ContentView: View {
       offsetY: 0  // No additional Y offset needed since we account for header in adjustTouchLocationForGrid
     )
 
-    // Build 2D grid
-    let numberOfRows = (itemsInYear.count + viewMode.dotsPerRow - 1) / viewMode.dotsPerRow
+    // Calculate leading empty slots for calendar week alignment (only in .now mode)
+    let leadingOffset = viewMode == .now ? CalendarGridHelper.leadingEmptySlots(for: selectedYear) : 0
+    let totalVirtualItems = leadingOffset + itemsInYear.count
+
+    // Build 2D grid accounting for leading empty slots
+    let numberOfRows = (totalVirtualItems + viewMode.dotsPerRow - 1) / viewMode.dotsPerRow
     hitTestingGrid = Array(
       repeating: Array(repeating: nil, count: viewMode.dotsPerRow), count: numberOfRows)
 
     for (index, item) in itemsInYear.enumerated() {
-      let row = index / viewMode.dotsPerRow
-      let col = index % viewMode.dotsPerRow
+      // Offset the index by leading empty slots to place items in correct grid positions
+      let virtualIndex = index + leadingOffset
+      let row = virtualIndex / viewMode.dotsPerRow
+      let col = virtualIndex % viewMode.dotsPerRow
       hitTestingGrid[row][col] = item.id
     }
   }
@@ -554,9 +560,17 @@ struct ContentView: View {
     }
 
     let col = max(0, min(viewMode.dotsPerRow - 1, closestCol))
-    let itemIndex = row * viewMode.dotsPerRow + col
 
-    guard itemIndex < itemsInYear.count else { return nil }
+    // Calculate virtual index accounting for leading empty slots
+    let leadingOffset = viewMode == .now ? CalendarGridHelper.leadingEmptySlots(for: selectedYear) : 0
+    let virtualIndex = row * viewMode.dotsPerRow + col
+
+    // Convert virtual index to actual item index by subtracting leading offset
+    let itemIndex = virtualIndex - leadingOffset
+
+    // Check bounds: virtualIndex could be in leading empty slots (negative itemIndex)
+    // or past the end of actual items
+    guard itemIndex >= 0, itemIndex < itemsInYear.count else { return nil }
 
     let item = itemsInYear[itemIndex]
     return item.id

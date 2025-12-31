@@ -492,8 +492,13 @@ struct InteractiveTutorialView: View {
         let todayIndex = getTodayIndex()
         let dotSize = mockStore.viewMode.dotSize
         let dotsPerRow = mockStore.viewMode.dotsPerRow
-        let row = todayIndex / dotsPerRow
-        let col = todayIndex % dotsPerRow
+
+        // Account for leading empty slots in calendar week alignment
+        let leadingOffset = mockStore.viewMode == .now ? CalendarGridHelper.leadingEmptySlots(for: mockStore.selectedYear) : 0
+        let virtualIndex = todayIndex + leadingOffset
+
+        let row = virtualIndex / dotsPerRow
+        let col = virtualIndex % dotsPerRow
       let x = GRID_HORIZONTAL_PADDING + CGFloat(col) * (dotSize + itemsSpacing) - dotSize * 1.5
       let y = CGFloat(row) * (dotSize + itemsSpacing) - dotSize * 1.5
 
@@ -519,8 +524,14 @@ struct InteractiveTutorialView: View {
         let todayIndex = getTodayIndex()
         let dotSize = mockStore.viewMode.dotSize
         let dotsPerRow = mockStore.viewMode.dotsPerRow
-        let row = todayIndex / dotsPerRow
-        let totalRows = (mockStore.itemsInYear.count + dotsPerRow - 1) / dotsPerRow
+
+        // Account for leading empty slots in calendar week alignment
+        let leadingOffset = mockStore.viewMode == .now ? CalendarGridHelper.leadingEmptySlots(for: mockStore.selectedYear) : 0
+        let virtualIndex = todayIndex + leadingOffset
+        let totalVirtualItems = leadingOffset + mockStore.itemsInYear.count
+
+        let row = virtualIndex / dotsPerRow
+        let totalRows = (totalVirtualItems + dotsPerRow - 1) / dotsPerRow
 
         // Calculate distance from today's row to bottom
         let rowsFromBottom = totalRows - row - 1
@@ -853,9 +864,17 @@ struct InteractiveTutorialView: View {
         }
 
         let col = max(0, min(mockStore.viewMode.dotsPerRow - 1, closestCol))
-        let itemIndex = row * mockStore.viewMode.dotsPerRow + col
 
-        guard itemIndex >= 0 && itemIndex < mockStore.itemsInYear.count else { return nil }
+        // Calculate virtual index accounting for leading empty slots (calendar week alignment)
+        let leadingOffset = mockStore.viewMode == .now ? CalendarGridHelper.leadingEmptySlots(for: mockStore.selectedYear) : 0
+        let virtualIndex = row * mockStore.viewMode.dotsPerRow + col
+
+        // Convert virtual index to actual item index by subtracting leading offset
+        let itemIndex = virtualIndex - leadingOffset
+
+        // Check bounds: virtualIndex could be in leading empty slots (negative itemIndex)
+        // or past the end of actual items
+        guard itemIndex >= 0, itemIndex < mockStore.itemsInYear.count else { return nil }
         return mockStore.itemsInYear[itemIndex].id
     }
 
