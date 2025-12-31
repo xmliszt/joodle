@@ -350,12 +350,6 @@ struct InteractiveTutorialView: View {
                                     )
                                 )
 
-                                // Scroll anchor for today's entry - must be direct child of ScrollView content
-                                Color.clear
-                                    .frame(height: 1)
-                                    .id("todayEntryAnchor")
-                                    .offset(y: -calculateTodayEntryOffset(itemsSpacing: itemsSpacing))
-
                                 // Extra space at bottom for scrolling
                                 Spacer().frame(height: 200)
                             }
@@ -476,28 +470,6 @@ struct InteractiveTutorialView: View {
             .offset(x: x, y: y)
     }
 
-    /// Calculate the Y offset from the bottom of the grid to today's entry
-    private func calculateTodayEntryOffset(itemsSpacing: CGFloat) -> CGFloat {
-        let todayIndex = getTodayIndex()
-        let dotSize = mockStore.viewMode.dotSize
-
-        // Use CalendarGridHelper for grid position calculation (accounts for leading empty slots)
-        let (row, _) = CalendarGridHelper.gridPosition(
-            forItemIndex: todayIndex,
-            viewMode: mockStore.viewMode,
-            year: mockStore.selectedYear
-        )
-        let totalRows = CalendarGridHelper.totalRows(
-            forItemCount: mockStore.itemsInYear.count,
-            viewMode: mockStore.viewMode,
-            year: mockStore.selectedYear
-        )
-
-        // Calculate distance from today's row to bottom
-        let rowsFromBottom = totalRows - row - 1
-        return CGFloat(rowsFromBottom) * (dotSize + itemsSpacing) + dotSize / 2
-    }
-
     // MARK: - Setup & Animation
 
     private func setupInitialState() {
@@ -575,8 +547,16 @@ struct InteractiveTutorialView: View {
         guard !hasScrolledToEntry else { return }
         hasScrolledToEntry = true
 
-        withAnimation(.easeInOut(duration: 0.6)) {
-            scrollProxy?.scrollTo("todayEntryAnchor", anchor: .center)
+        // Scroll to today's actual item ID instead of using a separate anchor
+        // The anchor approach with offset doesn't work because .offset() only moves the view visually
+        // but doesn't change its position for scrolling purposes
+        let calendar = Calendar.current
+        let today = Date()
+
+        if let todayItem = mockStore.itemsInYear.first(where: { calendar.isDate($0.date, inSameDayAs: today) }) {
+            withAnimation(.easeInOut(duration: 0.6)) {
+                scrollProxy?.scrollTo(todayItem.id, anchor: .center)
+            }
         }
     }
 
