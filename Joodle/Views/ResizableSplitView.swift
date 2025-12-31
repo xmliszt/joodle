@@ -112,10 +112,10 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
               }
             }
           // Drag gesture handling for resize handle area
-            .gesture(
+            .simultaneousGesture(
               (!isDraggable || !allowHandleDrag)
               ? nil
-              : DragGesture()
+              : DragGesture(minimumDistance: 0)
                 .onChanged { value in
                   isDragging = true
                   let newPosition = (topHeight + value.translation.height) / _geometry.size.height
@@ -170,7 +170,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             .gesture(
               (!isDraggable || !allowHandleDrag)
               ? nil
-              : DragGesture()
+              : DragGesture(minimumDistance: 0)
                 .onChanged { value in
                   isDragging = true
                   let newPosition = (topHeight + value.translation.height) / _geometry.size.height
