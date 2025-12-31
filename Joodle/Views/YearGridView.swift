@@ -11,7 +11,10 @@ import SwiftUI
 let GRID_HORIZONTAL_PADDING: CGFloat = 40
 let MAX_SCALE: CGFloat = 1.5
 let MAX_SCALE_DISTANCE: CGFloat = 2.5
-let WEEKDAY_LABELS: [String] = ["S", "M", "T", "W", "T", "F", "S"]
+/// Weekday labels starting from Sunday
+let WEEKDAY_LABELS_SUNDAY: [String] = ["S", "M", "T", "W", "T", "F", "S"]
+/// Weekday labels starting from Monday
+let WEEKDAY_LABELS_MONDAY: [String] = ["M", "T", "W", "T", "F", "S", "S"]
 
 struct DateItem: Identifiable, Equatable {
   var id: String
@@ -19,6 +22,9 @@ struct DateItem: Identifiable, Equatable {
 }
 
 struct YearGridView: View {
+
+  // MARK: Environment
+  @Environment(\.userPreferences) private var userPreferences
 
   // MARK: Params
   /// The year to display
@@ -68,7 +74,12 @@ struct YearGridView: View {
   private var leadingEmptySlots: Int {
     // Only apply calendar alignment for .now mode (7 days per row = calendar week)
     guard viewMode == .now else { return 0 }
-    return CalendarGridHelper.leadingEmptySlots(for: year)
+    return CalendarGridHelper.leadingEmptySlots(for: year, startOfWeek: userPreferences.startOfWeek)
+  }
+
+  /// Get weekday labels based on user's start of week preference
+  private var weekdayLabels: [String] {
+    userPreferences.startOfWeek == "monday" ? WEEKDAY_LABELS_MONDAY : WEEKDAY_LABELS_SUNDAY
   }
 
   // MARK: View
@@ -200,7 +211,7 @@ struct YearGridView: View {
             Color.clear
               .frame(width: viewMode.dotSize, height: viewMode.dotSize)
               .overlay {
-                Text(WEEKDAY_LABELS[index])
+                Text(weekdayLabels[index])
                   .font(.system(size: 10, weight: .medium))
                   .foregroundStyle(.secondary)
                   .fixedSize()

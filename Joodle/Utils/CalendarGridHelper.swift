@@ -11,7 +11,10 @@ import SwiftUI
 // MARK: - Constants
 
 /// Start of week configuration: "sunday" or "monday"
-let START_OF_WEEK: String = "sunday"
+/// Dynamically reads from UserPreferences to support user customization
+var START_OF_WEEK: String {
+    UserPreferences.shared.startOfWeek
+}
 
 // MARK: - Calendar Grid Helper
 

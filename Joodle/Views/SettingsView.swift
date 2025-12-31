@@ -121,9 +121,17 @@ struct SettingsView: View {
     )
   }
 
+  private var startOfWeekBinding: Binding<String> {
+    Binding(
+      get: { userPreferences.startOfWeek },
+      set: { userPreferences.startOfWeek = $0 }
+    )
+  }
+
   var body: some View {
     Form {
       defaultViewSection
+      startOfWeekSection
       appearanceSection
       themeColorSection
       interactionSection
@@ -275,9 +283,55 @@ struct SettingsView: View {
           }
           .pickerStyle(.palette)
         }
+
+        // Explanation
+        VStack {
+          if userPreferences.defaultViewMode == .now {
+            Text("\"Normal\" view mode gives you a more focused view with 7 days per row representing the 7 days of a week. Layout is shifted to match the weekday.")
+              .font(.caption)
+              .foregroundColor(.secondary)
+              .frame(maxWidth: .infinity, alignment: .leading)
+          } else if userPreferences.defaultViewMode == .year {
+            Text("\"Minimized\" view mode gives you an overview of your entire year. Additional sharing is available in this view mode to share your entire year.")
+              .font(.caption)
+              .foregroundColor(.secondary)
+              .frame(maxWidth: .infinity, alignment: .leading)
+          }
+        }.padding(.top, 12)
       }
     } header: {
       Text("Default View Mode")
+    }
+  }
+
+  @ViewBuilder
+  private var startOfWeekSection: some View {
+    Section {
+      VStack(spacing: 12) {
+        // Picker
+        if #available(iOS 26.0, *) {
+          Picker("Start of Week", selection: startOfWeekBinding) {
+            Text("Sunday").tag("sunday")
+            Text("Monday").tag("monday")
+          }
+          .pickerStyle(.palette)
+          .glassEffect(.regular.interactive())
+        } else {
+          Picker("Start of Week", selection: startOfWeekBinding) {
+            Text("Sunday").tag("sunday")
+            Text("Monday").tag("monday")
+          }
+          .pickerStyle(.palette)
+        }
+        
+        // Explanation
+        Text("Start of Week affects the layout in \"Normal\" view mode.")
+          .font(.caption)
+          .foregroundColor(.secondary)
+          .frame(maxWidth: .infinity, alignment: .leading)
+      }
+    } header: {
+      Text("Start of Week")
     }
   }
 

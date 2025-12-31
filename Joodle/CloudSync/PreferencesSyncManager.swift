@@ -28,6 +28,10 @@ final class PreferencesSyncManager {
     static let defaultViewMode = "default_view_mode"
     static let preferredColorScheme = "preferred_color_scheme"
     static let enableHaptic = "enable_haptic"
+    static let startOfWeek = "start_of_week"
+    static let accentColor = "accent_color"
+    static let isDailyReminderEnabled = "is_daily_reminder_enabled"
+    static let dailyReminderTimeSeconds = "daily_reminder_time_seconds"
     // Sync state keys - persist across app reinstalls to detect restore scenario
     // Use two keys for redundancy (same as CloudSyncStatePersistence and JoodleApp)
     static let primarySyncKey = "is_cloud_sync_enabled_backup"
@@ -114,6 +118,16 @@ final class PreferencesSyncManager {
     // Sync haptic preference
     cloudStore.set(userPreferences.enableHaptic, forKey: CloudKey.enableHaptic)
 
+    // Sync start of week preference
+    cloudStore.set(userPreferences.startOfWeek, forKey: CloudKey.startOfWeek)
+
+    // Sync accent color
+    cloudStore.set(userPreferences.accentColor.rawValue, forKey: CloudKey.accentColor)
+
+    // Sync daily reminder preferences
+    cloudStore.set(userPreferences.isDailyReminderEnabled, forKey: CloudKey.isDailyReminderEnabled)
+    cloudStore.set(userPreferences.dailyReminderTimeSeconds, forKey: CloudKey.dailyReminderTimeSeconds)
+
     // Force synchronize
     let success = cloudStore.synchronize()
 
@@ -148,6 +162,26 @@ final class PreferencesSyncManager {
       userPreferences.enableHaptic = cloudStore.bool(forKey: CloudKey.enableHaptic)
     }
 
+    // Sync start of week preference
+    if let startOfWeek = cloudStore.string(forKey: CloudKey.startOfWeek) {
+      userPreferences.startOfWeek = startOfWeek
+    }
+
+    // Sync accent color
+    if let accentColorRaw = cloudStore.string(forKey: CloudKey.accentColor),
+       let accentColor = ThemeColor(rawValue: accentColorRaw) {
+      userPreferences.accentColor = accentColor
+    }
+
+    // Sync daily reminder preferences
+    if cloudStore.object(forKey: CloudKey.isDailyReminderEnabled) != nil {
+      userPreferences.isDailyReminderEnabled = cloudStore.bool(forKey: CloudKey.isDailyReminderEnabled)
+    }
+    if cloudStore.object(forKey: CloudKey.dailyReminderTimeSeconds) != nil {
+      let timeSeconds = cloudStore.longLong(forKey: CloudKey.dailyReminderTimeSeconds)
+      userPreferences.dailyReminderTimeSeconds = Int(timeSeconds)
+    }
+
     isSyncing = false
   }
 
@@ -162,6 +196,10 @@ final class PreferencesSyncManager {
     cloudStore.removeObject(forKey: CloudKey.defaultViewMode)
     cloudStore.removeObject(forKey: CloudKey.preferredColorScheme)
     cloudStore.removeObject(forKey: CloudKey.enableHaptic)
+    cloudStore.removeObject(forKey: CloudKey.startOfWeek)
+    cloudStore.removeObject(forKey: CloudKey.accentColor)
+    cloudStore.removeObject(forKey: CloudKey.isDailyReminderEnabled)
+    cloudStore.removeObject(forKey: CloudKey.dailyReminderTimeSeconds)
     cloudStore.synchronize()
   }
 

@@ -19,6 +19,8 @@ enum Pref {
   static let isDailyReminderEnabled = Key(key: "is_daily_reminder_enabled", default: false)
   // Default to 9:00 AM - stored as seconds from midnight
   static let dailyReminderTimeSeconds = Key(key: "daily_reminder_time_seconds", default: 9 * 3600)
+  // Start of week: "sunday" or "monday"
+  static let startOfWeek = Key(key: "start_of_week", default: "sunday")
 
   // Experimental features
   static let enableTimeBackdrop = Key(key: "enable_time_backdrop", default: false)
@@ -46,6 +48,7 @@ enum Pref {
     accentColor.key,
     isDailyReminderEnabled.key,
     dailyReminderTimeSeconds.key,
+    startOfWeek.key,
     enableTimeBackdrop.key,
   ]
 }
@@ -110,6 +113,12 @@ final class UserPreferences {
   var dailyReminderTimeSeconds: Int = Pref.dailyReminderTimeSeconds.defaultValue {
     didSet {
       _dailyReminderTimeSecondsWatcher = dailyReminderTimeSeconds
+      syncToCloudIfEnabled()
+    }
+  }
+  var startOfWeek: String = Pref.startOfWeek.defaultValue {
+    didSet {
+      _startOfWeekWatcher = startOfWeek
       syncToCloudIfEnabled()
     }
   }
@@ -202,6 +211,11 @@ final class UserPreferences {
     set { set(Pref.dailyReminderTimeSeconds, newValue) }
   }
 
+  private var _startOfWeekWatcher: String {
+    get { get(Pref.startOfWeek) }
+    set { set(Pref.startOfWeek, newValue) }
+  }
+
   private var _enableTimeBackdropWatcher: Bool {
     get { get(Pref.enableTimeBackdrop) }
     set { set(Pref.enableTimeBackdrop, newValue) }
@@ -217,6 +231,7 @@ final class UserPreferences {
     accentColor = _accentColorWatcher
     isDailyReminderEnabled = _isDailyReminderEnabledWatcher
     dailyReminderTimeSeconds = _dailyReminderTimeSecondsWatcher
+    startOfWeek = _startOfWeekWatcher
     enableTimeBackdrop = _enableTimeBackdropWatcher
   }
 
@@ -234,6 +249,7 @@ final class UserPreferences {
     accentColor = Pref.accentColor.defaultValue
     isDailyReminderEnabled = Pref.isDailyReminderEnabled.defaultValue
     dailyReminderTimeSeconds = Pref.dailyReminderTimeSeconds.defaultValue
+    startOfWeek = Pref.startOfWeek.defaultValue
     enableTimeBackdrop = Pref.enableTimeBackdrop.defaultValue
   }
 
