@@ -125,7 +125,8 @@ enum TutorialDefinitions {
 
   static let otherTutorials: [TutorialData] = [
     siriShortcuts,
-    experimentalFeatures
+    experimentalFeatures,
+    weekdayLabelView
   ]
 }
 
