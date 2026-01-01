@@ -309,9 +309,11 @@ struct DotPositionTweakerView: View {
 #Preview("🎯 Dot Tweaker - Widget Screenshots") {
     NavigationStack {
         DotPositionTweakerView(screenshots: [
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature1.png", dots: [TapDot(x: 376, y: 163)]),
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature2.png", dots: [TapDot(x: 352, y: 591)]),
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature3.png", dots: [TapDot(x: 496, y: 726)])
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel1.png", dots: [TapDot(x: 520, y: 163)]),
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel2.png"),
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel3.png"),
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel4.png", dots: [TapDot(x: 376, y: 163)]),
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel5.png", dots: [TapDot(x: 408, y: 629)])
         ])
     }
 }

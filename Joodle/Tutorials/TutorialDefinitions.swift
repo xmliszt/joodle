@@ -97,6 +97,22 @@ enum TutorialDefinitions {
     description: "In \"Settings\", go to \"Labs\" section, then tap on \"Experimental Features\".",
     isPremiumFeature: true
   )
+  
+  /// Tutorial for viewing weekday in "Normal" view mode
+  static let weekdayLabelView = TutorialData(
+    id: "weekday-label-view",
+    title: "Quick Peek at Weekday Labels",
+    icon: "w.square",
+    shortDescription: "Learn how to get a quick peek at the weekday labels in \"Normal\" view mode",
+    screenshots: [
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel1.png", dots: [TapDot(x: 520, y: 163)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel2.png"),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel3.png"),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel4.png", dots: [TapDot(x: 376, y: 163)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel5.png", dots: [TapDot(x: 408, y: 629)])
+    ],
+    description: "Swtich to \"Normal\" view mode, then scroll to the top of the grid, continue to scroll and you should see the weekday labels. To change the Start of Week, go to \"Settings\" > \"Start of Week\"."
+  )
 
   // MARK: - All Tutorials
 
