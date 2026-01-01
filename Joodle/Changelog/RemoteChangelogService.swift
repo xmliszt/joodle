@@ -80,7 +80,7 @@ actor RemoteChangelogService {
 
     /// Base URL for the changelog API
     /// Update this to your Vercel API endpoint
-    private let baseURL = "https://liyuxuan.dev/api/changelogs"
+    private let baseURL = "https://liyuxuan.dev/api/changelogs/joodle"
 
     // MARK: - Caching
 
