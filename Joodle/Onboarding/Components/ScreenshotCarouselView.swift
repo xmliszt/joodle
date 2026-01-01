@@ -46,15 +46,41 @@ struct TapDot: Identifiable {
     }
 }
 
+/// Image source for a screenshot - either local asset or remote URL
+enum ScreenshotImageSource {
+    case local(Image)
+    case remote(URL)
+}
+
 /// Represents a single screenshot with optional tap indicator dots
 struct ScreenshotItem: Identifiable {
     let id = UUID()
-    let image: Image
+    let imageSource: ScreenshotImageSource
     let dots: [TapDot]
     let orientation: ScreenshotOrientation
 
+    /// Initialize with a local Image
     init(image: Image, dots: [TapDot] = [], orientation: ScreenshotOrientation = .portrait) {
-        self.image = image
+        self.imageSource = .local(image)
+        self.dots = dots
+        self.orientation = orientation
+    }
+
+    /// Initialize with a remote URL
+    init(url: URL, dots: [TapDot] = [], orientation: ScreenshotOrientation = .portrait) {
+        self.imageSource = .remote(url)
+        self.dots = dots
+        self.orientation = orientation
+    }
+
+    /// Convenience initializer with URL string
+    init(urlString: String, dots: [TapDot] = [], orientation: ScreenshotOrientation = .portrait) {
+        if let url = URL(string: urlString) {
+            self.imageSource = .remote(url)
+        } else {
+            // Fallback to a placeholder if URL is invalid
+            self.imageSource = .local(Image(systemName: "photo.trianglebadge.exclamationmark.fill"))
+        }
         self.dots = dots
         self.orientation = orientation
     }
@@ -72,8 +98,7 @@ struct SingleScreenshotView: View {
                 // System background for transparent PNG screenshots
                 Color(uiColor: .systemBackground)
 
-                item.image
-                    .resizable()
+                screenshotImage
                     .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
@@ -89,6 +114,33 @@ struct SingleScreenshotView: View {
             }
         }
         .aspectRatio(item.orientation.aspectRatio, contentMode: .fit)
+    }
+
+    @ViewBuilder
+    private var screenshotImage: some View {
+        switch item.imageSource {
+        case .local(let image):
+          image.resizable()
+        case .remote(let url):
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                case .success(let image):
+                    image
+                        .resizable()
+                case .failure:
+                    Image(systemName: "photo")
+                        .resizable()
+                        .foregroundStyle(.secondary)
+                @unknown default:
+                    Image(systemName: "photo")
+                        .resizable()
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
     }
 }
 

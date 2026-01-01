@@ -182,11 +182,40 @@ struct DotPositionTweakerView: View {
                 let item = screenshots[currentIndex]
                 GeometryReader { geometry in
                     ZStack {
-                        item.image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: geometry.size.width, height: geometry.size.height)
-                            .clipped()
+                        Group {
+                            switch item.imageSource {
+                            case .local(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                            case .remote(let url):
+                                AsyncImage(url: url) { phase in
+                                    switch phase {
+                                    case .empty:
+                                        ProgressView()
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    case .success(let image):
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                    case .failure:
+                                        Image(systemName: "photo.trianglebadge.exclamationmark.fill")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .foregroundStyle(.secondary)
+                                            .padding(40)
+                                    @unknown default:
+                                        Image(systemName: "photo.trianglebadge.exclamationmark.fill")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .foregroundStyle(.secondary)
+                                            .padding(40)
+                                    }
+                                }
+                            }
+                        }
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
 
                         // Show existing dots from screenshot definition
                         ForEach(item.dots) { dot in
@@ -280,9 +309,9 @@ struct DotPositionTweakerView: View {
 #Preview("🎯 Dot Tweaker - Widget Screenshots") {
     NavigationStack {
         DotPositionTweakerView(screenshots: [
-          ScreenshotItem(image: Image("Help/ExperimentalFeature1"), dots: [TapDot(x: 376, y: 163)]),
-          ScreenshotItem(image: Image("Help/ExperimentalFeature2"), dots: [TapDot(x: 352, y: 591)]),
-          ScreenshotItem(image: Image("Help/ExperimentalFeature3"), dots: [TapDot(x: 496, y: 726)])
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature1.png", dots: [TapDot(x: 376, y: 163)]),
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature2.png", dots: [TapDot(x: 352, y: 591)]),
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature3.png", dots: [TapDot(x: 496, y: 726)])
         ])
     }
 }

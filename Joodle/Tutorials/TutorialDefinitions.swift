@@ -18,14 +18,14 @@ enum TutorialDefinitions {
     icon: "square.grid.2x2",
     shortDescription: "Add Joodle to your home screen",
     screenshots: [
-      ScreenshotItem(image: Image("Help/Widget1"), dots: [TapDot(x: 122, y: 64)]),
-      ScreenshotItem(image: Image("Help/Widget2"), dots: [TapDot(x: 197, y: 147)]),
-      ScreenshotItem(image: Image("Help/Widget3"), dots: [TapDot(x: 298, y: 268)]),
-      ScreenshotItem(image: Image("Help/Widget4"), dots: [TapDot(x: 240, y: 366)]),
-      ScreenshotItem(image: Image("Help/Widget5")),
-      ScreenshotItem(image: Image("Help/Widget6"), dots: [TapDot(x: 300, y: 1107)]),
-      ScreenshotItem(image: Image("Help/Widget7"), dots: [TapDot(x: 263, y: 496)]),
-      ScreenshotItem(image: Image("Help/Widget8"))
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget1.png", dots: [TapDot(x: 122, y: 64)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget2.png", dots: [TapDot(x: 197, y: 147)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget3.png", dots: [TapDot(x: 298, y: 268)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget4.png", dots: [TapDot(x: 240, y: 366)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget5.png"),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget6.png", dots: [TapDot(x: 300, y: 1107)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget7.png", dots: [TapDot(x: 263, y: 496)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget8.png")
     ],
     description: "Long press on your home screen, tap the + button, search for \"Joodle\", and add a widget. Some widgets are configurable. Tap the widget while in edit mode to configure.",
     isPremiumFeature: true
@@ -38,13 +38,13 @@ enum TutorialDefinitions {
     icon: "square.grid.2x2",
     shortDescription: "Add Joodle to your lock screen",
     screenshots: [
-      ScreenshotItem(image: Image("Help/Lockscreen1"), dots: [TapDot(x: 306, y: 625)]),
-      ScreenshotItem(image: Image("Help/Lockscreen2"), dots: [TapDot(x: 298, y: 1140)]),
-      ScreenshotItem(image: Image("Help/Lockscreen3"), dots: [TapDot(x: 298, y: 962)]),
-      ScreenshotItem(image: Image("Help/Lockscreen4")),
-      ScreenshotItem(image: Image("Help/Lockscreen5"), dots: [TapDot(x: 239, y: 823)]),
-      ScreenshotItem(image: Image("Help/Lockscreen6"), dots: [TapDot(x: 299, y: 910)]),
-      ScreenshotItem(image: Image("Help/Lockscreen7"), dots: [TapDot(x: 478, y: 65)])
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen1.png", dots: [TapDot(x: 306, y: 625)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen2.png", dots: [TapDot(x: 298, y: 1140)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen3.png", dots: [TapDot(x: 298, y: 962)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen4.png"),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen5.png", dots: [TapDot(x: 239, y: 823)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen6.png", dots: [TapDot(x: 299, y: 910)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen7.png", dots: [TapDot(x: 478, y: 65)])
     ],
     description: "Long press on your lock screen, tap \"Customize\", then \"ADD WIDGETS\", find \"Joodle\", and tap or drag the widget onto the lock screen.",
     isPremiumFeature: true
@@ -57,17 +57,17 @@ enum TutorialDefinitions {
     icon: "square.grid.2x2",
     shortDescription: "Add Joodle to your StandBy screen",
     screenshots: [
-      ScreenshotItem(image: Image("Help/Standby1"), dots: [TapDot(x: 802, y: 304)], orientation: .landscape),
-      ScreenshotItem(image: Image("Help/Standby2"), dots: [TapDot(x: 118, y: 67)], orientation: .landscape),
-      ScreenshotItem(image: Image("Help/Standby3"), dots: [TapDot(x: 314, y: 306)], orientation: .landscape),
-      ScreenshotItem(image: Image("Help/Standby4"), dots: [TapDot(x: 823, y: 481)], orientation: .landscape),
-      ScreenshotItem(image: Image("Help/Standby5"), dots: [TapDot(x: 621, y: 296)], orientation: .landscape),
-      ScreenshotItem(image: Image("Help/Standby6"), orientation: .landscape)
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby1.png", dots: [TapDot(x: 802, y: 304)], orientation: .landscape),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby2.png", dots: [TapDot(x: 118, y: 67)], orientation: .landscape),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby3.png", dots: [TapDot(x: 314, y: 306)], orientation: .landscape),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby4.png", dots: [TapDot(x: 823, y: 481)], orientation: .landscape),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby5.png", dots: [TapDot(x: 621, y: 296)], orientation: .landscape),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby6.png", orientation: .landscape)
     ],
     description: "Long press, tap the + button, search for \"Joodle\", and add a widget. Some widgets are configurable. Tap the widget while in edit mode to configure.",
     isPremiumFeature: true
   )
-  
+
   /// Tutorial for accessing Joodle from Siri Shortcut
   static let siriShortcuts = TutorialData(
     id: "siri-shortcut",
@@ -75,14 +75,14 @@ enum TutorialDefinitions {
     icon: "magnifyingglass",
     shortDescription: "Quickly jump to today or upcoming anniversary via Siri Shortcuts",
     screenshots: [
-      ScreenshotItem(image: Image("Help/SiriShortcut1"), dots: [TapDot(x: 306, y: 758)]),
-      ScreenshotItem(image: Image("Help/SiriShortcut2"), dots: [TapDot(x: 237, y: 215)]),
-      ScreenshotItem(image: Image("Help/SiriShortcut3"))
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/SiriShortcut1.png", dots: [TapDot(x: 306, y: 758)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/SiriShortcut2.png", dots: [TapDot(x: 237, y: 215)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/SiriShortcut3.png")
     ],
     description: "Open Spotlight Search by swiping down on home screen. Search for \"Joodle\". Tap on any quick action.",
     isPremiumFeature: false
   )
-  
+
   /// Tutorial for accessing experimental features
   static let experimentalFeatures = TutorialData(
     id: "access-experimental-features",
@@ -90,9 +90,9 @@ enum TutorialDefinitions {
     icon: "flask",
     shortDescription: "Get early access to experimental features",
     screenshots: [
-      ScreenshotItem(image: Image("Help/ExperimentalFeature1"), dots: [TapDot(x: 376, y: 163)]),
-      ScreenshotItem(image: Image("Help/ExperimentalFeature2"), dots: [TapDot(x: 352, y: 591)]),
-      ScreenshotItem(image: Image("Help/ExperimentalFeature3"), dots: [TapDot(x: 496, y: 726)])
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature1.png", dots: [TapDot(x: 376, y: 163)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature2.png", dots: [TapDot(x: 352, y: 591)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature3.png", dots: [TapDot(x: 496, y: 726)])
     ],
     description: "In \"Settings\", go to \"Labs\" section, then tap on \"Experimental Features\".",
     isPremiumFeature: true
@@ -106,7 +106,7 @@ enum TutorialDefinitions {
     lockScreenWidgets,
     standbyWidgets
   ]
-  
+
   static let otherTutorials: [TutorialData] = [
     siriShortcuts,
     experimentalFeatures
