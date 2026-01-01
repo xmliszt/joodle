@@ -2,18 +2,36 @@
 //  ChangelogManager.swift
 //  Joodle
 //
-//  Created by Claude on 2025-01-15.
+//  Created by Claude on 2025.
 //
 
 import Foundation
 
-final class ChangelogManager {
+/// Manages changelog display state and determines when to show "What's New" modals
+@MainActor
+final class ChangelogManager: ObservableObject {
     static let shared = ChangelogManager()
+
+    // MARK: - Published Properties
+
+    /// The changelog entry to display (if any)
+    @Published private(set) var changelogToShow: ChangelogEntry?
+
+    /// Whether the changelog modal should be presented
+    @Published var shouldShowChangelog = false
+
+    /// Loading state for fetching remote changelog
+    @Published private(set) var isLoading = false
+
+    // MARK: - Private Properties
 
     private let defaults = UserDefaults.standard
     private let lastSeenVersionKey = "changelog_last_seen_version"
+    private let remoteService = RemoteChangelogService.shared
 
     private init() {}
+
+    // MARK: - User Defaults
 
     /// Last version whose changelog was displayed
     var lastSeenVersion: String? {
@@ -21,59 +39,77 @@ final class ChangelogManager {
         set { defaults.set(newValue, forKey: lastSeenVersionKey) }
     }
 
-    /// Check if we should show changelog for current version
-    var shouldShowChangelog: Bool {
+    // MARK: - Public Methods
+
+    /// Check and prepare changelog for display if needed
+    /// Call this on app launch after onboarding is complete
+    func checkAndPrepareChangelog() async {
         let currentVersion = AppEnvironment.fullVersionString
         let hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
-        let changelogEntry = ChangelogData.entry(for: currentVersion)
-        let availableVersions = ChangelogData.entries.map { $0.version }
 
         print("📋 [Changelog Debug]")
         print("   Current app version: '\(currentVersion)'")
-        print("   Available changelog versions: \(availableVersions)")
-        print("   Changelog entry for current: \(changelogEntry?.version ?? "nil")")
         print("   Has completed onboarding: \(hasCompletedOnboarding)")
         print("   Last seen version: \(lastSeenVersion ?? "nil")")
 
         // Don't show during first launch (onboarding handles that)
         guard hasCompletedOnboarding else {
             print("   ❌ Skipping: Onboarding not completed")
-            return false
+            return
         }
 
-        // Check if there's a changelog for current version
-        guard changelogEntry != nil else {
-            print("   ❌ Skipping: No changelog found for version '\(currentVersion)'")
-            return false
+        // Check if we've already seen this version
+        if hasSeenChangelog(for: currentVersion) {
+            print("   ❌ Skipping: Already seen changelog for \(currentVersion)")
+            return
         }
 
-        // Show if never seen OR if last seen version differs from current
-      guard lastSeenVersion != nil else {
-            print("   ✅ Showing: No last seen version (first time)")
-            return true
-        }
+        // Try to fetch remote changelog first
+        isLoading = true
 
-        let alreadySeen = hasSeenChangelog(for: currentVersion)
-        print("   Already seen this version: \(alreadySeen)")
-
-        if alreadySeen {
-            print("   ❌ Skipping: Already seen this changelog")
+        if let entry = await fetchChangelogForVersion(currentVersion) {
+            changelogToShow = entry
+            shouldShowChangelog = true
+            print("   ✅ Showing changelog for version \(currentVersion)")
         } else {
-            print("   ✅ Showing: New version changelog")
+            print("   ❌ No changelog available for version \(currentVersion)")
         }
 
-        return !alreadySeen
+        isLoading = false
     }
 
-    /// Get the changelog entry to display (if any)
-    var changelogToShow: ChangelogEntry? {
-        guard shouldShowChangelog else { return nil }
-        return ChangelogData.entry(for: AppEnvironment.fullVersionString)
+    /// Fetch changelog for a specific version (remote first, then bundled fallback)
+    func fetchChangelogForVersion(_ version: String) async -> ChangelogEntry? {
+        // Try remote first
+        do {
+            // Fetch index to get metadata
+            let index = try await remoteService.fetchChangelogIndex()
+
+            guard let indexEntry = index.first(where: { $0.version == version }) else {
+                print("   ⚠️ Version \(version) not found in remote index, trying bundled...")
+                return ChangelogData.entry(for: version)
+            }
+
+            // Fetch full markdown content
+            let markdown = try await remoteService.fetchChangelogDetail(version: version)
+
+            if let entry = await remoteService.convertToChangelogEntry(indexEntry, markdown: markdown) {
+                return entry
+            }
+        } catch {
+            print("   ⚠️ Failed to fetch remote changelog: \(error.localizedDescription)")
+        }
+
+        // Fall back to bundled data
+        return ChangelogData.entry(for: version)
     }
 
     /// Mark current version's changelog as seen
     func markCurrentVersionAsSeen() {
         lastSeenVersion = AppEnvironment.fullVersionString
+        shouldShowChangelog = false
+        changelogToShow = nil
+        print("📋 Marked changelog as seen for version: \(AppEnvironment.fullVersionString)")
     }
 
     /// Check if a specific version's changelog has been seen
@@ -82,6 +118,46 @@ final class ChangelogManager {
         guard let lastSeen = lastSeenVersion else { return false }
         return compareVersions(version, lastSeen) <= 0
     }
+
+    /// Dismiss the changelog without marking as seen (user can see it again)
+    func dismissChangelog() {
+        shouldShowChangelog = false
+    }
+
+    /// Reset changelog state for testing
+    func resetChangelogState() {
+        lastSeenVersion = nil
+        changelogToShow = nil
+        shouldShowChangelog = false
+    }
+
+    /// Force a specific version as last seen for testing
+    func setLastSeenVersion(_ version: String?) {
+        lastSeenVersion = version
+    }
+
+    // MARK: - Legacy Support
+
+    /// Check if we should show changelog (synchronous, uses bundled data only)
+    /// Use `checkAndPrepareChangelog()` for async remote support
+    var shouldShowChangelogSync: Bool {
+        let currentVersion = AppEnvironment.fullVersionString
+        let hasCompletedOnboarding = defaults.bool(forKey: "hasCompletedOnboarding")
+
+        guard hasCompletedOnboarding else { return false }
+        guard ChangelogData.entry(for: currentVersion) != nil else { return false }
+        guard lastSeenVersion != nil else { return true }
+
+        return !hasSeenChangelog(for: currentVersion)
+    }
+
+    /// Get the changelog entry to display synchronously (bundled data only)
+    var changelogToShowSync: ChangelogEntry? {
+        guard shouldShowChangelogSync else { return nil }
+        return ChangelogData.entry(for: AppEnvironment.fullVersionString)
+    }
+
+    // MARK: - Private Methods
 
     /// Compare two version strings (returns -1, 0, or 1)
     private func compareVersions(_ v1: String, _ v2: String) -> Int {
@@ -95,15 +171,5 @@ final class ChangelogManager {
             if p1 > p2 { return 1 }
         }
         return 0
-    }
-
-    /// Reset changelog state for testing
-    func resetChangelogState() {
-        lastSeenVersion = nil
-    }
-
-    /// Force a specific version as last seen for testing
-    func setLastSeenVersion(_ version: String?) {
-        lastSeenVersion = version
     }
 }

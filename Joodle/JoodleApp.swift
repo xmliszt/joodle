@@ -541,8 +541,10 @@ struct JoodleApp: App {
     // Only show changelog after onboarding is complete
     guard hasCompletedOnboarding else { return }
 
-    // Small delay to ensure app is fully ready
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+    // Small delay to ensure app is fully ready, then fetch async
+    Task { @MainActor in
+      try? await Task.sleep(for: .milliseconds(300))
+      await ChangelogManager.shared.checkAndPrepareChangelog()
       if let entry = ChangelogManager.shared.changelogToShow {
         changelogEntry = entry
       }

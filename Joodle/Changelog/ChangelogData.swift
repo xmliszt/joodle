@@ -7,25 +7,12 @@
 
 import Foundation
 
+/// Provides bundled changelog data as a fallback when remote API is unavailable
 enum ChangelogData {
     /// All changelog entries auto-discovered from Changelogs folder
     /// Files must be named: {major}.{minor}.{build}_{year}-{month}-{day}.md
     /// Example: 1.0.55_2025-12-28.md
     static let entries: [ChangelogEntry] = discoverChangelogs()
-
-    // MARK: - Optional Header Images
-    // Add header image URLs for specific versions here
-    // Key: version string (e.g., "1.0.55"), Value: remote image URL
-    private static let headerImages: [String: URL] = [
-      "1.0.61": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.61.gif")!,
-        "1.0.58": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.58.png")!,
-        "1.0.54": URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.54.png")!
-    ]
-
-    /// Get the header image URL for a specific version
-    static func headerImage(for version: String) -> URL? {
-        headerImages[version]
-    }
 
     /// Get changelog for a specific version (e.g., "1.0.55")
     static func entry(for version: String) -> ChangelogEntry? {
@@ -160,7 +147,7 @@ enum ChangelogData {
             minor: minor,
             build: build,
             date: date,
-            headerImageURL: headerImage(for: versionString),
+            headerImageURL: nil, // Header images come from remote API
             markdownContent: content
         )
     }
