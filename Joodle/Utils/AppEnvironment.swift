@@ -154,7 +154,7 @@ enum AppEnvironment {
     // MARK: - Feedback URLs
 
     /// The App Store ID for the app (update this with your actual App Store ID)
-    private static let appStoreID = "6744076379"
+    private static let appStoreID = "6756204776"
 
     /// URL to open TestFlight for submitting feedback
     static var testFlightFeedbackURL: URL? {
