@@ -37,9 +37,6 @@ class StoreKitManager: NSObject, ObservableObject {
     private var updateListenerTask: Task<Void, Never>?
     private var foregroundObserver: AnyCancellable?
 
-    /// Debug logger for TestFlight troubleshooting
-    private let debugLogger = PaywallDebugLogger.shared
-
     override init() {
         super.init()
 
@@ -76,7 +73,6 @@ class StoreKitManager: NSObject, ObservableObject {
                     await self?.updatePurchasedProducts()
                     // Also sync SubscriptionManager to update feature flags and UI state
                     await SubscriptionManager.shared.updateSubscriptionStatus()
-                    self?.debugLogger.log(.debug, "Refreshed subscription status on foreground")
                 }
             }
     }
@@ -87,16 +83,12 @@ class StoreKitManager: NSObject, ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        debugLogger.logProductsLoading()
         print("📦 StoreKit: Loading products for IDs: \(productIDs)")
         print("📦 StoreKit: Environment - \(getEnvironmentInfo())")
 
         do {
             let loadedProducts = try await Product.products(for: productIDs)
             print("📦 StoreKit: Loaded \(loadedProducts.count) products")
-
-            // Log to debug logger
-            debugLogger.logProductsLoaded(count: loadedProducts.count, productIDs: loadedProducts.map { $0.id })
 
             for product in loadedProducts {
                 print("📦 Product: \(product.id)")
@@ -105,13 +97,6 @@ class StoreKitManager: NSObject, ObservableObject {
                 print("   💰 Raw Price: \(product.price)")
                 print("   💰 Currency Code: \(product.priceFormatStyle.currencyCode)")
                 print("   🌍 Locale: \(product.priceFormatStyle.locale.identifier)")
-
-                // Log each product to debug logger
-                debugLogger.logProductDetails(
-                    id: product.id,
-                    displayName: product.displayName,
-                    price: product.displayPrice
-                )
             }
 
             self.products = loadedProducts.sorted { product1, product2 in
@@ -136,20 +121,17 @@ class StoreKitManager: NSObject, ObservableObject {
                 """
                 errorMessage = "Unable to load subscription plans. Please try again later."
                 print("⚠️ StoreKit: \(troubleshootingMessage)")
-                debugLogger.log(.warning, "No products found", details: troubleshootingMessage)
             }
         } catch let error as StoreKitError {
             let detailedError = handleStoreKitError(error)
             errorMessage = detailedError
             print("❌ StoreKit Error (StoreKitError): \(error)")
             print("❌ Detailed: \(detailedError)")
-            debugLogger.logStoreKitError(error, context: "Loading products (StoreKitError)")
         } catch {
             errorMessage = "Failed to load products: \(error.localizedDescription)"
             print("❌ StoreKit Error: \(error)")
             print("❌ Error type: \(type(of: error))")
             print("❌ Full error description: \(String(describing: error))")
-            debugLogger.logStoreKitError(error, context: "Loading products")
         }
 
         isLoading = false
@@ -200,8 +182,6 @@ class StoreKitManager: NSObject, ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        debugLogger.logPurchaseAttempt(productID: product.id)
-
         defer { isLoading = false }
 
         do {
@@ -219,25 +199,20 @@ class StoreKitManager: NSObject, ObservableObject {
                 // Finish the transaction after we've updated our state
                 await transaction.finish()
 
-                debugLogger.logPurchaseSuccess(productID: product.id)
                 return transaction
 
             case .userCancelled:
-                debugLogger.logPurchaseCancelled()
                 return nil
 
             case .pending:
                 // Transaction is pending approval (Ask to Buy, SCA, etc.)
                 // It will appear in Transaction.updates when approved
-                debugLogger.log(.info, "Purchase pending approval", details: product.id)
                 return nil
 
             @unknown default:
-                debugLogger.log(.warning, "Unknown purchase result", details: product.id)
                 return nil
             }
         } catch {
-            debugLogger.logPurchaseFailed(productID: product.id, error: error)
             throw error
         }
     }
@@ -248,18 +223,14 @@ class StoreKitManager: NSObject, ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        debugLogger.logRestoreAttempt()
-
         do {
             // AppStore.sync() forces the app to get fresh transaction data from the App Store
             // This satisfies App Store Review Guidelines section 3.1.1 requirement for restore mechanism
             try await AppStore.sync()
             await updatePurchasedProducts()
-            debugLogger.logRestoreSuccess(productIDs: purchasedProductIDs)
         } catch {
             errorMessage = "Failed to restore purchase: \(error.localizedDescription)"
             debugPrint("Failed to restore purchase: \(error)")
-            debugLogger.logRestoreFailed(error)
         }
 
         isLoading = false
@@ -289,7 +260,6 @@ class StoreKitManager: NSObject, ObservableObject {
                 for status in statuses {
                     // Only process active subscription states
                     guard status.state == .subscribed || status.state == .inGracePeriod || status.state == .inBillingRetryPeriod else {
-                        debugLogger.log(.debug, "Skipping non-active status", details: "State: \(status.state)")
                         continue
                     }
 
@@ -328,14 +298,11 @@ class StoreKitManager: NSObject, ObservableObject {
                         pendingOfferCodeId = renewalInfo.offerID
                     }
 
-                    debugLogger.log(.debug, "Found active subscription", details: "Product: \(transactionInfo.productID), AutoRenew: \(autoRenew), State: \(status.state), RenewalProduct: \(renewalInfo.currentProductID), PendingOfferCode: \(pendingOfferCode)")
-
                     // We found an active subscription, no need to continue
                     break
                 }
             } catch {
                 debugPrint("Failed to get subscription status: \(error)")
-                debugLogger.log(.error, "Failed to get subscription status", details: error.localizedDescription)
             }
         }
 
@@ -395,10 +362,6 @@ class StoreKitManager: NSObject, ObservableObject {
         print("   Expiration: \(expirationDate?.formatted() ?? "N/A")")
         print("   Auto-Renew: \(autoRenew)")
         print("   Eligible for Intro Offer: \(eligibleForIntro)")
-
-        // Log subscription status to debug logger
-        let statusDetails = "Active: \(!purchasedIDs.isEmpty), Trial: \(inTrial), Auto-Renew: \(autoRenew)"
-        debugLogger.log(.debug, "Subscription status updated", details: statusDetails)
     }
 
     // MARK: - Transaction Verification
@@ -441,7 +404,6 @@ class StoreKitManager: NSObject, ObservableObject {
                     // Transaction failed verification - log but don't finish
                     // Unverified transactions could be from jailbroken devices
                     debugPrint("❌ Transaction verification failed: \(error)")
-                    self.debugLogger.log(.error, "Transaction update verification failed", details: error.localizedDescription)
                 }
             }
         }

@@ -291,7 +291,6 @@ struct PaywallContentView: View {
   let configuration: PaywallConfiguration
 
   @StateObject private var storeManager = StoreKitManager.shared
-  @ObservedObject private var debugLogger = PaywallDebugLogger.shared
 
   @State private var selectedProductID: String?
   @State private var isPurchasing = false
@@ -304,7 +303,6 @@ struct PaywallContentView: View {
       VStack(spacing: 16) {
         // Header Section
         headerSection
-          .paywallDebugGesture()
 
         // Features Section
         featuresSection
@@ -390,7 +388,7 @@ struct PaywallContentView: View {
         icon: "swatchpalette.fill",
         title: "More accent colors"
       )
-      
+
       FeatureRow(icon: "flask.fill", title: "Access to experimental features")
     }
     .padding(8)
@@ -441,7 +439,7 @@ struct PaywallContentView: View {
 #if DEBUG
     return true
 #else
-    return debugLogger.isDebugModeEnabled
+    return false
 #endif
   }
 
@@ -613,15 +611,11 @@ struct PaywallContentView: View {
   // MARK: - Helper Methods
 
   private func handleOnAppear() {
-    debugLogger.log(.info, "PaywallContentView appeared")
-    debugLogger.log(.debug, "Products count: \(storeManager.products.count)")
-
     if selectedProductID == nil, !storeManager.products.isEmpty {
       selectedProductID = storeManager.yearlyProduct?.id
     }
 
     if storeManager.products.isEmpty && !storeManager.isLoading {
-      debugLogger.log(.warning, "No products loaded, attempting reload")
       Task {
         await storeManager.loadProducts()
       }
@@ -631,7 +625,6 @@ struct PaywallContentView: View {
   private func handlePurchase(_ product: Product) {
     // Guard against double-purchase if user is already subscribed
     if storeManager.hasActiveSubscription {
-      debugLogger.log(.warning, "Attempted purchase while already subscribed - skipping")
       configuration.onPurchaseComplete?()
       return
     }
@@ -652,15 +645,12 @@ struct PaywallContentView: View {
           return
         } else {
           // Transaction is nil - purchase was not completed (e.g., pending approval)
-          debugLogger.log(.warning, "Purchase returned nil transaction for product: \(product.id)")
           await MainActor.run {
             errorMessage = "Purchase could not be completed. It may be pending approval or was cancelled. Please check your subscription status from \"Settings > [Your Name] > Subscriptions\""
             showError = true
           }
         }
       } catch {
-        debugLogger.logPurchaseFailed(productID: product.id, error: error)
-
         // Show user-friendly error message
         if let storeKitError = error as? StoreKitError {
           switch storeKitError {
