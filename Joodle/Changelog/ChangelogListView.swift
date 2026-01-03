@@ -44,7 +44,7 @@ struct ChangelogListView: View {
                     }
                 }
                 .refreshable {
-                    await viewModel.refresh()
+                    await viewModel.clearCacheAndRefresh()
                 }
             }
         }

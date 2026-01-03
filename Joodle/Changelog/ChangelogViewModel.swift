@@ -125,8 +125,15 @@ final class ChangelogViewModel: ObservableObject {
         loadingVersions.contains(version)
     }
 
-    /// Refresh all data
-    func refresh() async {
+    /// Refresh all data (clears cache and fetches fresh data)
+    func clearCacheAndRefresh() async {
+        // Clear the remote service's caches
+        await service.clearCaches()
+
+        // Clear local loaded entries cache
+        loadedEntries.removeAll()
+
+        // Fetch fresh data
         await fetchChangelogIndex(forceRefresh: true)
     }
 
