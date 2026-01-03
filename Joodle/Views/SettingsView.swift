@@ -249,6 +249,9 @@ struct SettingsView: View {
 
   var body: some View {
     Form {
+      if isNonProductionEnvironment {
+        betaTesterSection
+      }
       membershipBannerSection
       generalSection
       labSection
@@ -354,6 +357,46 @@ struct SettingsView: View {
       Task {
         await subscriptionManager.updateSubscriptionStatus()
       }
+    }
+  }
+
+  // MARK: - Beta Tester Section
+  @ViewBuilder
+  private var betaTesterSection: some View {
+    Section {
+      Link(destination: URL(string: "https://apps.apple.com/sg/app/joodle-journaling-with-doodle/id6756204776")!) {
+        HStack {
+          if #available(iOS 18.0, *) {
+            Image(systemName: "fireworks")
+              .font(.system(size: 14, weight: .semibold))
+              .frame(width: 28, height: 28)
+              .symbolRenderingMode(.palette)
+              .symbolEffect(.bounce)
+              .foregroundStyle(.accent, .red, .yellow)
+              .background(.gray.opacity(0.1))
+              .clipShape(RoundedRectangle(cornerRadius: 6))
+          } else {
+            // Fallback on earlier versions
+            Image(systemName: "fireworks")
+              .font(.system(size: 14, weight: .semibold))
+              .frame(width: 28, height: 28)
+              .symbolRenderingMode(.palette)
+              .foregroundStyle(.accent, .red, .yellow)
+              .background(.gray.opacity(0.1))
+              .clipShape(RoundedRectangle(cornerRadius: 6))
+          }
+          
+          Text("Download in App Store")
+            .font(.body.weight(.medium))
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
+        }
+      }
+    } footer: {
+      Text("Joodle is now available in App Store!")
     }
   }
 
