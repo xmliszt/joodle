@@ -126,25 +126,21 @@ struct RandomJoodleProvider: TimelineProvider {
   }
 
   private func getRandomJoodle(using generator: inout SeededRandomNumberGenerator, family: WidgetFamily) -> JoodleData? {
-    let entries = WidgetDataManager.shared.loadEntries()
+    let entries = WidgetDataManager.shared.loadAllEntries()
 
-    // Filter entries from the past year (365 days back) that have drawings
+    // Get entries with drawings, sorted by date, and take the first 365
+    // This ensures a stable pool size for consistent random selection
     let calendar = Calendar.current
     let today = calendar.startOfDay(for: Date())
-    let oneYearAgo = calendar.date(byAdding: .day, value: -365, to: today)!
-
-    // Get today's dateString and one year ago dateString for comparison (timezone-agnostic)
     let todayComponents = calendar.dateComponents([.year, .month, .day], from: today)
     let todayString = String(format: "%04d-%02d-%02d", todayComponents.year ?? 0, todayComponents.month ?? 1, todayComponents.day ?? 1)
-    let oneYearAgoComponents = calendar.dateComponents([.year, .month, .day], from: oneYearAgo)
-    let oneYearAgoString = String(format: "%04d-%02d-%02d", oneYearAgoComponents.year ?? 0, oneYearAgoComponents.month ?? 1, oneYearAgoComponents.day ?? 1)
 
-    // Filter using dateString comparison (timezone-agnostic)
-    let JoodleEntries = entries.filter { entry in
-      return entry.hasDrawing && entry.drawingData != nil
-        && entry.dateString >= oneYearAgoString
-        && entry.dateString <= todayString
+    // Filter entries with drawings up to today, sort by date, take first 365
+    let entriesWithDrawings = entries.filter { entry in
+      entry.hasDrawing && entry.drawingData != nil && entry.dateString <= todayString
     }
+    let sortedEntries = entriesWithDrawings.sorted { $0.dateString < $1.dateString }
+    let JoodleEntries = Array(sortedEntries.prefix(365))
 
     guard !JoodleEntries.isEmpty else {
       return nil
