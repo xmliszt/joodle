@@ -37,7 +37,7 @@ struct ChangelogEntry: Identifiable, Hashable {
 
     /// Formatted version for display: "1.0.55"
     var displayVersion: String {
-        "\(major).\(minor).\(build)"
+        "\(major).\(minor) (\(build))"
     }
 
     /// Formatted header line: "DECEMBER 25, 2025 · VERSION 1.0.55"

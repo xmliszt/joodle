@@ -33,7 +33,7 @@ struct ChangelogListView: View {
                                 indexEntry: indexEntry,
                                 viewModel: viewModel
                             )
-                            .navigationTitle("Version \(indexEntry.version)")
+                            .navigationTitle("Version \(indexEntry.displayVersion)")
                             .navigationBarTitleDisplayMode(.inline)
                         } label: {
                             ChangelogRowView(
@@ -75,11 +75,11 @@ private struct ChangelogRowView: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Version \(indexEntry.version)")
+                Text("Version \(indexEntry.displayVersion)")
                     .font(.headline)
 
                 if let date = indexEntry.parsedDate {
-                    Text(date, style: .date)
+                  Text(date, style: .date)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }

@@ -19,6 +19,10 @@ struct ChangelogIndexEntry: Codable, Identifiable {
     let version: String
     let date: String
     let headerImageURL: String?
+    var displayVersion: String {
+        guard let v = versionComponents else { return version }
+        return "\(v.major).\(v.minor) (\(v.build))"
+    }
 
     var id: String { version }
 
