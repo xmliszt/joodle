@@ -34,7 +34,8 @@ struct ChangelogDetailView: View {
                 }
 
                 // Markdown Content
-                Markdown(entry.markdownContent).markdownTheme(.gitHub)
+                Markdown(entry.markdownContent)
+                .markdownTheme(.docC)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
@@ -44,6 +45,10 @@ struct ChangelogDetailView: View {
 
 #Preview ("Without Image") {
     NavigationStack {
+      ZStack {
+        Color.gray
+        .edgesIgnoringSafeArea(.all)
+        
         ChangelogDetailView(
             entry: ChangelogEntry(
                 version: "1.0.54",
@@ -58,6 +63,7 @@ struct ChangelogDetailView: View {
                 - **Feature 1**: Description of feature 1
                 - **Feature 2**: Description of feature 2
 
+                ---
                 ## 🐛 Bug Fixes
 
                 - Fixed an issue with sync
@@ -65,6 +71,8 @@ struct ChangelogDetailView: View {
                 """
             )
         )
+      }
+       
     }
 }
 
