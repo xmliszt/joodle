@@ -88,6 +88,74 @@ struct SettingsRowView: View {
   }
 }
 
+// MARK: - Membership Banner View (Reusable Component)
+
+struct MembershipBannerView: View {
+  let isSubscribed: Bool
+  let statusMessage: String?
+  let joodleCount: Int
+  let alarmCount: Int
+  let onTap: () -> Void
+
+  var body: some View {
+    Button(action: onTap) {
+      ZStack(alignment: .topLeading) {
+        // Background image (1200x600 = 2:1 aspect ratio)
+        Image(isSubscribed ? "Others/Pro Banner" : "Others/Free Banner")
+          .resizable()
+          .aspectRatio(2/1, contentMode: .fit)
+
+        // Content overlay - positioned at top to avoid mushroom glow at bottom
+        VStack(alignment: .leading, spacing: 6) {
+          HStack {
+            Text(isSubscribed ? "Joodle Pro" : "Unlock Joodle Pro")
+              .font(.headline)
+              .fontWeight(.bold)
+              .foregroundColor(isSubscribed ? .white : .black)
+            Spacer()
+            Image(systemName: "chevron.right")
+              .font(.caption)
+              .foregroundColor(isSubscribed ? .white.opacity(0.8) : .black.opacity(0.8))
+          }
+
+          if isSubscribed {
+            if let statusMessage = statusMessage {
+              Text(statusMessage)
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.9))
+            } else {
+              Text("Thanks for supporting Joodle!")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.9))
+            }
+          } else {
+            HStack(spacing: 16) {
+              HStack(spacing: 4) {
+                Image(systemName: "doc.text")
+                  .font(.caption)
+                Text("\(joodleCount)/\(SubscriptionManager.freeJoodlesAllowed)")
+                  .font(.caption)
+              }
+              .foregroundColor(joodleCount >= SubscriptionManager.freeJoodlesAllowed ? .red : .black.opacity(0.8))
+
+              HStack(spacing: 4) {
+                Image(systemName: "bell")
+                  .font(.caption)
+                Text("\(alarmCount)/5")
+                  .font(.caption)
+              }
+              .foregroundColor(alarmCount >= 5 ? .red : .black.opacity(0.8))
+            }
+          }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+      }
+      .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+  }
+}
+
 struct SettingsView: View {
   @Environment(\.userPreferences) private var userPreferences
   @Environment(\.cloudSyncManager) private var cloudSyncManager
@@ -294,73 +362,35 @@ struct SettingsView: View {
   @ViewBuilder
   private var membershipBannerSection: some View {
     Section {
-      // Membership Card
-      Button {
-        if subscriptionManager.isSubscribed {
-          showSubscriptions = true
-        } else {
-          showPaywall = true
-        }
-      } label: {
-        VStack(alignment: .leading, spacing: 8) {
+      VStack(spacing: 16) {
+        MembershipBannerView(
+          isSubscribed: subscriptionManager.isSubscribed,
+          statusMessage: subscriptionManager.subscriptionStatusMessage,
+          joodleCount: currentJoodleCount,
+          alarmCount: reminderManager.reminders.count,
+          onTap: {
+            if subscriptionManager.isSubscribed {
+              showSubscriptions = true
+            } else {
+              showPaywall = true
+            }
+          }
+        )
+        .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 8, trailing: 16))
+
+        // Redeem Promo Code
+        Button {
+          showRedeemCode = true
+        } label: {
           HStack {
-            Image(systemName: "crown.fill")
-              .foregroundStyle(.appAccent)
-              .font(.title2)
-            Text(subscriptionManager.isSubscribed ? "Joodle Pro" : "Unlock Joodle Pro")
-              .font(.headline)
+            SettingsIconView(systemName: "ticket.fill", backgroundColor: .orange)
+            Text("Redeem Promo Code")
               .foregroundColor(.primary)
             Spacer()
-            Image(systemName: "chevron.right")
+            Image(systemName: "arrow.up.right")
               .font(.caption)
               .foregroundColor(.secondary)
           }
-
-          if subscriptionManager.isSubscribed {
-            if let statusMessage = subscriptionManager.subscriptionStatusMessage {
-              Text(statusMessage)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            } else {
-              Text("Thanks for supporting Joodle!")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            }
-          } else {
-            HStack(spacing: 16) {
-              HStack(spacing: 4) {
-                Image(systemName: "doc.text")
-                  .font(.caption)
-                Text("\(currentJoodleCount)/\(SubscriptionManager.freeJoodlesAllowed)")
-                  .font(.caption)
-              }
-              .foregroundColor(currentJoodleCount >= SubscriptionManager.freeJoodlesAllowed ? .red : .secondary)
-
-              HStack(spacing: 4) {
-                Image(systemName: "bell")
-                  .font(.caption)
-                Text("\(reminderManager.reminders.count)/5")
-                  .font(.caption)
-              }
-              .foregroundColor(reminderManager.hasReachedFreeLimit ? .red : .secondary)
-            }
-          }
-        }
-        .padding(.vertical, 4)
-      }
-
-      // Redeem Promo Code
-      Button {
-        showRedeemCode = true
-      } label: {
-        HStack {
-          SettingsIconView(systemName: "ticket.fill", backgroundColor: .orange)
-          Text("Redeem Promo Code")
-            .foregroundColor(.primary)
-          Spacer()
-          Image(systemName: "arrow.up.right")
-            .font(.caption)
-            .foregroundColor(.secondary)
         }
       }
     }
@@ -1178,7 +1208,7 @@ struct CustomizationSettingsView: View {
       } header: {
         Text("Start of Week")
       }
-      
+
       // Color Scheme Section
       Section {
         if #available(iOS 26.0, *) {
@@ -2069,7 +2099,14 @@ struct MembershipBannerPreviewView: View {
         }
 
         Section("Preview") {
-          bannerPreview
+          MembershipBannerView(
+            isSubscribed: isSubscribed,
+            statusMessage: statusMessage,
+            joodleCount: joodleCount,
+            alarmCount: alarmCount,
+            onTap: {}
+          )
+          .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
         }
       }
       .navigationTitle("Banner Preview")
@@ -2080,55 +2117,6 @@ struct MembershipBannerPreviewView: View {
         }
       }
     }
-  }
-
-  @ViewBuilder
-  private var bannerPreview: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      HStack {
-        Image(systemName: "crown.fill")
-          .foregroundStyle(.appAccent)
-          .font(.title2)
-        Text(isSubscribed ? "Joodle Pro" : "Unlock Joodle Pro")
-          .font(.headline)
-          .foregroundColor(.primary)
-        Spacer()
-        Image(systemName: "chevron.right")
-          .font(.caption)
-          .foregroundColor(.secondary)
-      }
-
-      if isSubscribed {
-        if let statusMessage = statusMessage {
-          Text(statusMessage)
-            .font(.subheadline)
-            .foregroundColor(.secondary)
-        } else {
-          Text("Thanks for supporting Joodle!")
-            .font(.subheadline)
-            .foregroundColor(.secondary)
-        }
-      } else {
-        HStack(spacing: 16) {
-          HStack(spacing: 4) {
-            Image(systemName: "doc.text")
-              .font(.caption)
-            Text("\(joodleCount)/\(SubscriptionManager.freeJoodlesAllowed)")
-              .font(.caption)
-          }
-          .foregroundColor(joodleCount >= SubscriptionManager.freeJoodlesAllowed ? .red : .secondary)
-
-          HStack(spacing: 4) {
-            Image(systemName: "bell")
-              .font(.caption)
-            Text("\(alarmCount)/5")
-              .font(.caption)
-          }
-          .foregroundColor(alarmCount >= 5 ? .red : .secondary)
-        }
-      }
-    }
-    .padding(.vertical, 4)
   }
 
   private var isSubscribed: Bool {

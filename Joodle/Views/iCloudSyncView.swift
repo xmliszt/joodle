@@ -237,7 +237,7 @@ struct iCloudSyncView: View {
         Section {
           // iCloud Status
           HStack {
-            iCloudSettingsIconView(systemName: needsRestartForSync ? "icloud.slash" : (syncManager.isCloudAvailable ? "icloud" : "icloud.slash"), backgroundColor: .cyan)
+            iCloudSettingsIconView(systemName: needsRestartForSync ? "icloud.slash" : (syncManager.isCloudAvailable ? "icloud.fill" : "icloud.slash"), backgroundColor: .cyan)
             Text("iCloud")
               .foregroundStyle(.primary)
 
@@ -344,7 +344,8 @@ struct iCloudSyncView: View {
             SyncActivityDetailView(needsRestartForSync: needsRestartForSync)
           } label: {
             HStack {
-              Label("Sync Activity Details", systemImage: "chart.line.uptrend.xyaxis").foregroundStyle(.primary)
+              iCloudSettingsIconView(systemName: "chart.line.uptrend.xyaxis", backgroundColor: .gray)
+              Text("Sync Activity Details").foregroundStyle(.primary)
               if needsRestartForSync {
                 Spacer()
                 Image(systemName: "exclamationmark.triangle.fill")
@@ -356,7 +357,10 @@ struct iCloudSyncView: View {
           NavigationLink {
             TroubleshootingView()
           } label: {
-            Label("Troubleshooting Guide", systemImage: "wrench.and.screwdriver").foregroundStyle(.primary)
+            HStack {
+              iCloudSettingsIconView(systemName: "wrench.and.screwdriver", backgroundColor: .gray)
+              Text("Troubleshooting Guide").foregroundStyle(.primary)
+            }
           }
         } header: {
           Text("Advanced")

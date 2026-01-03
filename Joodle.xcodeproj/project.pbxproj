@@ -72,13 +72,6 @@
 			);
 			target = FA85D44C2EB7AECA007D82EE /* WidgetsExtension */;
 		};
-		FABA57E72EF0675800181F46 /* Exceptions for "Joodle" folder in "WidgetsExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Assets.xcassets,
-			);
-			target = FA85D44C2EB7AECA007D82EE /* WidgetsExtension */;
-		};
 		FABB3D932EBF4E7900C8CCBA /* Exceptions for "Fonts" folder in "WidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -116,7 +109,6 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				FADC35A62E48C2E2007AE111 /* Exceptions for "Joodle" folder in "Joodle" target */,
-				FABA57E72EF0675800181F46 /* Exceptions for "Joodle" folder in "WidgetsExtension" target */,
 			);
 			path = Joodle;
 			sourceTree = "<group>";
