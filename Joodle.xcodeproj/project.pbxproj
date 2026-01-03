@@ -66,6 +66,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FA0621922F090AA900F47C66 /* Exceptions for "Joodle" folder in "WidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+			);
+			target = FA85D44C2EB7AECA007D82EE /* WidgetsExtension */;
+		};
 		FA85D4672EB7AECB007D82EE /* Exceptions for "Widgets" folder in "WidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -110,6 +117,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				FADC35A62E48C2E2007AE111 /* Exceptions for "Joodle" folder in "Joodle" target */,
+				FA0621922F090AA900F47C66 /* Exceptions for "Joodle" folder in "WidgetsExtension" target */,
 			);
 			path = Joodle;
 			sourceTree = "<group>";
