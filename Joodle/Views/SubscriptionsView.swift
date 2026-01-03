@@ -135,10 +135,10 @@ struct SubscriptionsView: View {
           .multilineTextAlignment(.center)
           .padding(.horizontal, 32)
 
-        // Show trial or cancellation status
+        // Show trial, offer code, or cancellation status
         if let statusMessage = subscriptionManager.subscriptionStatusMessage {
           HStack(spacing: 6) {
-            Image(systemName: subscriptionManager.isInTrialPeriod ? "clock.fill" : "exclamationmark.triangle.fill")
+            Image(systemName: statusIconName)
               .font(.caption2)
               .foregroundStyle(.appAccent)
             Text(statusMessage)
@@ -175,7 +175,7 @@ struct SubscriptionsView: View {
       PricingCard(
         product: product,
         isSelected: true,
-        badge: subscriptionManager.isInTrialPeriod ? "FREE TRIAL" : nil,
+        badge: currentPlanBadge,
         isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
         onSelect: {}
       )
@@ -208,7 +208,20 @@ struct SubscriptionsView: View {
       }
       .padding(.horizontal, 20)
 
-      if subscriptionManager.isInTrialPeriod && subscriptionManager.willAutoRenew {
+      if subscriptionManager.hasRedeemedOfferCode && subscriptionManager.willAutoRenew {
+        Text("Your promo code offer will automatically convert to a paid subscription on \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "the expiration date"). Cancel anytime before then to avoid charges.")
+          .font(.caption2)
+          .foregroundColor(.secondary)
+          .multilineTextAlignment(.leading)
+          .padding(.horizontal, 32)
+      } else if subscriptionManager.isInTrialPeriod && subscriptionManager.hasPendingOfferCode && subscriptionManager.willAutoRenew {
+        // Trial with pending offer code - promo activates at next billing event (when trial ends)
+        Text("You have a promo code applied. When your free trial ends, the promo period will activate. After the promo period ends, your subscription will convert to paid. Cancel anytime to avoid charges.")
+          .font(.caption2)
+          .foregroundColor(.secondary)
+          .multilineTextAlignment(.leading)
+          .padding(.horizontal, 32)
+      } else if subscriptionManager.isInTrialPeriod && subscriptionManager.willAutoRenew {
         Text("Your free trial will automatically convert to a paid subscription on \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "the expiration date"). Cancel anytime before then to avoid charges.")
           .font(.caption2)
           .foregroundColor(.secondary)
@@ -252,6 +265,35 @@ struct SubscriptionsView: View {
   }
 
   // MARK: - Helper Methods
+
+  /// Returns the appropriate badge text for the current plan
+  private var currentPlanBadge: String? {
+    if subscriptionManager.hasRedeemedOfferCode {
+      return "PROMO CODE"
+    } else if subscriptionManager.isInTrialPeriod {
+      // Show promo badge if there's a pending offer code (it replaces the trial)
+      if subscriptionManager.hasPendingOfferCode {
+        return "PROMO APPLIED"
+      }
+      return "FREE TRIAL"
+    }
+    return nil
+  }
+
+  /// Returns the appropriate icon name for the current subscription status
+  private var statusIconName: String {
+    if subscriptionManager.hasRedeemedOfferCode {
+      return "ticket.fill"
+    } else if subscriptionManager.isInTrialPeriod {
+      // Show ticket icon if there's also a pending offer code
+      if subscriptionManager.hasPendingOfferCode {
+        return "gift.fill"
+      }
+      return "clock.fill"
+    } else {
+      return "exclamationmark.triangle.fill"
+    }
+  }
 
   private func formatExpirationDate(_ date: Date?) -> String? {
     guard let date = date else { return nil }

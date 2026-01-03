@@ -24,7 +24,7 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 788683301.03974199,
+    "_lastSynchronizedDate" : 789122394.56986201,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "SGP",
@@ -88,7 +88,7 @@
           "groupNumber" : 2,
           "internalID" : "6757140768",
           "introductoryOffer" : {
-            "internalID" : "B4FAE927",
+            "internalID" : "A5A9E7CF",
             "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P1W"
@@ -114,14 +114,26 @@
 
           ],
           "codeOffers" : [
-
+            {
+              "eligibility" : [
+                "new",
+                "existing",
+                "expired"
+              ],
+              "internalID" : "8A76387F",
+              "isStackable" : true,
+              "numberOfPeriods" : 1,
+              "paymentMode" : "free",
+              "referenceName" : "1 Month Free",
+              "subscriptionPeriod" : "P1M"
+            }
           ],
           "displayPrice" : "49.98",
           "familyShareable" : true,
           "groupNumber" : 1,
           "internalID" : "6757140365",
           "introductoryOffer" : {
-            "internalID" : "7804D380",
+            "internalID" : "6941B0CE",
             "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P2W"

@@ -24,6 +24,10 @@ class StoreKitManager: NSObject, ObservableObject {
     @Published var willAutoRenew = true
     @Published var isEligibleForIntroOffer = true
     @Published var currentProductID: String?  // The actual currently active subscription product
+    @Published var hasRedeemedOfferCode = false  // Whether user redeemed an offer code (promo code)
+    @Published var offerCodeId: String?  // The offer code identifier if applicable
+    @Published var hasPendingOfferCode = false  // Whether there's an offer code queued for next renewal
+    @Published var pendingOfferCodeId: String?  // The pending offer code identifier
 
     private let productIDs: [String] = [
         "dev.liyuxuan.joodle.pro.monthly",
@@ -270,6 +274,10 @@ class StoreKitManager: NSObject, ObservableObject {
         var autoRenew = false  // Default to false, will be set to true if we find an active subscription
         var eligibleForIntro = true
         var currentProduct: String?
+        var redeemedOfferCode = false
+        var offerCode: String?
+        var pendingOfferCode = false
+        var pendingOfferCodeId: String?
 
         // Use Product.SubscriptionInfo.status for accurate current subscription detection
         // This is more reliable than Transaction.currentEntitlements for determining the CURRENT plan
@@ -293,9 +301,15 @@ class StoreKitManager: NSObject, ObservableObject {
                     currentProduct = transactionInfo.productID
                     purchasedIDs.insert(transactionInfo.productID)
 
-                    // Check if in trial period
-                    if let offerType = transactionInfo.offer?.type {
-                        inTrial = (offerType == .introductory)
+                    // Check if in trial period or redeemed offer code
+                    if let offer = transactionInfo.offer {
+                        inTrial = (offer.type == .introductory)
+                        redeemedOfferCode = (offer.type == .code)
+
+                        // Get the offer code ID if available
+                        if offer.type == .code {
+                            offerCode = offer.id
+                        }
                     }
 
                     // Get expiration date from the current transaction
@@ -307,7 +321,14 @@ class StoreKitManager: NSObject, ObservableObject {
                     // renewalInfo.currentProductID shows what they'll renew to (could be different if they changed plans)
                     autoRenew = renewalInfo.willAutoRenew
 
-                    debugLogger.log(.debug, "Found active subscription", details: "Product: \(transactionInfo.productID), AutoRenew: \(autoRenew), State: \(status.state), RenewalProduct: \(renewalInfo.currentProductID)")
+                    // Check for pending offer code in renewal info
+                    // This detects when user redeems an offer code while still in intro/trial period
+                    if let renewalOfferType = renewalInfo.offerType, renewalOfferType == .code {
+                        pendingOfferCode = true
+                        pendingOfferCodeId = renewalInfo.offerID
+                    }
+
+                    debugLogger.log(.debug, "Found active subscription", details: "Product: \(transactionInfo.productID), AutoRenew: \(autoRenew), State: \(status.state), RenewalProduct: \(renewalInfo.currentProductID), PendingOfferCode: \(pendingOfferCode)")
 
                     // We found an active subscription, no need to continue
                     break
@@ -358,11 +379,19 @@ class StoreKitManager: NSObject, ObservableObject {
         self.subscriptionExpirationDate = expirationDate
         self.willAutoRenew = autoRenew
         self.isEligibleForIntroOffer = eligibleForIntro
+        self.hasRedeemedOfferCode = redeemedOfferCode
+        self.offerCodeId = offerCode
+        self.hasPendingOfferCode = pendingOfferCode
+        self.pendingOfferCodeId = pendingOfferCodeId
 
         print("📊 Subscription Status:")
         print("   Active: \(!purchasedIDs.isEmpty)")
         print("   Current Product: \(currentProduct ?? "None")")
         print("   Trial: \(inTrial)")
+        print("   Offer Code Redeemed: \(redeemedOfferCode)")
+        print("   Offer Code ID: \(offerCode ?? "N/A")")
+        print("   Pending Offer Code: \(pendingOfferCode)")
+        print("   Pending Offer Code ID: \(pendingOfferCodeId ?? "N/A")")
         print("   Expiration: \(expirationDate?.formatted() ?? "N/A")")
         print("   Auto-Renew: \(autoRenew)")
         print("   Eligible for Intro Offer: \(eligibleForIntro)")

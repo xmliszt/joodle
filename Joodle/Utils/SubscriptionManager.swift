@@ -34,6 +34,10 @@ class SubscriptionManager: ObservableObject {
 
     @Published var isInTrialPeriod: Bool = false
     @Published var willAutoRenew: Bool = false
+    @Published var hasRedeemedOfferCode: Bool = false
+    @Published var offerCodeId: String? = nil
+    @Published var hasPendingOfferCode: Bool = false  // Offer code queued for next renewal
+    @Published var pendingOfferCodeId: String? = nil
 
     /// Flag indicating subscription just expired (for UI alerts)
     @Published var subscriptionJustExpired: Bool = false
@@ -244,6 +248,10 @@ class SubscriptionManager: ObservableObject {
             storedProductID = storeManager.currentProductID
             isInTrialPeriod = storeManager.isInTrialPeriod
             willAutoRenew = storeManager.willAutoRenew
+            hasRedeemedOfferCode = storeManager.hasRedeemedOfferCode
+            offerCodeId = storeManager.offerCodeId
+            hasPendingOfferCode = storeManager.hasPendingOfferCode
+            pendingOfferCodeId = storeManager.pendingOfferCodeId
 
             // Update subscribed state
             if !isSubscribed {
@@ -258,6 +266,10 @@ class SubscriptionManager: ObservableObject {
             storedProductID = nil
             isInTrialPeriod = false
             willAutoRenew = false
+            hasRedeemedOfferCode = false
+            offerCodeId = nil
+            hasPendingOfferCode = false
+            pendingOfferCodeId = nil
 
             if isSubscribed {
                 isSubscribed = false
@@ -462,11 +474,27 @@ class SubscriptionManager: ObservableObject {
             return "Subscription ending"
         }
 
+        if hasRedeemedOfferCode {
+            if let expirationDate = subscriptionExpirationDate {
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                return "Promo ends \(formatter.string(from: expirationDate))"
+            }
+            return "Promo code active"
+        }
+
         if isInTrialPeriod {
             if let expirationDate = subscriptionExpirationDate {
                 let formatter = DateFormatter()
                 formatter.dateStyle = .medium
+                // Check if there's a pending offer code - promo activates after trial ends
+                if hasPendingOfferCode {
+                    return "Trial ends \(formatter.string(from: expirationDate)) • Promo next"
+                }
                 return "Trial ends \(formatter.string(from: expirationDate))"
+            }
+            if hasPendingOfferCode {
+                return "Free trial • Promo code applied"
             }
             return "Free trial active"
         }
