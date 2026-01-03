@@ -409,58 +409,52 @@ struct SettingsView: View {
   @ViewBuilder
   private var membershipBannerSection: some View {
     Section {
-      VStack(spacing: 16) {
-        // Membership Banner - only this should trigger paywall
-        MembershipBannerView(
-          isSubscribed: subscriptionManager.isSubscribed,
-          statusMessage: subscriptionManager.subscriptionStatusMessage,
-          joodleCount: currentJoodleCount,
-          alarmCount: reminderManager.reminders.count,
-          onTap: {
-            if subscriptionManager.isSubscribed {
-              showSubscriptions = true
-            } else {
-              showPaywall = true
-            }
-          }
-        )
-        .buttonStyle(.plain)
-
-        // Redeem Promo Code
-        Button {
-          showRedeemCode = true
-        } label: {
-          HStack {
-            SettingsIconView(systemName: "ticket.fill", backgroundColor: .orange)
-            Text("Redeem Promo Code")
-              .foregroundColor(.primary)
-            Spacer()
-            Image(systemName: "arrow.up.right")
-              .font(.caption)
-              .foregroundColor(.secondary)
+      // Membership Banner - only this should trigger paywall
+      MembershipBannerView(
+        isSubscribed: subscriptionManager.isSubscribed,
+        statusMessage: subscriptionManager.subscriptionStatusMessage,
+        joodleCount: currentJoodleCount,
+        alarmCount: reminderManager.reminders.count,
+        onTap: {
+          if subscriptionManager.isSubscribed {
+            showSubscriptions = true
+          } else {
+            showPaywall = true
           }
         }
-        .buttonStyle(.plain)
-
-        // Tutorial for TestFlight users only - how to redeem promo code
-        if isNonProductionEnvironment {
-          NavigationLink {
-            TutorialView(
-              title: TutorialDefinitions.testFlightUserRedeemPromoCode.title,
-              screenshots: TutorialDefinitions.testFlightUserRedeemPromoCode.screenshots,
-              description: TutorialDefinitions.testFlightUserRedeemPromoCode.description
-            )
-          } label: {
-            HStack {
-              SettingsIconView(systemName: TutorialDefinitions.testFlightUserRedeemPromoCode.icon, backgroundColor: .indigo)
-              Text("How to Get Promo Code")
-                .foregroundColor(.primary)
-            }
-          }
-          .buttonStyle(.plain)
+      )
+      
+      // Redeem Promo Code
+      Button {
+        showRedeemCode = true
+      } label: {
+        HStack {
+          SettingsIconView(systemName: "ticket.fill", backgroundColor: .orange)
+          Text("Redeem Promo Code")
+            .foregroundColor(.primary)
+          Spacer()
+          Image(systemName: "arrow.up.right")
+            .font(.caption)
+            .foregroundColor(.secondary)
         }
       }
-      .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16))
+      
+      // Tutorial for TestFlight users only - how to redeem promo code
+      if isNonProductionEnvironment {
+        NavigationLink {
+          TutorialView(
+            title: TutorialDefinitions.testFlightUserRedeemPromoCode.title,
+            screenshots: TutorialDefinitions.testFlightUserRedeemPromoCode.screenshots,
+            description: TutorialDefinitions.testFlightUserRedeemPromoCode.description
+          )
+        } label: {
+          HStack {
+            SettingsIconView(systemName: TutorialDefinitions.testFlightUserRedeemPromoCode.icon, backgroundColor: .indigo)
+            Text("How to Get Promo Code")
+              .foregroundColor(.primary)
+          }
+        }
+      }
     }
   }
 
