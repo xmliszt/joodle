@@ -309,12 +309,9 @@ struct DotPositionTweakerView: View {
 #Preview("🎯 Dot Tweaker - Widget Screenshots") {
     NavigationStack {
         DotPositionTweakerView(screenshots: [
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code1.png"),
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code2.png", dots: [TapDot(x: 522, y: 134)]),
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code3.png", dots: [TapDot(x: 397, y: 144)]),
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code4.png", dots: [TapDot(x: 81, y: 405)]),
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code5.png"),
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code6.png", dots: [TapDot(x: 207, y: 626)])
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature1.png", dots: [TapDot(x: 376, y: 163)]),
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature2.png", dots: [TapDot(x: 395, y: 603)]),
+          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature3.png", dots: [TapDot(x: 488, y: 709)])
         ])
     }
 }

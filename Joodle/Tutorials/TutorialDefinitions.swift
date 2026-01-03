@@ -91,8 +91,8 @@ enum TutorialDefinitions {
     shortDescription: "Get early access to experimental features",
     screenshots: [
       ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature1.png", dots: [TapDot(x: 376, y: 163)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature2.png", dots: [TapDot(x: 352, y: 591)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature3.png", dots: [TapDot(x: 496, y: 726)])
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature2.png", dots: [TapDot(x: 395, y: 603)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature3.png", dots: [TapDot(x: 488, y: 709)])
     ],
     description: "In \"Settings\", go to \"Labs\" section, then tap on \"Experimental Features\".",
     isPremiumFeature: true
@@ -109,9 +109,10 @@ enum TutorialDefinitions {
       ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel2.png"),
       ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel3.png"),
       ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel4.png", dots: [TapDot(x: 376, y: 163)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel5.png", dots: [TapDot(x: 408, y: 629)])
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel5.png", dots: [TapDot(x: 408, y: 613)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel6.png", dots: [TapDot(x: 405, y: 697)])
     ],
-    description: "Swtich to \"Normal\" view mode, then scroll to the top of the grid, continue to scroll and you should see the weekday labels. To change the Start of Week, go to \"Settings\" > \"Start of Week\"."
+    description: "Swtich to \"Normal\" view mode, then scroll to the top of the grid, continue to scroll and you should see the weekday labels. To change the Start of Week, go to \"Settings\" > \"General\" > \"Customization\" > \"Start of Week\"."
   )
   
   /// Tutorial for TestFlight user only: how to redeem a promo code
