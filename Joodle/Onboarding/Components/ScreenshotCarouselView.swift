@@ -122,7 +122,7 @@ struct SingleScreenshotView: View {
         case .local(let image):
           image.resizable()
         case .remote(let url):
-            AsyncImage(url: url) { phase in
+            CachedAsyncImage(url: url) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
@@ -131,10 +131,6 @@ struct SingleScreenshotView: View {
                     image
                         .resizable()
                 case .failure:
-                    Image(systemName: "photo")
-                        .resizable()
-                        .foregroundStyle(.secondary)
-                @unknown default:
                     Image(systemName: "photo")
                         .resizable()
                         .foregroundStyle(.secondary)

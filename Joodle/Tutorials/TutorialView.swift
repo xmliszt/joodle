@@ -189,7 +189,7 @@ struct DotPositionTweakerView: View {
                                     .resizable()
                                     .scaledToFill()
                             case .remote(let url):
-                                AsyncImage(url: url) { phase in
+                                CachedAsyncImage(url: url) { phase in
                                     switch phase {
                                     case .empty:
                                         ProgressView()
@@ -199,12 +199,6 @@ struct DotPositionTweakerView: View {
                                             .resizable()
                                             .scaledToFill()
                                     case .failure:
-                                        Image(systemName: "photo.trianglebadge.exclamationmark.fill")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .foregroundStyle(.secondary)
-                                            .padding(40)
-                                    @unknown default:
                                         Image(systemName: "photo.trianglebadge.exclamationmark.fill")
                                             .resizable()
                                             .scaledToFit()
