@@ -113,6 +113,23 @@ enum TutorialDefinitions {
     ],
     description: "Swtich to \"Normal\" view mode, then scroll to the top of the grid, continue to scroll and you should see the weekday labels. To change the Start of Week, go to \"Settings\" > \"Start of Week\"."
   )
+  
+  /// Tutorial for TestFlight user only: how to redeem a promo code
+  static let testFlightUserRedeemPromoCode = TutorialData(
+    id: "how-to-redeem-promo-code",
+    title: "Get Promo Code For Early Tester",
+    icon: "barcode",
+    shortDescription: "Learn how to get a promo code as an early tester",
+    screenshots: [
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code1.png"),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code2.png", dots: [TapDot(x: 522, y: 134)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code3.png", dots: [TapDot(x: 397, y: 144)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code4.png", dots: [TapDot(x: 81, y: 405)]),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code5.png"),
+      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code6.png", dots: [TapDot(x: 207, y: 626)])
+    ],
+    description: "Make sure you are on TestFlight. Take a screenshot, then tap \"Share Beta Feedback...\". Write \"I want promo code\" in the feedback section. And most importantly, include your email address in \"Share Your Email\" section so that we can send the code to you!"
+  )
 
   // MARK: - All Tutorials
 
