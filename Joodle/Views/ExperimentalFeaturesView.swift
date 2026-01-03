@@ -8,6 +8,21 @@
 import AVKit
 import SwiftUI
 
+// MARK: - Settings Icon View (shared component)
+struct ExperimentalSettingsIconView: View {
+  let systemName: String
+  let backgroundColor: Color
+
+  var body: some View {
+    Image(systemName: systemName)
+      .font(.system(size: 14, weight: .semibold))
+      .foregroundColor(.white)
+      .frame(width: 28, height: 28)
+      .background(backgroundColor)
+      .clipShape(RoundedRectangle(cornerRadius: 6))
+  }
+}
+
 struct ExperimentalFeaturesView: View {
   @Environment(\.userPreferences) private var userPreferences
   @StateObject private var subscriptionManager = SubscriptionManager.shared
@@ -61,10 +76,9 @@ struct ExperimentalFeaturesView: View {
             set: { userPreferences.enableTimeBackdrop = $0 }
           )) {
             HStack {
-              VStack(alignment: .leading, spacing: 4) {
-                Text("Passing Time Backdrop")
-                  .font(.body)
-              }
+              ExperimentalSettingsIconView(systemName: "water.waves", backgroundColor: .cyan)
+              Text("Passing Time Backdrop")
+                .font(.body)
 
               if !subscriptionManager.isSubscribed {
                 Spacer()
@@ -81,13 +95,10 @@ struct ExperimentalFeaturesView: View {
       // MARK: - About Section
       Section {
         VStack(alignment: .leading, spacing: 12) {
-          Label {
+          HStack {
+            ExperimentalSettingsIconView(systemName: "flask.fill", backgroundColor: .purple)
             Text("About Experimental Features")
               .font(.subheadline)
-          } icon: {
-            Image(systemName: "flask")
-              .foregroundStyle(.primary)
-              .scaledToFit()
           }
 
           Text("Experimental features are fun little projects that we are testing. These features may affect performance or battery life.")

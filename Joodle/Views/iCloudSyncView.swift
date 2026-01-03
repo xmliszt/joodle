@@ -7,6 +7,21 @@
 
 import SwiftUI
 
+// MARK: - Settings Icon View (shared component)
+struct iCloudSettingsIconView: View {
+  let systemName: String
+  let backgroundColor: Color
+
+  var body: some View {
+    Image(systemName: systemName)
+      .font(.system(size: 14, weight: .semibold))
+      .foregroundColor(.white)
+      .frame(width: 28, height: 28)
+      .background(backgroundColor)
+      .clipShape(RoundedRectangle(cornerRadius: 6))
+  }
+}
+
 struct iCloudSyncView: View {
   @Environment(\.userPreferences) private var userPreferences
   @Environment(\.cloudSyncManager) private var syncManager
@@ -177,10 +192,9 @@ struct iCloudSyncView: View {
           }
         )) {
           HStack {
-            VStack(alignment: .leading, spacing: 4) {
-              Text("iCloud Sync")
-                .font(.body)
-            }
+            iCloudSettingsIconView(systemName: "icloud.fill", backgroundColor: .cyan)
+            Text("iCloud Sync")
+              .font(.body)
 
             if !subscriptionManager.hasICloudSync {
               Spacer()
@@ -223,7 +237,8 @@ struct iCloudSyncView: View {
         Section {
           // iCloud Status
           HStack {
-            Label("iCloud", systemImage: needsRestartForSync ? "icloud.slash" : (syncManager.isCloudAvailable ? "icloud" : "icloud.slash"))
+            iCloudSettingsIconView(systemName: needsRestartForSync ? "icloud.slash" : (syncManager.isCloudAvailable ? "icloud" : "icloud.slash"), backgroundColor: .cyan)
+            Text("iCloud")
               .foregroundStyle(.primary)
 
             Spacer()
@@ -250,7 +265,8 @@ struct iCloudSyncView: View {
 
           // Network Status
           HStack {
-            Label("Network", systemImage: networkMonitor.isConnected ? "wifi" : "wifi.slash")
+            iCloudSettingsIconView(systemName: networkMonitor.isConnected ? "wifi" : "wifi.slash", backgroundColor: .blue)
+            Text("Network")
               .foregroundStyle(.primary)
 
             Spacer()
@@ -265,7 +281,8 @@ struct iCloudSyncView: View {
 
           // Sync Status
           HStack {
-            Label("Sync Status", systemImage: syncManager.canSync ? "arrow.trianglehead.2.clockwise.rotate.90" : "exclamationmark.arrow.trianglehead.2.clockwise.rotate.90")
+            iCloudSettingsIconView(systemName: syncManager.canSync ? "arrow.triangle.2.circlepath" : "exclamationmark.arrow.triangle.2.circlepath", backgroundColor: .green)
+            Text("Sync Status")
               .foregroundStyle(.primary)
 
             Spacer()
@@ -297,7 +314,8 @@ struct iCloudSyncView: View {
         if userPreferences.isCloudSyncEnabled {
           Section {
             HStack {
-              Label("Last synced at", systemImage: "clock")
+              iCloudSettingsIconView(systemName: "clock.fill", backgroundColor: .orange)
+              Text("Last synced at")
                 .foregroundStyle(.primary)
 
               Spacer()

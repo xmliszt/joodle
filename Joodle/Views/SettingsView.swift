@@ -305,7 +305,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 8) {
           HStack {
             Image(systemName: "crown.fill")
-              .foregroundStyle(subscriptionManager.isSubscribed ? .yellow : .appAccent)
+              .foregroundStyle(.appAccent)
               .font(.title2)
             Text(subscriptionManager.isSubscribed ? "Joodle Pro" : "Unlock Joodle Pro")
               .font(.headline)
@@ -1021,15 +1021,21 @@ struct DailyReminderSettingsView: View {
             }
           }
         )) {
-          Text("Enable Daily Reminder")
+          HStack {
+            SettingsIconView(systemName: "bell.fill", backgroundColor: .red)
+            Text("Enable Daily Reminder")
+          }
         }
 
         if userPreferences.isDailyReminderEnabled {
-          DatePicker(
-            "Reminder Time",
-            selection: dailyReminderTimeBinding,
-            displayedComponents: .hourAndMinute
-          )
+          HStack {
+            SettingsIconView(systemName: "clock.fill", backgroundColor: .red)
+            DatePicker(
+              "Reminder Time",
+              selection: dailyReminderTimeBinding,
+              displayedComponents: .hourAndMinute
+            )
+          }
         }
       } footer: {
         Text("Get a daily notification to capture your moment. Daily reminder will be skipped if today's entry has already been filled.")
@@ -1172,27 +1178,7 @@ struct CustomizationSettingsView: View {
       } header: {
         Text("Start of Week")
       }
-
-      // Theme Color Section
-      Section {
-        ThemeColorPaletteView(
-          subscriptionManager: subscriptionManager,
-          onLockedColorTapped: {
-            showPaywall = true
-          },
-          onColorChangeStarted: { color in
-            pendingThemeColor = color
-            showThemeOverlay = true
-          },
-          onColorChangeCompleted: {
-            // Let the overlay handle the completion
-          }
-        )
-        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-      } header: {
-        Text("Theme Color")
-      }
-
+      
       // Color Scheme Section
       Section {
         if #available(iOS 26.0, *) {
@@ -1213,6 +1199,26 @@ struct CustomizationSettingsView: View {
         }
       } header: {
         Text("Appearance")
+      }
+
+      // Theme Color Section
+      Section {
+        ThemeColorPaletteView(
+          subscriptionManager: subscriptionManager,
+          onLockedColorTapped: {
+            showPaywall = true
+          },
+          onColorChangeStarted: { color in
+            pendingThemeColor = color
+            showThemeOverlay = true
+          },
+          onColorChangeCompleted: {
+            // Let the overlay handle the completion
+          }
+        )
+        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+      } header: {
+        Text("Theme Color")
       }
     }
     .navigationTitle("Customization")
@@ -1252,7 +1258,10 @@ struct InteractionsSettingsView: View {
     Form {
       Section {
         Toggle(isOn: hapticBinding) {
-          Text("Haptic Feedback")
+          HStack {
+            SettingsIconView(systemName: "hand.tap.fill", backgroundColor: .blue)
+            Text("Haptic Feedback")
+          }
         }
       } footer: {
         Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration.")
@@ -1278,20 +1287,24 @@ struct BackupRestoreSettingsView: View {
       Section {
         Button(action: { exportData() }) {
           HStack {
+            SettingsIconView(systemName: "square.and.arrow.up.fill", backgroundColor: .gray)
             Text("Backup Locally")
+              .foregroundColor(.primary)
             Spacer()
-            Image(systemName: "square.and.arrow.up")
-              .font(.body)
+            Image(systemName: "chevron.right")
+              .font(.caption)
               .foregroundColor(.secondary)
           }
         }
 
         Button(action: { showFileImporter = true }) {
           HStack {
+            SettingsIconView(systemName: "square.and.arrow.down.fill", backgroundColor: .gray)
             Text("Restore From Local Backup")
+              .foregroundColor(.primary)
             Spacer()
-            Image(systemName: "square.and.arrow.down")
-              .font(.body)
+            Image(systemName: "chevron.right")
+              .font(.caption)
               .foregroundColor(.secondary)
           }
         }
@@ -1860,7 +1873,8 @@ struct LearnCoreFeaturesView: View {
             selectedTutorialStep = stepType
           } label: {
             HStack {
-              Label(stepType.title, systemImage: stepType.icon)
+              SettingsIconView(systemName: stepType.icon, backgroundColor: .indigo)
+              Text(stepType.title)
                 .foregroundColor(.textColor)
               Spacer()
               Image(systemName: "chevron.right")
@@ -1883,7 +1897,8 @@ struct LearnCoreFeaturesView: View {
             )
           } label: {
             HStack {
-              Label(tutorial.title, systemImage: tutorial.icon)
+              SettingsIconView(systemName: tutorial.icon, backgroundColor: .indigo)
+              Text(tutorial.title)
                 .foregroundColor(.primary)
               Spacer()
               if !subscriptionManager.isSubscribed && tutorial.isPremiumFeature {
@@ -1906,7 +1921,8 @@ struct LearnCoreFeaturesView: View {
             )
           } label: {
             HStack {
-              Label(tutorial.title, systemImage: tutorial.icon)
+              SettingsIconView(systemName: tutorial.icon, backgroundColor: .indigo)
+              Text(tutorial.title)
                 .foregroundColor(.primary)
               Spacer()
               if !subscriptionManager.isSubscribed && tutorial.isPremiumFeature {
@@ -2071,7 +2087,7 @@ struct MembershipBannerPreviewView: View {
     VStack(alignment: .leading, spacing: 8) {
       HStack {
         Image(systemName: "crown.fill")
-          .foregroundStyle(isSubscribed ? .yellow : .appAccent)
+          .foregroundStyle(.appAccent)
           .font(.title2)
         Text(isSubscribed ? "Joodle Pro" : "Unlock Joodle Pro")
           .font(.headline)
