@@ -32,6 +32,7 @@ final class PreferencesSyncManager {
     static let accentColor = "accent_color"
     static let isDailyReminderEnabled = "is_daily_reminder_enabled"
     static let dailyReminderTimeSeconds = "daily_reminder_time_seconds"
+    static let enableTimeBackdrop = "enable_time_backdrop"
     // Sync state keys - persist across app reinstalls to detect restore scenario
     // Use two keys for redundancy (same as CloudSyncStatePersistence and JoodleApp)
     static let primarySyncKey = "is_cloud_sync_enabled_backup"
@@ -128,6 +129,9 @@ final class PreferencesSyncManager {
     cloudStore.set(userPreferences.isDailyReminderEnabled, forKey: CloudKey.isDailyReminderEnabled)
     cloudStore.set(userPreferences.dailyReminderTimeSeconds, forKey: CloudKey.dailyReminderTimeSeconds)
 
+    // Sync experimental features
+    cloudStore.set(userPreferences.enableTimeBackdrop, forKey: CloudKey.enableTimeBackdrop)
+
     // Force synchronize
     let success = cloudStore.synchronize()
 
@@ -182,6 +186,11 @@ final class PreferencesSyncManager {
       userPreferences.dailyReminderTimeSeconds = Int(timeSeconds)
     }
 
+    // Sync experimental features
+    if cloudStore.object(forKey: CloudKey.enableTimeBackdrop) != nil {
+      userPreferences.enableTimeBackdrop = cloudStore.bool(forKey: CloudKey.enableTimeBackdrop)
+    }
+
     isSyncing = false
   }
 
@@ -200,6 +209,7 @@ final class PreferencesSyncManager {
     cloudStore.removeObject(forKey: CloudKey.accentColor)
     cloudStore.removeObject(forKey: CloudKey.isDailyReminderEnabled)
     cloudStore.removeObject(forKey: CloudKey.dailyReminderTimeSeconds)
+    cloudStore.removeObject(forKey: CloudKey.enableTimeBackdrop)
     cloudStore.synchronize()
   }
 
