@@ -707,7 +707,7 @@ struct PaywallContentView: View {
     let email = "joodle@liyuxuan.dev"
     let subject = "Support Request - Purchase Issue"
     let iOSVersion = UIDevice.current.systemVersion
-    let body = "\n\n\n\n\nJoodle \(AppEnvironment.fullVersionString) - iOS \(iOSVersion)\nID: \(deviceIdentifier)"
+    let body = "\n\n\n\n\nJoodle \(AppEnvironment.fullVersionDisplayString) - iOS \(iOSVersion)\nID: \(deviceIdentifier)"
 
     let subjectEncoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
     let bodyEncoded = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""

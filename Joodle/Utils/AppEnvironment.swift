@@ -146,6 +146,10 @@ enum AppEnvironment {
         "\(appVersion).\(buildNumber)"
     }
 
+    static var fullVersionDisplayString: String {
+        "\(appVersion) (\(buildNumber))"
+    }
+
     /// Bundle identifier
     static var bundleIdentifier: String {
         Bundle.main.bundleIdentifier ?? "Unknown"
