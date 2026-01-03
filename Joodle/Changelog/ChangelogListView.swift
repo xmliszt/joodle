@@ -152,11 +152,7 @@ private struct ChangelogDetailLoadingView: View {
         }
 
         // Fetch from remote
-        do {
-            entry = await viewModel.fetchChangelogDetail(for: indexEntry.version)
-        } catch {
-            loadError = error
-        }
+      entry = await viewModel.fetchChangelogDetail(for: indexEntry.version)
 
         isLoading = false
     }

@@ -114,7 +114,7 @@ enum FaqData {
             1. Subscribe to **Joodle Pro** (iCloud Sync is a premium feature)
             2. Make sure you're signed into iCloud on your device
             3. Enable iCloud for Joodle in your device's **Settings → [Your Name] → iCloud → Saved to iCloud → Joodle**
-            4. Enable sync in the Joodle app under **Settings → iCloud Sync**
+            4. Enable sync in the Joodle app under **Settings → General → iCloud Sync**
 
             **Important**: Both the system iCloud toggle and the in-app toggle must be enabled for sync to work.
 
@@ -150,11 +150,11 @@ enum FaqData {
             **To create a backup**:
 
             1. Go to **Settings** in Joodle
-            2. Scroll to **Data Management**
-            3. Tap **Export Data**
+            2. Tap **General → Backup & Restore**
+            3. Tap **Backup Locally**
             4. Save the backup file to a safe location
 
-            You can restore from this backup using the **Import Data** option after reinstalling.
+            You can restore from this backup using the **Restore From Local Backup** option after reinstalling.
             """
         ),
         FaqItem(
@@ -249,7 +249,7 @@ enum FaqData {
 
             This gesture lets you quickly scan through an entire year of entries without tapping each day individually.
 
-            **Tip**: Haptic feedback helps you feel when you move to a new day. You can toggle haptics on/off in Settings.
+            **Tip**: Haptic feedback helps you feel when you move to a new day. You can toggle haptics on/off in Settings → General → Interactions.
             """
         )
     ]

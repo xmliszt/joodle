@@ -14,7 +14,6 @@ struct SubscriptionsView: View {
   @StateObject private var storeManager = StoreKitManager.shared
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var subscriptionGroupID: String?
-  @State private var isRefreshing = false
 
   /// The current product comes directly from StoreKitManager for accuracy
   private var currentProduct: Product? {
@@ -31,9 +30,6 @@ struct SubscriptionsView: View {
           // Current Plan Card (if subscribed and we know the product)
           if let product = currentProduct {
             currentPlanSection(product: product)
-          } else if subscriptionManager.isSubscribed && isRefreshing {
-            // Show placeholder while loading current product
-            currentPlanLoadingSection
           }
 
           // Manage Subscription Button
@@ -47,33 +43,22 @@ struct SubscriptionsView: View {
         .padding(.vertical, 20)
         .padding(.bottom, 40)
       }
-      .refreshable {
-        await refreshSubscriptionStatus()
-      }
-
-      if storeManager.isLoading && !isRefreshing {
-        Color.black.opacity(0.3)
-          .ignoresSafeArea()
-        ProgressView()
-          .scaleEffect(1.5)
-      }
+    }
+    .refreshable {
+      await refreshSubscriptionStatus()
     }
     .navigationTitle("Joodle Pro")
     .navigationBarTitleDisplayMode(.inline)
     .onAppear {
       Task {
-        isRefreshing = true
         await refreshSubscriptionStatus()
-        isRefreshing = false
       }
     }
     .onChange(of: scenePhase) { oldPhase, newPhase in
       if newPhase == .active {
         // Refresh subscription status when returning from system subscription management
         Task {
-          isRefreshing = true
           await refreshSubscriptionStatus()
-          isRefreshing = false
         }
       }
     }
@@ -86,9 +71,7 @@ struct SubscriptionsView: View {
       guard subscriptionGroupID != nil else { return }
 
       Task {
-        isRefreshing = true
         await refreshSubscriptionStatus()
-        isRefreshing = false
       }
     }
   }
@@ -171,17 +154,6 @@ struct SubscriptionsView: View {
           .padding(.top, 8)
         }
 
-        // Show refresh indicator
-        if isRefreshing {
-          HStack(spacing: 6) {
-            ProgressView()
-              .scaleEffect(0.7)
-            Text("Updating...")
-              .font(.caption2)
-              .foregroundColor(.secondary)
-          }
-          .padding(.top, 4)
-        }
       } else {
         Text("No active subscription")
           .font(.subheadline)
@@ -206,29 +178,6 @@ struct SubscriptionsView: View {
         badge: subscriptionManager.isInTrialPeriod ? "FREE TRIAL" : nil,
         isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
         onSelect: {}
-      )
-      .padding(.horizontal, 20)
-    }
-  }
-
-  // MARK: - Current Plan Loading Placeholder
-
-  private var currentPlanLoadingSection: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Text("Your Current Plan")
-        .font(.caption)
-        .foregroundColor(.secondary)
-        .padding(.horizontal, 20)
-
-      HStack {
-        Spacer()
-        ProgressView()
-          .padding(.vertical, 40)
-        Spacer()
-      }
-      .background(
-        RoundedRectangle(cornerRadius: 16, style: .continuous)
-          .fill(.appBorder.opacity(0.2))
       )
       .padding(.horizontal, 20)
     }
@@ -335,9 +284,7 @@ struct SubscriptionsView: View {
         try await AppStore.showManageSubscriptions(in: windowScene)
 
         // Refresh subscription status after the sheet is dismissed
-        isRefreshing = true
         await refreshSubscriptionStatus()
-        isRefreshing = false
       } catch {
         print("Failed to show manage subscriptions: \(error)")
       }
