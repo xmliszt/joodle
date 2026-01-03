@@ -171,7 +171,9 @@ struct SettingsView: View {
   @State private var showPaywall = false
   @State private var showSubscriptions = false
   @State private var showAppStats = false
+  #if DEBUG
   @State private var showDataSeeder = false
+  #endif
   @State private var currentJoodleCount: Int = 0
 
   @State private var showSubscriptionTesting = false
@@ -179,7 +181,9 @@ struct SettingsView: View {
   @State private var showFaq = false
   @State private var showShareSheet = false
   @State private var showDeviceIdentifierAlert = false
+  #if DEBUG
   @State private var showBannerPreview = false
+  #endif
 
   // Theme color change state
   @State private var pendingThemeColor: ThemeColor?
@@ -385,7 +389,7 @@ struct SettingsView: View {
               .background(.gray.opacity(0.1))
               .clipShape(RoundedRectangle(cornerRadius: 6))
           }
-          
+
           Text("Download in App Store")
             .font(.body.weight(.medium))
             .foregroundColor(.primary)
@@ -896,9 +900,11 @@ struct SettingsView: View {
         Button("App Stats") {
           showAppStats = true
         }
+        #if DEBUG
         Button("Data Seeder") {
           showDataSeeder = true
         }
+        #endif
         Button("Generate Placeholder") {
           showPlaceholderGenerator = true
         }
@@ -946,16 +952,20 @@ struct SettingsView: View {
           showSubscriptionTesting = true
         }
 
+        #if DEBUG
         Button("Preview Membership Banner") {
           showBannerPreview = true
         }
+        #endif
       }
       .sheet(isPresented: $showSubscriptionTesting) {
         SubscriptionTestingView()
       }
+      #if DEBUG
       .sheet(isPresented: $showBannerPreview) {
         MembershipBannerPreviewView()
       }
+      #endif
     }
 
     if isSimulatingProduction {
