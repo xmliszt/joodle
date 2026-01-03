@@ -740,7 +740,7 @@ struct SettingsView: View {
       }
       .sheet(isPresented: $showShareSheet) {
         let shareText = "Hey! I've found a gem journaling app that allows you to draw your days! Joodle, that's what it's called, is made for people like you and I. Check it out here:"
-        let shareURL = URL(string: "https://liyuxuan.dev/apps/joodle")!
+        let shareURL = URL(string: "https://apps.apple.com/sg/app/joodle-journaling-with-doodle/id6756204776")!
         ShareSheet(items: [shareText, shareURL])
       }
     } header: {

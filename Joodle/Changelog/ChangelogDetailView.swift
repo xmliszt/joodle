@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MarkdownUI
 
 /// Detail view for a single changelog entry, used in Settings navigation
 struct ChangelogDetailView: View {
@@ -33,10 +34,7 @@ struct ChangelogDetailView: View {
                 }
 
                 // Markdown Content
-                Text(LocalizedStringKey(entry.markdownContent))
-                    .font(.body)
-                    .textSelection(.enabled)
-                    .multilineTextAlignment(.leading)
+                Markdown(entry.markdownContent).markdownTheme(.gitHub)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()

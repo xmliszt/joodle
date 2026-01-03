@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FA34C5092F08CE93000C510E /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = FA34C5082F08CE93000C510E /* MarkdownUI */; };
 		FA80CBF22EE9D05200E3BD1E /* Store.storekit in Resources */ = {isa = PBXBuildFile; fileRef = FA80CBF12EE9D05200E3BD1E /* Store.storekit */; };
 		FA85D4502EB7AECA007D82EE /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D44F2EB7AECA007D82EE /* WidgetKit.framework */; };
 		FA85D4632EB7AECB007D82EE /* WidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -150,6 +151,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FA8A958E2EE5CCF300FF871C /* StoreKit.framework in Frameworks */,
+				FA34C5092F08CE93000C510E /* MarkdownUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -256,6 +258,7 @@
 			);
 			name = Joodle;
 			packageProductDependencies = (
+				FA34C5082F08CE93000C510E /* MarkdownUI */,
 			);
 			productName = Joodle;
 			productReference = FA88AA2D2EE41776009AEFEB /* Joodle.app */;
@@ -342,6 +345,9 @@
 			);
 			mainGroup = FADC357A2E48C2E1007AE111;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FA34C5072F08CE93000C510E /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FADC35842E48C2E1007AE111 /* Products */;
 			projectDirPath = "";
@@ -444,7 +450,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = WidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 62;
+				CURRENT_PROJECT_VERSION = 63;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widgets/Info.plist;
@@ -478,7 +484,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = WidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 62;
+				CURRENT_PROJECT_VERSION = 63;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widgets/Info.plist;
@@ -513,7 +519,7 @@
 				CODE_SIGN_ENTITLEMENTS = joodle/joodle.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 62;
+				CURRENT_PROJECT_VERSION = 63;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -553,7 +559,7 @@
 				CODE_SIGN_ENTITLEMENTS = joodle/joodle.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 62;
+				CURRENT_PROJECT_VERSION = 63;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -831,6 +837,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FA34C5072F08CE93000C510E /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FA34C5082F08CE93000C510E /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA34C5072F08CE93000C510E /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FADC357B2E48C2E1007AE111 /* Project object */;
 }
