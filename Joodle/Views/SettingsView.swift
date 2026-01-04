@@ -423,7 +423,7 @@ struct SettingsView: View {
           }
         }
       )
-      
+
       // Redeem Promo Code
       Button {
         showRedeemCode = true
@@ -438,7 +438,7 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
         }
       }
-      
+
       // Tutorial for TestFlight users only - how to redeem promo code
       if isNonProductionEnvironment {
         NavigationLink {
@@ -914,6 +914,22 @@ struct SettingsView: View {
           ChangelogManager.shared.resetChangelogState()
           print("DEBUG: Changelog state reset - will show on next launch")
         }
+
+        #if DEBUG
+        Button("Show Test Remote Alert") {
+          RemoteAlertService.shared.showTestAlert()
+        }
+
+        Button("Reset Remote Alert State") {
+          RemoteAlertService.shared.resetDismissedState()
+        }
+
+        Button("Fetch Remote Alert Now") {
+          Task {
+            await RemoteAlertService.shared.checkForAlert()
+          }
+        }
+        #endif
 
         Toggle("Simulate Production Environment", isOn: Binding(
           get: { AppEnvironment.simulateProductionEnvironment },

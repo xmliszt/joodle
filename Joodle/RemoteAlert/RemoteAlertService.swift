@@ -117,7 +117,6 @@ final class RemoteAlertService: ObservableObject {
 
     // MARK: - Debug Helpers
 
-    #if DEBUG
     /// Reset the dismissed state (for testing)
     func resetDismissedState() {
         UserDefaults.standard.removeObject(forKey: lastDismissedKey)
@@ -141,5 +140,4 @@ final class RemoteAlertService: ObservableObject {
             imageURL: nil
         )
     }
-    #endif
 }
