@@ -223,6 +223,26 @@ actor RemoteChangelogService {
         indexCache = nil
         indexCacheTimestamp = nil
         markdownCache.removeAll()
+
+        // Also clear disk cache
+        clearDiskCache()
+    }
+
+    /// Clear all cached files from disk
+    private func clearDiskCache() {
+        guard let cacheDir = cacheDirectory else { return }
+
+        do {
+            let fileManager = FileManager.default
+            if fileManager.fileExists(atPath: cacheDir.path) {
+                let contents = try fileManager.contentsOfDirectory(at: cacheDir, includingPropertiesForKeys: nil)
+                for fileURL in contents {
+                    try fileManager.removeItem(at: fileURL)
+                }
+            }
+        } catch {
+            print("⚠️ Failed to clear changelog disk cache: \(error)")
+        }
     }
 
     /// Get cached index if available (for offline access)
