@@ -28,6 +28,12 @@ struct RemoteAlertView: View {
 
     var body: some View {
         VStack(spacing: 24) {
+            Image(systemName: alert.type.iconName)
+              .font(.system(size: 16, weight: .semibold))
+              .foregroundColor(.white)
+              .frame(width: 40, height: 40)
+              .background(alert.type.iconColor)
+              .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             // Title
             Text(alert.title)

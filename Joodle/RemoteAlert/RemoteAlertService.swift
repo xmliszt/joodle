@@ -155,8 +155,17 @@ final class RemoteAlertService: ObservableObject {
 
     /// Force show a test alert
     func showTestAlert(type: RemoteAlert.AnnouncementType = .community) {
+        let alertId = "test-alert-\(Date().timeIntervalSince1970)"
+      
+        // Check if announcements are enabled
+        guard isAnnouncementAllowed(type: type) else {
+            print("📢 Remote alert: Alert '\(alertId)' blocked by user preferences")
+            currentAlert = nil
+            return
+        }
+      
         currentAlert = RemoteAlert(
-            id: "test-alert-\(Date().timeIntervalSince1970)",
+            id: alertId,
             title: "Test Alert 🧪",
             message: "This is a test alert to preview the remote alert UI. It will behave just like a real remote alert.",
             primaryButton: RemoteAlert.AlertButton(
