@@ -555,8 +555,16 @@ class ReminderManager: ObservableObject {
     func refreshDailyReminderIfNeeded() {
         guard UserPreferences.shared.isDailyReminderEnabled else { return }
 
-        // Reschedule - this will check if user has already drawn today
-        scheduleDailyReminder(at: UserPreferences.shared.dailyReminderTime)
+        // Use a slight delay to ensure the ModelContext save has propagated to the persistent store
+        // before we create a new context to check for today's entry.
+        // This prevents race conditions where hasTodayEntry() reads stale data.
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self else { return }
+            guard UserPreferences.shared.isDailyReminderEnabled else { return }
+
+            // Reschedule - this will check if user has already drawn today
+            self.scheduleDailyReminder(at: UserPreferences.shared.dailyReminderTime)
+        }
     }
 
     /// Cancel the daily reminder notification

@@ -778,6 +778,11 @@ private func deleteEntry() {
   entry.deleteAllForSameDate(in: modelContext)
   textContent = ""
   self.entry = nil
+
+  // Refresh daily reminder - entry was deleted, so we may need to reschedule notification
+  if let date = date, CalendarDate.from(date).isToday {
+    ReminderManager.shared.refreshDailyReminderIfNeeded()
+  }
 }
 
 /// Save note to mock store (tutorial mode)
@@ -812,14 +817,19 @@ func saveNote(text: String, for date: Date) {
     if text.isEmpty && !hasDrawing {
       existingEntry.deleteAllForSameDate(in: modelContext)
       self.entry = nil
+
+      // Refresh daily reminder - entry was deleted, so we may need to reschedule notification
+      if CalendarDate.from(date).isToday {
+        ReminderManager.shared.refreshDailyReminderIfNeeded()
+      }
       return
     }
 
     try? modelContext.save()
 
-    // If this is today's entry and has content, refresh the daily reminder
-    // (cancels pending notification since user already added content today)
-    if !text.isEmpty && CalendarDate.from(date).isToday {
+    // Refresh the daily reminder for today's entry
+    // (cancels pending notification if entry has content, or reschedules if content was cleared)
+    if CalendarDate.from(date).isToday {
       ReminderManager.shared.refreshDailyReminderIfNeeded()
     }
     return

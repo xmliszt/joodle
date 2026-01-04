@@ -467,6 +467,11 @@ struct DrawingCanvasView: View {
         } else {
           try? modelContext.save()
         }
+
+        // Refresh daily reminder - drawing was cleared, so we may need to reschedule notification
+        if CalendarDate.from(date).isToday {
+          ReminderManager.shared.refreshDailyReminderIfNeeded()
+        }
       }
       return
     }
@@ -537,6 +542,11 @@ struct DrawingCanvasView: View {
           existingEntry.deleteAllForSameDate(in: modelContext)
         } else {
           try? modelContext.save()
+        }
+
+        // Refresh daily reminder - drawing was cleared, so we may need to reschedule notification
+        if CalendarDate.from(date).isToday {
+          ReminderManager.shared.refreshDailyReminderIfNeeded()
         }
       }
     }
