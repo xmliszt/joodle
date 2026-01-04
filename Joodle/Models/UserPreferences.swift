@@ -78,19 +78,16 @@ final class UserPreferences {
   var defaultViewMode: ViewMode = Pref.defaultViewMode.defaultValue {
     didSet {
       _defaultViewModeWatcher = defaultViewMode
-      syncToCloudIfEnabled()
     }
   }
   var preferredColorScheme: ColorScheme? = Pref.preferredColorScheme.defaultValue {
     didSet {
       _preferredColorSchemeWatcher = preferredColorScheme
-      syncToCloudIfEnabled()
     }
   }
   var enableHaptic: Bool = Pref.enableHaptic.defaultValue {
     didSet {
       _enableHapticWatcher = enableHaptic
-      syncToCloudIfEnabled()
     }
   }
   var isCloudSyncEnabled: Bool = Pref.isCloudSyncEnabled.defaultValue {
@@ -99,7 +96,6 @@ final class UserPreferences {
   var accentColor: ThemeColor = Pref.accentColor.defaultValue {
     didSet {
       _accentColorWatcher = accentColor
-      syncToCloudIfEnabled()
       // Notify the app to update the accent color
       NotificationCenter.default.post(name: .didChangeAccentColor, object: nil)
     }
@@ -107,19 +103,16 @@ final class UserPreferences {
   var isDailyReminderEnabled: Bool = Pref.isDailyReminderEnabled.defaultValue {
     didSet {
       _isDailyReminderEnabledWatcher = isDailyReminderEnabled
-      syncToCloudIfEnabled()
     }
   }
   var dailyReminderTimeSeconds: Int = Pref.dailyReminderTimeSeconds.defaultValue {
     didSet {
       _dailyReminderTimeSecondsWatcher = dailyReminderTimeSeconds
-      syncToCloudIfEnabled()
     }
   }
   var startOfWeek: String = Pref.startOfWeek.defaultValue {
     didSet {
       _startOfWeekWatcher = startOfWeek
-      syncToCloudIfEnabled()
     }
   }
 
@@ -127,7 +120,6 @@ final class UserPreferences {
   var enableTimeBackdrop: Bool = Pref.enableTimeBackdrop.defaultValue {
     didSet {
       _enableTimeBackdropWatcher = enableTimeBackdrop
-      syncToCloudIfEnabled()
     }
   }
 
@@ -253,16 +245,6 @@ final class UserPreferences {
     enableTimeBackdrop = Pref.enableTimeBackdrop.defaultValue
   }
 
-  // MARK: - iCloud Sync Helper
-  private func syncToCloudIfEnabled() {
-    // Only sync if cloud sync is enabled
-    guard isCloudSyncEnabled else { return }
-
-    // Push changes to iCloud in background
-    DispatchQueue.global(qos: .utility).async {
-      PreferencesSyncManager.shared.pushToCloud()
-    }
-  }
 }
 
 // MARK: - Environment Extension

@@ -26,7 +26,6 @@ struct iCloudSyncView: View {
   @Environment(\.userPreferences) private var userPreferences
   @Environment(\.cloudSyncManager) private var syncManager
   @Environment(\.networkMonitor) private var networkMonitor
-  @Environment(\.preferencesSyncManager) private var prefsSync
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var showEnableAlert = false
   @State private var showEnableWithRestartAlert = false

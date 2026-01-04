@@ -394,9 +394,8 @@ final class CloudSyncManager {
     CloudSyncStatePersistence.saveSyncEnabled(true)
     preferencesSyncManager.saveSyncEnabledToCloud()
 
-    // Perform initial sync of preferences
-    // Note: SwiftData sync happens automatically, we can't control it
-    preferencesSyncManager.performInitialSync()
+    // Note: SwiftData sync happens automatically for journal entries
+    // User preferences are intentionally NOT synced - they are device-specific
 
     // Check if container was created with different sync state
     // CloudKit can only have ONE active sync handler per store
