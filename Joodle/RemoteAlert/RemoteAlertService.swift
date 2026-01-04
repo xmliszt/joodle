@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import SwiftUI
 
 // MARK: - Remote Alert Service
 
@@ -71,6 +72,13 @@ final class RemoteAlertService: ObservableObject {
                 return
             }
 
+            // Check if announcements are enabled
+            guard isAnnouncementAllowed(type: alert.type) else {
+                print("📢 Remote alert: Alert '\(alert.id)' blocked by user preferences")
+                currentAlert = nil
+                return
+            }
+
             // Show the alert
             print("📢 Remote alert: Showing alert '\(alert.id)'")
             currentAlert = alert
@@ -78,6 +86,28 @@ final class RemoteAlertService: ObservableObject {
         } catch {
             // Fail silently - remote alerts are non-critical
             print("📢 Remote alert fetch failed: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Preference Checking
+
+    /// Check if a specific announcement type is allowed based on user preferences
+    private func isAnnouncementAllowed(type: RemoteAlert.AnnouncementType) -> Bool {
+        let prefs = UserPreferences.shared
+
+        // If master toggle is off, block all announcements
+        guard prefs.announcementsEnabled else {
+            return false
+        }
+
+        // Check individual type preferences
+        switch type {
+        case .promo:
+            return prefs.announcementPromoEnabled
+        case .community:
+            return prefs.announcementCommunityEnabled
+        case .tips:
+            return prefs.announcementTipsEnabled
         }
     }
 
@@ -124,7 +154,7 @@ final class RemoteAlertService: ObservableObject {
     }
 
     /// Force show a test alert
-    func showTestAlert() {
+    func showTestAlert(type: RemoteAlert.AnnouncementType = .community) {
         currentAlert = RemoteAlert(
             id: "test-alert-\(Date().timeIntervalSince1970)",
             title: "Test Alert 🧪",
@@ -137,7 +167,8 @@ final class RemoteAlertService: ObservableObject {
                 text: "Dismiss",
                 url: nil
             ),
-            imageURL: nil
+            imageURL: nil,
+            type: type
         )
     }
 }

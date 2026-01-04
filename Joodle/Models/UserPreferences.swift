@@ -25,6 +25,12 @@ enum Pref {
   // Experimental features
   static let enableTimeBackdrop = Key(key: "enable_time_backdrop", default: false)
 
+  // Announcements
+  static let announcementsEnabled = Key(key: "announcements_enabled", default: true)
+  static let announcementPromoEnabled = Key(key: "announcement_promo_enabled", default: true)
+  static let announcementCommunityEnabled = Key(key: "announcement_community_enabled", default: true)
+  static let announcementTipsEnabled = Key(key: "announcement_tips_enabled", default: true)
+
   // Add new preferences here - just specify the default!
   // static let newSetting = Key(default: "defaultValue")
 
@@ -50,6 +56,10 @@ enum Pref {
     dailyReminderTimeSeconds.key,
     startOfWeek.key,
     enableTimeBackdrop.key,
+    announcementsEnabled.key,
+    announcementPromoEnabled.key,
+    announcementCommunityEnabled.key,
+    announcementTipsEnabled.key,
   ]
 }
 
@@ -120,6 +130,28 @@ final class UserPreferences {
   var enableTimeBackdrop: Bool = Pref.enableTimeBackdrop.defaultValue {
     didSet {
       _enableTimeBackdropWatcher = enableTimeBackdrop
+    }
+  }
+
+  // Announcements
+  var announcementsEnabled: Bool = Pref.announcementsEnabled.defaultValue {
+    didSet {
+      _announcementsEnabledWatcher = announcementsEnabled
+    }
+  }
+  var announcementPromoEnabled: Bool = Pref.announcementPromoEnabled.defaultValue {
+    didSet {
+      _announcementPromoEnabledWatcher = announcementPromoEnabled
+    }
+  }
+  var announcementCommunityEnabled: Bool = Pref.announcementCommunityEnabled.defaultValue {
+    didSet {
+      _announcementCommunityEnabledWatcher = announcementCommunityEnabled
+    }
+  }
+  var announcementTipsEnabled: Bool = Pref.announcementTipsEnabled.defaultValue {
+    didSet {
+      _announcementTipsEnabledWatcher = announcementTipsEnabled
     }
   }
 
@@ -213,6 +245,26 @@ final class UserPreferences {
     set { set(Pref.enableTimeBackdrop, newValue) }
   }
 
+  private var _announcementsEnabledWatcher: Bool {
+    get { get(Pref.announcementsEnabled) }
+    set { set(Pref.announcementsEnabled, newValue) }
+  }
+
+  private var _announcementPromoEnabledWatcher: Bool {
+    get { get(Pref.announcementPromoEnabled) }
+    set { set(Pref.announcementPromoEnabled, newValue) }
+  }
+
+  private var _announcementCommunityEnabledWatcher: Bool {
+    get { get(Pref.announcementCommunityEnabled) }
+    set { set(Pref.announcementCommunityEnabled, newValue) }
+  }
+
+  private var _announcementTipsEnabledWatcher: Bool {
+    get { get(Pref.announcementTipsEnabled) }
+    set { set(Pref.announcementTipsEnabled, newValue) }
+  }
+
   // MARK: - Step 5: Add your property to load during initialization
   init() {
     // Load initial values from UserDefaults
@@ -225,6 +277,10 @@ final class UserPreferences {
     dailyReminderTimeSeconds = _dailyReminderTimeSecondsWatcher
     startOfWeek = _startOfWeekWatcher
     enableTimeBackdrop = _enableTimeBackdropWatcher
+    announcementsEnabled = _announcementsEnabledWatcher
+    announcementPromoEnabled = _announcementPromoEnabledWatcher
+    announcementCommunityEnabled = _announcementCommunityEnabledWatcher
+    announcementTipsEnabled = _announcementTipsEnabledWatcher
   }
 
   // MARK: - Reset Method (automatically uses all registered keys!)
@@ -243,6 +299,10 @@ final class UserPreferences {
     dailyReminderTimeSeconds = Pref.dailyReminderTimeSeconds.defaultValue
     startOfWeek = Pref.startOfWeek.defaultValue
     enableTimeBackdrop = Pref.enableTimeBackdrop.defaultValue
+    announcementsEnabled = Pref.announcementsEnabled.defaultValue
+    announcementPromoEnabled = Pref.announcementPromoEnabled.defaultValue
+    announcementCommunityEnabled = Pref.announcementCommunityEnabled.defaultValue
+    announcementTipsEnabled = Pref.announcementTipsEnabled.defaultValue
   }
 
 }

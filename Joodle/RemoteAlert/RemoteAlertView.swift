@@ -231,7 +231,8 @@ extension View {
                     text: "Maybe Later",
                     url: nil
                 ),
-                imageURL: nil
+                imageURL: nil,
+                type: .community
             ),
             onPrimaryAction: {},
             onSecondaryAction: {}
@@ -253,7 +254,8 @@ extension View {
                     url: nil
                 ),
                 secondaryButton: nil,
-                imageURL: nil
+                imageURL: nil,
+                type: .promo
             ),
             onPrimaryAction: {},
             onSecondaryAction: {}
@@ -278,7 +280,8 @@ extension View {
                   text: "Maybe Later",
                   url: nil
               ),
-              imageURL: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Discord%20Community%20Banner.png"
+              imageURL: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Discord%20Community%20Banner.png",
+              type: .community
             ),
             onPrimaryAction: {},
             onSecondaryAction: {}

@@ -538,6 +538,23 @@ struct SettingsView: View {
           Spacer()
         }
       }
+
+      // Announcements
+      NavigationLink {
+        AnnouncementsSettingsView()
+      } label: {
+        HStack {
+          SettingsIconView(systemName: "megaphone.fill", backgroundColor: .blue)
+          Text("Announcements")
+            .foregroundColor(.primary)
+          Spacer()
+          if !userPreferences.announcementsEnabled {
+            Text("Off")
+              .font(.subheadline)
+              .foregroundColor(.secondary)
+          }
+        }
+      }
     } header: {
       Text("General")
     }
