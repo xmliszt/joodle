@@ -174,6 +174,9 @@ struct JoodleApp: App {
   @State private var showPendingRestartAlert = false
   @State private var changelogEntry: ChangelogEntry?
 
+  /// Remote alert service for displaying server-pushed announcements
+  @StateObject private var remoteAlertService = RemoteAlertService.shared
+
   /// Use the singleton container - never recreate during app lifecycle
   private let modelContainer = ModelContainerManager.shared.container
 
@@ -482,12 +485,17 @@ struct JoodleApp: App {
                 showLaunchScreen = false
                 // Check for changelog after launch screen dismisses
                 checkForChangelog()
+                // Check for remote alerts after launch screen dismisses
+                Task {
+                  await remoteAlertService.checkForAlert()
+                }
               }
             }
         }
       }
       .preferredColorScheme(colorScheme)
       .tint(accentColor.color)
+      .remoteAlertOverlay(service: remoteAlertService)
       .sheet(item: $changelogEntry, onDismiss: {
         changelogEntry = nil
       }) { entry in
