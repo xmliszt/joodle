@@ -79,7 +79,11 @@ class TutorialCoordinator: ObservableObject {
         // In singleStepMode, we still play through all steps in the array before completing
         // This allows multi-step tutorials (like drawAndEdit with 2 steps) to work correctly
         if isLastStep {
-            complete()
+            // Add a short delay before completing to let the user see the result of their final action
+            // (e.g., animations finishing after their interaction)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+                self?.complete()
+            }
         } else {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                 currentStepIndex += 1
