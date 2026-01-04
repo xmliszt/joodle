@@ -121,9 +121,7 @@ struct SubscriptionsView: View {
 
   private var headerSection: some View {
     VStack(spacing: 12) {
-      Image(systemName: "crown.fill")
-        .font(.system(size: 50))
-        .foregroundColor(subscriptionManager.isSubscribed ? .appAccent : .appBorder)
+      GlossyCrownView(isSubscribed: subscriptionManager.isSubscribed)
 
       if subscriptionManager.isSubscribed {
         Text("Joodle Pro")
@@ -331,6 +329,64 @@ struct SubscriptionsView: View {
         print("Failed to show manage subscriptions: \(error)")
       }
     }
+  }
+}
+
+// MARK: - Glossy Crown View
+
+struct GlossyCrownView: View {
+  let isSubscribed: Bool
+  @State private var shimmerOffset: CGFloat = -1.5
+
+  var body: some View {
+    Image(systemName: "crown.fill")
+      .font(.system(size: 50))
+      .foregroundColor(isSubscribed ? .appAccent : .appBorder)
+      .overlay {
+        if isSubscribed {
+          LinearGradient(
+            stops: [
+              .init(color: .clear, location: 0),
+              .init(color: .white.opacity(0.5), location: 0.3),
+              .init(color: .white.opacity(0.8), location: 0.5),
+              .init(color: .white.opacity(0.5), location: 0.7),
+              .init(color: .clear, location: 1)
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+          )
+          .frame(width: 30)
+          .offset(x: shimmerOffset * 50)
+          .blur(radius: 2)
+          .mask {
+            Image(systemName: "crown.fill")
+              .font(.system(size: 50))
+          }
+        }
+      }
+      .onAppear {
+        if isSubscribed {
+          withAnimation(
+            .easeInOut(duration: 2.0)
+            .repeatForever(autoreverses: false)
+            .delay(0.5)
+          ) {
+            shimmerOffset = 1.5
+          }
+        }
+      }
+      .onChange(of: isSubscribed) { _, newValue in
+        if newValue {
+          shimmerOffset = -1.5
+          withAnimation(
+            .easeInOut(duration: 2.0)
+            .repeatForever(autoreverses: false)
+            .delay(0.5)
+          ) {
+            shimmerOffset = 1.5
+          }
+        }
+      }
   }
 }
 
