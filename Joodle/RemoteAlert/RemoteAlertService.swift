@@ -39,6 +39,14 @@ final class RemoteAlertService: ObservableObject {
     /// Check for new alerts from the remote server
     /// Call this on app launch after any splash/loading screen
     func checkForAlert() async {
+        // Skip if user hasn't completed onboarding yet
+        // This handles fresh installs and reinstalls going through onboarding
+        let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+        guard hasCompletedOnboarding else {
+            print("📢 Remote alert: Skipping - user is in onboarding")
+            return
+        }
+
         do {
             var request = URLRequest(url: endpoint)
             request.cachePolicy = .reloadIgnoringLocalCacheData
@@ -156,14 +164,14 @@ final class RemoteAlertService: ObservableObject {
     /// Force show a test alert
     func showTestAlert(type: RemoteAlert.AnnouncementType = .community) {
         let alertId = "test-alert-\(Date().timeIntervalSince1970)"
-      
+
         // Check if announcements are enabled
         guard isAnnouncementAllowed(type: type) else {
             print("📢 Remote alert: Alert '\(alertId)' blocked by user preferences")
             currentAlert = nil
             return
         }
-      
+
         currentAlert = RemoteAlert(
             id: alertId,
             title: "Test Alert 🧪",

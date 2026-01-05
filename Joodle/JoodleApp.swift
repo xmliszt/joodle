@@ -484,11 +484,8 @@ struct JoodleApp: App {
               DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 showLaunchScreen = false
                 // Check for changelog after launch screen dismisses
-                checkForChangelog()
-                // Check for remote alerts after launch screen dismisses
-                Task {
-                  await remoteAlertService.checkForAlert()
-                }
+                // Remote alerts will be checked after changelog check completes (if no changelog shown)
+                checkForChangelogThenRemoteAlerts()
               }
             }
         }
@@ -545,8 +542,10 @@ struct JoodleApp: App {
     }
   }
 
-  private func checkForChangelog() {
-    // Only show changelog after onboarding is complete
+  /// Checks for changelog first, then remote alerts if no changelog is shown.
+  /// Remote alerts are skipped during onboarding or when changelog is displayed.
+  private func checkForChangelogThenRemoteAlerts() {
+    // Skip everything during onboarding - user should complete onboarding first
     guard hasCompletedOnboarding else { return }
 
     // Small delay to ensure app is fully ready, then fetch async
@@ -554,7 +553,12 @@ struct JoodleApp: App {
       try? await Task.sleep(for: .milliseconds(300))
       await ChangelogManager.shared.checkAndPrepareChangelog()
       if let entry = ChangelogManager.shared.changelogToShow {
+        // Show changelog - skip remote alerts for this launch
+        // (user will see remote alert on next launch if conditions are met)
         changelogEntry = entry
+      } else {
+        // No changelog to show - safe to check for remote alerts
+        await remoteAlertService.checkForAlert()
       }
     }
   }
