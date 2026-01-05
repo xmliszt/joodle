@@ -33,12 +33,22 @@ class OnboardingViewModel: ObservableObject {
     @Published var needsRestartAfterOnboarding: Bool = false
 
     // Track if this is a revisit (user already completed onboarding before)
+    // We use a separate flag because hasCompletedOnboarding is reset to false to trigger onboarding
     var isRevisitingOnboarding: Bool {
-      UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+      UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") ||
+      UserDefaults.standard.bool(forKey: "isRevisitFromSettings")
+    }
+
+    /// Check if this is a revisit triggered from Settings > Learn Core Features
+    /// This flag ensures tutorials are shown even for users with active subscriptions
+    var isRevisitFromSettings: Bool {
+      UserDefaults.standard.bool(forKey: "isRevisitFromSettings")
     }
 
     var isReturnUser: Bool {
-      !self.isRevisitingOnboarding && StoreKitManager.shared.hasActiveSubscription
+      // If revisiting from settings, never treat as return user (always show tutorials)
+      if isRevisitFromSettings { return false }
+      return !self.isRevisitingOnboarding && StoreKitManager.shared.hasActiveSubscription
     }
 
     /// Whether to show feature introduction steps
@@ -129,6 +139,8 @@ class OnboardingViewModel: ObservableObject {
     private func finishOnboarding() {
         // Save flags to UserDefaults to hide onboarding on next launch
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+        // Clear the revisit from settings flag
+        UserDefaults.standard.removeObject(forKey: "isRevisitFromSettings")
 
         // Update subscription status if premium was set during onboarding
         #if DEBUG

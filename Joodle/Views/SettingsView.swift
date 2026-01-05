@@ -973,11 +973,6 @@ struct SettingsView: View {
           }
         ))
 
-        if isNonProductionEnvironment {
-          Button("Revisit Onboarding") {
-            showOnboarding = true
-          }
-        }
       } header: {
         Text("Developer Options")
       } footer: {
@@ -2192,6 +2187,8 @@ struct JSONDocument: FileDocument {
 struct LearnCoreFeaturesView: View {
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var selectedTutorialStep: TutorialStepType?
+  @State private var showRevisitOnboardingConfirmation = false
+  @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
 
   var body: some View {
     List {
@@ -2260,6 +2257,33 @@ struct LearnCoreFeaturesView: View {
           }
         }
       }
+
+      Section {
+        Button {
+          showRevisitOnboardingConfirmation = true
+        } label: {
+          HStack {
+            SettingsIconView(systemName: "arrow.counterclockwise", backgroundColor: .orange)
+            Text("Revisit Onboarding")
+              .foregroundColor(.primary)
+          }
+        }
+      }
+      .confirmationDialog(
+        "Revisit Onboarding?",
+        isPresented: $showRevisitOnboardingConfirmation,
+        titleVisibility: .visible
+      ) {
+        Button("Revisit Onboarding") {
+          // Set flag to indicate this is a revisit from settings (ensures tutorials are shown)
+          UserDefaults.standard.set(true, forKey: "isRevisitFromSettings")
+          // Reset the flag to trigger onboarding flow in JoodleApp
+          hasCompletedOnboarding = false
+        }
+        Button("Cancel", role: .cancel) { }
+      } message: {
+        Text("This will restart the full onboarding experience. Today's entry may be overwritten, and you will go through preference setup again.")
+      }
     }
     .navigationTitle("Learn Core Features")
     .navigationBarTitleDisplayMode(.inline)
@@ -2268,6 +2292,7 @@ struct LearnCoreFeaturesView: View {
         selectedTutorialStep = nil
       }
     }
+    
   }
 }
 
