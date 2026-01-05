@@ -497,6 +497,23 @@ struct SettingsView: View {
         }
       }
 
+      // Anniversary Alarms
+      NavigationLink {
+        AnniversaryAlarmsSettingsView()
+      } label: {
+        HStack {
+          SettingsIconView(systemName: "alarm.fill", backgroundColor: .orange)
+          Text("Anniversary Alarms")
+            .foregroundColor(.primary)
+          Spacer()
+          if !reminderManager.reminders.isEmpty {
+            Text("\(reminderManager.reminders.count)")
+              .font(.subheadline)
+              .foregroundColor(.secondary)
+          }
+        }
+      }
+
       // Customization
       NavigationLink {
         CustomizationSettingsView(
@@ -1374,6 +1391,186 @@ struct CustomizationSettingsView: View {
 }
 
 // MARK: - Interactions Settings View
+
+// MARK: - Anniversary Alarms Settings View
+
+struct AnniversaryAlarmsSettingsView: View {
+  @StateObject private var reminderManager = ReminderManager.shared
+  @State private var selectedReminders = Set<String>()
+  @State private var showPastTimeAlert = false
+
+  /// Sorted reminders by date (ascending)
+  private var sortedReminders: [Reminder] {
+    reminderManager.reminders.sorted { lhs, rhs in
+      // First compare by dateString (which is in yyyy-MM-dd format, so lexicographic order works)
+      if lhs.dateString != rhs.dateString {
+        return lhs.dateString < rhs.dateString
+      }
+      // If same date, compare by reminder time
+      return lhs.reminderDate < rhs.reminderDate
+    }
+  }
+
+  var body: some View {
+    List(selection: $selectedReminders) {
+      if sortedReminders.isEmpty {
+        Section {
+          VStack(spacing: 12) {
+            Image(systemName: "alarm")
+              .font(.system(size: 40))
+              .foregroundStyle(.secondary)
+            Text("No Anniversary Alarms")
+              .font(.headline)
+              .foregroundStyle(.secondary)
+            Text("Set alarms for future Joodle entries to get notified on special dates.")
+              .font(.subheadline)
+              .foregroundStyle(.tertiary)
+              .multilineTextAlignment(.center)
+          }
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 40)
+        }
+      } else {
+        Section {
+          ForEach(sortedReminders) { reminder in
+            AnniversaryAlarmRow(
+              reminder: reminder,
+              onTimeChange: { newTime in
+                updateReminderTime(reminder: reminder, newTime: newTime)
+              },
+              onPastTimeError: {
+                showPastTimeAlert = true
+              }
+            )
+          }
+          .onDelete(perform: deleteReminders)
+        } footer: {
+          Text("Swipe left to delete, or tap Edit to select multiple alarms.")
+        }
+      }
+    }
+    .navigationTitle("Anniversary Alarms")
+    .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      ToolbarItem(placement: .topBarTrailing) {
+        if !sortedReminders.isEmpty {
+          EditButton()
+        }
+      }
+
+      ToolbarItem(placement: .bottomBar) {
+        if !selectedReminders.isEmpty {
+          Button(role: .destructive) {
+            deleteSelectedReminders()
+          } label: {
+            Text("Delete Selected (\(selectedReminders.count))")
+              .foregroundStyle(.red)
+          }
+        }
+      }
+    }
+    .alert("Invalid Alarm Time", isPresented: $showPastTimeAlert) {
+      Button("OK", role: .cancel) { }
+    } message: {
+      Text("The selected time has already passed. Please choose a future time for your anniversary alarm.")
+    }
+  }
+
+  private func deleteReminders(at offsets: IndexSet) {
+    let remindersToDelete = offsets.map { sortedReminders[$0] }
+    for reminder in remindersToDelete {
+      reminderManager.removeReminder(for: reminder.dateString)
+    }
+  }
+
+  private func deleteSelectedReminders() {
+    for dateString in selectedReminders {
+      reminderManager.removeReminder(for: dateString)
+    }
+    selectedReminders.removeAll()
+  }
+
+  private func updateReminderTime(reminder: Reminder, newTime: Date) {
+    Task {
+      await reminderManager.addReminder(
+        for: reminder.dateString,
+        at: newTime,
+        entryBody: reminder.entryBody
+      )
+    }
+  }
+}
+
+// MARK: - Anniversary Alarm Row
+
+struct AnniversaryAlarmRow: View {
+  let reminder: Reminder
+  let onTimeChange: (Date) -> Void
+  let onPastTimeError: () -> Void
+
+  @State private var selectedTime: Date
+
+  init(reminder: Reminder, onTimeChange: @escaping (Date) -> Void, onPastTimeError: @escaping () -> Void) {
+    self.reminder = reminder
+    self.onTimeChange = onTimeChange
+    self.onPastTimeError = onPastTimeError
+    self._selectedTime = State(initialValue: reminder.reminderDate)
+  }
+
+  private var displayDate: String {
+    CalendarDate(dateString: reminder.dateString)?.displayString ?? reminder.dateString
+  }
+
+  /// Combines the entry date with the selected time
+  private func combinedReminderDate(from time: Date) -> Date {
+    guard let entryDate = DayEntry.stringToLocalDate(reminder.dateString) else {
+      return time
+    }
+
+    let timeComponents = Calendar.current.dateComponents([.hour, .minute], from: time)
+    var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: entryDate)
+    dateComponents.hour = timeComponents.hour
+    dateComponents.minute = timeComponents.minute
+
+    return Calendar.current.date(from: dateComponents) ?? time
+  }
+
+  var body: some View {
+    HStack {
+      VStack(alignment: .leading, spacing: 4) {
+        Text(displayDate)
+          .font(.body)
+          .foregroundStyle(.primary)
+
+        if let entryBody = reminder.entryBody, !entryBody.isEmpty {
+          Text(entryBody)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+        }
+      }
+
+      Spacer()
+
+      DatePicker(
+        "Alarm Time",
+        selection: $selectedTime,
+        displayedComponents: .hourAndMinute
+      )
+      .labelsHidden()
+      .onChange(of: selectedTime) { _, newTime in
+        let combined = combinedReminderDate(from: newTime)
+        if combined <= Date() {
+          // Reset to previous time and show error
+          selectedTime = reminder.reminderDate
+          onPastTimeError()
+        } else {
+          onTimeChange(combined)
+        }
+      }
+    }
+  }
+}
 
 struct InteractionsSettingsView: View {
   @Environment(\.userPreferences) private var userPreferences
