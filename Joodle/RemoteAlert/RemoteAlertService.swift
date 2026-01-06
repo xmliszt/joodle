@@ -25,7 +25,13 @@ final class RemoteAlertService: ObservableObject {
     // MARK: - Configuration
 
     /// API endpoint for fetching alerts
-    private let endpoint = URL(string: "https://liyuxuan.dev/api/alerts/joodle")!
+    private var endpoint: URL {
+      #if DEBUG
+      return URL(string: "http://192.168.88.11:3000/api/alerts/joodle")!
+      #else
+      return URL(string: "https://liyuxuan.dev/api/alerts/joodle")!
+      #endif
+    }
 
     /// UserDefaults key for storing the last dismissed alert ID
     private let lastDismissedKey = "lastDismissedRemoteAlertId"
@@ -48,6 +54,7 @@ final class RemoteAlertService: ObservableObject {
         }
 
         do {
+            print("📢 Remote alert: fetch from \(endpoint)")
             var request = URLRequest(url: endpoint)
             request.cachePolicy = .reloadIgnoringLocalCacheData
             request.timeoutInterval = 10
