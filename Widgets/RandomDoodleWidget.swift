@@ -388,7 +388,7 @@ struct JoodleView: View {
             scaledPath,
             with: .color(themeColor),
             style: StrokeStyle(
-              lineWidth: (family == .accessoryCircular ? 10.0 :5.0) * scale,
+              lineWidth: 5.0 * scale,
               lineCap: .round,
               lineJoin: .round
             )

@@ -377,24 +377,31 @@ struct TodayDoodleJoodleView: View {
       let offsetX = (size.width - 300 * scale) / 2
       let offsetY = (size.height - 300 * scale) / 2
 
+      // Use consistent line width (5.0) that scales proportionally
+      // This ensures the doodle looks "normal" regardless of widget size
+      let lineWidth: CGFloat = 5.0 * scale
+
       for pathData in paths {
         var scaledPath = Path()
 
         if pathData.isDot && pathData.points.count >= 1 {
-          // Draw dot
+          // Draw dot as filled circle (not stroked, to avoid hollow appearance)
           let center = pathData.points[0]
           let scaledCenter = CGPoint(
             x: center.x * scale + offsetX,
             y: center.y * scale + offsetY
           )
-          let radius: CGFloat = 3.0 * scale
+          // Dot radius should match half the line width for visual consistency
+          let dotRadius: CGFloat = lineWidth / 2
           scaledPath.addEllipse(
             in: CGRect(
-              x: scaledCenter.x - radius,
-              y: scaledCenter.y - radius,
-              width: radius * 2,
-              height: radius * 2
+              x: scaledCenter.x - dotRadius,
+              y: scaledCenter.y - dotRadius,
+              width: dotRadius * 2,
+              height: dotRadius * 2
             ))
+          // Fill the dot instead of stroking to avoid hollow circle appearance
+          context.fill(scaledPath, with: .color(themeColor))
         } else if pathData.points.count > 1 {
           // Draw path
           let firstPoint = pathData.points[0]
@@ -411,16 +418,16 @@ struct TodayDoodleJoodleView: View {
             )
             scaledPath.addLine(to: scaledPoint)
           }
-        }
-        context.stroke(
-          scaledPath,
-          with: .color(themeColor),
-          style: StrokeStyle(
-            lineWidth: (family == .accessoryCircular ? 10.0 : 5.0) * scale,
-            lineCap: .round,
-            lineJoin: .round
+          context.stroke(
+            scaledPath,
+            with: .color(themeColor),
+            style: StrokeStyle(
+              lineWidth: lineWidth,
+              lineCap: .round,
+              lineJoin: .round
+            )
           )
-        )
+        }
       }
     }
   }

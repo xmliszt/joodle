@@ -570,13 +570,14 @@ struct AnniversaryJoodleView: View {
         var scaledPath = Path()
 
         if pathData.isDot && pathData.points.count >= 1 {
-          // Draw dot
+          // Draw dot as filled circle
           let center = pathData.points[0]
           let scaledCenter = CGPoint(
             x: center.x * scale + offsetX,
             y: center.y * scale + offsetY
           )
-          let radius: CGFloat = 3.0 * scale
+          // Use consistent dot radius (DRAWING_LINE_WIDTH / 2 = 2.5)
+          let radius: CGFloat = 2.5 * scale
           scaledPath.addEllipse(
             in: CGRect(
               x: scaledCenter.x - radius,
@@ -584,6 +585,9 @@ struct AnniversaryJoodleView: View {
               width: radius * 2,
               height: radius * 2
             ))
+          // Fill dot instead of stroke to avoid hollow circle appearance
+          context.fill(scaledPath, with: .color(themeColor))
+          continue
         } else if pathData.points.count > 1 {
           // Draw path
           let firstPoint = pathData.points[0]
@@ -601,15 +605,18 @@ struct AnniversaryJoodleView: View {
             scaledPath.addLine(to: scaledPoint)
           }
         }
-        context.stroke(
-          scaledPath,
-          with: .color(themeColor),
-          style: StrokeStyle(
-            lineWidth: 5.0 * scale,
-            lineCap: .round,
-            lineJoin: .round
+        // Only stroke non-dot paths
+        if !pathData.isDot {
+          context.stroke(
+            scaledPath,
+            with: .color(themeColor),
+            style: StrokeStyle(
+              lineWidth: 5.0 * scale,
+              lineCap: .round,
+              lineJoin: .round
+            )
           )
-        )
+        }
       }
     }
   }
