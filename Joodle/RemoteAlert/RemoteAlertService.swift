@@ -26,11 +26,7 @@ final class RemoteAlertService: ObservableObject {
 
     /// API endpoint for fetching alerts
     private var endpoint: URL {
-      #if DEBUG
-      return URL(string: "http://192.168.88.11:3000/api/alerts/joodle")!
-      #else
       return URL(string: "https://liyuxuan.dev/api/alerts/joodle")!
-      #endif
     }
 
     /// UserDefaults key for storing the last dismissed alert ID
