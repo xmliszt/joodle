@@ -33,9 +33,17 @@ struct ShareCardSelectorView: View {
   @State private var renderedPreviews: [ShareCardStyle: [ColorScheme: [Bool: UIImage]]] = [:]
   @State private var renderingStyles: Set<ShareCardStyle> = []
 
+  // Cache animated preview frames for each style
+  @State private var animatedPreviewFrames: [ShareCardStyle: [ColorScheme: [Bool: [UIImage]]]] = [:]
+  @State private var loadingAnimatedStyles: Set<ShareCardStyle> = []
+
   // Year grid data (loaded when in yearGrid mode)
   @State private var yearEntries: [ShareCardDayEntry] = []
   @State private var yearPercentage: Double = 0.0
+
+  // Animated export progress
+  @State private var exportProgress: Double = 0.0
+  @State private var isExportingAnimated: Bool = false
 
   /// Check if the selected year is the current year
   private var isCurrentYear: Bool {
@@ -57,15 +65,34 @@ struct ShareCardSelectorView: View {
     SubscriptionManager.shared.isSubscribed
   }
 
+  /// Check if the entry has a drawing (required for animated styles)
+  private var hasDrawing: Bool {
+    switch mode {
+    case .entry(let entry, _):
+      return entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true)
+    case .yearGrid:
+      return false
+    }
+  }
+
   private var availableStyles: [ShareCardStyle] {
     switch mode {
     case .entry(_, let date):
       let isFuture = Calendar.current.startOfDay(for: date) > Calendar.current.startOfDay(for: Date())
+
+      var styles: [ShareCardStyle]
       if isFuture {
-        return ShareCardStyle.entryStyles
+        styles = ShareCardStyle.entryStyles
       } else {
-        return ShareCardStyle.entryStyles.filter { $0 != .anniversary }
+        styles = ShareCardStyle.entryStyles.filter { $0 != .anniversary }
       }
+
+      // Add animated styles only if entry has a drawing
+      if hasDrawing {
+        styles += ShareCardStyle.animatedStyles
+      }
+
+      return styles
     case .yearGrid:
       return ShareCardStyle.yearGridStyles
     }
@@ -101,6 +128,13 @@ struct ShareCardSelectorView: View {
                 Text(selectedStyle.rawValue)
                   .font(.system(size: 16).bold())
                   .foregroundColor(.textColor)
+
+                // Show format badge for animated styles
+                if selectedStyle.isGIFStyle {
+                  formatBadge(text: "GIF", color: .orange)
+                } else if selectedStyle.isVideoStyle {
+                  formatBadge(text: "MP4", color: .blue)
+                }
               }
 
               Text(selectedStyle.description)
@@ -123,6 +157,24 @@ struct ShareCardSelectorView: View {
 
         Spacer().frame(maxHeight: .infinity)
 
+        // Export progress indicator for animated exports
+        if isExportingAnimated {
+          VStack(spacing: 8) {
+            ProgressView(value: exportProgress) {
+              Text("Generating animation...")
+                .font(.system(size: 14))
+                .foregroundColor(.secondaryTextColor)
+            }
+            .progressViewStyle(LinearProgressViewStyle(tint: .appAccent))
+            .padding(.horizontal, 32)
+
+            Text("\(Int(exportProgress * 100))%")
+              .font(.system(size: 12, weight: .medium))
+              .foregroundColor(.secondaryTextColor)
+          }
+          .padding(.bottom, 16)
+        }
+
         // Watermark toggle - only visible for Joodle Super users
         Toggle(isOn: $showWatermark) {
           HStack(spacing: 8) {
@@ -144,6 +196,7 @@ struct ShareCardSelectorView: View {
         .onChange(of: showWatermark) { _, _ in
           // Clear cached previews when watermark setting changes
           renderedPreviews.removeAll()
+          animatedPreviewFrames.removeAll()
           // Re-render current preview
           renderPreview(for: selectedStyle)
         }
@@ -170,10 +223,10 @@ struct ShareCardSelectorView: View {
                 shareCard()
               } label: {
                 HStack(spacing: 12) {
-                  Image(systemName: "square.and.arrow.up")
+                  Image(systemName: shareButtonIcon)
                     .font(.system(size: 18, weight: .semibold))
 
-                  Text("Share")
+                  Text(shareButtonText)
                     .font(.system(size: 18, weight:.semibold))
                 }
                 .foregroundColor(.appAccentContrast)
@@ -183,7 +236,7 @@ struct ShareCardSelectorView: View {
                 .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
               }
               .glassEffect(.regular.interactive())
-              .disabled(isSharing || shareItem != nil)
+              .disabled(isSharing || shareItem != nil || isExportingAnimated)
             }
           }
           .padding(.horizontal, UIDevice.screenCornerRadius / 2)
@@ -203,10 +256,10 @@ struct ShareCardSelectorView: View {
               shareCard()
             } label: {
               HStack(spacing: 12) {
-                Image(systemName: "square.and.arrow.up")
+                Image(systemName: shareButtonIcon)
                   .font(.system(size: 18, weight: .semibold))
 
-                Text("Share")
+                Text(shareButtonText)
                   .font(.system(size: 18, weight:.semibold))
               }
               .foregroundColor(.appAccentContrast)
@@ -215,7 +268,7 @@ struct ShareCardSelectorView: View {
               .background(.appAccent)
               .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
             }
-            .disabled(isSharing || shareItem != nil)
+            .disabled(isSharing || shareItem != nil || isExportingAnimated)
           }
           .padding(.horizontal, UIDevice.screenCornerRadius / 2)
         }
@@ -244,6 +297,32 @@ struct ShareCardSelectorView: View {
         await SubscriptionManager.shared.verifySubscriptionForAccess()
       }
     }
+  }
+
+  // MARK: - Share Button Customization
+
+  private var shareButtonIcon: String {
+    return selectedStyle.icon
+  }
+
+  private var shareButtonText: String {
+    if selectedStyle.isAnimatedStyle {
+      return "Share"
+    }
+    return "Share"
+  }
+
+  // MARK: - Format Badge
+
+  @ViewBuilder
+  private func formatBadge(text: String, color: Color) -> some View {
+    Text(text)
+      .font(.system(size: 10, weight: .bold))
+      .foregroundColor(.white)
+      .padding(.horizontal, 6)
+      .padding(.vertical, 2)
+      .background(color)
+      .clipShape(Capsule())
   }
 
   private func setupInitialState() {
@@ -275,7 +354,10 @@ struct ShareCardSelectorView: View {
   @ViewBuilder
   private func cardPreview(style: ShareCardStyle) -> some View {
     ZStack {
-      if let previewImage = renderedPreviews[style]?[previewColorScheme]?[shouldShowWatermark] {
+      if style.isAnimatedStyle {
+        // Animated preview with auto-play
+        animatedCardPreview(style: style)
+      } else if let previewImage = renderedPreviews[style]?[previewColorScheme]?[shouldShowWatermark] {
         // Show the actual rendered export image
         Image(uiImage: previewImage)
           .resizable()
@@ -308,7 +390,43 @@ struct ShareCardSelectorView: View {
     }
   }
 
+  @ViewBuilder
+  private func animatedCardPreview(style: ShareCardStyle) -> some View {
+    if let frames = animatedPreviewFrames[style]?[previewColorScheme]?[shouldShowWatermark], !frames.isEmpty {
+      // Auto-playing animated preview using TimelineView
+      AnimatedPreviewPlayer(frames: frames, previewSize: style.previewSize, frameRate: Double(style.animationConfig.frameRate))
+    } else if loadingAnimatedStyles.contains(style) {
+      // Show loader while generating frames
+      ZStack {
+        Color.backgroundColor
+          .frame(width: style.previewSize.width, height: style.previewSize.height)
+
+        VStack(spacing: 8) {
+          ProgressView()
+            .progressViewStyle(CircularProgressViewStyle())
+          Text("Loading animation...")
+            .font(.system(size: 12))
+            .foregroundColor(.secondaryTextColor)
+        }
+      }
+    } else {
+      // Show placeholder
+      ZStack {
+        Color.backgroundColor
+          .frame(width: style.previewSize.width, height: style.previewSize.height)
+      }
+    }
+  }
+
   private func renderPreview(for style: ShareCardStyle) {
+    if style.isAnimatedStyle {
+      renderAnimatedPreview(for: style)
+    } else {
+      renderStaticPreview(for: style)
+    }
+  }
+
+  private func renderStaticPreview(for style: ShareCardStyle) {
     // Skip if already rendered or currently rendering
     guard renderedPreviews[style]?[previewColorScheme]?[shouldShowWatermark] == nil, !renderingStyles.contains(style) else {
       return
@@ -354,6 +472,47 @@ struct ShareCardSelectorView: View {
     }
   }
 
+  private func renderAnimatedPreview(for style: ShareCardStyle) {
+    // Skip if already rendered or currently loading
+    guard animatedPreviewFrames[style]?[previewColorScheme]?[shouldShowWatermark] == nil,
+          !loadingAnimatedStyles.contains(style) else {
+      return
+    }
+
+    loadingAnimatedStyles.insert(style)
+
+    let watermarkSetting = shouldShowWatermark
+
+    Task { @MainActor in
+      var frames: [UIImage] = []
+
+      switch mode {
+      case .entry(let entry, let date):
+        frames = await ShareCardRenderer.shared.generateAnimatedPreviewFrames(
+          style: style,
+          entry: entry,
+          date: date,
+          colorScheme: previewColorScheme,
+          showWatermark: watermarkSetting
+        )
+      case .yearGrid:
+        // Animated styles not available for year grid
+        break
+      }
+
+      if !frames.isEmpty {
+        if animatedPreviewFrames[style] == nil {
+          animatedPreviewFrames[style] = [:]
+        }
+        if animatedPreviewFrames[style]?[previewColorScheme] == nil {
+          animatedPreviewFrames[style]?[previewColorScheme] = [:]
+        }
+        animatedPreviewFrames[style]?[previewColorScheme]?[watermarkSetting] = frames
+      }
+      loadingAnimatedStyles.remove(style)
+    }
+  }
+
   private func prepareAndPresentShareSheet(with image: UIImage) {
     isSharing = true
     Task.detached {
@@ -379,10 +538,23 @@ struct ShareCardSelectorView: View {
     }
   }
 
+  private func prepareAndPresentShareSheet(with fileURL: URL) {
+    isSharing = false
+    isExportingAnimated = false
+    exportProgress = 0.0
+    shareItem = ShareItem(items: [fileURL])
+  }
+
   private func shareCard() {
-    guard shareItem == nil else { return }
+    guard shareItem == nil, !isExportingAnimated else { return }
 
     let watermarkSetting = shouldShowWatermark
+
+    // Handle animated exports
+    if selectedStyle.isAnimatedStyle {
+      shareAnimatedCard(watermarkSetting: watermarkSetting)
+      return
+    }
 
     // If we already have the rendered preview, use it directly
     if let cachedImage = renderedPreviews[selectedStyle]?[previewColorScheme]?[watermarkSetting] {
@@ -422,6 +594,88 @@ struct ShareCardSelectorView: View {
         isSharing = false
       }
     }
+  }
+
+  private func shareAnimatedCard(watermarkSetting: Bool) {
+    guard case .entry(let entry, let date) = mode else { return }
+
+    isExportingAnimated = true
+    exportProgress = 0.0
+
+    Task { @MainActor in
+      do {
+        let fileURL: URL?
+
+        if selectedStyle.isGIFStyle {
+          fileURL = try await ShareCardRenderer.shared.renderAnimatedGIF(
+            style: selectedStyle,
+            entry: entry,
+            date: date,
+            colorScheme: previewColorScheme,
+            showWatermark: watermarkSetting,
+            progressCallback: { progress in
+              self.exportProgress = progress
+            }
+          )
+        } else if selectedStyle.isVideoStyle {
+          fileURL = try await ShareCardRenderer.shared.renderAnimatedVideo(
+            style: selectedStyle,
+            entry: entry,
+            date: date,
+            colorScheme: previewColorScheme,
+            showWatermark: watermarkSetting,
+            progressCallback: { progress in
+              self.exportProgress = progress
+            }
+          )
+        } else {
+          fileURL = nil
+        }
+
+        if let fileURL = fileURL {
+          prepareAndPresentShareSheet(with: fileURL)
+        } else {
+          isExportingAnimated = false
+          exportProgress = 0.0
+        }
+      } catch {
+        print("Failed to export animated card: \(error)")
+        isExportingAnimated = false
+        exportProgress = 0.0
+      }
+    }
+  }
+}
+
+// MARK: - Animated Preview Player
+
+/// A view that auto-plays animation frames in a loop
+private struct AnimatedPreviewPlayer: View {
+  let frames: [UIImage]
+  let previewSize: CGSize
+  let frameRate: Double
+
+  var body: some View {
+    TimelineView(.animation(minimumInterval: 1.0 / frameRate)) { timeline in
+      let frameIndex = calculateFrameIndex(for: timeline.date)
+
+      Image(uiImage: frames[frameIndex])
+        .resizable()
+        .scaledToFit()
+        .frame(width: previewSize.width, height: previewSize.height)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+  }
+
+  private func calculateFrameIndex(for date: Date) -> Int {
+    guard !frames.isEmpty else { return 0 }
+
+    // Calculate which frame to show based on time
+    let totalDuration = Double(frames.count) / frameRate
+    let elapsed = date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: totalDuration)
+    let frameIndex = Int(elapsed * frameRate) % frames.count
+
+    return frameIndex
   }
 }
 

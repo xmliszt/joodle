@@ -19,15 +19,20 @@ struct MushroomWatermarkView: View {
   var body: some View {
     VStack {
       Spacer()
-      HStack {
+      HStack (alignment: .bottom) {
         if alignment == .bottomTrailing {
           Spacer()
         }
         Image("LaunchIcon")
           .resizable()
           .scaledToFit()
-          .frame(width: 128 * scale, height: 128 * scale)
+          .frame(width: 64 * scale, height: 64 * scale)
           .opacity(0.8)
+
+        Text("Made with Joodle")
+          .font(.system(size: 32 * scale))
+          .foregroundColor(.appTextSecondary)
+          .opacity(0.5)
         if alignment == .bottomLeading {
           Spacer()
         }

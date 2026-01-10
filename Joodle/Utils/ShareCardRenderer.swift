@@ -223,7 +223,213 @@ class ShareCardRenderer {
     case .yearGridDots, .yearGridJoodles, .yearGridJoodlesOnly:
       // Year grid styles should use renderYearGridCard instead
       EmptyView()
+    case .animatedMinimalGIF, .animatedExcerptGIF, .animatedMinimalVideo, .animatedExcerptVideo:
+      // Animated styles should use renderAnimatedGIF or renderAnimatedVideo instead
+      EmptyView()
     }
+  }
+
+  // MARK: - Animated Export
+
+  /// Renders an animated drawing as a GIF file
+  /// - Parameters:
+  ///   - style: The card style to render (must be a GIF style)
+  ///   - entry: The day entry containing the drawing
+  ///   - date: The date for the entry
+  ///   - colorScheme: The color scheme to use for rendering
+  ///   - showWatermark: Whether to show the watermark
+  ///   - progressCallback: Optional callback for progress updates (0.0 to 1.0)
+  /// - Returns: URL to the temporary GIF file
+  func renderAnimatedGIF(
+    style: ShareCardStyle,
+    entry: DayEntry?,
+    date: Date,
+    colorScheme: ColorScheme,
+    showWatermark: Bool = true,
+    progressCallback: ((Double) -> Void)? = nil
+  ) async throws -> URL? {
+    guard let entry = entry, entry.drawingData != nil else {
+      return nil
+    }
+
+    guard style.isGIFStyle else {
+      return nil
+    }
+
+    let frameRenderer = AnimatedDrawingRenderer()
+    let gifExporter = GIFExporter()
+    let config = style.animationConfig
+
+    // Generate card frames
+    let frames = await frameRenderer.generateCardFrames(
+      entry: entry,
+      date: date,
+      style: style,
+      colorScheme: colorScheme,
+      showWatermark: showWatermark,
+      progressCallback: { progress in
+        progressCallback?(progress)
+      }
+    )
+
+    guard !frames.isEmpty else {
+      return nil
+    }
+
+    // Export as GIF
+    let gifURL = try gifExporter.createGIFFile(from: frames, config: config)
+    progressCallback?(1.0)
+
+    return gifURL
+  }
+
+  /// Renders an animated drawing as a video file
+  /// - Parameters:
+  ///   - style: The card style to render (must be a video style)
+  ///   - entry: The day entry containing the drawing
+  ///   - date: The date for the entry
+  ///   - colorScheme: The color scheme to use for rendering
+  ///   - showWatermark: Whether to show the watermark
+  ///   - progressCallback: Optional callback for progress updates (0.0 to 1.0)
+  /// - Returns: URL to the temporary video file
+  func renderAnimatedVideo(
+    style: ShareCardStyle,
+    entry: DayEntry?,
+    date: Date,
+    colorScheme: ColorScheme,
+    showWatermark: Bool = true,
+    progressCallback: ((Double) -> Void)? = nil
+  ) async throws -> URL? {
+    guard let entry = entry, entry.drawingData != nil else {
+      return nil
+    }
+
+    guard style.isVideoStyle else {
+      return nil
+    }
+
+    let frameRenderer = AnimatedDrawingRenderer()
+    let videoExporter = VideoExporter()
+    let config = style.animationConfig
+
+    // Generate card frames
+    let frames = await frameRenderer.generateCardFrames(
+      entry: entry,
+      date: date,
+      style: style,
+      colorScheme: colorScheme,
+      showWatermark: showWatermark,
+      progressCallback: { progress in
+        progressCallback?(progress)
+      }
+    )
+
+    guard !frames.isEmpty else {
+      return nil
+    }
+
+    // Export as video
+    let videoURL = try await videoExporter.createVideo(from: frames, config: config)
+    progressCallback?(1.0)
+
+    return videoURL
+  }
+
+  /// Renders a single frame for animated preview at a specific progress
+  /// - Parameters:
+  ///   - style: The animated card style
+  ///   - entry: The day entry containing the drawing
+  ///   - date: The date for the entry
+  ///   - colorScheme: The color scheme to use for rendering
+  ///   - showWatermark: Whether to show the watermark
+  ///   - progress: Animation progress from 0.0 to 1.0
+  /// - Returns: A UIImage preview frame
+  func renderAnimatedFrame(
+    style: ShareCardStyle,
+    entry: DayEntry?,
+    date: Date,
+    colorScheme: ColorScheme,
+    showWatermark: Bool = true,
+    progress: CGFloat = 1.0
+  ) -> UIImage? {
+    guard let entry = entry, entry.drawingData != nil else {
+      return nil
+    }
+
+    guard style.isAnimatedStyle else {
+      return nil
+    }
+
+    let frameRenderer = AnimatedDrawingRenderer()
+    let config = style.animationConfig
+
+    // Get the paths
+    guard let drawingData = entry.drawingData else { return nil }
+    let pathsWithMetadata = DrawingPathCache.shared.getPathsWithMetadata(for: drawingData)
+    guard !pathsWithMetadata.isEmpty else { return nil }
+
+    // Get stroke color
+    let strokeColor = UIColor(Color.appAccent)
+
+    // Calculate drawing size based on style
+    let scale: CGFloat = 1.0
+    let drawingSize: CGFloat = style.includesExcerpt ? 600 * scale : 800 * scale
+
+    // Render drawing frame at current progress
+    guard let drawingFrame = frameRenderer.renderDrawingFrame(
+      pathsWithMetadata: pathsWithMetadata,
+      progress: progress,
+      size: CGSize(width: drawingSize, height: drawingSize),
+      foregroundColor: strokeColor,
+      config: config
+    ) else {
+      return nil
+    }
+
+    // Render complete card frame using the AnimatedDrawingRenderer
+    return frameRenderer.renderCardFrame(
+      drawingImage: drawingFrame,
+      entry: entry,
+      date: date,
+      style: style,
+      colorScheme: colorScheme,
+      showWatermark: showWatermark
+    )
+  }
+
+  /// Generate all frames for animated preview
+  /// - Parameters:
+  ///   - style: The animated card style
+  ///   - entry: The day entry containing the drawing
+  ///   - date: The date for the entry
+  ///   - colorScheme: The color scheme to use for rendering
+  ///   - showWatermark: Whether to show the watermark
+  /// - Returns: Array of UIImage frames for animation
+  func generateAnimatedPreviewFrames(
+    style: ShareCardStyle,
+    entry: DayEntry?,
+    date: Date,
+    colorScheme: ColorScheme,
+    showWatermark: Bool = true
+  ) async -> [UIImage] {
+    guard let entry = entry, entry.drawingData != nil else {
+      return []
+    }
+
+    guard style.isAnimatedStyle else {
+      return []
+    }
+
+    let frameRenderer = AnimatedDrawingRenderer()
+
+    return await frameRenderer.generateCardFrames(
+      entry: entry,
+      date: date,
+      style: style,
+      colorScheme: colorScheme,
+      showWatermark: showWatermark,
+      progressCallback: nil
+    )
   }
 
   /// Creates the appropriate year grid card view based on style

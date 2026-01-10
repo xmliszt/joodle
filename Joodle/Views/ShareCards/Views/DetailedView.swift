@@ -50,18 +50,23 @@ struct DetailedView: View {
           )
           .frame(width: contentWidth, height: contentHeight, alignment: .topLeading)
           .clipped()
-
-          // Date at the bottom right
-          Text(dateString)
-            .font(.system(size: 48 * scale))
-            .foregroundColor(.appTextSecondary)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            .frame(height: dateHeight)
         }
         .padding(.horizontal, outerPadding)
         .padding(.vertical, outerPadding)
         .padding(.trailing, 20 * scale)
 
+        // Date at the bottom right
+        HStack (alignment: .bottom) {
+          VStack (alignment: .trailing) {
+            Spacer()
+            Text(dateString)
+              .font(.system(size: 32 * scale))
+              .foregroundColor(.appTextSecondary)
+          }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+        .padding(40 * scale)
+        
         // Joodle image overlay in top-left corner
         if hasDrawing {
           DrawingPreviewView(
@@ -214,7 +219,7 @@ class ExclusionTextUIView: UIView {
 #Preview("With Drawing & Long Text") {
   DetailedView(
     entry: DayEntry(
-      body: "Today was amazing! I learned so much and felt really productive. The weather was beautiful and I went for a long walk in the park. I also finished reading that book I've been working on. Later in the evening, I cooked a delicious dinner and watched a great movie. It was truly a perfect day from start to finish!",
+      body: "Today was amazing! I learned so much and felt really productive. The weather was beautiful and I went for a long walk in the park. I also finished reading that book I've been working on. Later in the evening, I cooked a delicious dinner and watched a great movie. It was truly a perfect day from start to finish! Today was amazing! I learned so much and felt really productive. The weather was beautiful and I went for a long walk in the park. I also finished reading that book I've been working on. Later in the evening, I cooked a delicious dinner and watched a great movie. It was truly a perfect day from start to finish! Today was amazing! I learned so much and felt really productive. The weather was beautiful and I went for a long walk in the park. I also finished reading that book I've been working on. Later in the evening, I cooked a delicious dinner and watched a great movie. It was truly a perfect day from start to finish!",
       createdAt: Date(),
       drawingData: createMockDrawingData()
     ),
