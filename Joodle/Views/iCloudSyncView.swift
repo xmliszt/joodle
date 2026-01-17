@@ -178,8 +178,12 @@ struct iCloudSyncView: View {
                   } else if ModelContainerManager.shared.needsRestartForSyncChange {
                     // Restart is required - show special alert
                     showEnableWithRestartAlert = true
+                    // Track iCloud sync enabled
+                    AnalyticsManager.shared.trackICloudSyncEnabled()
                   } else {
                     showEnableAlert = true
+                    // Track iCloud sync enabled
+                    AnalyticsManager.shared.trackICloudSyncEnabled()
                   }
                 }
               }
@@ -187,6 +191,8 @@ struct iCloudSyncView: View {
               // No restart needed to disable - sync just stops on next app launch
               // The CloudKit container stays active but we save the preference
               showDisableAlert = true
+              // Track iCloud sync disabled
+              AnalyticsManager.shared.trackICloudSyncDisabled()
             }
           }
         )) {
@@ -412,6 +418,8 @@ struct iCloudSyncView: View {
       syncManager.checkCloudAvailability()
       // Clear the pending restart flag since user can see the banner here
       UserDefaults.standard.removeObject(forKey: "pending_icloud_sync_restart")
+      // Track iCloud sync settings screen viewed
+      AnalyticsManager.shared.trackScreen(.iCloudSync)
       // Verify subscription status when accessing iCloud Sync view (premium feature)
       Task {
         await SubscriptionManager.shared.verifySubscriptionForAccess()

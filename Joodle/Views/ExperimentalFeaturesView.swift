@@ -73,7 +73,18 @@ struct ExperimentalFeaturesView: View {
           // Toggle with premium badge
           Toggle(isOn: Binding(
             get: { userPreferences.enableTimeBackdrop },
-            set: { userPreferences.enableTimeBackdrop = $0 }
+            set: { newValue in
+              let previousValue = userPreferences.enableTimeBackdrop
+              userPreferences.enableTimeBackdrop = newValue
+              // Track experimental feature toggle
+              if newValue != previousValue {
+                AnalyticsManager.shared.trackSettingChanged(
+                  name: "experimental_time_backdrop",
+                  value: newValue,
+                  previousValue: previousValue
+                )
+              }
+            }
           )) {
             HStack {
               ExperimentalSettingsIconView(systemName: "water.waves", backgroundColor: .cyan)
@@ -110,6 +121,10 @@ struct ExperimentalFeaturesView: View {
     }
     .navigationTitle("Experimental Features")
     .navigationBarTitleDisplayMode(.inline)
+    .onAppear {
+      // Track experimental features screen viewed
+      AnalyticsManager.shared.trackScreen(.experimentalFeatures)
+    }
     .sheet(isPresented: $showPaywall) {
       StandalonePaywallView()
     }

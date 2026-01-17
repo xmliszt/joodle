@@ -13,6 +13,14 @@ struct ChangelogDetailView: View {
     let entry: ChangelogEntry
 
     var body: some View {
+        content
+            .onAppear {
+                // Track changelog viewed
+                AnalyticsManager.shared.trackChangelogViewed(version: entry.version)
+            }
+    }
+
+    private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 // Header with date and version
@@ -48,7 +56,7 @@ struct ChangelogDetailView: View {
       ZStack {
         Color.gray
         .edgesIgnoringSafeArea(.all)
-        
+
         ChangelogDetailView(
             entry: ChangelogEntry(
                 version: "1.0.54",
@@ -72,7 +80,7 @@ struct ChangelogDetailView: View {
             )
         )
       }
-       
+
     }
 }
 

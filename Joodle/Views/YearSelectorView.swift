@@ -40,8 +40,13 @@ struct YearSelectorView: View {
     Menu {
       ForEach(availableYears, id: \.self) { year in
         Button(String(year)) {
+          let previousYear = selectedYear
           withAnimation(.easeInOut(duration: 0.3)) {
             selectedYear = year
+          }
+          // Track year change
+          if year != previousYear {
+            AnalyticsManager.shared.trackYearChanged(to: year, from: previousYear)
           }
         }
       }

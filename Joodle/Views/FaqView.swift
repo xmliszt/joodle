@@ -131,6 +131,10 @@ struct FaqView: View {
         }
         .navigationTitle("Frequently Asked Questions")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Track FAQ screen viewed
+            AnalyticsManager.shared.trackFAQViewed()
+        }
         .refreshable {
             await faqManager.refresh()
         }
@@ -155,6 +159,16 @@ struct FaqDetailView: View {
         self.items = items
         self.initialIndex = initialIndex
         self._currentIndex = State(initialValue: initialIndex)
+    }
+
+    private func trackCurrentQuestion() {
+        guard currentIndex < items.count else { return }
+        let item = items[currentIndex]
+        AnalyticsManager.shared.trackFAQQuestionExpanded(
+            questionId: item.id,
+            questionTitle: item.title,
+            category: sectionTitle
+        )
     }
 
     var body: some View {
@@ -183,6 +197,12 @@ struct FaqDetailView: View {
         .background(Color(.systemBackground))
         .navigationTitle(sectionTitle)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            trackCurrentQuestion()
+        }
+        .onChange(of: currentIndex) { _, _ in
+            trackCurrentQuestion()
+        }
     }
 }
 

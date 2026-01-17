@@ -196,12 +196,22 @@ class StoreKitManager: NSObject, ObservableObject {
                 await updatePurchasedProducts()
                 await SubscriptionManager.shared.refreshSubscriptionFromStoreKit()
 
+                // Track subscription started
+                AnalyticsManager.shared.trackSubscriptionStarted(
+                    productId: product.id,
+                    isTrial: isInTrialPeriod,
+                    isOfferCode: hasRedeemedOfferCode,
+                    offerCodeId: offerCodeId
+                )
+
                 // Finish the transaction after we've updated our state
                 await transaction.finish()
 
                 return transaction
 
             case .userCancelled:
+                // Track purchase cancelled (user cancelled)
+                AnalyticsManager.shared.trackPaywallDismissed(source: "purchase", didPurchase: false)
                 return nil
 
             case .pending:
@@ -213,6 +223,11 @@ class StoreKitManager: NSObject, ObservableObject {
                 return nil
             }
         } catch {
+            // Track purchase failed
+            AnalyticsManager.shared.trackPurchaseFailed(
+                productId: product.id,
+                errorMessage: error.localizedDescription
+            )
             throw error
         }
     }
@@ -228,9 +243,17 @@ class StoreKitManager: NSObject, ObservableObject {
             // This satisfies App Store Review Guidelines section 3.1.1 requirement for restore mechanism
             try await AppStore.sync()
             await updatePurchasedProducts()
+
+            // Track restore result
+            let success = hasActiveSubscription
+            AnalyticsManager.shared.trackRestorePurchasesAttempted(success: success)
+            if success, let productId = currentProductID {
+                AnalyticsManager.shared.trackSubscriptionRestored(productId: productId)
+            }
         } catch {
             errorMessage = "Failed to restore purchase: \(error.localizedDescription)"
             debugPrint("Failed to restore purchase: \(error)")
+            AnalyticsManager.shared.trackRestorePurchasesAttempted(success: false)
         }
 
         isLoading = false

@@ -72,8 +72,17 @@ class OnboardingViewModel: ObservableObject {
         // Play haptic feedback on step transition
         Haptic.play(with: .light)
 
+        // Track step completion
+        if let stepIndex = OnboardingStep.allCases.firstIndex(of: step) {
+            AnalyticsManager.shared.trackOnboardingStep(stepName(for: step), stepIndex: stepIndex)
+        }
+
         switch step {
         case .drawingEntry:
+            // Track that user created a drawing during onboarding
+            if firstJoodleData != nil {
+                AnalyticsManager.shared.track(.onboardingDrawingCreated)
+            }
             navigationPath.append(OnboardingStep.valueProposition)
 
         case .valueProposition:
@@ -127,6 +136,10 @@ class OnboardingViewModel: ObservableObject {
     func skipCloudSync() {
         Haptic.play(with: .light)
         userWantsCloudSync = false
+
+        // Track that user skipped iCloud sync
+        AnalyticsManager.shared.trackSettingChanged(name: "icloud_sync_onboarding", value: "skipped")
+
         navigationPath.append(OnboardingStep.onboardingCompletion)
     }
 
@@ -137,6 +150,13 @@ class OnboardingViewModel: ObservableObject {
     }
 
     private func finishOnboarding() {
+        // Track onboarding completion with user properties
+        AnalyticsManager.shared.setUserProperties(
+            isSubscribed: isPremium || StoreKitManager.shared.hasActiveSubscription,
+            hasCompletedOnboarding: true,
+            entryCount: 1  // At least the onboarding drawing
+        )
+
         // Save flags to UserDefaults to hide onboarding on next launch
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         // Clear the revisit from settings flag
@@ -308,5 +328,19 @@ class OnboardingViewModel: ObservableObject {
             return "No iCloud account found"
         }
         return nil
+    }
+
+    /// Helper to get step name for analytics
+    private func stepName(for step: OnboardingStep) -> String {
+        switch step {
+        case .drawingEntry: return "drawing_entry"
+        case .valueProposition: return "value_proposition"
+        case .yearGridDemo: return "year_grid_demo"
+        case .featureIntroWidgets: return "feature_intro_widgets"
+        case .paywall: return "paywall"
+        case .icloudConfig: return "icloud_config"
+        case .dailyReminder: return "daily_reminder"
+        case .onboardingCompletion: return "completion"
+        }
     }
 }

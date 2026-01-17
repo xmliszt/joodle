@@ -397,6 +397,9 @@ struct ContentView: View {
         highlightedId = newId
       },
       onScrubbingEnded: { _ in
+        // Track scrubbing gesture used
+        AnalyticsManager.shared.trackScrubbingUsed()
+
         if let highlightedId, let item = dataProvider.getItem(from: highlightedId) {
           selectDateItem(item: item, scrollProxy: scrollProxy)
         }
@@ -435,10 +438,12 @@ struct ContentView: View {
 
     // Pinch in: switch from "now" to "year" mode
     if value < scaleThreshold && dataProvider.viewMode == .now {
+      AnalyticsManager.shared.trackPinchGestureUsed(resultingMode: "year")
       toggleViewMode(to: .year)
     }
     // Pinch out: switch from "year" to "now" mode
     else if value > expandThreshold && dataProvider.viewMode == .year {
+      AnalyticsManager.shared.trackPinchGestureUsed(resultingMode: "now")
       toggleViewMode(to: .now)
     }
   }
@@ -542,14 +547,30 @@ struct ContentView: View {
     // This prevents empty entries from being created just by selecting a date
     dataProvider.selectDateItem(item)
     scrollToRelevantDate(itemId: item.id, scrollProxy: scrollProxy)
+
+    // Track entry selection with context
+    let entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: item.date) }
+    let isToday = Calendar.current.isDateInToday(item.date)
+    let isFuture = item.date > Date()
+    AnalyticsManager.shared.trackEntrySelected(
+      hasDrawing: entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true),
+      hasText: !(entry?.body.isEmpty ?? true),
+      isToday: isToday,
+      isFuture: isFuture
+    )
   }
 
   /// Toggle the view mode to a specific mode
   private func toggleViewMode(to newViewMode: ViewMode) {
+    let previousMode = dataProvider.viewMode.rawValue
+
     // Use a spring animation for morphing effect
     withAnimation(.springFkingSatifying) {
       dataProvider.toggleViewMode(to: newViewMode)
     }
+
+    // Track view mode change
+    AnalyticsManager.shared.trackViewModeChanged(to: newViewMode.rawValue, from: previousMode)
   }
 
   // MARK: Layout Calculations

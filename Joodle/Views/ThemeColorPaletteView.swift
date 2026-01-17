@@ -72,6 +72,8 @@ struct ThemeColorPaletteView: View {
 
     private func handleColorTap(_ colorInfo: ThemeColorInfo) {
         if colorInfo.isLocked {
+            // Track feature gated event
+            AnalyticsManager.shared.trackFeatureGated(featureName: "theme_color_\(colorInfo.themeColor.rawValue)")
             onLockedColorTapped?()
         } else {
             // Don't do anything if already selected or already regenerating
@@ -79,6 +81,13 @@ struct ThemeColorPaletteView: View {
                   !themeColorManager.isRegenerating else {
                 return
             }
+
+            // Track theme color change
+            let previousColor = userPreferences.accentColor.rawValue
+            AnalyticsManager.shared.trackThemeColorChanged(
+                to: colorInfo.themeColor.rawValue,
+                from: previousColor
+            )
 
             // Notify parent that color change is starting
             onColorChangeStarted?(colorInfo.themeColor)

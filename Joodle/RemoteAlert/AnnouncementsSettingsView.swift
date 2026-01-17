@@ -19,7 +19,17 @@ struct AnnouncementsSettingsView: View {
             Section {
                 Toggle(isOn: Binding(
                     get: { userPreferences.announcementsEnabled },
-                    set: { userPreferences.announcementsEnabled = $0 }
+                    set: { newValue in
+                        let previousValue = userPreferences.announcementsEnabled
+                        userPreferences.announcementsEnabled = newValue
+                        if newValue != previousValue {
+                            AnalyticsManager.shared.trackSettingChanged(
+                                name: "announcements_enabled",
+                                value: newValue,
+                                previousValue: previousValue
+                            )
+                        }
+                    }
                 )) {
                     HStack(spacing: 12) {
                         Image(systemName: "megaphone.fill")
@@ -51,6 +61,9 @@ struct AnnouncementsSettingsView: View {
         }
         .navigationTitle("Announcements")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            AnalyticsManager.shared.trackScreen(.settings, properties: [.source: "announcements"])
+        }
         .animation(.easeInOut(duration: 0.2), value: userPreferences.announcementsEnabled)
     }
 
@@ -86,17 +99,47 @@ struct AnnouncementsSettingsView: View {
         case .promo:
             return Binding(
                 get: { userPreferences.announcementPromoEnabled },
-                set: { userPreferences.announcementPromoEnabled = $0 }
+                set: { newValue in
+                    let previousValue = userPreferences.announcementPromoEnabled
+                    userPreferences.announcementPromoEnabled = newValue
+                    if newValue != previousValue {
+                        AnalyticsManager.shared.trackSettingChanged(
+                            name: "announcement_promo_enabled",
+                            value: newValue,
+                            previousValue: previousValue
+                        )
+                    }
+                }
             )
         case .community:
             return Binding(
                 get: { userPreferences.announcementCommunityEnabled },
-                set: { userPreferences.announcementCommunityEnabled = $0 }
+                set: { newValue in
+                    let previousValue = userPreferences.announcementCommunityEnabled
+                    userPreferences.announcementCommunityEnabled = newValue
+                    if newValue != previousValue {
+                        AnalyticsManager.shared.trackSettingChanged(
+                            name: "announcement_community_enabled",
+                            value: newValue,
+                            previousValue: previousValue
+                        )
+                    }
+                }
             )
         case .tips:
             return Binding(
                 get: { userPreferences.announcementTipsEnabled },
-                set: { userPreferences.announcementTipsEnabled = $0 }
+                set: { newValue in
+                    let previousValue = userPreferences.announcementTipsEnabled
+                    userPreferences.announcementTipsEnabled = newValue
+                    if newValue != previousValue {
+                        AnalyticsManager.shared.trackSettingChanged(
+                            name: "announcement_tips_enabled",
+                            value: newValue,
+                            previousValue: previousValue
+                        )
+                    }
+                }
             )
         }
     }

@@ -120,6 +120,10 @@ struct ShareCardSelectorView: View {
           }
           .tabViewStyle(.page(indexDisplayMode: .never))
           .frame(maxWidth: .infinity, minHeight: 400)
+          .onChange(of: selectedStyle) { _, newStyle in
+            // Track style selection
+            AnalyticsManager.shared.trackShareCardStyleSelected(style: newStyle.rawValue)
+          }
 
           VStack(spacing: 24) {
             // Style info
@@ -525,6 +529,14 @@ struct ShareCardSelectorView: View {
       }
 
       await MainActor.run {
+        // Track static image share completed
+        AnalyticsManager.shared.trackShareCardShared(
+          style: self.selectedStyle.rawValue,
+          format: "image",
+          includesWatermark: self.shouldShowWatermark,
+          colorScheme: self.previewColorScheme == .dark ? "dark" : "light"
+        )
+
         isSharing = false
         shareItem = ShareItem(items: [itemToShare])
       }
@@ -532,6 +544,15 @@ struct ShareCardSelectorView: View {
   }
 
   private func prepareAndPresentShareSheet(with fileURL: URL) {
+    // Track animated share completed
+    let format = selectedStyle.isVideoStyle ? "video" : "gif"
+    AnalyticsManager.shared.trackShareCardShared(
+      style: selectedStyle.rawValue,
+      format: format,
+      includesWatermark: shouldShowWatermark,
+      colorScheme: previewColorScheme == .dark ? "dark" : "light"
+    )
+
     isSharing = false
     isExportingAnimated = false
     exportProgress = 0.0

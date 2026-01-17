@@ -265,6 +265,9 @@ class ReminderManager: ObservableObject {
         saveReminders()
         scheduleNotification(for: reminder)
 
+        // Track anniversary reminder created
+        AnalyticsManager.shared.trackAnniversaryReminderCreated(forDate: date)
+
         return true
     }
 
@@ -274,6 +277,8 @@ class ReminderManager: ObservableObject {
             reminders.removeAll { $0.dateString == dateString }
             if notify {
                 saveReminders()
+                // Track anniversary reminder deleted
+                AnalyticsManager.shared.trackAnniversaryReminderDeleted()
             }
         }
     }
@@ -437,12 +442,17 @@ class ReminderManager: ObservableObject {
         // Schedule the notification
         scheduleDailyReminder(at: time)
 
+        // Track daily reminder enabled
+        AnalyticsManager.shared.trackDailyReminderEnabled(time: time)
+
         return true
     }
 
     /// Disable daily reminder
     func disableDailyReminder() {
         cancelDailyReminder()
+        // Track daily reminder disabled
+        AnalyticsManager.shared.trackDailyReminderDisabled()
     }
 
     /// Update daily reminder time (reschedules if enabled)
@@ -450,6 +460,8 @@ class ReminderManager: ObservableObject {
         if UserPreferences.shared.isDailyReminderEnabled {
             // Reschedule with new time
             scheduleDailyReminder(at: time)
+            // Track daily reminder time changed
+            AnalyticsManager.shared.trackDailyReminderTimeChanged(newTime: time)
         }
     }
 

@@ -30,8 +30,14 @@ struct PaywallView: View {
                 }
             ))
         }
+        .onAppear {
+            // Track onboarding paywall viewed
+            AnalyticsManager.shared.trackPaywallViewed(source: "onboarding")
+        }
         .overlay(alignment: .topTrailing) {
             Button {
+                // Track paywall skipped
+                AnalyticsManager.shared.trackPaywallDismissed(source: "onboarding", didPurchase: false)
                 viewModel.isPremium = false
                 viewModel.completeStep(.paywall)
             } label: {

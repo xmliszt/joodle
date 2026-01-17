@@ -230,9 +230,16 @@ struct SettingsView: View {
     Binding(
       get: { userPreferences.preferredColorScheme },
       set: { newValue in
+        let previousValue = userPreferences.preferredColorScheme
         userPreferences.preferredColorScheme = newValue
         // Force UI update immediately
         NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
+        // Track color scheme change
+        let newSchemeString = newValue == nil ? "system" : (newValue == .light ? "light" : "dark")
+        let previousSchemeString = previousValue == nil ? "system" : (previousValue == .light ? "light" : "dark")
+        if newSchemeString != previousSchemeString {
+          AnalyticsManager.shared.trackColorSchemeChanged(to: newSchemeString)
+        }
       }
     )
   }
@@ -294,6 +301,10 @@ struct SettingsView: View {
     }
     .navigationTitle("Settings")
     .navigationBarTitleDisplayMode(.inline)
+    .onAppear {
+      // Track settings screen viewed
+      AnalyticsManager.shared.trackScreen(.settings)
+    }
     .preferredColorScheme(userPreferences.preferredColorScheme)
     .navigationBarBackButtonHidden(showThemeOverlay)
     .interactiveDismissDisabled(showThemeOverlay)
@@ -801,6 +812,9 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
         }
       }
+      .simultaneousGesture(TapGesture().onEnded {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "whatsapp_community", type: "social")
+      })
 
       Link(destination: URL(string: "https://x.com/xmliszt")!) {
         HStack {
@@ -817,6 +831,9 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
         }
       }
+      .simultaneousGesture(TapGesture().onEnded {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "x.com/xmliszt", type: "social")
+      })
 
       Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle")!) {
         SettingsRowView(
@@ -826,8 +843,12 @@ struct SettingsView: View {
           isExternal: true
         )
       }
+      .simultaneousGesture(TapGesture().onEnded {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "liyuxuan.dev/apps/joodle", type: "website")
+      })
 
       Button {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "feedback", type: "feedback")
         openFeedback()
       } label: {
         SettingsRowView(
@@ -847,9 +868,13 @@ struct SettingsView: View {
             isExternal: true
           )
         }
+        .simultaneousGesture(TapGesture().onEnded {
+          AnalyticsManager.shared.trackExternalLinkOpened(url: "joodle-feedback", type: "feedback")
+        })
       }
 
       Button {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "share_sheet", type: "recommend")
         showShareSheet = true
       } label: {
         SettingsRowView(
@@ -886,6 +911,9 @@ struct SettingsView: View {
           isExternal: true
         )
       }
+      .simultaneousGesture(TapGesture().onEnded {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "privacy-policy", type: "legal")
+      })
 
       Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!) {
         SettingsRowView(
@@ -895,6 +923,9 @@ struct SettingsView: View {
           isExternal: true
         )
       }
+      .simultaneousGesture(TapGesture().onEnded {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "terms-of-service", type: "legal")
+      })
     } header: {
       Text("Legal")
     }
@@ -1286,14 +1317,26 @@ struct CustomizationSettingsView: View {
   private var viewModeBinding: Binding<ViewMode> {
     Binding(
       get: { userPreferences.defaultViewMode },
-      set: { userPreferences.defaultViewMode = $0 }
+      set: { newValue in
+        let previousValue = userPreferences.defaultViewMode
+        userPreferences.defaultViewMode = newValue
+        if newValue != previousValue {
+          AnalyticsManager.shared.trackSettingChanged(name: "default_view_mode", value: newValue.rawValue, previousValue: previousValue.rawValue)
+        }
+      }
     )
   }
 
   private var startOfWeekBinding: Binding<String> {
     Binding(
       get: { userPreferences.startOfWeek },
-      set: { userPreferences.startOfWeek = $0 }
+      set: { newValue in
+        let previousValue = userPreferences.startOfWeek
+        userPreferences.startOfWeek = newValue
+        if newValue != previousValue {
+          AnalyticsManager.shared.trackSettingChanged(name: "start_of_week", value: newValue, previousValue: previousValue)
+        }
+      }
     )
   }
 
@@ -1437,7 +1480,17 @@ struct CustomizationSettingsView: View {
       Section {
         Toggle(isOn: Binding(
           get: { userPreferences.promptForNotesAfterDoodling },
-          set: { userPreferences.promptForNotesAfterDoodling = $0 }
+          set: { newValue in
+            let previousValue = userPreferences.promptForNotesAfterDoodling
+            userPreferences.promptForNotesAfterDoodling = newValue
+            if newValue != previousValue {
+              AnalyticsManager.shared.trackSettingChanged(
+                name: "prompt_for_notes_after_doodling",
+                value: newValue,
+                previousValue: previousValue
+              )
+            }
+          }
         )) {
           VStack(alignment: .leading, spacing: 4) {
             Text("Prompt for notes after doodling")
@@ -1784,6 +1837,8 @@ struct BackupRestoreSettingsView: View {
         let data = try JSONEncoder().encode(dtos)
 
         await MainActor.run {
+          // Track data exported
+          AnalyticsManager.shared.trackDataExported(entryCount: dtos.count)
           exportDocument = JSONDocument(data: data)
           showFileExporter = true
         }
@@ -1841,11 +1896,15 @@ struct BackupRestoreSettingsView: View {
         let finalMerged = mergedCount
         let finalSkipped = skippedCount
         await MainActor.run {
+          // Track data imported
+          AnalyticsManager.shared.trackDataImported(entryCount: finalImported + finalMerged)
           importMessage = "Imported \(finalImported) new entries, merged \(finalMerged) existing entries. Skipped \(finalSkipped) empty entries."
           showImportAlert = true
         }
       } catch {
         await MainActor.run {
+          // Track import failed
+          AnalyticsManager.shared.trackDataImportFailed(errorMessage: error.localizedDescription)
           importMessage = "Import failed: \(error.localizedDescription)"
           showImportAlert = true
         }

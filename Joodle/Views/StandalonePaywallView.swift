@@ -52,6 +52,9 @@ struct StandalonePaywallView: View {
                 return
             }
 
+            // Track paywall viewed
+            AnalyticsManager.shared.trackPaywallViewed(source: "standalone")
+
             isCheckingSubscription = false
         }
     }

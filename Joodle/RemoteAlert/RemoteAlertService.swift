@@ -94,6 +94,9 @@ final class RemoteAlertService: ObservableObject {
             print("📢 Remote alert: Showing alert '\(alert.id)'")
             currentAlert = alert
 
+            // Track remote alert shown
+            AnalyticsManager.shared.trackRemoteAlertShown(alertId: alert.id, title: alert.title)
+
         } catch {
             // Fail silently - remote alerts are non-critical
             print("📢 Remote alert fetch failed: \(error.localizedDescription)")
@@ -126,6 +129,9 @@ final class RemoteAlertService: ObservableObject {
     func dismissCurrentAlert() {
         guard let alert = currentAlert else { return }
 
+        // Track remote alert dismissed
+        AnalyticsManager.shared.trackRemoteAlertDismissed(alertId: alert.id)
+
         // Store the dismissed alert ID
         UserDefaults.standard.set(alert.id, forKey: lastDismissedKey)
         print("📢 Remote alert: Dismissed alert '\(alert.id)'")
@@ -145,6 +151,9 @@ final class RemoteAlertService: ObservableObject {
             return false
         }
 
+        // Track remote alert action taken
+        AnalyticsManager.shared.trackRemoteAlertActionTaken(alertId: alert.id, actionType: "primary")
+
         // Open the URL
         UIApplication.shared.open(url)
         dismissCurrentAlert()
@@ -153,6 +162,10 @@ final class RemoteAlertService: ObservableObject {
 
     /// Handle the secondary button action (always just dismisses)
     func handleSecondaryAction() {
+        if let alert = currentAlert {
+            // Track remote alert action taken
+            AnalyticsManager.shared.trackRemoteAlertActionTaken(alertId: alert.id, actionType: "secondary")
+        }
         dismissCurrentAlert()
     }
 

@@ -76,6 +76,14 @@ class TutorialCoordinator: ObservableObject {
     func advance() {
         Haptic.play(with: .light)
 
+        // Track tutorial step completed
+        if let step = currentStep {
+            AnalyticsManager.shared.trackTutorialStepCompleted(
+                stepName: step.type.rawValue,
+                stepIndex: currentStepIndex
+            )
+        }
+
         // In singleStepMode, we still play through all steps in the array before completing
         // This allows multi-step tutorials (like drawAndEdit with 2 steps) to work correctly
         if isLastStep {
@@ -115,6 +123,10 @@ class TutorialCoordinator: ObservableObject {
     func complete() {
         Haptic.play(with: .medium)
 
+        // Track tutorial completed
+        let tutorialName = singleStepMode ? "single_step" : "onboarding"
+        AnalyticsManager.shared.trackTutorialCompleted(tutorialName: tutorialName)
+
         // Show completion indication first
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
             showingCompletion = true
@@ -137,6 +149,11 @@ class TutorialCoordinator: ObservableObject {
     /// Skip all remaining steps and complete (bypasses completion animation)
     func skipAll() {
         Haptic.play(with: .light)
+
+        // Track tutorial skipped
+        let tutorialName = singleStepMode ? "single_step" : "onboarding"
+        let currentStepName = currentStep?.type.rawValue ?? "unknown"
+        AnalyticsManager.shared.trackTutorialSkipped(tutorialName: tutorialName, atStep: currentStepName)
 
         // Skip the completion animation for faster exit
         withAnimation(.easeOut(duration: 0.3)) {

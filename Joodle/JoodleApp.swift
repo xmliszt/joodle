@@ -61,6 +61,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
     // Check if this is a daily reminder notification
     if let isDailyReminder = userInfo["isDailyReminder"] as? Bool, isDailyReminder {
+      // Track navigation from daily reminder notification
+      AnalyticsManager.shared.trackNavigatedFromNotification(notificationType: "daily_reminder")
+
       // Navigate to today's entry
       print("📬 [AppDelegate] Daily reminder tapped - navigating to today")
       NotificationCenter.default.post(
@@ -73,6 +76,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         ReminderManager.shared.refreshDailyReminderIfNeeded()
       }
     } else if let date = DayEntry.stringToLocalDate(identifier) {
+      // Track navigation from anniversary reminder notification
+      AnalyticsManager.shared.trackNavigatedFromNotification(notificationType: "anniversary_reminder")
+
       // Anniversary reminder - the identifier is the dateString
       NotificationCenter.default.post(
         name: .navigateToDateFromShortcut,
@@ -428,6 +434,9 @@ struct JoodleApp: App {
             .font(.system(size: 17))
             .onChange(of: hasCompletedOnboarding) { _, completed in
               if completed {
+                // Track onboarding completion
+                AnalyticsManager.shared.trackOnboardingCompleted()
+
                 // Check if restart is pending for iCloud sync
                 checkPendingRestartAfterOnboarding()
               }
@@ -446,6 +455,12 @@ struct JoodleApp: App {
                 if !hasSetupObservers {
                   setupColorSchemeObserver()
                   hasSetupObservers = true
+
+                  // Track app launch (main content appeared)
+                  AnalyticsManager.shared.trackAppLaunched(
+                    isFirstLaunch: false,
+                    hasCompletedOnboarding: hasCompletedOnboarding
+                  )
                 }
               }
               .onOpenURL { url in
@@ -454,6 +469,12 @@ struct JoodleApp: App {
               .onReceive(NotificationCenter.default.publisher(for: .navigateToDateFromShortcut)) { notification in
                 // Handle navigation from App Shortcut (Siri/Spotlight) or push notifications
                 let date = (notification.userInfo?["date"] as? Date) ?? Date()
+
+                // Track navigation from shortcut (if not already tracked by notification handler)
+                if notification.userInfo?["source"] as? String == "shortcut" {
+                  AnalyticsManager.shared.track(.navigatedFromShortcut)
+                }
+
                 NavigationHelper.navigateToDate(date, selectedDateBinding: $selectedDateFromWidget)
               }
               .onReceive(NotificationCenter.default.publisher(for: .dismissToRootAndNavigate)) { _ in
@@ -575,6 +596,9 @@ struct JoodleApp: App {
   private func handleWidgetURL(_ url: URL) {
     guard url.scheme == "joodle" else { return }
 
+    // Track deep link opened
+    AnalyticsManager.shared.trackDeepLinkOpened(url: url.absoluteString, source: "widget")
+
     // Handle URL scheme: joodle://paywall
     if url.host == "paywall" {
       // Check subscription status before showing paywall
@@ -590,6 +614,7 @@ struct JoodleApp: App {
     }
 
     // Handle URL scheme: joodle://date/{dateString or timestamp}
+    // Track navigation from widget
     // Supports both new dateString format (yyyy-MM-dd) and legacy timestamp format
     if url.host == "date" {
       let pathComponents = url.pathComponents
@@ -598,10 +623,12 @@ struct JoodleApp: App {
 
         // Try parsing as dateString (yyyy-MM-dd) first
         if let calendarDate = CalendarDate(dateString: identifier) {
+          AnalyticsManager.shared.trackNavigatedFromWidget(widgetType: "date")
           NavigationHelper.navigateToDate(calendarDate.displayDate, selectedDateBinding: $selectedDateFromWidget)
         }
         // Fall back to legacy timestamp format
         else if let timestamp = TimeInterval(identifier) {
+          AnalyticsManager.shared.trackNavigatedFromWidget(widgetType: "date_legacy")
           let date = Date(timeIntervalSince1970: timestamp)
           NavigationHelper.navigateToDate(date, selectedDateBinding: $selectedDateFromWidget)
         }
@@ -610,6 +637,7 @@ struct JoodleApp: App {
 
     // Handle URL scheme: joodle://today
     if url.host == "today" {
+      AnalyticsManager.shared.trackNavigatedFromWidget(widgetType: "today")
       NavigationHelper.navigateToDate(Date(), selectedDateBinding: $selectedDateFromWidget)
     }
   }
