@@ -287,7 +287,8 @@ struct EntryEditingView: View {
               if textContent.isEmpty {
                 Text("Tap to write a note...")
                   .font(.body)
-                  .foregroundColor(.textColor.opacity(0.5))
+                  .foregroundColor(.textColor.opacity(0.3))
+                  .offset(y: 20)
                   .allowsHitTesting(false)  // Important: prevents blocking TextEditor
               }
             }
