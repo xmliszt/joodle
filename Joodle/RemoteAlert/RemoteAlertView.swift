@@ -227,11 +227,11 @@ extension View {
         RemoteAlertView(
             alert: RemoteAlert(
                 id: "preview-1",
-                title: "Join Our Community! 🎮",
-                message: "Connect with other Joodle users, share tips, and get support on our Discord server!",
+                title: "Join Our Community! 🫶",
+                message: "Connect with others, share doodles and stories!",
                 primaryButton: RemoteAlert.AlertButton(
-                    text: "Join Discord",
-                    url: "https://discord.gg/example"
+                    text: "Join WhatsApp Community",
+                    url: "https://chat.whatsapp.com/FF2rMEiSOwe9hsRapSyvdY"
                 ),
                 secondaryButton: RemoteAlert.AlertButton(
                     text: "Maybe Later",
@@ -277,10 +277,10 @@ extension View {
             alert: RemoteAlert(
               id: "preview-3",
               title: "Join Our Community! 🎮",
-              message: "Connect with other Joodle users, share tips, and get support on our Discord server!",
+              message: "Connect with others, share doodles and stories!",
               primaryButton: RemoteAlert.AlertButton(
-                  text: "Join Discord",
-                  url: "https://discord.gg/example"
+                  text: "Join WhatsApp Community",
+                  url: "https://chat.whatsapp.com/FF2rMEiSOwe9hsRapSyvdY"
               ),
               secondaryButton: RemoteAlert.AlertButton(
                   text: "Maybe Later",

@@ -766,14 +766,14 @@ struct SettingsView: View {
   @ViewBuilder
   private var getInvolvedSection: some View {
     Section {
-      Link(destination: URL(string: "https://discord.gg/WnQSdZqBjk")!) {
+      Link(destination: URL(string: "https://chat.whatsapp.com/FF2rMEiSOwe9hsRapSyvdY")!) {
         HStack {
-          Image("Social/discord")
+          Image("Social/whatsapp")
             .resizable()
             .scaledToFit()
             .frame(width: 28, height: 28)
             .clipShape(RoundedRectangle(cornerRadius: 6))
-          Text("Join Discord Community")
+          Text("Join WhatsApp Community")
             .foregroundColor(.primary)
           Spacer()
           Image(systemName: "arrow.up.right")
