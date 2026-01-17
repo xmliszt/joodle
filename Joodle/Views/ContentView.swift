@@ -39,6 +39,7 @@ struct ContentView: View {
   @State private var entryHadDoodleOnCanvasOpen: Bool = false
 
   @State private var navigateToSettings = false
+  @State private var navigateToNotePromptSetting = false
   @State private var hideDynamicIslandView = false
   private let headerHeight: CGFloat = 100.0
 
@@ -261,7 +262,7 @@ struct ContentView: View {
       }
       // Navigate to setting view
       .navigationDestination(isPresented: $navigateToSettings) {
-        SettingsView()
+        SettingsView(navigateToNotePromptSetting: $navigateToNotePromptSetting)
       }
       .navigationTitle("Home")
       .toolbar(.hidden, for: .navigationBar)
@@ -309,7 +310,8 @@ struct ContentView: View {
             saveNoteForEntry(note: note)
           },
           onNavigateToSettings: {
-            // Navigate to Customization settings
+            // Navigate to Customization settings and scroll to note prompt setting
+            navigateToNotePromptSetting = true
             navigateToSettings = true
           }
         )

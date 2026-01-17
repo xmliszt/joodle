@@ -165,6 +165,13 @@ struct SettingsView: View {
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @StateObject private var storeKitManager = StoreKitManager.shared
   @StateObject private var reminderManager = ReminderManager.shared
+
+  /// When true, auto-navigates to Customization and scrolls to note prompt setting
+  @Binding var navigateToNotePromptSetting: Bool
+
+  init(navigateToNotePromptSetting: Binding<Bool> = .constant(false)) {
+    self._navigateToNotePromptSetting = navigateToNotePromptSetting
+  }
   @State private var showOnboarding = false
   @State private var showNotificationDeniedAlert = false
   @State private var showPlaceholderGenerator = false
@@ -207,6 +214,8 @@ struct SettingsView: View {
 
   // Navigation state for sub-pages
   @State private var showExperimentalFeatures = false
+  @State private var showCustomization = false
+  @State private var scrollToNotePromptSetting = false
 
   // MARK: - Computed Bindings
   private var viewModeBinding: Binding<ViewMode> {
@@ -269,6 +278,18 @@ struct SettingsView: View {
     .background(NavigationGestureEnabler(isEnabled: !showThemeOverlay))
     .navigationDestination(isPresented: $showExperimentalFeatures) {
       ExperimentalFeaturesView()
+    }
+    .navigationDestination(isPresented: $showCustomization) {
+      CustomizationSettingsView(
+        showPaywall: $showPaywall,
+        pendingThemeColor: $pendingThemeColor,
+        showThemeOverlay: $showThemeOverlay,
+        scrollToNotePromptSetting: scrollToNotePromptSetting
+      )
+      .onDisappear {
+        // Reset the scroll flag when leaving
+        scrollToNotePromptSetting = false
+      }
     }
     .navigationTitle("Settings")
     .navigationBarTitleDisplayMode(.inline)
@@ -354,6 +375,15 @@ struct SettingsView: View {
         await subscriptionManager.updateSubscriptionStatus()
         if !subscriptionManager.isSubscribed {
           currentJoodleCount = subscriptionManager.fetchTotalJoodleCount(in: modelContext)
+        }
+      }
+
+      // Auto-navigate to Customization if requested
+      if navigateToNotePromptSetting {
+        scrollToNotePromptSetting = true
+        navigateToNotePromptSetting = false  // Reset flag to avoid re-navigating
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+          showCustomization = true
         }
       }
     }
@@ -1209,10 +1239,14 @@ struct CustomizationSettingsView: View {
   @Binding var showThemeOverlay: Bool
   private var themeColorManager = ThemeColorManager.shared
 
-  init(showPaywall: Binding<Bool>, pendingThemeColor: Binding<ThemeColor?>, showThemeOverlay: Binding<Bool>) {
+  /// When true, scrolls to the "Prompt for notes after doodling" toggle on appear
+  var scrollToNotePromptSetting: Bool = false
+
+  init(showPaywall: Binding<Bool>, pendingThemeColor: Binding<ThemeColor?>, showThemeOverlay: Binding<Bool>, scrollToNotePromptSetting: Bool = false) {
     self._showPaywall = showPaywall
     self._pendingThemeColor = pendingThemeColor
     self._showThemeOverlay = showThemeOverlay
+    self.scrollToNotePromptSetting = scrollToNotePromptSetting
   }
 
   private var viewModeBinding: Binding<ViewMode> {
@@ -1240,7 +1274,8 @@ struct CustomizationSettingsView: View {
   }
 
   var body: some View {
-    Form {
+    ScrollViewReader { scrollProxy in
+      Form {
       // Default View Mode Section
       Section {
         VStack(spacing: 0) {
@@ -1378,6 +1413,17 @@ struct CustomizationSettingsView: View {
           }
         }
         .tint(.appAccent)
+        .id("notePromptSetting")
+      }
+      }
+      .onAppear {
+        if scrollToNotePromptSetting {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation {
+              scrollProxy.scrollTo("notePromptSetting", anchor: .center)
+            }
+          }
+        }
       }
     }
     .navigationTitle("Customization")
