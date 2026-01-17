@@ -40,15 +40,7 @@ struct DrawingAnimationConfig {
     minStrokeDuration: 0.05,
     frameRate: 15
   )
-
-  /// Configuration optimized for GIF export (lower frame rate, smaller file)
-  static let gif = DrawingAnimationConfig(
-    maxDuration: 3.0,
-    durationPerPixel: 0.2 / 50.0,
-    minStrokeDuration: 0.05,
-    frameRate: 15
-  )
-
+  
   /// Configuration optimized for video export (higher frame rate, smoother)
   static let video = DrawingAnimationConfig(
     maxDuration: 3.0,

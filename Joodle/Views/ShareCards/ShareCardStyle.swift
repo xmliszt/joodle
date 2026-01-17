@@ -16,8 +16,6 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   case yearGridJoodles = "Year Grid with Joodles"
   case yearGridJoodlesOnly = "Year Grid with Joodles Only"
   // Animated styles
-  case animatedMinimalGIF = "Minimal GIF"
-  case animatedExcerptGIF = "Excerpt GIF"
   case animatedMinimalVideo = "Minimal Video"
   case animatedExcerptVideo = "Excerpt Video"
 
@@ -30,8 +28,6 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return "photo.on.rectangle"
     case .yearGridDots, .yearGridJoodles, .yearGridJoodlesOnly:
       return "calendar"
-    case .animatedMinimalGIF, .animatedExcerptGIF:
-      return "photo.on.rectangle.angled"
     case .animatedMinimalVideo, .animatedExcerptVideo:
       return "video.fill"
     }
@@ -40,27 +36,23 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   var description: String {
     switch self {
     case .minimal:
-      return "Joodle only"
+      return "Doodle only"
     case .excerpt:
-      return "Joodle & snippet"
+      return "Doodle & note snippet"
     case .detailed:
-      return "Joodle & more text"
+      return "Doodle & more note"
     case .anniversary:
-      return "Joodle and countdown"
+      return "Doodle and countdown"
     case .yearGridDots:
       return "Year progress with dots"
     case .yearGridJoodles:
-      return "Year progress with Joodles"
+      return "Year progress with doodles"
     case .yearGridJoodlesOnly:
-      return "Year progress with Joodles only"
-    case .animatedMinimalGIF:
-      return "Animated Joodle as GIF"
-    case .animatedExcerptGIF:
-      return "Animated Joodle & snippet as GIF"
+      return "Year progress with doodles only"
     case .animatedMinimalVideo:
-      return "Animated Joodle as Video"
+      return "Animated doodle"
     case .animatedExcerptVideo:
-      return "Animated Joodle & snippet as Video"
+      return "Animated doodle & note snippet"
     }
   }
 
@@ -77,17 +69,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Whether this style is an animated export (GIF or Video)
   var isAnimatedStyle: Bool {
     switch self {
-    case .animatedMinimalGIF, .animatedExcerptGIF, .animatedMinimalVideo, .animatedExcerptVideo:
-      return true
-    default:
-      return false
-    }
-  }
-
-  /// Whether this style exports as GIF
-  var isGIFStyle: Bool {
-    switch self {
-    case .animatedMinimalGIF, .animatedExcerptGIF:
+    case .animatedMinimalVideo, .animatedExcerptVideo:
       return true
     default:
       return false
@@ -107,7 +89,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Whether this style includes excerpt text
   var includesExcerpt: Bool {
     switch self {
-    case .excerpt, .detailed, .animatedExcerptGIF, .animatedExcerptVideo:
+    case .excerpt, .detailed, .animatedExcerptVideo:
       return true
     default:
       return false
@@ -126,7 +108,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
 
   /// Animated styles for entry sharing
   static var animatedStyles: [ShareCardStyle] {
-    [.animatedMinimalGIF, .animatedExcerptGIF, .animatedMinimalVideo, .animatedExcerptVideo]
+    [.animatedMinimalVideo, .animatedExcerptVideo]
   }
 
   /// All entry styles including animated (static + animated)
@@ -137,9 +119,6 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Size for the actual share card, this is the dimension of the image/video saved.
   var cardSize: CGSize {
     switch self {
-    // GIF uses smaller size for file size optimization
-    case .animatedMinimalGIF, .animatedExcerptGIF:
-      return CGSize(width: 540, height: 540)
     // Video uses full size
     case .animatedMinimalVideo, .animatedExcerptVideo:
       return CGSize(width: 1080, height: 1080)
@@ -157,8 +136,6 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Animation configuration for this style
   var animationConfig: DrawingAnimationConfig {
     switch self {
-    case .animatedMinimalGIF, .animatedExcerptGIF:
-      return .gif
     case .animatedMinimalVideo, .animatedExcerptVideo:
       return .video
     default:

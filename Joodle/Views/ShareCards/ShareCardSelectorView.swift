@@ -128,13 +128,6 @@ struct ShareCardSelectorView: View {
                 Text(selectedStyle.rawValue)
                   .font(.system(size: 16).bold())
                   .foregroundColor(.textColor)
-
-                // Show format badge for animated styles
-                if selectedStyle.isGIFStyle {
-                  formatBadge(text: "GIF", color: .orange)
-                } else if selectedStyle.isVideoStyle {
-                  formatBadge(text: "MP4", color: .blue)
-                }
               }
 
               Text(selectedStyle.description)
@@ -606,18 +599,7 @@ struct ShareCardSelectorView: View {
       do {
         let fileURL: URL?
 
-        if selectedStyle.isGIFStyle {
-          fileURL = try await ShareCardRenderer.shared.renderAnimatedGIF(
-            style: selectedStyle,
-            entry: entry,
-            date: date,
-            colorScheme: previewColorScheme,
-            showWatermark: watermarkSetting,
-            progressCallback: { progress in
-              self.exportProgress = progress
-            }
-          )
-        } else if selectedStyle.isVideoStyle {
+       if selectedStyle.isVideoStyle {
           fileURL = try await ShareCardRenderer.shared.renderAnimatedVideo(
             style: selectedStyle,
             entry: entry,

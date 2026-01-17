@@ -223,65 +223,13 @@ class ShareCardRenderer {
     case .yearGridDots, .yearGridJoodles, .yearGridJoodlesOnly:
       // Year grid styles should use renderYearGridCard instead
       EmptyView()
-    case .animatedMinimalGIF, .animatedExcerptGIF, .animatedMinimalVideo, .animatedExcerptVideo:
-      // Animated styles should use renderAnimatedGIF or renderAnimatedVideo instead
+    case .animatedMinimalVideo, .animatedExcerptVideo:
+      // Animated styles should use renderAnimatedVideo instead
       EmptyView()
     }
   }
 
   // MARK: - Animated Export
-
-  /// Renders an animated drawing as a GIF file
-  /// - Parameters:
-  ///   - style: The card style to render (must be a GIF style)
-  ///   - entry: The day entry containing the drawing
-  ///   - date: The date for the entry
-  ///   - colorScheme: The color scheme to use for rendering
-  ///   - showWatermark: Whether to show the watermark
-  ///   - progressCallback: Optional callback for progress updates (0.0 to 1.0)
-  /// - Returns: URL to the temporary GIF file
-  func renderAnimatedGIF(
-    style: ShareCardStyle,
-    entry: DayEntry?,
-    date: Date,
-    colorScheme: ColorScheme,
-    showWatermark: Bool = true,
-    progressCallback: ((Double) -> Void)? = nil
-  ) async throws -> URL? {
-    guard let entry = entry, entry.drawingData != nil else {
-      return nil
-    }
-
-    guard style.isGIFStyle else {
-      return nil
-    }
-
-    let frameRenderer = AnimatedDrawingRenderer()
-    let gifExporter = GIFExporter()
-    let config = style.animationConfig
-
-    // Generate card frames
-    let frames = await frameRenderer.generateCardFrames(
-      entry: entry,
-      date: date,
-      style: style,
-      colorScheme: colorScheme,
-      showWatermark: showWatermark,
-      progressCallback: { progress in
-        progressCallback?(progress)
-      }
-    )
-
-    guard !frames.isEmpty else {
-      return nil
-    }
-
-    // Export as GIF
-    let gifURL = try gifExporter.createGIFFile(from: frames, config: config)
-    progressCallback?(1.0)
-
-    return gifURL
-  }
 
   /// Renders an animated drawing as a video file
   /// - Parameters:
