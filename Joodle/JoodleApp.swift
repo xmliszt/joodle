@@ -21,12 +21,16 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     // Set self as the notification center delegate to handle foreground notifications
     UNUserNotificationCenter.current().delegate = self
 
-    // PostHog
-    let POSTHOG_API_KEY = ""
-    let POSTHOG_HOST = ""
-
-    let config = PostHogConfig(apiKey: POSTHOG_API_KEY, host: POSTHOG_HOST)
-    PostHogSDK.shared.setup(config)
+    // PostHog - Read from Info.plist (configured via Secrets.xcconfig)
+    if let apiKey = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_API_KEY") as? String,
+       let host = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_HOST") as? String,
+       !apiKey.isEmpty,
+       !apiKey.contains("your_posthog") {
+      let config = PostHogConfig(apiKey: apiKey, host: host)
+      PostHogSDK.shared.setup(config)
+    } else {
+      print("⚠️ PostHog not configured. See Secrets.xcconfig.template for setup instructions.")
+    }
 
     return true
   }

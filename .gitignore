@@ -97,3 +97,6 @@ buildServer.json
 .ai-notes
 
 .rules
+
+# Secrets - API keys and sensitive configuration
+Secrets.xcconfig
