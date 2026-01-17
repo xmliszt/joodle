@@ -88,7 +88,7 @@ struct EntryEditingView: View {
   }
 
   private var textContentHeight: CGFloat {
-    let minHeight: CGFloat = 100
+    let minHeight: CGFloat = 84
     let maxHeight = max(minHeight, 180)
 
     guard screenHeight > 0 else { return minHeight }
@@ -228,8 +228,8 @@ struct EntryEditingView: View {
                 .autocapitalization(.sentences)
                 .focused($isTextFieldFocused)
                 // Nudge to align with placeholder text
-                .padding(.top, -8)
                 .padding(.horizontal, -5)
+                .padding(.vertical, 12)
                 .onDisappear {
                   withAnimation {
                     isTextFieldFocused = false
@@ -292,16 +292,15 @@ struct EntryEditingView: View {
               }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, 12)
             // MARK: Overlay gradient
             .overlay(alignment: .top) {
               ZStack {
-                Rectangle().fill(.backgroundColor)  // blur layer
+                Rectangle().fill(.backgroundColor) // blur layer
 
                 LinearGradient(
                   gradient: Gradient(stops: [
                     .init(color: Color.black.opacity(1.0), location: 0.0),
-                    .init(color: Color.black.opacity(0.0), location: 0.4),
+                    .init(color: Color.black.opacity(0.0), location: 0.8),
                     .init(color: Color.black.opacity(0.0), location: 1.0),
                   ]),
                   startPoint: .bottom,
@@ -311,7 +310,6 @@ struct EntryEditingView: View {
               }
               .compositingGroup()  // required for destinationOut to work
               .frame(height: 40)
-              .padding(.top, -40)
               .allowsHitTesting(false)
             }
             .overlay(alignment: .bottom) {
@@ -321,7 +319,7 @@ struct EntryEditingView: View {
                 LinearGradient(
                   gradient: Gradient(stops: [
                     .init(color: Color.black.opacity(1.0), location: 0.0),
-                    .init(color: Color.black.opacity(0.0), location: 0.4),
+                    .init(color: Color.black.opacity(0.0), location: 0.8),
                     .init(color: Color.black.opacity(0.0), location: 1.0),
                   ]),
                   startPoint: .top,
@@ -374,7 +372,7 @@ struct EntryEditingView: View {
           }
           .frame(maxWidth: .infinity, alignment: .leading)
           // Offset the header part
-          .padding(.vertical, 40)
+          .padding(.vertical, 24)
         }
         .scrollDismissesKeyboard(.never)
       }
@@ -879,59 +877,4 @@ private func confirmAndDismiss() {
     onFocusChange: nil
   )
   .modelContainer(for: DayEntry.self, inMemory: true)
-}
-
-#Preview("Mock Mode - Tutorial") {
-  struct MockPreview: View {
-    @StateObject private var mockStore = MockDataStore()
-
-    var body: some View {
-      EntryEditingView(
-        date: Date(),
-        onOpenDrawingCanvas: { print("Open canvas") },
-        onFocusChange: nil,
-        mockStore: mockStore,
-        tutorialMode: true
-      )
-      .onAppear {
-        // Add a mock entry
-        let entry = MockDayEntry(
-          date: Date(),
-          body: "This is a sample note for the tutorial!",
-          drawingData: PLACEHOLDER_DATA
-        )
-        mockStore.addEntry(entry)
-        mockStore.selectDate(Date())
-      }
-    }
-  }
-  return MockPreview()
-}
-
-#Preview("Mock Mode - Future Date") {
-  struct MockPreview: View {
-    @StateObject private var mockStore = MockDataStore()
-    let futureDate = Date().addingTimeInterval(86400 * 30) // 30 days from now
-
-    var body: some View {
-      EntryEditingView(
-        date: futureDate,
-        onOpenDrawingCanvas: { print("Open canvas") },
-        onFocusChange: nil,
-        mockStore: mockStore,
-        tutorialMode: true
-      )
-      .onAppear {
-        // Add a mock entry for future date
-        let entry = MockDayEntry(
-          date: futureDate,
-          body: "🎂 Birthday party!",
-          drawingData: nil
-        )
-        mockStore.addEntry(entry)
-        mockStore.selectDate(futureDate)
-      }
-    }
-  }
-  return MockPreview()
 }
