@@ -88,7 +88,7 @@ struct EntryEditingView: View {
   }
 
   private var textContentHeight: CGFloat {
-    let minHeight: CGFloat = 84
+    let minHeight: CGFloat = 100
     let maxHeight = max(minHeight, 180)
 
     guard screenHeight > 0 else { return minHeight }
@@ -301,7 +301,7 @@ struct EntryEditingView: View {
                 LinearGradient(
                   gradient: Gradient(stops: [
                     .init(color: Color.black.opacity(1.0), location: 0.0),
-                    .init(color: Color.black.opacity(0.0), location: 0.8),
+                    .init(color: Color.black.opacity(0.0), location: 0.5),
                     .init(color: Color.black.opacity(0.0), location: 1.0),
                   ]),
                   startPoint: .bottom,
@@ -311,6 +311,7 @@ struct EntryEditingView: View {
               }
               .compositingGroup()  // required for destinationOut to work
               .frame(height: 40)
+              .offset(y: -20)
               .allowsHitTesting(false)
             }
             .overlay(alignment: .bottom) {
@@ -320,7 +321,7 @@ struct EntryEditingView: View {
                 LinearGradient(
                   gradient: Gradient(stops: [
                     .init(color: Color.black.opacity(1.0), location: 0.0),
-                    .init(color: Color.black.opacity(0.0), location: 0.8),
+                    .init(color: Color.black.opacity(0.0), location: 0.5),
                     .init(color: Color.black.opacity(0.0), location: 1.0),
                   ]),
                   startPoint: .top,
@@ -330,6 +331,7 @@ struct EntryEditingView: View {
               }
               .compositingGroup()  // required for destinationOut to work
               .frame(height: 40)
+              .offset(y: 20)
               .allowsHitTesting(false)
             }
 
