@@ -188,6 +188,7 @@ struct SettingsView: View {
   @State private var showFaq = false
   @State private var showShareSheet = false
   @State private var showDeviceIdentifierAlert = false
+  @State private var isAppUpdateAvailable = false
   #if DEBUG
   @State private var showBannerPreview = false
   #endif
@@ -376,6 +377,9 @@ struct SettingsView: View {
         if !subscriptionManager.isSubscribed {
           currentJoodleCount = subscriptionManager.fetchTotalJoodleCount(in: modelContext)
         }
+
+        // Check if app update is available
+        await checkForAppUpdate()
       }
 
       // Auto-navigate to Customization if requested
@@ -717,7 +721,23 @@ struct SettingsView: View {
         SettingsRowView(
           icon: "sparkles",
           iconColor: .indigo,
-          title: "What's New"
+          title: "What's New",
+          trailingView: isAppUpdateAvailable ? AnyView(
+            Text("UPDATE")
+              .font(.system(size: 10).bold())
+              .fontWeight(.semibold)
+              .padding(.horizontal, 6)
+              .padding(.vertical, 2)
+              .background(
+                LinearGradient(
+                  colors: [.appAccent, .appAccent.opacity(0.7)],
+                  startPoint: .topLeading,
+                  endPoint: .bottomTrailing
+                )
+              )
+              .foregroundStyle(.appAccentContrast)
+              .clipShape(Capsule())
+          ) : nil
         )
       }
 
@@ -1051,6 +1071,20 @@ struct SettingsView: View {
   }
 
   // MARK: - Helper Methods
+
+  /// Check if a newer app version is available based on changelog
+  private func checkForAppUpdate() async {
+    do {
+      let index = try await RemoteChangelogService.shared.fetchChangelogIndex()
+      if let latestVersion = index.first?.version {
+        let currentVersion = AppEnvironment.fullVersionString
+        isAppUpdateAvailable = VersionComparator.isLessThan(currentVersion, latestVersion)
+      }
+    } catch {
+      // Silently fail - don't show update badge if we can't fetch
+      print("Failed to check for app update: \(error)")
+    }
+  }
 
   private func openFeedback() {
     guard let url = AppEnvironment.feedbackURL else { return }

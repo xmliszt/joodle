@@ -11,6 +11,20 @@ import SwiftUI
 struct ChangelogListView: View {
     @StateObject private var viewModel = ChangelogViewModel()
 
+    /// Check if the current app version is outdated compared to the latest changelog
+    private var isAppOutdated: Bool {
+        guard let latestVersion = viewModel.latestEntry?.version else {
+            return false
+        }
+        let currentVersion = AppEnvironment.fullVersionString
+        return VersionComparator.isLessThan(currentVersion, latestVersion)
+    }
+
+    /// The latest available version string for display
+    private var latestVersionDisplay: String? {
+        viewModel.latestEntry?.displayVersion
+    }
+
     var body: some View {
         Group {
             if viewModel.isLoadingIndex && viewModel.changelogIndex.isEmpty {
@@ -27,19 +41,28 @@ struct ChangelogListView: View {
             } else {
                 // Changelog list
                 List {
-                    ForEach(viewModel.changelogIndex) { indexEntry in
-                        NavigationLink {
-                            ChangelogDetailLoadingView(
-                                indexEntry: indexEntry,
-                                viewModel: viewModel
-                            )
-                            .navigationTitle("Version \(indexEntry.displayVersion)")
-                            .navigationBarTitleDisplayMode(.inline)
-                        } label: {
-                            ChangelogRowView(
-                                indexEntry: indexEntry,
-                                isCurrentVersion: indexEntry.version == AppEnvironment.fullVersionString
-                            )
+                    // Update available banner
+                    if isAppOutdated {
+                        Section {
+                            UpdateAvailableBanner(latestVersion: latestVersionDisplay)
+                        }
+                    }
+
+                    Section {
+                        ForEach(viewModel.changelogIndex) { indexEntry in
+                            NavigationLink {
+                                ChangelogDetailLoadingView(
+                                    indexEntry: indexEntry,
+                                    viewModel: viewModel
+                                )
+                                .navigationTitle("Version \(indexEntry.displayVersion)")
+                                .navigationBarTitleDisplayMode(.inline)
+                            } label: {
+                                ChangelogRowView(
+                                    indexEntry: indexEntry,
+                                    isCurrentVersion: indexEntry.version == AppEnvironment.fullVersionString
+                                )
+                            }
                         }
                     }
                 }
@@ -63,6 +86,60 @@ struct ChangelogListView: View {
         } message: {
             Text(viewModel.error?.localizedDescription ?? "An unknown error occurred")
         }
+    }
+}
+
+// MARK: - Update Available Banner
+
+private struct UpdateAvailableBanner: View {
+    let latestVersion: String?
+
+    private let appStoreURL = URL(string: "https://apps.apple.com/sg/app/joodle-journaling-with-doodle/id6756204776")!
+
+    var body: some View {
+        Button {
+            UIApplication.shared.open(appStoreURL)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.white)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Download New Version")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+
+                    if let version = latestVersion {
+                        Text("Version \(version) is now available")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.9))
+                    } else {
+                        Text("A new version is available")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.9))
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            .padding()
+            .background(
+                LinearGradient(
+                    colors: [.appAccent, .appAccent.opacity(0.8)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .listRowInsets(EdgeInsets(top: 0, leading: 8, bottom: 0, trailing: 8))
+        .listRowBackground(Color.clear)
     }
 }
 

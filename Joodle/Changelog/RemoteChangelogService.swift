@@ -129,7 +129,7 @@ actor RemoteChangelogService {
 
             // Sort by version (newest first)
             let sorted = indexResponse.changelogs.sorted { entry1, entry2 in
-                compareVersions(entry1.version, entry2.version) > 0
+                VersionComparator.isGreaterThan(entry1.version, entry2.version)
             }
 
             // Update cache
@@ -313,18 +313,4 @@ actor RemoteChangelogService {
         return try? String(contentsOf: fileURL, encoding: .utf8)
     }
 
-    // MARK: - Version Comparison
-
-    private func compareVersions(_ v1: String, _ v2: String) -> Int {
-        let v1Parts = v1.split(separator: ".").compactMap { Int($0) }
-        let v2Parts = v2.split(separator: ".").compactMap { Int($0) }
-
-        for i in 0..<max(v1Parts.count, v2Parts.count) {
-            let p1 = i < v1Parts.count ? v1Parts[i] : 0
-            let p2 = i < v2Parts.count ? v2Parts[i] : 0
-            if p1 < p2 { return -1 }
-            if p1 > p2 { return 1 }
-        }
-        return 0
-    }
 }

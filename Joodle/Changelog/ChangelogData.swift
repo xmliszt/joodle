@@ -59,7 +59,7 @@ enum ChangelogData {
         }
 
         // Sort by version (newest first)
-        return entries.sorted { compareVersions($0.version, $1.version) > 0 }
+        return entries.sorted { VersionComparator.isGreaterThan($0.version, $1.version) }
     }
 
     /// Fallback: discover changelog files from root bundle
@@ -80,7 +80,7 @@ enum ChangelogData {
             }
         }
 
-        return entries.sorted { compareVersions($0.version, $1.version) > 0 }
+        return entries.sorted { VersionComparator.isGreaterThan($0.version, $1.version) }
     }
 
     /// Parses a changelog file from directory path
@@ -152,17 +152,5 @@ enum ChangelogData {
         )
     }
 
-    /// Compare two version strings (returns -1, 0, or 1)
-    private static func compareVersions(_ v1: String, _ v2: String) -> Int {
-        let v1Parts = v1.split(separator: ".").compactMap { Int($0) }
-        let v2Parts = v2.split(separator: ".").compactMap { Int($0) }
 
-        for i in 0..<max(v1Parts.count, v2Parts.count) {
-            let p1 = i < v1Parts.count ? v1Parts[i] : 0
-            let p2 = i < v2Parts.count ? v2Parts[i] : 0
-            if p1 < p2 { return -1 }
-            if p1 > p2 { return 1 }
-        }
-        return 0
-    }
 }

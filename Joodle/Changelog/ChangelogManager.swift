@@ -116,7 +116,7 @@ final class ChangelogManager: ObservableObject {
     func hasSeenChangelog(for version: String) -> Bool {
         // Consider it seen if it's older than or equal to last seen version
         guard let lastSeen = lastSeenVersion else { return false }
-        return compareVersions(version, lastSeen) <= 0
+        return VersionComparator.isLessThanOrEqual(version, lastSeen)
     }
 
     /// Dismiss the changelog without marking as seen (user can see it again)
@@ -157,19 +157,4 @@ final class ChangelogManager: ObservableObject {
         return ChangelogData.entry(for: AppEnvironment.fullVersionString)
     }
 
-    // MARK: - Private Methods
-
-    /// Compare two version strings (returns -1, 0, or 1)
-    private func compareVersions(_ v1: String, _ v2: String) -> Int {
-        let v1Parts = v1.split(separator: ".").compactMap { Int($0) }
-        let v2Parts = v2.split(separator: ".").compactMap { Int($0) }
-
-        for i in 0..<max(v1Parts.count, v2Parts.count) {
-            let p1 = i < v1Parts.count ? v1Parts[i] : 0
-            let p2 = i < v2Parts.count ? v2Parts[i] : 0
-            if p1 < p2 { return -1 }
-            if p1 > p2 { return 1 }
-        }
-        return 0
-    }
 }

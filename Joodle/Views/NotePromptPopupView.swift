@@ -50,6 +50,7 @@ struct NotePromptPopupView: View {
 
         // Text Editor
         TextEditor(text: $noteText)
+          .font(.body)
           .focused($isTextFieldFocused)
           .frame(minHeight: 120, maxHeight: 160)
           .padding(12)
