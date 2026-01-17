@@ -10,6 +10,7 @@ import SwiftData
 import SwiftUI
 import UIKit
 import Combine
+import PostHog
 
 // AppDelegate to enforce portrait orientation and handle notifications
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -19,6 +20,14 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
   ) -> Bool {
     // Set self as the notification center delegate to handle foreground notifications
     UNUserNotificationCenter.current().delegate = self
+
+    // PostHog
+    let POSTHOG_API_KEY = ""
+    let POSTHOG_HOST = ""
+
+    let config = PostHogConfig(apiKey: POSTHOG_API_KEY, host: POSTHOG_HOST)
+    PostHogSDK.shared.setup(config)
+
     return true
   }
 

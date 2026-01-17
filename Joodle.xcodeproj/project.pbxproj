@@ -13,6 +13,7 @@
 		FA85D4632EB7AECB007D82EE /* WidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		FA8A958E2EE5CCF300FF871C /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA8A958D2EE5CCF300FF871C /* StoreKit.framework */; };
 		FAB12DE32ED57E2F00F6006A /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D4512EB7AECA007D82EE /* SwiftUI.framework */; };
+		FABBB5B92F1BB53300B0C947 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = FABBB5B82F1BB53300B0C947 /* PostHog */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -158,6 +159,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FABBB5B92F1BB53300B0C947 /* PostHog in Frameworks */,
 				FA8A958E2EE5CCF300FF871C /* StoreKit.framework in Frameworks */,
 				FA34C5092F08CE93000C510E /* MarkdownUI in Frameworks */,
 			);
@@ -267,6 +269,7 @@
 			name = Joodle;
 			packageProductDependencies = (
 				FA34C5082F08CE93000C510E /* MarkdownUI */,
+				FABBB5B82F1BB53300B0C947 /* PostHog */,
 			);
 			productName = Joodle;
 			productReference = FA88AA2D2EE41776009AEFEB /* Joodle.app */;
@@ -355,6 +358,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				FA34C5072F08CE93000C510E /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+				FABBB5B72F1BB4BD00B0C947 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FADC35842E48C2E1007AE111 /* Products */;
@@ -458,7 +462,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = WidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 80;
+				CURRENT_PROJECT_VERSION = 81;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widgets/Info.plist;
@@ -492,7 +496,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = WidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 80;
+				CURRENT_PROJECT_VERSION = 81;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widgets/Info.plist;
@@ -527,7 +531,7 @@
 				CODE_SIGN_ENTITLEMENTS = joodle/joodle.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 81;
+				CURRENT_PROJECT_VERSION = 82;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -567,7 +571,7 @@
 				CODE_SIGN_ENTITLEMENTS = joodle/joodle.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 81;
+				CURRENT_PROJECT_VERSION = 82;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -855,6 +859,14 @@
 				minimumVersion = 2.4.1;
 			};
 		};
+		FABBB5B72F1BB4BD00B0C947 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.37.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -862,6 +874,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA34C5072F08CE93000C510E /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
 			productName = MarkdownUI;
+		};
+		FABBB5B82F1BB53300B0C947 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FABBB5B72F1BB4BD00B0C947 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
