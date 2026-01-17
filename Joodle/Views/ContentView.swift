@@ -33,6 +33,10 @@ struct ContentView: View {
   @State private var yearGridViewSize: CGSize = .zero
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
+  @State private var showNotePromptPopup: Bool = false
+  @State private var dateForNotePrompt: Date? = nil
+  /// Tracks whether the entry had a doodle when the drawing canvas was opened (for note prompt logic)
+  @State private var entryHadDoodleOnCanvasOpen: Bool = false
 
   @State private var navigateToSettings = false
   @State private var hideDynamicIslandView = false
@@ -184,6 +188,8 @@ struct ContentView: View {
                 date: dataProvider.selectedDateItem?.date,
                 onOpenDrawingCanvas: {
                   Haptic.play()
+                  // Track if entry already has doodle before opening canvas
+                  entryHadDoodleOnCanvasOpen = selectedEntry?.drawingData != nil
                   showDrawingCanvas = true
                 },
                 onFocusChange: { isFocused in
@@ -243,7 +249,7 @@ struct ContentView: View {
           date: dataProvider.selectedDateItem!.date,
           entry: selectedEntry,
           onDismiss: {
-            showDrawingCanvas = false
+            handleDrawingCanvasDismiss()
           },
           isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland
         )
@@ -281,7 +287,7 @@ struct ContentView: View {
               date: dataProvider.selectedDateItem!.date,
               entry: selectedEntry,
               onDismiss: {
-                showDrawingCanvas = false
+                handleDrawingCanvasDismiss()
               },
               isShowing: showDrawingCanvas
             )
@@ -289,10 +295,25 @@ struct ContentView: View {
           // Hide dynamic island view when navigate to setting
           hidden: hideDynamicIslandView,
           onDismiss: {
-            showDrawingCanvas = false
+            handleDrawingCanvasDismiss()
           }
         )
         .id("DynamicIslandExpandedView-\(dataProvider.selectedDateItem?.id ?? "none")")
+      }
+
+      // Note prompt popup - shown after first doodle
+      if showNotePromptPopup {
+        NotePromptPopupView(
+          isPresented: $showNotePromptPopup,
+          onSave: { note in
+            saveNoteForEntry(note: note)
+          },
+          onNavigateToSettings: {
+            // Navigate to Customization settings
+            navigateToSettings = true
+          }
+        )
+        .zIndex(100)
       }
     }
     .alert("Subscription Ended", isPresented: $subscriptionManager.subscriptionJustExpired) {
@@ -555,6 +576,62 @@ struct ContentView: View {
 
   private func getFormattedDate(_ date: Date) -> String {
     return date.formatted(date: .abbreviated, time: .omitted)
+  }
+
+  /// Handle drawing canvas dismiss - check if we should show note prompt
+  private func handleDrawingCanvasDismiss() {
+    let selectedDate = dataProvider.selectedDateItem?.date
+
+    // Close the drawing canvas first
+    showDrawingCanvas = false
+
+    // Check if we should show note prompt popup
+    // Conditions: setting is enabled, entry didn't have doodle when canvas opened, and now has doodle
+    guard userPreferences.promptForNotesAfterDoodling,
+          !entryHadDoodleOnCanvasOpen,
+          let date = selectedDate
+    else { return }
+
+    // Get the entry for this date
+    let entry = entries.first(where: { $0.matches(date: date) })
+
+    // Check if the entry now has drawing data (user actually saved something new)
+    let entryHasDrawingNow = entry?.drawingData != nil
+
+    // Only show prompt if: entry had no doodle before AND has doodle now
+    guard entryHasDrawingNow else { return }
+
+    // Don't show prompt if entry already has notes
+    let entryHasNotes = !(entry?.body.isEmpty ?? true)
+    guard !entryHasNotes else { return }
+
+    // Store the date for saving notes later
+    dateForNotePrompt = date
+
+    // Show the note prompt popup after a short delay for smooth transition
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+      withAnimation {
+        showNotePromptPopup = true
+      }
+    }
+  }
+
+  /// Save note from the popup to the entry
+  private func saveNoteForEntry(note: String) {
+    guard let date = dateForNotePrompt else { return }
+
+    // Find or create entry for this date
+    let entryToUpdate = DayEntry.findOrCreate(for: date, in: modelContext)
+    entryToUpdate.body = note
+
+    try? modelContext.save()
+
+    // Refresh daily reminder if this is today's entry
+    if CalendarDate.from(date).isToday {
+      ReminderManager.shared.refreshDailyReminderIfNeeded()
+    }
+
+    dateForNotePrompt = nil
   }
 
   /// Adjusts the touch location from the parent coordinate system to the grid's coordinate system

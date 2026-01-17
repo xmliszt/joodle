@@ -1363,6 +1363,22 @@ struct CustomizationSettingsView: View {
       } header: {
         Text("Theme Color")
       }
+
+      // Prompt for notes after doodling - no header
+      Section {
+        Toggle(isOn: Binding(
+          get: { userPreferences.promptForNotesAfterDoodling },
+          set: { userPreferences.promptForNotesAfterDoodling = $0 }
+        )) {
+          VStack(alignment: .leading, spacing: 4) {
+            Text("Prompt for notes after doodling")
+            Text("Show a popup to add notes after doodling")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        }
+        .tint(.appAccent)
+      }
     }
     .navigationTitle("Customization")
     .navigationBarTitleDisplayMode(.inline)
@@ -2292,7 +2308,7 @@ struct LearnCoreFeaturesView: View {
         selectedTutorialStep = nil
       }
     }
-    
+
   }
 }
 

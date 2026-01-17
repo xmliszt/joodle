@@ -31,6 +31,9 @@ enum Pref {
   static let announcementCommunityEnabled = Key(key: "announcement_community_enabled", default: true)
   static let announcementTipsEnabled = Key(key: "announcement_tips_enabled", default: true)
 
+  // Notes prompt after doodling
+  static let promptForNotesAfterDoodling = Key(key: "prompt_for_notes_after_doodling", default: true)
+
   // Add new preferences here - just specify the default!
   // static let newSetting = Key(default: "defaultValue")
 
@@ -60,6 +63,7 @@ enum Pref {
     announcementPromoEnabled.key,
     announcementCommunityEnabled.key,
     announcementTipsEnabled.key,
+    promptForNotesAfterDoodling.key,
   ]
 }
 
@@ -152,6 +156,13 @@ final class UserPreferences {
   var announcementTipsEnabled: Bool = Pref.announcementTipsEnabled.defaultValue {
     didSet {
       _announcementTipsEnabledWatcher = announcementTipsEnabled
+    }
+  }
+
+  // Notes prompt after doodling
+  var promptForNotesAfterDoodling: Bool = Pref.promptForNotesAfterDoodling.defaultValue {
+    didSet {
+      _promptForNotesAfterDoodlingWatcher = promptForNotesAfterDoodling
     }
   }
 
@@ -265,6 +276,11 @@ final class UserPreferences {
     set { set(Pref.announcementTipsEnabled, newValue) }
   }
 
+  private var _promptForNotesAfterDoodlingWatcher: Bool {
+    get { get(Pref.promptForNotesAfterDoodling) }
+    set { set(Pref.promptForNotesAfterDoodling, newValue) }
+  }
+
   // MARK: - Step 5: Add your property to load during initialization
   init() {
     // Load initial values from UserDefaults
@@ -281,6 +297,7 @@ final class UserPreferences {
     announcementPromoEnabled = _announcementPromoEnabledWatcher
     announcementCommunityEnabled = _announcementCommunityEnabledWatcher
     announcementTipsEnabled = _announcementTipsEnabledWatcher
+    promptForNotesAfterDoodling = _promptForNotesAfterDoodlingWatcher
   }
 
   // MARK: - Reset Method (automatically uses all registered keys!)
@@ -303,6 +320,7 @@ final class UserPreferences {
     announcementPromoEnabled = Pref.announcementPromoEnabled.defaultValue
     announcementCommunityEnabled = Pref.announcementCommunityEnabled.defaultValue
     announcementTipsEnabled = Pref.announcementTipsEnabled.defaultValue
+    promptForNotesAfterDoodling = Pref.promptForNotesAfterDoodling.defaultValue
   }
 
 }
