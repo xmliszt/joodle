@@ -187,6 +187,7 @@ struct ContentView: View {
             bottom: {
               EntryEditingView(
                 date: dataProvider.selectedDateItem?.date,
+                entry: selectedEntry,
                 onOpenDrawingCanvas: {
                   Haptic.play()
                   // Track if entry already has doodle before opening canvas

@@ -11,20 +11,34 @@ import SwiftUI
 struct EntryEditingView: View {
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
-  @Query private var entries: [DayEntry]
 
-  let date: Date?
-  let onOpenDrawingCanvas: (() -> Void)?
-  let onFocusChange: ((Bool) -> Void)?
+  private let date: Date?
+  private let selectedEntry: DayEntry?
+  private let onOpenDrawingCanvas: (() -> Void)?
+  private let onFocusChange: ((Bool) -> Void)?
+  private let mockStore: MockDataStore?
+  private let tutorialMode: Bool
+  private let showReminderSheetBinding: Binding<Bool>?
 
-  /// Optional mock store for tutorial mode - when provided, uses mock data instead of real database
-  var mockStore: MockDataStore?
-
-  /// When true, adds tutorial highlight anchors to interactive elements
-  var tutorialMode: Bool = false
-
-  /// Optional binding for reminder sheet state - used by tutorial to track sheet dismiss
-  var showReminderSheetBinding: Binding<Bool>?
+  init(
+    date: Date?,
+    entry: DayEntry? = nil,
+    onOpenDrawingCanvas: (() -> Void)? = nil,
+    onFocusChange: ((Bool) -> Void)? = nil,
+    mockStore: MockDataStore? = nil,
+    tutorialMode: Bool = false,
+    showReminderSheetBinding: Binding<Bool>? = nil
+  ) {
+    self.date = date
+    self.selectedEntry = entry
+    self.onOpenDrawingCanvas = onOpenDrawingCanvas
+    self.onFocusChange = onFocusChange
+    self.mockStore = mockStore
+    self.tutorialMode = tutorialMode
+    self.showReminderSheetBinding = showReminderSheetBinding
+    _textContent = State(initialValue: entry?.body ?? "")
+    _entry = State(initialValue: entry)
+  }
 
   @State private var showDeleteConfirmation = false
   @State private var currentTime = Date()
@@ -177,13 +191,18 @@ struct EntryEditingView: View {
 
   /// Check if reminder exists for current date
   private var hasReminder: Bool {
-    guard let date = date else { return false }
+    guard let date else { return false }
     // Use CalendarDate for timezone-agnostic date string
     let dateString = CalendarDate.from(date).dateString
     if isMockMode {
       return mockStore?.hasReminder(for: dateString) ?? false
     }
     return reminderManager.getReminder(for: dateString) != nil
+  }
+
+  private var selectedEntrySignature: String {
+    guard let entry = selectedEntry else { return "nil" }
+    return "\(entry.dateString)::\(entry.body)::\(entry.drawingData?.hashValue ?? 0)"
   }
 
   var body: some View {
@@ -244,12 +263,7 @@ struct EntryEditingView: View {
                       // Load from mock store
                       textContent = mockStore?.getEntry(for: newDate)?.body ?? ""
                     } else {
-                      let candidates = entries.filter { $0.matches(date: newDate) }
-                      // Prioritize entry with content
-                      entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
-
-                      // Always update textContent - clear it if no entry exists
-                      textContent = entry?.body ?? ""
+                      refreshEntryState(for: newDate, preserveUserInput: false)
                     }
                   }
                 }
@@ -271,7 +285,7 @@ struct EntryEditingView: View {
                 }
                 .scrollDismissesKeyboard(.never)
               if textContent.isEmpty {
-                Text("Tap to write some notes...")
+                Text("Tap to write a note...")
                   .font(.body)
                   .foregroundColor(.textColor.opacity(0.5))
                   .allowsHitTesting(false)  // Important: prevents blocking TextEditor
@@ -394,13 +408,7 @@ struct EntryEditingView: View {
           // Load from mock store
           textContent = mockStore?.getEntry(for: date)?.body ?? ""
         } else {
-          let candidates = entries.filter { $0.matches(date: date) }
-          // Prioritize entry with content
-          entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
-
-          if let entry {
-            textContent = entry.body
-          }
+          refreshEntryState(for: date, preserveUserInput: false)
         }
         // Then start timer
         startTimerIfNeeded()
@@ -421,38 +429,14 @@ struct EntryEditingView: View {
 
         // Update entry if got new date
         if let newDate = newValue {
-          let candidates = entries.filter { $0.matches(date: newDate) }
-          // Prioritize entry with content
-          entry = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
-
-          // Always update textContent - clear it if no entry exists
-          textContent = entry?.body ?? ""
+          refreshEntryState(for: newDate, preserveUserInput: false)
         }
       }
-      .onChange(of: entries) { _, newEntries in
+      .onChange(of: selectedEntrySignature) { _, _ in
         // Skip in mock mode
         guard !isMockMode else { return }
-
         guard let date else { return }
-        // Always refresh entry from the latest entries array
-        // This handles the case where an entry is created/updated externally (e.g., from drawing canvas)
-        let candidates = newEntries.filter { $0.matches(date: date) }
-        // Prioritize entry with content
-        let found = candidates.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? candidates.first
-
-        // Only update if we found a different entry or entry was nil
-        if found?.id != entry?.id {
-          entry = found
-          // Update textContent only if user is not currently editing
-          // This prevents overwriting what user is typing
-          if !isTextFieldFocused {
-            textContent = found?.body ?? ""
-          }
-        } else if let found = found {
-          // Same entry but data might have changed (e.g., drawing added)
-          // Update the reference to get latest data
-          entry = found
-        }
+        refreshEntryState(for: date, preserveUserInput: isTextFieldFocused)
       }
       .onChange(of: entry) { _, _ in
         // Skip in mock mode
@@ -735,6 +719,29 @@ struct EntryEditingView: View {
 }
 
 // MARK: - Private Methods
+
+private func refreshEntryState(for date: Date, preserveUserInput: Bool) {
+  let resolvedEntry: DayEntry?
+  if let selectedEntry, selectedEntry.matches(date: date) {
+    resolvedEntry = selectedEntry
+  } else {
+    resolvedEntry = fetchEntry(for: date)
+  }
+  entry = resolvedEntry
+  if !preserveUserInput {
+    textContent = resolvedEntry?.body ?? ""
+  }
+}
+
+private func fetchEntry(for date: Date) -> DayEntry? {
+  let targetDateString = CalendarDate.from(date).dateString
+  let predicate = #Predicate<DayEntry> { entry in
+    entry.dateString == targetDateString
+  }
+  let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+  guard let results = try? modelContext.fetch(descriptor) else { return nil }
+  return results.first(where: { ($0.drawingData != nil && !$0.drawingData!.isEmpty) || !$0.body.isEmpty }) ?? results.first
+}
 
 /// Start the timer if needed
 /// Note: Timer is no longer needed since we show "Tomorrow" for <= 1 day
