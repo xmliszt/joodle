@@ -81,10 +81,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         object: nil,
         userInfo: ["date": Date()]
       )
-      // Reschedule for tomorrow (will check if user draws today before sending)
-      Task { @MainActor in
-        ReminderManager.shared.refreshDailyReminderIfNeeded()
-      }
+
     } else if let date = DayEntry.stringToLocalDate(identifier) {
       // Track navigation from anniversary reminder notification
       AnalyticsManager.shared.trackNavigatedFromNotification(notificationType: "anniversary_reminder")

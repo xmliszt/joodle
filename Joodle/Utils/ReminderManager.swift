@@ -211,7 +211,7 @@ class ReminderManager: ObservableObject {
                 Task { @MainActor in
                     self?.cleanupOutdatedReminders()
                     self?.syncFromCloud()
-                    // Refresh daily reminder - reschedules for next occurrence if user hasn't drawn today
+                    // Ensure daily reminder is scheduled (uses repeating trigger)
                     self?.refreshDailyReminderIfNeeded()
                 }
             }
@@ -470,12 +470,6 @@ class ReminderManager: ObservableObject {
         // Cancel existing daily reminder first
         cancelDailyReminder()
 
-        // Check if user has already created content for today - if so, don't schedule
-        if hasTodayEntry() {
-            print("📝 [ReminderManager] User already has today's entry - skipping daily reminder")
-            return
-        }
-
         let content = UNMutableNotificationContent()
         content.title = "Time to Joodle 🌸"
         content.body = "Capture today's moment in Joodle."
@@ -488,27 +482,14 @@ class ReminderManager: ObservableObject {
         let calendar = Calendar.current
         let timeComponents = calendar.dateComponents([.hour, .minute], from: time)
 
-        // Calculate the next trigger date
-        // If the reminder time has already passed today, schedule for tomorrow
-        let now = Date()
-        var triggerDateComponents = calendar.dateComponents([.year, .month, .day], from: now)
-        triggerDateComponents.hour = timeComponents.hour
-        triggerDateComponents.minute = timeComponents.minute
-        triggerDateComponents.second = 0
+        // Use a repeating trigger with only hour and minute components
+        // This ensures the notification fires every day at the same time,
+        // regardless of whether the user opens the app or taps the notification
+        var triggerComponents = DateComponents()
+        triggerComponents.hour = timeComponents.hour
+        triggerComponents.minute = timeComponents.minute
 
-        guard var triggerDate = calendar.date(from: triggerDateComponents) else {
-            print("❌ [ReminderManager] Failed to calculate trigger date")
-            return
-        }
-
-        // If the trigger time has already passed today, schedule for tomorrow
-        if triggerDate <= now {
-            triggerDate = calendar.date(byAdding: .day, value: 1, to: triggerDate) ?? triggerDate
-        }
-
-        // Use a non-repeating trigger so we can check daily if user has drawn
-        let finalTriggerComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: triggerDate)
-        let trigger = UNCalendarNotificationTrigger(dateMatching: finalTriggerComponents, repeats: false)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: triggerComponents, repeats: true)
 
         let request = UNNotificationRequest(
             identifier: DailyReminderConstants.notificationIdentifier,
@@ -520,63 +501,19 @@ class ReminderManager: ObservableObject {
             if let error = error {
                 print("❌ [ReminderManager] Error scheduling daily reminder: \(error)")
             } else {
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
-                print("✅ [ReminderManager] Daily reminder scheduled for \(dateFormatter.string(from: triggerDate))")
+                print("✅ [ReminderManager] Daily reminder scheduled for \(timeComponents.hour ?? 0):\(String(format: "%02d", timeComponents.minute ?? 0)) (repeating daily)")
             }
         }
     }
 
-    /// Check if user has created content (drawing or text) for today
-    /// - Returns: True if today's entry has content, false otherwise
-    private func hasTodayEntry() -> Bool {
-        let container = ModelContainerManager.shared.container
-        let context = ModelContext(container)
-
-        // Use CalendarDate for timezone-agnostic "today" determination
-        let todayString = CalendarDate.today().dateString
-
-        let predicate = #Predicate<DayEntry> { entry in
-            entry.dateString == todayString
-        }
-
-        let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
-
-        do {
-            let entries = try context.fetch(descriptor)
-
-            // Check if any entry has content (text or drawing)
-            for entry in entries {
-                let hasText = !entry.body.isEmpty
-                let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
-
-                if hasText || hasDrawing {
-                    return true
-                }
-            }
-
-            return false
-        } catch {
-            print("❌ [ReminderManager] Error checking today's entry: \(error)")
-            return false
-        }
-    }
-
-    /// Refresh the daily reminder - reschedules if needed based on whether user has drawn today
-    /// Call this when app comes to foreground or after saving a drawing
+    /// Refresh the daily reminder if needed
+    /// With repeating triggers, this is mainly used to ensure the reminder is scheduled
+    /// after preference changes or app updates
     func refreshDailyReminderIfNeeded() {
         guard UserPreferences.shared.isDailyReminderEnabled else { return }
 
-        // Use a slight delay to ensure the ModelContext save has propagated to the persistent store
-        // before we create a new context to check for today's entry.
-        // This prevents race conditions where hasTodayEntry() reads stale data.
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self else { return }
-            guard UserPreferences.shared.isDailyReminderEnabled else { return }
-
-            // Reschedule - this will check if user has already drawn today
-            self.scheduleDailyReminder(at: UserPreferences.shared.dailyReminderTime)
-        }
+        // Reschedule the repeating daily reminder
+        scheduleDailyReminder(at: UserPreferences.shared.dailyReminderTime)
     }
 
     /// Cancel the daily reminder notification

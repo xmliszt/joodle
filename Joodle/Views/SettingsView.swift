@@ -1276,7 +1276,7 @@ struct DailyReminderSettingsView: View {
           }
         }
       } footer: {
-        Text("Get a daily notification to capture your moment. Daily reminder will be skipped if today's entry has already been filled.")
+        Text("Get a daily notification to remind you to capture your moment in Joodle.")
       }
     }
     .navigationTitle("Daily Reminder")

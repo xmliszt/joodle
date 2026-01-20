@@ -650,11 +650,6 @@ struct ContentView: View {
 
     try? modelContext.save()
 
-    // Refresh daily reminder if this is today's entry
-    if CalendarDate.from(date).isToday {
-      ReminderManager.shared.refreshDailyReminderIfNeeded()
-    }
-
     dateForNotePrompt = nil
   }
 

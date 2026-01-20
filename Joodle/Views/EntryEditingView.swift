@@ -796,10 +796,7 @@ private func deleteEntry() {
   textContent = ""
   self.entry = nil
 
-  // Refresh daily reminder - entry was deleted, so we may need to reschedule notification
-  if let date = date, CalendarDate.from(date).isToday {
-    ReminderManager.shared.refreshDailyReminderIfNeeded()
-  }
+
 }
 
 /// Save note to mock store (tutorial mode)
@@ -841,20 +838,13 @@ func saveNote(text: String, for date: Date) {
       existingEntry.deleteAllForSameDate(in: modelContext)
       self.entry = nil
 
-      // Refresh daily reminder - entry was deleted, so we may need to reschedule notification
-      if CalendarDate.from(date).isToday {
-        ReminderManager.shared.refreshDailyReminderIfNeeded()
-      }
+
       return
     }
 
     try? modelContext.save()
 
-    // Refresh the daily reminder for today's entry
-    // (cancels pending notification if entry has content, or reschedules if content was cleared)
-    if CalendarDate.from(date).isToday {
-      ReminderManager.shared.refreshDailyReminderIfNeeded()
-    }
+
     return
   }
 
@@ -866,11 +856,7 @@ func saveNote(text: String, for date: Date) {
   // Save the context to persist changes
   try? modelContext.save()
 
-  // If this is today's entry, refresh the daily reminder
-  // (cancels pending notification since user already added content today)
-  if CalendarDate.from(date).isToday {
-    ReminderManager.shared.refreshDailyReminderIfNeeded()
-  }
+
 }
 
 private func confirmAndDismiss() {

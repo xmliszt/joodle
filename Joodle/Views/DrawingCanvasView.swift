@@ -485,10 +485,7 @@ struct DrawingCanvasView: View {
           try? modelContext.save()
         }
 
-        // Refresh daily reminder - drawing was cleared, so we may need to reschedule notification
-        if CalendarDate.from(date).isToday {
-          ReminderManager.shared.refreshDailyReminderIfNeeded()
-        }
+
       }
       return
     }
@@ -524,11 +521,7 @@ struct DrawingCanvasView: View {
 
     try? modelContext.save()
 
-    // If this is today's entry, refresh the daily reminder
-    // (cancels pending notification since user already drew today)
-    if CalendarDate.from(date).isToday {
-      ReminderManager.shared.refreshDailyReminderIfNeeded()
-    }
+
   }
 
 
@@ -567,9 +560,7 @@ struct DrawingCanvasView: View {
         }
 
         // Refresh daily reminder - drawing was cleared, so we may need to reschedule notification
-        if CalendarDate.from(date).isToday {
-          ReminderManager.shared.refreshDailyReminderIfNeeded()
-        }
+
       }
     }
   }
