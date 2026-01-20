@@ -24,10 +24,16 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     // PostHog - Read from Info.plist (configured via Secrets.xcconfig)
     if let apiKey = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_API_KEY") as? String,
        let host = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_HOST") as? String,
-       !apiKey.isEmpty,
-       !apiKey.contains("your_posthog") {
+       !apiKey.isEmpty {
       let config = PostHogConfig(apiKey: apiKey, host: host)
       PostHogSDK.shared.setup(config)
+      print("✅ PostHog configured successfully.")
+
+      // Identify user with device vendor ID (persists across sessions, respects privacy)
+      if let vendorId = UIDevice.current.identifierForVendor?.uuidString {
+        AnalyticsManager.shared.identifyUser(anonymousId: vendorId)
+        print("✅ PostHog user identified: \(vendorId)")
+      }
     } else {
       print("⚠️ PostHog not configured. See Secrets.xcconfig.template for setup instructions.")
     }
