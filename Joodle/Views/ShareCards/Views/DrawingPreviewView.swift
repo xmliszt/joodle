@@ -8,6 +8,8 @@ struct DrawingPreviewView: View {
   /// Optional override for the logical display size used for stroke calculation.
   /// If nil, uses size / scale.
   var logicalDisplaySize: CGFloat? = nil
+  var animateDrawing: Bool = false
+  var looping: Bool = false
   
   var body: some View {
     if let highResDrawing = highResDrawing {
@@ -25,7 +27,9 @@ struct DrawingPreviewView: View {
         accent: true,
         highlighted: false,
         scale: scale,
-        useThumbnail: false
+        useThumbnail: false,
+        animateDrawing: animateDrawing,
+        looping: looping
       )
       .frame(width: size, height: size)
     } else {

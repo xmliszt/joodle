@@ -29,13 +29,7 @@ struct ShareCardSelectorView: View {
   // Watermark toggle - only available for Joodle Pro users
   @State private var showWatermark: Bool = true
 
-  // Cache rendered preview images for each style, color scheme, and watermark setting
-  @State private var renderedPreviews: [ShareCardStyle: [ColorScheme: [Bool: UIImage]]] = [:]
-  @State private var renderingStyles: Set<ShareCardStyle> = []
-
-  // Cache animated preview frames for each style
-  @State private var animatedPreviewFrames: [ShareCardStyle: [ColorScheme: [Bool: [UIImage]]]] = [:]
-  @State private var loadingAnimatedStyles: Set<ShareCardStyle> = []
+  // No longer caching rendered images - using views directly for real-time rendering
 
   // Year grid data (loaded when in yearGrid mode)
   @State private var yearEntries: [ShareCardDayEntry] = []
@@ -191,11 +185,7 @@ struct ShareCardSelectorView: View {
         .toggleStyle(SwitchToggleStyle(tint: .appAccent))
         .padding(.horizontal, 32)
         .onChange(of: showWatermark) { _, _ in
-          // Clear cached previews when watermark setting changes
-          renderedPreviews.removeAll()
-          animatedPreviewFrames.removeAll()
-          // Re-render current preview
-          renderPreview(for: selectedStyle)
+          // Watermark change will automatically update the view
         }
 
         Spacer().frame(height: 16)
@@ -352,161 +342,116 @@ struct ShareCardSelectorView: View {
   private func cardPreview(style: ShareCardStyle) -> some View {
     ZStack {
       if style.isAnimatedStyle {
-        // Animated preview with auto-play
+        // Animated preview with DrawingDisplayView looping
         animatedCardPreview(style: style)
-      } else if let previewImage = renderedPreviews[style]?[previewColorScheme]?[shouldShowWatermark] {
-        // Show the actual rendered export image
-        Image(uiImage: previewImage)
-          .resizable()
-          .scaledToFit()
-          .frame(width: style.previewSize.width, height: style.previewSize.height)
-      } else if renderingStyles.contains(style) {
-        // Show loader while rendering
-        ZStack {
-          Color.backgroundColor
-            .frame(width: style.previewSize.width, height: style.previewSize.height)
-
-          ProgressView()
-            .progressViewStyle(CircularProgressViewStyle())
-        }
       } else {
-        // Show placeholder before rendering starts
-        ZStack {
-          Color.backgroundColor
-            .frame(width: style.previewSize.width, height: style.previewSize.height)
-        }
+        // Use SwiftUI views directly for static previews
+        staticCardPreview(style: style)
       }
     }
-    .onAppear {
-      // Render preview when it appears
-      renderPreview(for: style)
-    }
-    .onChange(of: previewColorScheme) { _, _ in
-      // Re-render if preview color scheme changes
-      renderPreview(for: style)
+    .border(Color(.separator))
+  }
+
+  @ViewBuilder
+  private func staticCardPreview(style: ShareCardStyle) -> some View {
+    switch mode {
+    case .entry(let entry, let date):
+      switch style {
+      case .minimal:
+        MinimalView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+          .preferredColorScheme(previewColorScheme)
+          .frame(width: style.previewSize.width, height: style.previewSize.height)
+      case .excerpt:
+        ExcerptView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+          .preferredColorScheme(previewColorScheme)
+          .frame(width: style.previewSize.width, height: style.previewSize.height)
+      case .detailed:
+        DetailedView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+          .preferredColorScheme(previewColorScheme)
+          .frame(width: style.previewSize.width, height: style.previewSize.height)
+      case .anniversary:
+        AnniversaryView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+          .preferredColorScheme(previewColorScheme)
+          .frame(width: style.previewSize.width, height: style.previewSize.height)
+      default:
+        EmptyView()
+      }
+    case .yearGrid(let year):
+      switch style {
+      case .yearGridDots:
+        YearGridDotsView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark)
+          .preferredColorScheme(previewColorScheme)
+          .frame(width: style.previewSize.width, height: style.previewSize.height)
+      case .yearGridJoodles:
+        YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark)
+          .preferredColorScheme(previewColorScheme)
+          .frame(width: style.previewSize.width, height: style.previewSize.height)
+      case .yearGridJoodlesOnly:
+        YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark, showEmptyDots: false)
+          .preferredColorScheme(previewColorScheme)
+          .frame(width: style.previewSize.width, height: style.previewSize.height)
+      default:
+        EmptyView()
+      }
     }
   }
 
   @ViewBuilder
   private func animatedCardPreview(style: ShareCardStyle) -> some View {
-    if let frames = animatedPreviewFrames[style]?[previewColorScheme]?[shouldShowWatermark], !frames.isEmpty {
-      // Auto-playing animated preview using TimelineView
-      AnimatedPreviewPlayer(frames: frames, previewSize: style.previewSize, frameRate: Double(style.animationConfig.frameRate))
-    } else if loadingAnimatedStyles.contains(style) {
-      // Show loader while generating frames
-      ZStack {
-        Color.backgroundColor
-          .frame(width: style.previewSize.width, height: style.previewSize.height)
-
-        VStack(spacing: 8) {
-          ProgressView()
-            .progressViewStyle(CircularProgressViewStyle())
-          Text("Loading animation...")
-            .font(.system(size: 12))
-            .foregroundColor(.secondaryTextColor)
-        }
-      }
-    } else {
-      // Show placeholder
-      ZStack {
-        Color.backgroundColor
-          .frame(width: style.previewSize.width, height: style.previewSize.height)
-      }
-    }
-  }
-
-  private func renderPreview(for style: ShareCardStyle) {
-    if style.isAnimatedStyle {
-      renderAnimatedPreview(for: style)
-    } else {
-      renderStaticPreview(for: style)
-    }
-  }
-
-  private func renderStaticPreview(for style: ShareCardStyle) {
-    // Skip if already rendered or currently rendering
-    guard renderedPreviews[style]?[previewColorScheme]?[shouldShowWatermark] == nil, !renderingStyles.contains(style) else {
-      return
-    }
-
-    renderingStyles.insert(style)
-
-    let watermarkSetting = shouldShowWatermark
-
-    Task { @MainActor in
-      let image: UIImage?
-
-      switch mode {
-      case .entry(let entry, let date):
-        image = ShareCardRenderer.shared.renderCard(
-          style: style,
+    switch mode {
+    case .entry(let entry, let date):
+      switch style {
+      case .animatedMinimalVideo:
+        AnimatedMinimalCardView(
+          entry: entry,
+          drawingImage: nil,
+          cardSize: style.cardSize,
+          showWatermark: shouldShowWatermark,
+          animateDrawing: true,
+          looping: true
+        )
+        .preferredColorScheme(previewColorScheme)
+        .frame(width: style.previewSize.width, height: style.previewSize.height)
+      case .animatedExcerptVideo:
+        AnimatedExcerptCardView(
           entry: entry,
           date: date,
-          colorScheme: previewColorScheme,
-          showWatermark: watermarkSetting
+          drawingImage: nil,
+          cardSize: style.cardSize,
+          showWatermark: shouldShowWatermark,
+          animateDrawing: true,
+          looping: true
         )
-      case .yearGrid(let year):
-        image = ShareCardRenderer.shared.renderYearGridCard(
-          style: style,
-          year: year,
-          percentage: displayPercentage,
-          entries: yearEntries,
-          colorScheme: previewColorScheme,
-          showWatermark: watermarkSetting
-        )
+        .preferredColorScheme(previewColorScheme)
+        .frame(width: style.previewSize.width, height: style.previewSize.height)
+      default:
+        EmptyView()
       }
-
-      if let image = image {
-        if renderedPreviews[style] == nil {
-          renderedPreviews[style] = [:]
-        }
-        if renderedPreviews[style]?[previewColorScheme] == nil {
-          renderedPreviews[style]?[previewColorScheme] = [:]
-        }
-        renderedPreviews[style]?[previewColorScheme]?[watermarkSetting] = image
-      }
-      renderingStyles.remove(style)
+    case .yearGrid:
+      // Animated styles not available for year grid
+      EmptyView()
     }
   }
 
-  private func renderAnimatedPreview(for style: ShareCardStyle) {
-    // Skip if already rendered or currently loading
-    guard animatedPreviewFrames[style]?[previewColorScheme]?[shouldShowWatermark] == nil,
-          !loadingAnimatedStyles.contains(style) else {
-      return
-    }
-
-    loadingAnimatedStyles.insert(style)
-
-    let watermarkSetting = shouldShowWatermark
-
-    Task { @MainActor in
-      var frames: [UIImage] = []
-
-      switch mode {
-      case .entry(let entry, let date):
-        frames = await ShareCardRenderer.shared.generateAnimatedPreviewFrames(
-          style: style,
-          entry: entry,
-          date: date,
-          colorScheme: previewColorScheme,
-          showWatermark: watermarkSetting
-        )
-      case .yearGrid:
-        // Animated styles not available for year grid
-        break
-      }
-
-      if !frames.isEmpty {
-        if animatedPreviewFrames[style] == nil {
-          animatedPreviewFrames[style] = [:]
-        }
-        if animatedPreviewFrames[style]?[previewColorScheme] == nil {
-          animatedPreviewFrames[style]?[previewColorScheme] = [:]
-        }
-        animatedPreviewFrames[style]?[previewColorScheme]?[watermarkSetting] = frames
-      }
-      loadingAnimatedStyles.remove(style)
+  private func renderCardToImage(style: ShareCardStyle, watermarkSetting: Bool) -> UIImage? {
+    switch mode {
+    case .entry(let entry, let date):
+      return ShareCardRenderer.shared.renderCard(
+        style: style,
+        entry: entry,
+        date: date,
+        colorScheme: previewColorScheme,
+        showWatermark: watermarkSetting
+      )
+    case .yearGrid(let year):
+      return ShareCardRenderer.shared.renderYearGridCard(
+        style: style,
+        year: year,
+        percentage: displayPercentage,
+        entries: yearEntries,
+        colorScheme: previewColorScheme,
+        showWatermark: watermarkSetting
+      )
     }
   }
 
@@ -570,37 +515,11 @@ struct ShareCardSelectorView: View {
       return
     }
 
-    // If we already have the rendered preview, use it directly
-    if let cachedImage = renderedPreviews[selectedStyle]?[previewColorScheme]?[watermarkSetting] {
-      prepareAndPresentShareSheet(with: cachedImage)
-      return
-    }
-
-    // Otherwise render it now
+    // Render the view directly to image
     isSharing = true
 
     Task { @MainActor in
-      let image: UIImage?
-
-      switch mode {
-      case .entry(let entry, let date):
-        image = ShareCardRenderer.shared.renderCard(
-          style: selectedStyle,
-          entry: entry,
-          date: date,
-          colorScheme: previewColorScheme,
-          showWatermark: watermarkSetting
-        )
-      case .yearGrid(let year):
-        image = ShareCardRenderer.shared.renderYearGridCard(
-          style: selectedStyle,
-          year: year,
-          percentage: displayPercentage,
-          entries: yearEntries,
-          colorScheme: previewColorScheme,
-          showWatermark: watermarkSetting
-        )
-      }
+      let image = renderCardToImage(style: selectedStyle, watermarkSetting: watermarkSetting)
 
       if let image = image {
         prepareAndPresentShareSheet(with: image)
@@ -647,38 +566,6 @@ struct ShareCardSelectorView: View {
         exportProgress = 0.0
       }
     }
-  }
-}
-
-// MARK: - Animated Preview Player
-
-/// A view that auto-plays animation frames in a loop
-private struct AnimatedPreviewPlayer: View {
-  let frames: [UIImage]
-  let previewSize: CGSize
-  let frameRate: Double
-
-  var body: some View {
-    TimelineView(.animation(minimumInterval: 1.0 / frameRate)) { timeline in
-      let frameIndex = calculateFrameIndex(for: timeline.date)
-
-      Image(uiImage: frames[frameIndex])
-        .resizable()
-        .scaledToFit()
-        .frame(width: previewSize.width, height: previewSize.height)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
-  }
-
-  private func calculateFrameIndex(for date: Date) -> Int {
-    guard !frames.isEmpty else { return 0 }
-
-    // Calculate which frame to show based on time
-    let totalDuration = Double(frames.count) / frameRate
-    let elapsed = date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: totalDuration)
-    let frameIndex = Int(elapsed * frameRate) % frames.count
-
-    return frameIndex
   }
 }
 

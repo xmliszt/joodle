@@ -129,24 +129,27 @@ class AnimatedDrawingRenderer {
     let cardView: AnyView
 
     if style.includesExcerpt {
-      // Use AnimatedExcerptCardView matching ExcerptView layout
       cardView = AnyView(
         AnimatedExcerptCardView(
-          drawingImage: drawingImage,
           entry: entry,
           date: date,
+          drawingImage: drawingImage,
           cardSize: cardSize,
-          showWatermark: showWatermark
+          showWatermark: showWatermark,
+          animateDrawing: false,
+          looping: false
         )
         .environment(\.colorScheme, colorScheme)
       )
     } else {
-      // Use AnimatedMinimalCardView matching MinimalView layout
       cardView = AnyView(
         AnimatedMinimalCardView(
+          entry: entry,
           drawingImage: drawingImage,
           cardSize: cardSize,
-          showWatermark: showWatermark
+          showWatermark: showWatermark,
+          animateDrawing: false,
+          looping: false
         )
         .environment(\.colorScheme, colorScheme)
       )
@@ -279,113 +282,5 @@ class AnimatedDrawingRenderer {
     }
 
     return frames
-  }
-}
-
-// MARK: - Animated Card Views
-
-/// Animated version of MinimalView that accepts a pre-rendered drawing image
-private struct AnimatedMinimalCardView: View {
-  let drawingImage: UIImage
-  let cardSize: CGSize
-  var showWatermark: Bool = true
-
-  private var scale: CGFloat {
-    cardSize.width / 1080.0 // Base card size is 1080
-  }
-
-  var body: some View {
-    ZStack {
-      // Background
-      Color.backgroundColor
-
-      VStack {
-        // Drawing with surface background - matches MinimalView exactly
-        Image(uiImage: drawingImage)
-          .resizable()
-          .scaledToFit()
-          .frame(width: 800 * scale, height: 800 * scale)
-          .padding()
-          .background(
-            RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
-              .foregroundStyle(.appSurface)
-          )
-          .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
-      }
-
-      // Watermark - bottom right corner
-      if showWatermark {
-        MushroomWatermarkView(scale: scale)
-      }
-    }
-    .frame(width: cardSize.width, height: cardSize.height)
-  }
-}
-
-/// Animated version of ExcerptView that accepts a pre-rendered drawing image
-private struct AnimatedExcerptCardView: View {
-  let drawingImage: UIImage
-  let entry: DayEntry
-  let date: Date
-  let cardSize: CGSize
-  var showWatermark: Bool = true
-
-  private var scale: CGFloat {
-    cardSize.width / 1080.0 // Base card size is 1080
-  }
-
-  private var dateString: String {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "EEE, dd MMM yyyy"
-    return formatter.string(from: date)
-  }
-
-  var body: some View {
-    ZStack {
-      // Background
-      Color.backgroundColor
-
-      VStack(spacing: 0) {
-        Spacer()
-
-        // Drawing with surface background - matches ExcerptView exactly
-        Image(uiImage: drawingImage)
-          .resizable()
-          .scaledToFit()
-          .frame(width: 600 * scale, height: 600 * scale)
-          .padding()
-          .background(
-            RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
-              .foregroundStyle(.appSurface)
-          )
-          .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
-
-        Spacer()
-        Spacer()
-      }
-
-      // Date footer - matches ExcerptView exactly
-      VStack {
-        Spacer()
-        VStack(spacing: 14 * scale) {
-          Text(entry.body)
-            .font(.system(size: 52 * scale))
-            .lineLimit(1)
-            .padding(.horizontal, 140 * scale)
-          Text(dateString)
-            .font(.system(size: 48 * scale))
-            .foregroundColor(.appTextSecondary)
-        }
-      }
-      .padding(.top, 30 * scale)
-      .padding(.bottom, 100 * scale)
-      .padding(.horizontal, 80 * scale)
-
-      // Watermark - bottom right corner
-      if showWatermark {
-        MushroomWatermarkView(scale: scale)
-      }
-    }
-    .frame(width: cardSize.width, height: cardSize.height)
   }
 }
