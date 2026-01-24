@@ -114,6 +114,7 @@ struct ShareCardSelectorView: View {
           }
           .tabViewStyle(.page(indexDisplayMode: .never))
           .frame(maxWidth: .infinity, minHeight: 400)
+          .disabled(isSharing || isExportingAnimated)
           .onChange(of: selectedStyle) { _, newStyle in
             // Track style selection
             AnalyticsManager.shared.trackShareCardStyleSelected(style: newStyle.rawValue)
@@ -148,24 +149,6 @@ struct ShareCardSelectorView: View {
 
         Spacer().frame(maxHeight: .infinity)
 
-        // Export progress indicator for animated exports
-        if isExportingAnimated {
-          VStack(spacing: 8) {
-            ProgressView(value: exportProgress) {
-              Text("Generating animation...")
-                .font(.system(size: 14))
-                .foregroundColor(.secondaryTextColor)
-            }
-            .progressViewStyle(LinearProgressViewStyle(tint: .appAccent))
-            .padding(.horizontal, 32)
-
-            Text("\(Int(exportProgress * 100))%")
-              .font(.system(size: 12, weight: .medium))
-              .foregroundColor(.secondaryTextColor)
-          }
-          .padding(.bottom, 16)
-        }
-
         // Watermark toggle - only visible for Joodle Super users
         Toggle(isOn: $showWatermark) {
           HStack(spacing: 8) {
@@ -180,8 +163,8 @@ struct ShareCardSelectorView: View {
             }
           }
         }
-        // Not Pro user cannot edit
-        .disabled(!isJoodlePro)
+        // Not Pro user cannot edit, also disable during export
+        .disabled(!isJoodlePro || isSharing || isExportingAnimated)
         .toggleStyle(SwitchToggleStyle(tint: .appAccent))
         .padding(.horizontal, 32)
         .onChange(of: showWatermark) { _, _ in
@@ -204,17 +187,24 @@ struct ShareCardSelectorView: View {
                 .foregroundColor(.textColor)
               }
               .circularGlassButton(tintColor: .appAccent)
+              .disabled(isSharing || isExportingAnimated)
 
 
               Button {
                 shareCard()
               } label: {
                 HStack(spacing: 12) {
-                  Image(systemName: shareButtonIcon)
-                    .font(.system(size: 18, weight: .semibold))
+                  if isSharing || isExportingAnimated {
+                    ProgressView()
+                      .progressViewStyle(CircularProgressViewStyle(tint: .appAccentContrast))
+                      .scaleEffect(1.2)
+                  } else {
+                    Image(systemName: shareButtonIcon)
+                      .font(.system(size: 18, weight: .semibold))
 
-                  Text(shareButtonText)
-                    .font(.system(size: 18, weight:.semibold))
+                    Text(shareButtonText)
+                      .font(.system(size: 18, weight:.semibold))
+                  }
                 }
                 .foregroundColor(.appAccentContrast)
                 .frame(maxWidth: .infinity)
@@ -237,17 +227,25 @@ struct ShareCardSelectorView: View {
               Image(systemName: previewColorScheme == .light ? "sun.max.fill" : "moon.stars.fill")
               .fontWeight(.semibold)
               .foregroundColor(.textColor)
-            }.circularGlassButton()
+            }
+            .circularGlassButton()
+            .disabled(isSharing || isExportingAnimated)
 
             Button {
               shareCard()
             } label: {
               HStack(spacing: 12) {
-                Image(systemName: shareButtonIcon)
-                  .font(.system(size: 18, weight: .semibold))
+                if isSharing || isExportingAnimated {
+                  ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .appAccentContrast))
+                    .scaleEffect(1.2)
+                } else {
+                  Image(systemName: shareButtonIcon)
+                    .font(.system(size: 18, weight: .semibold))
 
-                Text(shareButtonText)
-                  .font(.system(size: 18, weight:.semibold))
+                  Text(shareButtonText)
+                    .font(.system(size: 18, weight:.semibold))
+                }
               }
               .foregroundColor(.appAccentContrast)
               .frame(maxWidth: .infinity)
@@ -271,6 +269,7 @@ struct ShareCardSelectorView: View {
             Image(systemName: "xmark")
               .foregroundColor(.primary)
           }
+          .disabled(isSharing || isExportingAnimated)
         }
       }
       .sheet(item: $shareItem) { item in
@@ -283,6 +282,7 @@ struct ShareCardSelectorView: View {
         // Verify subscription status when accessing share cards (premium feature)
         await SubscriptionManager.shared.verifySubscriptionForAccess()
       }
+      .interactiveDismissDisabled(isSharing || isExportingAnimated)
     }
   }
 
