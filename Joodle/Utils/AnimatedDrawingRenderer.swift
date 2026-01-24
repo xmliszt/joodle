@@ -227,8 +227,8 @@ class AnimatedDrawingRenderer {
     // Calculate frame count based on actual duration
     let frameCount = max(1, Int(ceil(actualDuration * Double(config.frameRate))))
 
-    // Get stroke color
-    let strokeColor = UIColor(Color.appAccent)
+    // Get stroke color resolved for the provided color scheme
+    let strokeColor = resolvedUIColor(for: .appAccent, colorScheme: colorScheme)
 
     // Calculate drawing size based on style
     let scale: CGFloat = 1.0 // We're rendering at actual card size
@@ -282,5 +282,12 @@ class AnimatedDrawingRenderer {
     }
 
     return frames
+  }
+
+  // Resolve a SwiftUI Color into a UIColor for a specific color scheme (light/dark)
+  private func resolvedUIColor(for color: Color, colorScheme: ColorScheme) -> UIColor {
+    let uiColor = UIColor(color)
+    let style: UIUserInterfaceStyle = colorScheme == .dark ? .dark : .light
+    return uiColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: style))
   }
 }
