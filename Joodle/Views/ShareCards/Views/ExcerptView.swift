@@ -13,6 +13,8 @@ struct ExcerptView: View {
     return formatter.string(from: date)
   }
 
+  @Environment(\.colorScheme) private var colorScheme
+
   var body: some View {
     GeometryReader { geometry in
       let size = geometry.size
@@ -20,7 +22,7 @@ struct ExcerptView: View {
 
       ZStack {
         // Background
-        Color.backgroundColor
+        (colorScheme == .dark ? Color.black : Color.white)
           .ignoresSafeArea()
 
         VStack(spacing: 0) {

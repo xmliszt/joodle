@@ -13,6 +13,8 @@ struct AnimatedMinimalCardView: View {
     return cardSize.width / cardSize.height
   }
 
+  @Environment(\.colorScheme) private var colorScheme
+
   var body: some View {
     GeometryReader { geometry in
       let size = geometry.size
@@ -20,7 +22,7 @@ struct AnimatedMinimalCardView: View {
 
       ZStack {
         // Background
-        Color.backgroundColor
+        (colorScheme == .dark ? Color.black : Color.white)
           .ignoresSafeArea()
 
         VStack {

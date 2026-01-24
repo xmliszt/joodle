@@ -7,6 +7,8 @@ struct MinimalView: View {
   let highResDrawing: UIImage?
   var showWatermark: Bool = true
 
+  @Environment(\.colorScheme) private var colorScheme
+
   var body: some View {
     GeometryReader { geometry in
       let size = geometry.size
@@ -14,7 +16,7 @@ struct MinimalView: View {
 
       ZStack {
         // Background
-        Color.backgroundColor
+        (colorScheme == .dark ? Color.black : Color.white)
           .ignoresSafeArea()
 
         VStack {

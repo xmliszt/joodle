@@ -124,6 +124,7 @@ class AnimatedDrawingRenderer {
     showWatermark: Bool
   ) -> UIImage? {
     let cardSize = style.cardSize
+    let cardBackground = colorScheme == .dark ? Color.black : Color.white
 
     // Create the appropriate card view based on style
     let cardView: AnyView
@@ -156,7 +157,11 @@ class AnimatedDrawingRenderer {
     }
 
     // Render SwiftUI view to image
-    return renderSwiftUIView(cardView, size: cardSize)
+    let wrappedView = cardView
+      .frame(width: cardSize.width, height: cardSize.height)
+      .background(cardBackground)
+
+    return renderSwiftUIView(wrappedView, size: cardSize)
   }
 
   /// Render a SwiftUI view to UIImage

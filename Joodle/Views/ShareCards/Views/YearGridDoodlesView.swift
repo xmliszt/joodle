@@ -54,6 +54,8 @@ struct YearGridJoodlesView: View {
     return lookup
   }
 
+  @Environment(\.colorScheme) private var colorScheme
+
   private func calculateGridLayout(availableWidth: CGFloat, scale: CGFloat) -> (dotsPerRow: Int, dotSize: CGFloat, spacing: CGFloat) {
     let scaledDotSize = baseDotSize * scale
     let scaledMinSpacing = baseMinSpacing * scale
@@ -90,7 +92,7 @@ struct YearGridJoodlesView: View {
 
       ZStack {
         // Background
-        Color.backgroundColor
+        (colorScheme == .dark ? Color.black : Color.white)
 
         VStack(alignment: .leading, spacing: headerSpacing) {
           // Header

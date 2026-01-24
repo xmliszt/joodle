@@ -17,6 +17,8 @@ struct DetailedView: View {
     entry?.drawingData != nil || highResDrawing != nil
   }
 
+  @Environment(\.colorScheme) private var colorScheme
+
   var body: some View {
     GeometryReader { geometry in
       let size = geometry.size
@@ -31,7 +33,7 @@ struct DetailedView: View {
 
       ZStack(alignment: .topLeading) {
         // Background
-        Color.backgroundColor
+        (colorScheme == .dark ? Color.black : Color.white)
           .ignoresSafeArea()
 
         VStack(spacing: 24 * scale) {

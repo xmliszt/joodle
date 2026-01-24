@@ -131,10 +131,9 @@ class ShareCardRenderer {
       width: style.cardSize.width + padding * 2,
       height: style.cardSize.height + padding * 2
     )
+    let cardBackground = colorScheme == .dark ? Color.black : Color.white
 
     let cardView = ZStack(alignment: .center) {
-      Color.clear  // Transparent background
-
       createCardView(
         style: style,
         entry: entry,
@@ -143,6 +142,7 @@ class ShareCardRenderer {
         showWatermark: showWatermark
       )
       .frame(width: style.cardSize.width, height: style.cardSize.height)
+      .background(cardBackground)
       .clipShape(RoundedRectangle(cornerRadius: 80))
       .shadow(color: .black.opacity(0.07), radius: 10, x: 0, y: 8)
     }
@@ -180,10 +180,9 @@ class ShareCardRenderer {
       width: style.cardSize.width + padding * 2,
       height: style.cardSize.height + padding * 2
     )
+    let cardBackground = colorScheme == .dark ? Color.black : Color.white
 
     let cardView = ZStack(alignment: .center) {
-      Color.clear  // Transparent background
-
       createYearGridCardView(
         style: style,
         year: year,
@@ -192,6 +191,7 @@ class ShareCardRenderer {
         showWatermark: showWatermark
       )
       .frame(width: style.cardSize.width, height: style.cardSize.height)
+      .background(cardBackground)
       .clipShape(RoundedRectangle(cornerRadius: 80))
       .shadow(color: .black.opacity(0.07), radius: 10, x: 0, y: 8)
     }

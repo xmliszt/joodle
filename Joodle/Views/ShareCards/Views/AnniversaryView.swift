@@ -11,6 +11,8 @@ struct AnniversaryView: View {
     return CountdownHelper.countdownText(from: Date(), to: date)
   }
 
+  @Environment(\.colorScheme) private var colorScheme
+
   var body: some View {
     GeometryReader { geometry in
       let size = geometry.size
@@ -18,7 +20,7 @@ struct AnniversaryView: View {
 
       ZStack {
         // Background
-        Color.backgroundColor
+        (colorScheme == .dark ? Color.black : Color.white)
           .ignoresSafeArea()
 
         VStack(spacing: 0) {
