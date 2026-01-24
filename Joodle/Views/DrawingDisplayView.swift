@@ -16,6 +16,7 @@ struct DrawingDisplayView: View {
   let scale: CGFloat
   let useThumbnail: Bool  // Use pre-rendered thumbnail for performance
   let animateDrawing: Bool  // Animate path drawing replay
+  let looping: Bool  // Loop animation infinitely
 
   // Animation timing constants
   private static let maxAnimationDuration: Double = 3.0  // Maximum total animation duration
@@ -86,7 +87,8 @@ struct DrawingDisplayView: View {
     highlighted: Bool = false,
     scale: CGFloat = 1.0,
     useThumbnail: Bool = false,
-    animateDrawing: Bool = false
+    animateDrawing: Bool = false,
+    looping: Bool = false
   ) {
     self.entry = entry
     self.displaySize = displaySize
@@ -96,6 +98,7 @@ struct DrawingDisplayView: View {
     self.scale = scale
     self.useThumbnail = useThumbnail
     self.animateDrawing = animateDrawing
+    self.looping = looping
   }
 
   private var foregroundColor: Color {
@@ -198,10 +201,15 @@ struct DrawingDisplayView: View {
             }
           }
           .onChange(of: currentProgress) { _, newProgress in
-            // Stop animation when complete
+            // Stop animation when complete, or restart if looping
             if newProgress >= 1.0 && isAnimatingDrawing {
-              isAnimatingDrawing = false
-              drawingProgress = 1.0
+              if looping {
+                // Reset for next loop iteration
+                animationStartTime = Date()
+              } else {
+                isAnimatingDrawing = false
+                drawingProgress = 1.0
+              }
             }
           }
         }
@@ -289,11 +297,11 @@ struct DrawingDisplayView: View {
 
 #Preview("Vector Mode") {
   DrawingDisplayView(
-    entry: nil,
+    entry: DayEntry(body: "", createdAt: Date(), drawingData: createMockDrawingData()),
     displaySize: 200,
-    dotStyle: .present,
-    accent: true,
-    highlighted: true,
+    dotStyle: .future,
+    accent: false,
+    highlighted: false,
     scale: 1.0,
     useThumbnail: false
   )
@@ -303,7 +311,7 @@ struct DrawingDisplayView: View {
 
 #Preview("Thumbnail Mode") {
   DrawingDisplayView(
-    entry: nil,
+    entry: DayEntry(body: "", createdAt: Date(), drawingData: createMockDrawingData()),
     displaySize: 20,
     dotStyle: .present,
     accent: true,
@@ -317,9 +325,10 @@ struct DrawingDisplayView: View {
 
 #Preview("Animated Drawing") {
   DrawingDisplayView(
-    entry: nil,
+    entry: DayEntry(body: "", createdAt: Date(), drawingData: createMockDrawingData()),
     displaySize: 200,
-    animateDrawing: true
+    animateDrawing: true,
+    looping: true
   )
   .frame(width: 200, height: 200)
   .background(.gray.opacity(0.1))
