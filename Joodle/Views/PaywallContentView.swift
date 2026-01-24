@@ -388,8 +388,6 @@ struct PaywallContentView: View {
         icon: "swatchpalette.fill",
         title: "More accent colors"
       )
-
-      FeatureRow(icon: "flask.fill", title: "Access to experimental features")
     }
     .padding(8)
   }

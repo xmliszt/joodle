@@ -25,41 +25,9 @@ struct ExperimentalSettingsIconView: View {
 
 struct ExperimentalFeaturesView: View {
   @Environment(\.userPreferences) private var userPreferences
-  @StateObject private var subscriptionManager = SubscriptionManager.shared
-  @State private var showPaywall = false
 
   var body: some View {
     List {
-      // MARK: - Premium Feature Banner
-      if !subscriptionManager.isSubscribed {
-        Section {
-          VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
-              Image(systemName: "crown.fill")
-                .foregroundStyle(.appAccent)
-                .font(.title2)
-
-              VStack(alignment: .leading, spacing: 4) {
-                Text("Experimental features are available with Joodle Pro. Upgrade to unlock.")
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-                  .fixedSize(horizontal: false, vertical: true)
-              }
-            }
-
-            Button {
-              showPaywall = true
-            } label: {
-              Text("Upgrade to Joodle Pro")
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.appAccent)
-          }
-          .padding(.vertical, 8)
-        }
-      }
-
       // MARK: - Time Passing Water Backdrop
       Section {
         VStack(spacing: 24) {
@@ -70,7 +38,7 @@ struct ExperimentalFeaturesView: View {
             .background(.black)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-          // Toggle with premium badge
+          // Toggle
           Toggle(isOn: Binding(
             get: { userPreferences.enableTimeBackdrop },
             set: { newValue in
@@ -90,14 +58,8 @@ struct ExperimentalFeaturesView: View {
               ExperimentalSettingsIconView(systemName: "water.waves", backgroundColor: .cyan)
               Text("Passing Time Backdrop")
                 .font(.body)
-
-              if !subscriptionManager.isSubscribed {
-                Spacer()
-                PremiumFeatureBadge()
-              }
             }
           }
-          .disabled(!subscriptionManager.isSubscribed)
         }
       } footer: {
         Text("Shows an animated water level that drains throughout the day in the background. Water level reacts to the tilting of your device.")
@@ -124,9 +86,6 @@ struct ExperimentalFeaturesView: View {
     .onAppear {
       // Track experimental features screen viewed
       AnalyticsManager.shared.trackScreen(.experimentalFeatures)
-    }
-    .sheet(isPresented: $showPaywall) {
-      StandalonePaywallView()
     }
   }
 }
