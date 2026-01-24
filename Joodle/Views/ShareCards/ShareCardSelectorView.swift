@@ -280,6 +280,11 @@ struct ShareCardSelectorView: View {
       .onAppear {
         setupInitialState()
       }
+      .onChange(of: colorScheme) { _, newScheme in
+        // Only sync with system when user preference is set to follow system
+        guard UserPreferences.shared.preferredColorScheme == nil else { return }
+        previewColorScheme = newScheme
+      }
       .task {
         // Verify subscription status when accessing share cards (premium feature)
         await SubscriptionManager.shared.verifySubscriptionForAccess()
@@ -315,6 +320,9 @@ struct ShareCardSelectorView: View {
   }
 
   private func setupInitialState() {
+    // Respect user preference; default to current system theme when set to follow system
+    previewColorScheme = UserPreferences.shared.preferredColorScheme ?? colorScheme
+
     // Set initial selected style based on mode
     switch mode {
     case .entry:
