@@ -9,30 +9,6 @@ import SwiftUI
 import SwiftData
 import Photos
 
-/// Thread-safe throttle helper for progress updates
-final class ProgressThrottle {
-  static let shared = ProgressThrottle(interval: 0.5)
-  
-  private var lastUpdateTime: Date = Date()
-  private let lock = NSLock()
-  private let interval: TimeInterval
-  
-  init(interval: TimeInterval = 0.5) {
-    self.interval = interval
-  }
-  
-  func shouldUpdate() -> Bool {
-    lock.lock()
-    defer { lock.unlock() }
-    
-    let now = Date()
-    if now.timeIntervalSince(lastUpdateTime) >= interval {
-      lastUpdateTime = now
-      return true
-    }
-    return false
-  }
-}
 
 /// Mode for the share card selector
 enum ShareCardMode {
@@ -63,7 +39,6 @@ struct ShareCardSelectorView: View {
   // Animated export progress
   @State private var exportProgress: Double = 0.0
   @State private var isExportingAnimated: Bool = false
-  private let progressThrottle = ProgressThrottle(interval: 0.5)
 
   /// Check if the selected year is the current year
   private var isCurrentYear: Bool {
@@ -643,10 +618,8 @@ struct ShareCardSelectorView: View {
             progressCallback: { progress in
               // Throttle at source - only create Task if enough time has passed
               // Note: progressThrottle is accessed from background thread, but just for time check
-              if ProgressThrottle.shared.shouldUpdate() {
-                Task { @MainActor in
-                  self.exportProgress = progress
-                }
+              Task { @MainActor in
+                self.exportProgress = progress
               }
             }
           )
