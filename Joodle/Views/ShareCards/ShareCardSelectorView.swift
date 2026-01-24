@@ -349,49 +349,66 @@ struct ShareCardSelectorView: View {
         staticCardPreview(style: style)
       }
     }
-    .border(Color(.separator))
+  }
+
+  /// Matches the export pipeline padding/clipping/shadow while scaling to preview size
+  @ViewBuilder
+  private func cardPreviewContainer<Content: View>(style: ShareCardStyle, @ViewBuilder content: () -> Content) -> some View {
+    let padding: CGFloat = 60
+    let paddedSize = CGSize(
+      width: style.cardSize.width + padding * 2,
+      height: style.cardSize.height + padding * 2
+    )
+    let previewScale = style.previewSize.width / paddedSize.width
+
+    ZStack(alignment: .center) {
+      Color.clear
+
+      content()
+        .frame(width: style.cardSize.width, height: style.cardSize.height)
+        .clipShape(RoundedRectangle(cornerRadius: 80))
+        .shadow(color: .black.opacity(0.07), radius: 10, x: 0, y: 8)
+    }
+    .frame(width: paddedSize.width, height: paddedSize.height)
+    .scaleEffect(previewScale)
+    .frame(width: style.previewSize.width, height: style.previewSize.height)
   }
 
   @ViewBuilder
   private func staticCardPreview(style: ShareCardStyle) -> some View {
-    switch mode {
-    case .entry(let entry, let date):
-      switch style {
-      case .minimal:
-        MinimalView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
-          .preferredColorScheme(previewColorScheme)
-          .frame(width: style.previewSize.width, height: style.previewSize.height)
-      case .excerpt:
-        ExcerptView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
-          .preferredColorScheme(previewColorScheme)
-          .frame(width: style.previewSize.width, height: style.previewSize.height)
-      case .detailed:
-        DetailedView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
-          .preferredColorScheme(previewColorScheme)
-          .frame(width: style.previewSize.width, height: style.previewSize.height)
-      case .anniversary:
-        AnniversaryView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
-          .preferredColorScheme(previewColorScheme)
-          .frame(width: style.previewSize.width, height: style.previewSize.height)
-      default:
-        EmptyView()
-      }
-    case .yearGrid(let year):
-      switch style {
-      case .yearGridDots:
-        YearGridDotsView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark)
-          .preferredColorScheme(previewColorScheme)
-          .frame(width: style.previewSize.width, height: style.previewSize.height)
-      case .yearGridJoodles:
-        YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark)
-          .preferredColorScheme(previewColorScheme)
-          .frame(width: style.previewSize.width, height: style.previewSize.height)
-      case .yearGridJoodlesOnly:
-        YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark, showEmptyDots: false)
-          .preferredColorScheme(previewColorScheme)
-          .frame(width: style.previewSize.width, height: style.previewSize.height)
-      default:
-        EmptyView()
+    cardPreviewContainer(style: style) {
+      switch mode {
+      case .entry(let entry, let date):
+        switch style {
+        case .minimal:
+          MinimalView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+            .preferredColorScheme(previewColorScheme)
+        case .excerpt:
+          ExcerptView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+            .preferredColorScheme(previewColorScheme)
+        case .detailed:
+          DetailedView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+            .preferredColorScheme(previewColorScheme)
+        case .anniversary:
+          AnniversaryView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+            .preferredColorScheme(previewColorScheme)
+        default:
+          EmptyView()
+        }
+      case .yearGrid(let year):
+        switch style {
+        case .yearGridDots:
+          YearGridDotsView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark)
+            .preferredColorScheme(previewColorScheme)
+        case .yearGridJoodles:
+          YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark)
+            .preferredColorScheme(previewColorScheme)
+        case .yearGridJoodlesOnly:
+          YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark, showEmptyDots: false)
+            .preferredColorScheme(previewColorScheme)
+        default:
+          EmptyView()
+        }
       }
     }
   }
@@ -402,28 +419,30 @@ struct ShareCardSelectorView: View {
     case .entry(let entry, let date):
       switch style {
       case .animatedMinimalVideo:
-        AnimatedMinimalCardView(
-          entry: entry,
-          drawingImage: nil,
-          cardSize: style.cardSize,
-          showWatermark: shouldShowWatermark,
-          animateDrawing: true,
-          looping: true
-        )
-        .preferredColorScheme(previewColorScheme)
-        .frame(width: style.previewSize.width, height: style.previewSize.height)
+        cardPreviewContainer(style: style) {
+          AnimatedMinimalCardView(
+            entry: entry,
+            drawingImage: nil,
+            cardSize: style.cardSize,
+            showWatermark: shouldShowWatermark,
+            animateDrawing: true,
+            looping: true
+          )
+          .preferredColorScheme(previewColorScheme)
+        }
       case .animatedExcerptVideo:
-        AnimatedExcerptCardView(
-          entry: entry,
-          date: date,
-          drawingImage: nil,
-          cardSize: style.cardSize,
-          showWatermark: shouldShowWatermark,
-          animateDrawing: true,
-          looping: true
-        )
-        .preferredColorScheme(previewColorScheme)
-        .frame(width: style.previewSize.width, height: style.previewSize.height)
+        cardPreviewContainer(style: style) {
+          AnimatedExcerptCardView(
+            entry: entry,
+            date: date,
+            drawingImage: nil,
+            cardSize: style.cardSize,
+            showWatermark: shouldShowWatermark,
+            animateDrawing: true,
+            looping: true
+          )
+          .preferredColorScheme(previewColorScheme)
+        }
       default:
         EmptyView()
       }
