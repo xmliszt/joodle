@@ -32,6 +32,7 @@ struct DrawingDisplayView: View {
   @State private var hasAnimatedDrawing: Bool = false
   @State private var isAnimatingDrawing: Bool = false
   @State private var animationStartTime: Date?
+  @State private var lastCalculatedProgress: CGFloat = 0.0
 
   // Use shared cache for drawing paths
   private let pathCache = DrawingPathCache.shared
@@ -124,98 +125,42 @@ struct DrawingDisplayView: View {
           .blur(radius: isVisible ? 0 : 5)
       } else {
         // Use TimelineView to drive animation when animating, otherwise static Canvas
-        TimelineView(isAnimatingDrawing ? .animation : .animation(minimumInterval: 1000)) { timeline in
-          // Calculate progress based on elapsed time during animation
-          let currentProgress: CGFloat = {
+        if isAnimatingDrawing {
+          TimelineView(.animation) { timeline in
+            Canvas { context, size in
+              renderAnimatedFrame(context: &context, size: size, timelineDate: timeline.date)
+            }
+          }
+          .frame(width: displaySize * scale, height: displaySize * scale)
+          .scaleEffect(isVisible ? 1.0 : 0.9)
+          .blur(radius: isVisible ? 0 : 5)
+          .onReceive(Timer.publish(every: 0.016, on: .main, in: .common).autoconnect()) { _ in
+            // Check for animation completion/looping every frame (~60fps)
             if isAnimatingDrawing, let startTime = animationStartTime {
-              let elapsed = timeline.date.timeIntervalSince(startTime)
+              let elapsed = Date().timeIntervalSince(startTime)
               let progress = min(1.0, CGFloat(elapsed / calculatedAnimationDuration))
-              // Apply easeOut curve: 1 - (1 - t)^2
-              let eased = 1.0 - pow(1.0 - progress, 2)
-              return eased
-            }
-            return drawingProgress
-          }()
-
-          Canvas { context, size in
-            // Calculate scale from canvas size (300x300) to display size
-            let canvasScale = (displaySize * scale) / CANVAS_SIZE
-
-            // Scale the context to render at display size
-            context.scaleBy(x: canvasScale, y: canvasScale)
-
-            // Get timing info for length-based animation
-            let timingInfo = strokeTimingInfo
-            let totalDuration = timingInfo.totalDuration
-            let cumulativeEndTimes = timingInfo.cumulativeEndTimes
-            let durations = timingInfo.durations
-
-            // Calculate current elapsed time based on progress
-            let effectiveProgress = animateDrawing ? currentProgress : 1.0
-            let currentElapsedTime = effectiveProgress * CGFloat(totalDuration)
-
-            for (index, pathWithMetadata) in pathsWithMetadata.enumerated() {
-              // Determine start time for this stroke
-              let strokeStartTime: CGFloat = index == 0 ? 0 : CGFloat(cumulativeEndTimes[index - 1])
-              let strokeEndTime = CGFloat(cumulativeEndTimes[index])
-
-              // Skip paths that haven't started yet
-              guard currentElapsedTime > strokeStartTime || !animateDrawing else { continue }
-
-              let path = pathWithMetadata.path
-
-              // Calculate trim for the current path being drawn
-              let pathProgress: CGFloat
-              if animateDrawing && currentElapsedTime < strokeEndTime {
-                // This stroke is currently being drawn
-                let strokeDuration = CGFloat(durations[index])
-                let timeIntoStroke = currentElapsedTime - strokeStartTime
-                pathProgress = min(1.0, max(0.0, timeIntoStroke / strokeDuration))
-              } else if animateDrawing && currentElapsedTime < strokeStartTime {
-                // This stroke hasn't started yet
-                pathProgress = 0.0
-              } else {
-                // Stroke is complete
-                pathProgress = 1.0
-              }
-
-              // Render based on original intent stored in metadata
-              if pathWithMetadata.metadata.isDot {
-                // For dots, fade in based on progress
-                if pathProgress > 0.5 {
-                  context.fill(path, with: .color(foregroundColor))
+              
+              if progress >= 1.0 && lastCalculatedProgress < 1.0 {
+                if looping {
+                  animationStartTime = Date()
+                  lastCalculatedProgress = 0.0
+                } else {
+                  isAnimatingDrawing = false
+                  drawingProgress = 1.0
                 }
-              } else {
-                // For strokes, use trim effect
-                let trimmedPath = path.trimmedPath(from: 0, to: pathProgress)
-                context.stroke(
-                  trimmedPath,
-                  with: .color(foregroundColor),
-                  style: StrokeStyle(
-                    lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1),
-                    lineCap: .round,
-                    lineJoin: .round
-                  )
-                )
               }
+              lastCalculatedProgress = progress
             }
           }
-          .onChange(of: currentProgress) { _, newProgress in
-            // Stop animation when complete, or restart if looping
-            if newProgress >= 1.0 && isAnimatingDrawing {
-              if looping {
-                // Reset for next loop iteration
-                animationStartTime = Date()
-              } else {
-                isAnimatingDrawing = false
-                drawingProgress = 1.0
-              }
-            }
+        } else {
+          // Static canvas when not animating - no TimelineView updates
+          Canvas { context, size in
+            renderStaticDrawing(context: &context, size: size)
           }
+          .frame(width: displaySize * scale, height: displaySize * scale)
+          .scaleEffect(isVisible ? 1.0 : 0.9)
+          .blur(radius: isVisible ? 0 : 5)
         }
-        .frame(width: displaySize * scale, height: displaySize * scale)
-        .scaleEffect(isVisible ? 1.0 : 0.9)
-        .blur(radius: isVisible ? 0 : 5)
       }
     }
     .animation(.springFkingSatifying, value: isVisible)
@@ -254,6 +199,17 @@ struct DrawingDisplayView: View {
         loadDrawingData()
       }
     }
+    .onChange(of: animateDrawing) { _, newValue in
+      // When animateDrawing changes to true, reset and restart animation
+      if newValue {
+        hasAnimatedDrawing = false
+        drawingProgress = 0.0
+        startDrawingAnimationIfNeeded()
+      } else {
+        // When animateDrawing changes to false, stop the animation
+        isAnimatingDrawing = false
+      }
+    }
   }
 
   /// Start the drawing animation if enabled and not yet played
@@ -264,6 +220,221 @@ struct DrawingDisplayView: View {
     drawingProgress = 0.0
     animationStartTime = Date()
     isAnimatingDrawing = true
+  }
+
+  /// Render animated frame with progress calculation
+  private func renderAnimatedFrame(context: inout GraphicsContext, size: CGSize, timelineDate: Date) {
+    // Calculate progress based on elapsed time during animation
+    let currentProgress: CGFloat = {
+      if isAnimatingDrawing, let startTime = animationStartTime {
+        let elapsed = timelineDate.timeIntervalSince(startTime)
+        let progress = min(1.0, CGFloat(elapsed / calculatedAnimationDuration))
+        // Apply easeOut curve: 1 - (1 - t)^2
+        let eased = 1.0 - pow(1.0 - progress, 2)
+        return eased
+      }
+      return drawingProgress
+    }()
+
+    // Calculate scale from canvas size (300x300) to display size
+    let canvasScale = (displaySize * scale) / CANVAS_SIZE
+
+    // Scale the context to render at display size
+    context.scaleBy(x: canvasScale, y: canvasScale)
+
+    // Get timing info for length-based animation
+    let timingInfo = strokeTimingInfo
+    let totalDuration = timingInfo.totalDuration
+    let cumulativeEndTimes = timingInfo.cumulativeEndTimes
+    let durations = timingInfo.durations
+
+    // Calculate current elapsed time based on progress
+    let effectiveProgress = animateDrawing ? currentProgress : 1.0
+    let currentElapsedTime = effectiveProgress * CGFloat(totalDuration)
+
+    for (index, pathWithMetadata) in pathsWithMetadata.enumerated() {
+      // Determine start time for this stroke
+      let strokeStartTime: CGFloat = index == 0 ? 0 : CGFloat(cumulativeEndTimes[index - 1])
+      let strokeEndTime = CGFloat(cumulativeEndTimes[index])
+
+      // Skip paths that haven't started yet
+      guard currentElapsedTime > strokeStartTime || !animateDrawing else { continue }
+
+      let path = pathWithMetadata.path
+
+      // Calculate trim for the current path being drawn
+      let pathProgress: CGFloat
+      if animateDrawing && currentElapsedTime < strokeEndTime {
+        // This stroke is currently being drawn
+        let strokeDuration = CGFloat(durations[index])
+        let timeIntoStroke = currentElapsedTime - strokeStartTime
+        pathProgress = min(1.0, max(0.0, timeIntoStroke / strokeDuration))
+      } else if animateDrawing && currentElapsedTime < strokeStartTime {
+        // This stroke hasn't started yet
+        pathProgress = 0.0
+      } else {
+        // Stroke is complete
+        pathProgress = 1.0
+      }
+
+      // Render based on original intent stored in metadata
+      if pathWithMetadata.metadata.isDot {
+        // For dots, fade in based on progress
+        if pathProgress > 0.5 {
+          context.fill(path, with: .color(foregroundColor))
+        }
+      } else {
+        // For strokes, use trim effect
+        let trimmedPath = path.trimmedPath(from: 0, to: pathProgress)
+        context.stroke(
+          trimmedPath,
+          with: .color(foregroundColor),
+          style: StrokeStyle(
+            lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1),
+            lineCap: .round,
+            lineJoin: .round
+          )
+        )
+      }
+    }
+  }
+
+  /// Update animation progress and handle looping
+  private func updateAnimationProgress(timelineDate: Date) {
+    guard isAnimatingDrawing, let startTime = animationStartTime else { return }
+
+    let elapsed = timelineDate.timeIntervalSince(startTime)
+    let progress = min(1.0, CGFloat(elapsed / calculatedAnimationDuration))
+
+    if progress >= 1.0 {
+      if looping {
+        // Reset for next loop iteration
+        animationStartTime = Date()
+      } else {
+        isAnimatingDrawing = false
+        drawingProgress = 1.0
+      }
+    }
+  }
+
+  /// Render animated drawing with TimelineView
+  @ViewBuilder
+  private func renderDrawingCanvas(timelineDate: Date) -> some View {
+    // Calculate progress based on elapsed time during animation
+    let currentProgress: CGFloat = {
+      if isAnimatingDrawing, let startTime = animationStartTime {
+        let elapsed = timelineDate.timeIntervalSince(startTime)
+        let progress = min(1.0, CGFloat(elapsed / calculatedAnimationDuration))
+        // Apply easeOut curve: 1 - (1 - t)^2
+        let eased = 1.0 - pow(1.0 - progress, 2)
+        return eased
+      }
+      return drawingProgress
+    }()
+
+    Canvas { context, size in
+      // Calculate scale from canvas size (300x300) to display size
+      let canvasScale = (displaySize * scale) / CANVAS_SIZE
+
+      // Scale the context to render at display size
+      context.scaleBy(x: canvasScale, y: canvasScale)
+
+      // Get timing info for length-based animation
+      let timingInfo = strokeTimingInfo
+      let totalDuration = timingInfo.totalDuration
+      let cumulativeEndTimes = timingInfo.cumulativeEndTimes
+      let durations = timingInfo.durations
+
+      // Calculate current elapsed time based on progress
+      let effectiveProgress = animateDrawing ? currentProgress : 1.0
+      let currentElapsedTime = effectiveProgress * CGFloat(totalDuration)
+
+      for (index, pathWithMetadata) in pathsWithMetadata.enumerated() {
+        // Determine start time for this stroke
+        let strokeStartTime: CGFloat = index == 0 ? 0 : CGFloat(cumulativeEndTimes[index - 1])
+        let strokeEndTime = CGFloat(cumulativeEndTimes[index])
+
+        // Skip paths that haven't started yet
+        guard currentElapsedTime > strokeStartTime || !animateDrawing else { continue }
+
+        let path = pathWithMetadata.path
+
+        // Calculate trim for the current path being drawn
+        let pathProgress: CGFloat
+        if animateDrawing && currentElapsedTime < strokeEndTime {
+          // This stroke is currently being drawn
+          let strokeDuration = CGFloat(durations[index])
+          let timeIntoStroke = currentElapsedTime - strokeStartTime
+          pathProgress = min(1.0, max(0.0, timeIntoStroke / strokeDuration))
+        } else if animateDrawing && currentElapsedTime < strokeStartTime {
+          // This stroke hasn't started yet
+          pathProgress = 0.0
+        } else {
+          // Stroke is complete
+          pathProgress = 1.0
+        }
+
+        // Render based on original intent stored in metadata
+        if pathWithMetadata.metadata.isDot {
+          // For dots, fade in based on progress
+          if pathProgress > 0.5 {
+            context.fill(path, with: .color(foregroundColor))
+          }
+        } else {
+          // For strokes, use trim effect
+          let trimmedPath = path.trimmedPath(from: 0, to: pathProgress)
+          context.stroke(
+            trimmedPath,
+            with: .color(foregroundColor),
+            style: StrokeStyle(
+              lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1),
+              lineCap: .round,
+              lineJoin: .round
+            )
+          )
+        }
+      }
+    }
+    .onChange(of: currentProgress) { _, newProgress in
+      // Stop animation when complete, or restart if looping
+      if newProgress >= 1.0 && isAnimatingDrawing {
+        if looping {
+          // Reset for next loop iteration
+          animationStartTime = Date()
+        } else {
+          isAnimatingDrawing = false
+          drawingProgress = 1.0
+        }
+      }
+    }
+  }
+
+  /// Render static drawing without TimelineView updates
+  private func renderStaticDrawing(context: inout GraphicsContext, size: CGSize) {
+    // Calculate scale from canvas size (300x300) to display size
+    let canvasScale = (displaySize * scale) / CANVAS_SIZE
+
+    // Scale the context to render at display size
+    context.scaleBy(x: canvasScale, y: canvasScale)
+
+    // Render all paths at 100% progress
+    for pathWithMetadata in pathsWithMetadata {
+      let path = pathWithMetadata.path
+
+      if pathWithMetadata.metadata.isDot {
+        context.fill(path, with: .color(foregroundColor))
+      } else {
+        context.stroke(
+          path,
+          with: .color(foregroundColor),
+          style: StrokeStyle(
+            lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1),
+            lineCap: .round,
+            lineJoin: .round
+          )
+        )
+      }
+    }
   }
 
   private func loadDrawingData() {

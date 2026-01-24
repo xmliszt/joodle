@@ -9,7 +9,6 @@ import SwiftUI
 import UIKit
 import SwiftData
 
-@MainActor
 class ShareCardRenderer {
   static let shared = ShareCardRenderer()
 
@@ -110,6 +109,7 @@ class ShareCardRenderer {
   ///   - colorScheme: The color scheme to use for rendering
   ///   - showWatermark: Whether to show the watermark (default: true)
   /// - Returns: A UIImage representation of the card
+  @MainActor
   func renderCard(
     style: ShareCardStyle,
     entry: DayEntry?,
@@ -183,6 +183,7 @@ class ShareCardRenderer {
   ///   - colorScheme: The color scheme to use for rendering
   ///   - showWatermark: Whether to show the watermark (default: true)
   /// - Returns: A UIImage representation of the card
+  @MainActor
   func renderYearGridCard(
     style: ShareCardStyle,
     year: Int,
@@ -320,7 +321,7 @@ class ShareCardRenderer {
     colorScheme: ColorScheme,
     showWatermark: Bool = true,
     progress: CGFloat = 1.0
-  ) -> UIImage? {
+  ) async -> UIImage? {
     guard let entry = entry, entry.drawingData != nil else {
       return nil
     }
@@ -344,26 +345,35 @@ class ShareCardRenderer {
     let scale: CGFloat = 1.0
     let drawingSize: CGFloat = style.includesExcerpt ? 600 * scale : 800 * scale
 
-    // Render drawing frame at current progress
-    guard let drawingFrame = frameRenderer.renderDrawingFrame(
-      pathsWithMetadata: pathsWithMetadata,
-      progress: progress,
-      size: CGSize(width: drawingSize, height: drawingSize),
-      foregroundColor: strokeColor,
-      config: config
-    ) else {
+    // Render drawing frame at current progress - dispatch to main thread
+    let drawingFrame = await MainActor.run {
+      frameRenderer.renderDrawingFrame(
+        pathsWithMetadata: pathsWithMetadata,
+        progress: progress,
+        size: CGSize(width: drawingSize, height: drawingSize),
+        foregroundColor: strokeColor,
+        config: config
+      )
+    }
+    
+    guard let drawingFrame = drawingFrame else {
       return nil
     }
 
-    // Render complete card frame using the AnimatedDrawingRenderer
-    return frameRenderer.renderCardFrame(
-      drawingImage: drawingFrame,
-      entry: entry,
-      date: date,
-      style: style,
-      colorScheme: colorScheme,
-      showWatermark: showWatermark
-    )
+    // Render complete card frame using the AnimatedDrawingRenderer - dispatch to main thread
+    // Avoid capturing non-Sendable types in the @Sendable closure by making an unsafe, immutable copy.
+    nonisolated(unsafe) let capturedEntry = entry
+
+    return await MainActor.run { () -> UIImage? in
+      frameRenderer.renderCardFrame(
+        drawingImage: drawingFrame,
+        entry: capturedEntry,
+        date: date,
+        style: style,
+        colorScheme: colorScheme,
+        showWatermark: showWatermark
+      )
+    }
   }
 
   /// Generate all frames for animated preview
@@ -469,3 +479,4 @@ class ShareCardRenderer {
     }
   }
 }
+

@@ -9,7 +9,6 @@ import SwiftUI
 import UIKit
 
 /// Renders individual frames of an animated drawing for export
-@MainActor
 class AnimatedDrawingRenderer {
 
   /// Render a single drawing frame at a specific progress value
@@ -20,6 +19,7 @@ class AnimatedDrawingRenderer {
   ///   - foregroundColor: Color for the strokes
   ///   - config: Animation configuration
   /// - Returns: Rendered frame as UIImage
+  @MainActor
   func renderDrawingFrame(
     pathsWithMetadata: [PathWithMetadata],
     progress: CGFloat,
@@ -115,6 +115,7 @@ class AnimatedDrawingRenderer {
   ///   - colorScheme: Color scheme for rendering
   ///   - showWatermark: Whether to show watermark
   /// - Returns: Rendered card frame as UIImage
+  @MainActor
   func renderCardFrame(
     drawingImage: UIImage,
     entry: DayEntry,
@@ -257,24 +258,35 @@ class AnimatedDrawingRenderer {
       // Apply easeOut curve
       let easedProgress = DrawingAnimationConfig.applyEaseOut(linearProgress)
 
-      // Render drawing frame at appropriate size
-      guard let drawingFrame = renderDrawingFrame(
-        pathsWithMetadata: pathsWithMetadata,
-        progress: easedProgress,
-        size: CGSize(width: drawingSize, height: drawingSize),
-        foregroundColor: strokeColor,
-        config: config
-      ) else { continue }
+      // Render drawing frame at appropriate size - dispatch to main thread
+      let drawingFrame = await MainActor.run {
+        self.renderDrawingFrame(
+          pathsWithMetadata: pathsWithMetadata,
+          progress: easedProgress,
+          size: CGSize(width: drawingSize, height: drawingSize),
+          foregroundColor: strokeColor,
+          config: config
+        )
+      }
+      
+      guard let drawingFrame = drawingFrame else { continue }
+      
+      // Avoid capturing non-Sendable types in the @Sendable closure by making an unsafe, immutable copy.
+      nonisolated(unsafe) let capturedEntry = entry
 
-      // Render complete card frame using SwiftUI
-      guard let cardFrame = renderCardFrame(
-        drawingImage: drawingFrame,
-        entry: entry,
-        date: date,
-        style: style,
-        colorScheme: colorScheme,
-        showWatermark: showWatermark
-      ) else { continue }
+      // Render complete card frame using SwiftUI - dispatch to main thread
+      let cardFrame = await MainActor.run { () -> UIImage? in
+        self.renderCardFrame(
+          drawingImage: drawingFrame,
+          entry: capturedEntry,
+          date: date,
+          style: style,
+          colorScheme: colorScheme,
+          showWatermark: showWatermark
+        )
+      }
+      
+      guard let cardFrame = cardFrame else { continue }
 
       frames.append(cardFrame)
 

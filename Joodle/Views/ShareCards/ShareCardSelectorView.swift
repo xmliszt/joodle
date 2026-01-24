@@ -9,6 +9,31 @@ import SwiftUI
 import SwiftData
 import Photos
 
+/// Thread-safe throttle helper for progress updates
+final class ProgressThrottle {
+  static let shared = ProgressThrottle(interval: 0.5)
+  
+  private var lastUpdateTime: Date = Date()
+  private let lock = NSLock()
+  private let interval: TimeInterval
+  
+  init(interval: TimeInterval = 0.5) {
+    self.interval = interval
+  }
+  
+  func shouldUpdate() -> Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    
+    let now = Date()
+    if now.timeIntervalSince(lastUpdateTime) >= interval {
+      lastUpdateTime = now
+      return true
+    }
+    return false
+  }
+}
+
 /// Mode for the share card selector
 enum ShareCardMode {
   case entry(entry: DayEntry?, date: Date)
@@ -38,6 +63,7 @@ struct ShareCardSelectorView: View {
   // Animated export progress
   @State private var exportProgress: Double = 0.0
   @State private var isExportingAnimated: Bool = false
+  private let progressThrottle = ProgressThrottle(interval: 0.5)
 
   /// Check if the selected year is the current year
   private var isCurrentYear: Bool {
@@ -195,9 +221,10 @@ struct ShareCardSelectorView: View {
               } label: {
                 HStack(spacing: 12) {
                   if isSharing || isExportingAnimated {
-                    ProgressView()
-                      .progressViewStyle(CircularProgressViewStyle(tint: .appAccentContrast))
-                      .scaleEffect(1.2)
+                    Text("\(Int(exportProgress * 100))%")
+                      .font(.system(size: 18, weight: .semibold))
+                      .contentTransition(.numericText())
+                      .animation(.springFkingSatifying, value: exportProgress)
                   } else {
                     Image(systemName: shareButtonIcon)
                       .font(.system(size: 18, weight: .semibold))
@@ -236,9 +263,9 @@ struct ShareCardSelectorView: View {
             } label: {
               HStack(spacing: 12) {
                 if isSharing || isExportingAnimated {
-                  ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .appAccentContrast))
-                    .scaleEffect(1.2)
+                  Text("\(Int(exportProgress * 100))%")
+                    .font(.system(size: 18, weight: .semibold))
+                    .contentTransition(.numericText())
                 } else {
                   Image(systemName: shareButtonIcon)
                     .font(.system(size: 18, weight: .semibold))
@@ -425,8 +452,8 @@ struct ShareCardSelectorView: View {
             drawingImage: nil,
             cardSize: style.cardSize,
             showWatermark: shouldShowWatermark,
-            animateDrawing: true,
-            looping: true
+            animateDrawing: !isExportingAnimated,
+            looping: !isExportingAnimated
           )
           .preferredColorScheme(previewColorScheme)
         }
@@ -438,8 +465,8 @@ struct ShareCardSelectorView: View {
             drawingImage: nil,
             cardSize: style.cardSize,
             showWatermark: shouldShowWatermark,
-            animateDrawing: true,
-            looping: true
+            animateDrawing: !isExportingAnimated,
+            looping: !isExportingAnimated
           )
           .preferredColorScheme(previewColorScheme)
         }
@@ -537,14 +564,58 @@ struct ShareCardSelectorView: View {
     // Render the view directly to image
     isSharing = true
 
-    Task { @MainActor in
-      let image = renderCardToImage(style: selectedStyle, watermarkSetting: watermarkSetting)
+    // Capture values needed for background rendering
+    let style = selectedStyle
+    let colorScheme = previewColorScheme
+    
+    Task.detached { [mode, yearEntries, displayPercentage] in
+      // Render on background thread
+      let image = await Self.renderCardToImageBackground(
+        mode: mode,
+        style: style,
+        watermarkSetting: watermarkSetting,
+        colorScheme: colorScheme,
+        yearEntries: yearEntries,
+        displayPercentage: displayPercentage
+      )
 
-      if let image = image {
-        prepareAndPresentShareSheet(with: image)
-      } else {
-        isSharing = false
+      await MainActor.run {
+        if let image = image {
+          self.prepareAndPresentShareSheet(with: image)
+        } else {
+          self.isSharing = false
+        }
       }
+    }
+  }
+  
+  @MainActor
+  private static func renderCardToImageBackground(
+    mode: ShareCardMode,
+    style: ShareCardStyle,
+    watermarkSetting: Bool,
+    colorScheme: ColorScheme,
+    yearEntries: [ShareCardDayEntry],
+    displayPercentage: Double?
+  ) -> UIImage? {
+    switch mode {
+    case .entry(let entry, let date):
+      return ShareCardRenderer.shared.renderCard(
+        style: style,
+        entry: entry,
+        date: date,
+        colorScheme: colorScheme,
+        showWatermark: watermarkSetting
+      )
+    case .yearGrid(let year):
+      return ShareCardRenderer.shared.renderYearGridCard(
+        style: style,
+        year: year,
+        percentage: displayPercentage,
+        entries: yearEntries,
+        colorScheme: colorScheme,
+        showWatermark: watermarkSetting
+      )
     }
   }
 
@@ -554,35 +625,49 @@ struct ShareCardSelectorView: View {
     isExportingAnimated = true
     exportProgress = 0.0
 
-    Task { @MainActor in
+    // Capture values for background rendering
+    let style = selectedStyle
+    let colorScheme = previewColorScheme
+    
+    Task.detached {
       do {
         let fileURL: URL?
 
-       if selectedStyle.isVideoStyle {
+        if style.isVideoStyle {
           fileURL = try await ShareCardRenderer.shared.renderAnimatedVideo(
-            style: selectedStyle,
+            style: style,
             entry: entry,
             date: date,
-            colorScheme: previewColorScheme,
+            colorScheme: colorScheme,
             showWatermark: watermarkSetting,
             progressCallback: { progress in
-              self.exportProgress = progress
+              // Throttle at source - only create Task if enough time has passed
+              // Note: progressThrottle is accessed from background thread, but just for time check
+              if ProgressThrottle.shared.shouldUpdate() {
+                Task { @MainActor in
+                  self.exportProgress = progress
+                }
+              }
             }
           )
         } else {
           fileURL = nil
         }
 
-        if let fileURL = fileURL {
-          prepareAndPresentShareSheet(with: fileURL)
-        } else {
-          isExportingAnimated = false
-          exportProgress = 0.0
+        await MainActor.run {
+          if let fileURL = fileURL {
+            self.prepareAndPresentShareSheet(with: fileURL)
+          } else {
+            self.isExportingAnimated = false
+            self.exportProgress = 0.0
+          }
         }
       } catch {
         print("Failed to export animated card: \(error)")
-        isExportingAnimated = false
-        exportProgress = 0.0
+        await MainActor.run {
+          self.isExportingAnimated = false
+          self.exportProgress = 0.0
+        }
       }
     }
   }
