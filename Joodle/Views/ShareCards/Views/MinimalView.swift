@@ -21,15 +21,12 @@ struct MinimalView: View {
 
         VStack {
           // Main content - Drawing or Text
-          // Main content - Drawing or Text
           DrawingPreviewView(
             entry: entry,
             highResDrawing: highResDrawing,
-            size: 800 * scale,
-            scale: scale,
-            logicalDisplaySize: nil // Use default calculation
+            size: 800,
+            scale: scale
           )
-          .padding()
           .background(
             RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
               .foregroundStyle(.appSurface)

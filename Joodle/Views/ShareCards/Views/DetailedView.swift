@@ -74,11 +74,9 @@ struct DetailedView: View {
           DrawingPreviewView(
             entry: entry,
             highResDrawing: highResDrawing,
-            size: imageSize,
+            size: 200,
             scale: scale,
-            logicalDisplaySize: 200
           )
-          .padding(imagePadding)
           .background(
             RoundedRectangle(cornerRadius: 50 * scale, style: .continuous)
               .foregroundStyle(.appSurface)

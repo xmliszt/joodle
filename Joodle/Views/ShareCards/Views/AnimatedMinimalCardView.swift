@@ -29,13 +29,11 @@ struct AnimatedMinimalCardView: View {
           DrawingPreviewView(
             entry: entry,
             highResDrawing: drawingImage,
-            size: 800 * scale,
+            size: 800,
             scale: scale,
-            logicalDisplaySize: 800,
             animateDrawing: animateDrawing,
             looping: looping
           )
-          .padding()
           .background(
             RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
               .foregroundStyle(.appSurface)

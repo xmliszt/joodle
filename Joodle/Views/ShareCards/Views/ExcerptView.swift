@@ -29,15 +29,12 @@ struct ExcerptView: View {
           Spacer()
 
           // Main content - Drawing or Text
-          // Main content - Drawing or Text
           DrawingPreviewView(
             entry: entry,
             highResDrawing: highResDrawing,
-            size: 600 * scale,
-            scale: scale,
-            logicalDisplaySize: 450 // Matches original 450
+            size: 600,
+            scale: scale
           )
-          .padding()
           .background(
             RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
               .foregroundStyle(.appSurface)

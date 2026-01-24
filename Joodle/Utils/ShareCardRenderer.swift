@@ -20,8 +20,9 @@ class ShareCardRenderer {
   ///   - entry: The day entry containing the drawing data
   ///   - targetPixelSize: The desired output size in physical pixels
   ///   - colorScheme: The color scheme to use for rendering (affects dynamic colors like .appAccent)
+  ///   - logicalDisplaySize: The logical display size for stroke calculations (should match the view's logicalDisplaySize)
   /// - Returns: A high-resolution UIImage at 1x scale that will be downsized by SwiftUI
-  private func renderDrawingAtHighResolution(entry: DayEntry, targetPixelSize: CGSize, colorScheme: ColorScheme) -> UIImage? {
+  private func renderDrawingAtHighResolution(entry: DayEntry, targetPixelSize: CGSize, colorScheme: ColorScheme, logicalDisplaySize: CGFloat) -> UIImage? {
     guard let drawingData = entry.drawingData, !drawingData.isEmpty else {
       return nil
     }
@@ -31,14 +32,15 @@ class ShareCardRenderer {
     // SwiftUI will then scale it down to fit the container
     let renderSize = targetPixelSize
 
-    // Create a high-res drawing view
+    // Create a high-res drawing view using the same logical display size as the live view
+    // This ensures stroke calculations match between preview and render
     let drawingView = DrawingDisplayView(
       entry: entry,
-      displaySize: renderSize.width,
+      displaySize: logicalDisplaySize,
       dotStyle: .present,
       accent: true,
       highlighted: false,
-      scale: 1.0,
+      scale: renderSize.width / logicalDisplaySize,  // Scale to achieve target pixel size
       useThumbnail: false
     )
     .frame(width: renderSize.width, height: renderSize.height)
@@ -118,10 +120,29 @@ class ShareCardRenderer {
     // Pre-render drawing at high resolution if present
     var highResDrawing: UIImage?
     if let entry = entry, entry.drawingData != nil {
+      // Determine the logical display size based on the card style
+      // This should match what the view uses for logicalDisplaySize
+      let logicalDisplaySize: CGFloat
+      switch style {
+      case .minimal:
+        logicalDisplaySize = 800  // MinimalView uses nil → defaults to size/scale = 800
+      case .excerpt, .anniversary:
+        logicalDisplaySize = 450  // ExcerptView and AnniversaryView use 450
+      case .detailed:
+        logicalDisplaySize = 200  // DetailedView uses 200
+      default:
+        logicalDisplaySize = 800  // Default fallback
+      }
+      
       // Render at high pixel resolution (2700x2700) max limit.
-      // SwiftUI will scale it down to fit the 600*scale container
+      // Use the same logicalDisplaySize as the view for consistent stroke calculations
       let highResPixelSize = CGSize(width: 2700, height: 2700)  // High resolution pixels
-      highResDrawing = renderDrawingAtHighResolution(entry: entry, targetPixelSize: highResPixelSize, colorScheme: colorScheme)
+      highResDrawing = renderDrawingAtHighResolution(
+        entry: entry,
+        targetPixelSize: highResPixelSize,
+        colorScheme: colorScheme,
+        logicalDisplaySize: logicalDisplaySize
+      )
     }
 
 

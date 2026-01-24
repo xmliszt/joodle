@@ -5,11 +5,12 @@ struct DrawingPreviewView: View {
   let highResDrawing: UIImage?
   let size: CGFloat
   let scale: CGFloat
-  /// Optional override for the logical display size used for stroke calculation.
-  /// If nil, uses size / scale.
-  var logicalDisplaySize: CGFloat? = nil
   var animateDrawing: Bool = false
   var looping: Bool = false
+  
+  var actualSize: CGFloat {
+    size * scale
+  }
   
   var body: some View {
     if let highResDrawing = highResDrawing {
@@ -17,12 +18,12 @@ struct DrawingPreviewView: View {
       Image(uiImage: highResDrawing)
         .resizable()
         .scaledToFit()
-        .frame(width: size, height: size)
+        .frame(width: actualSize, height: actualSize)
     } else if let entry = entry, let drawingData = entry.drawingData, !drawingData.isEmpty {
       // Fallback to live Canvas rendering (for previews)
       DrawingDisplayView(
         entry: entry,
-        displaySize: logicalDisplaySize ?? (size / scale),
+        displaySize: size,
         dotStyle: .present,
         accent: true,
         highlighted: false,
@@ -35,8 +36,8 @@ struct DrawingPreviewView: View {
     } else {
       // Empty state
       Image(systemName: "scribble.variable")
-        .font(.system(size: size * 0.16)) // Approx ratio based on ExcerptView (100/600)
-        .frame(width: size, height: size)
+        .font(.system(size: actualSize * 0.16)) // Approx ratio based on ExcerptView (100/600)
+        .frame(width: actualSize, height: actualSize)
         .foregroundColor(.textColor.opacity(0.3))
     }
   }

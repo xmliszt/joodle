@@ -39,13 +39,11 @@ struct AnimatedExcerptCardView: View {
           DrawingPreviewView(
             entry: entry,
             highResDrawing: drawingImage,
-            size: 600 * scale,
+            size: 600,
             scale: scale,
-            logicalDisplaySize: 450,
             animateDrawing: animateDrawing,
             looping: looping
           )
-          .padding()
           .background(
             RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
               .foregroundStyle(.appSurface)
