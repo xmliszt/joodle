@@ -19,7 +19,6 @@ class AnimatedDrawingRenderer {
   ///   - foregroundColor: Color for the strokes
   ///   - config: Animation configuration
   /// - Returns: Rendered frame as UIImage
-  @MainActor
   func renderDrawingFrame(
     pathsWithMetadata: [PathWithMetadata],
     progress: CGFloat,
@@ -115,7 +114,6 @@ class AnimatedDrawingRenderer {
   ///   - colorScheme: Color scheme for rendering
   ///   - showWatermark: Whether to show watermark
   /// - Returns: Rendered card frame as UIImage
-  @MainActor
   func renderCardFrame(
     drawingImage: UIImage,
     entry: DayEntry,
@@ -123,7 +121,7 @@ class AnimatedDrawingRenderer {
     style: ShareCardStyle,
     colorScheme: ColorScheme,
     showWatermark: Bool
-  ) -> UIImage? {
+  ) async -> UIImage? {
     let cardSize = style.cardSize
     let cardBackground = colorScheme == .dark ? Color.black : Color.white
 
@@ -157,15 +155,18 @@ class AnimatedDrawingRenderer {
       )
     }
 
-    // Render SwiftUI view to image
+    // Render SwiftUI view to image on main thread
     let wrappedView = cardView
       .frame(width: cardSize.width, height: cardSize.height)
       .background(cardBackground)
 
-    return renderSwiftUIView(wrappedView, size: cardSize)
+    return await MainActor.run { () -> UIImage? in
+      self.renderSwiftUIView(wrappedView, size: cardSize)
+    }
   }
 
   /// Render a SwiftUI view to UIImage
+  @MainActor
   private func renderSwiftUIView<V: View>(_ view: V, size: CGSize) -> UIImage? {
     let controller = UIHostingController(rootView: view)
     controller.view.bounds = CGRect(origin: .zero, size: size)
@@ -270,21 +271,16 @@ class AnimatedDrawingRenderer {
       }
       
       guard let drawingFrame = drawingFrame else { continue }
-      
-      // Avoid capturing non-Sendable types in the @Sendable closure by making an unsafe, immutable copy.
-      nonisolated(unsafe) let capturedEntry = entry
 
-      // Render complete card frame using SwiftUI - dispatch to main thread
-      let cardFrame = await MainActor.run { () -> UIImage? in
-        self.renderCardFrame(
-          drawingImage: drawingFrame,
-          entry: capturedEntry,
-          date: date,
-          style: style,
-          colorScheme: colorScheme,
-          showWatermark: showWatermark
-        )
-      }
+      // Render complete card frame (UIHostingController dispatches to main thread internally)
+      let cardFrame = await self.renderCardFrame(
+        drawingImage: drawingFrame,
+        entry: entry,
+        date: date,
+        style: style,
+        colorScheme: colorScheme,
+        showWatermark: showWatermark
+      )
       
       guard let cardFrame = cardFrame else { continue }
 

@@ -360,20 +360,15 @@ class ShareCardRenderer {
       return nil
     }
 
-    // Render complete card frame using the AnimatedDrawingRenderer - dispatch to main thread
-    // Avoid capturing non-Sendable types in the @Sendable closure by making an unsafe, immutable copy.
-    nonisolated(unsafe) let capturedEntry = entry
-
-    return await MainActor.run { () -> UIImage? in
-      frameRenderer.renderCardFrame(
-        drawingImage: drawingFrame,
-        entry: capturedEntry,
-        date: date,
-        style: style,
-        colorScheme: colorScheme,
-        showWatermark: showWatermark
-      )
-    }
+    // Render complete card frame (UIHostingController dispatches to main thread internally)
+    return await frameRenderer.renderCardFrame(
+      drawingImage: drawingFrame,
+      entry: entry,
+      date: date,
+      style: style,
+      colorScheme: colorScheme,
+      showWatermark: showWatermark
+    )
   }
 
   /// Generate all frames for animated preview
