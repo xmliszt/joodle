@@ -353,6 +353,11 @@ class SubscriptionManager: ObservableObject {
             }
         }
 
+        // Auto-disable watermark for new pro users (they can now remove it)
+        if UserPreferences.shared.shareCardWatermarkEnabled {
+            UserPreferences.shared.shareCardWatermarkEnabled = false
+        }
+
         // Update widget subscription status
         WidgetHelper.shared.updateSubscriptionStatus()
 
@@ -363,32 +368,40 @@ class SubscriptionManager: ObservableObject {
         )
     }
 
-    private func handleSubscriptionLost() {
-        print("⚠️ Subscription lost - disabling premium features")
-
+    /// Resets all premium feature preferences to free tier defaults
+    /// Called when subscription is lost or user downgrades
+    private func resetPremiumFeaturesToDefaults() {
         // Reset premium theme color to default if user was using a premium color
         let currentColor = UserPreferences.shared.accentColor
         if currentColor.isPremium {
-            print("   Resetting premium theme color '\(currentColor.displayName)' to default '\(ThemeColor.defaultColor.displayName)'")
             UserPreferences.shared.accentColor = ThemeColor.defaultColor
             WidgetHelper.shared.updateThemeColor()
         }
 
-        let needsContainerRecreation = UserPreferences.shared.isCloudSyncEnabled
+        // Reset watermark to enabled for free users (they can't disable it)
+        if !UserPreferences.shared.shareCardWatermarkEnabled {
+            UserPreferences.shared.shareCardWatermarkEnabled = true
+        }
 
-        if needsContainerRecreation {
+        // Disable iCloud sync for free users (premium feature)
+        if UserPreferences.shared.isCloudSyncEnabled {
             UserPreferences.shared.isCloudSyncEnabled = false
 
             let cloudStore = NSUbiquitousKeyValueStore.default
             cloudStore.set(false, forKey: "is_cloud_sync_enabled_backup")
             cloudStore.set(false, forKey: "cloud_sync_was_enabled")
             cloudStore.synchronize()
-
-            print("   iCloud sync disabled and cloud state cleared")
         }
 
         // Update widget subscription status
         WidgetHelper.shared.updateSubscriptionStatus()
+    }
+
+    private func handleSubscriptionLost() {
+        print("⚠️ Subscription lost - disabling premium features")
+
+        // Reset all premium features to free tier defaults
+        resetPremiumFeaturesToDefaults()
 
         // Post notification for other parts of the app
         NotificationCenter.default.post(
@@ -397,7 +410,8 @@ class SubscriptionManager: ObservableObject {
         )
 
         // Set the expired flag
-        if needsContainerRecreation {
+        let hadCloudSync = UserPreferences.shared.isCloudSyncEnabled
+        if hadCloudSync {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?.subscriptionJustExpired = true
             }

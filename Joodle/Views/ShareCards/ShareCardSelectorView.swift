@@ -27,9 +27,6 @@ struct ShareCardSelectorView: View {
   @State private var shareItem: ShareItem?
   @State private var previewColorScheme: ColorScheme = (UserPreferences.shared.preferredColorScheme ?? .light)
 
-  // Watermark toggle - only available for Joodle Pro users
-  @State private var showWatermark: Bool = true
-
   // No longer caching rendered images - using views directly for real-time rendering
 
   // Year grid data (loaded when in yearGrid mode)
@@ -149,30 +146,6 @@ struct ShareCardSelectorView: View {
         }
 
         Spacer().frame(maxHeight: .infinity)
-
-        // Watermark toggle - only visible for Joodle Super users
-        Toggle(isOn: $showWatermark) {
-          HStack(spacing: 8) {
-            Image("LaunchIcon")
-              .resizable()
-              .scaledToFit()
-              .frame(width: 44, height: 44)
-            Text("Show Watermark")
-              .font(.system(size: 14))
-            if !isJoodlePro && !SubscriptionManager.shared.hasWatermarkRemoval {
-              PremiumFeatureBadge()
-            }
-          }
-        }
-        // Not Pro user cannot edit, also disable during export
-        .disabled(!isJoodlePro || isSharing || isExportingAnimated)
-        .toggleStyle(SwitchToggleStyle(tint: .appAccent))
-        .padding(.horizontal, 32)
-        .onChange(of: showWatermark) { _, _ in
-          // Watermark change will automatically update the view
-        }
-
-        Spacer().frame(height: 16)
 
         // Action buttons
         if #available(iOS 26.0, *) {
@@ -338,16 +311,6 @@ struct ShareCardSelectorView: View {
     yearEntries = ShareCardRenderer.shared.loadEntriesForYear(year, from: modelContext)
   }
 
-  /// Determines whether watermark should be shown based on subscription status
-  /// Non-subscribers always see watermark, subscribers can toggle it off
-  private var shouldShowWatermark: Bool {
-    if isJoodlePro {
-      return showWatermark
-    } else {
-      return true // Non-subscribers always have watermark
-    }
-  }
-
   @ViewBuilder
   private func cardPreview(style: ShareCardStyle) -> some View {
     ZStack {
@@ -391,16 +354,16 @@ struct ShareCardSelectorView: View {
       case .entry(let entry, let date):
         switch style {
         case .minimal:
-          MinimalView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+          MinimalView(entry: entry, date: date, highResDrawing: nil, showWatermark: false)
             .preferredColorScheme(previewColorScheme)
         case .excerpt:
-          ExcerptView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+          ExcerptView(entry: entry, date: date, highResDrawing: nil, showWatermark: false)
             .preferredColorScheme(previewColorScheme)
         case .detailed:
-          DetailedView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+          DetailedView(entry: entry, date: date, highResDrawing: nil, showWatermark: false)
             .preferredColorScheme(previewColorScheme)
         case .anniversary:
-          AnniversaryView(entry: entry, date: date, highResDrawing: nil, showWatermark: shouldShowWatermark)
+          AnniversaryView(entry: entry, date: date, highResDrawing: nil, showWatermark: false)
             .preferredColorScheme(previewColorScheme)
         default:
           EmptyView()
@@ -408,13 +371,13 @@ struct ShareCardSelectorView: View {
       case .yearGrid(let year):
         switch style {
         case .yearGridDots:
-          YearGridDotsView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark)
+          YearGridDotsView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: false)
             .preferredColorScheme(previewColorScheme)
         case .yearGridJoodles:
-          YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark)
+          YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: false)
             .preferredColorScheme(previewColorScheme)
         case .yearGridJoodlesOnly:
-          YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: shouldShowWatermark, showEmptyDots: false)
+          YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: false, showEmptyDots: false)
             .preferredColorScheme(previewColorScheme)
         default:
           EmptyView()
@@ -434,8 +397,7 @@ struct ShareCardSelectorView: View {
             entry: entry,
             drawingImage: nil,
             cardSize: style.cardSize,
-            showWatermark: shouldShowWatermark,
-            animateDrawing: !isExportingAnimated,
+            showWatermark: false, animateDrawing: !isExportingAnimated,
             looping: !isExportingAnimated
           )
           .preferredColorScheme(previewColorScheme)
@@ -447,8 +409,7 @@ struct ShareCardSelectorView: View {
             date: date,
             drawingImage: nil,
             cardSize: style.cardSize,
-            showWatermark: shouldShowWatermark,
-            animateDrawing: !isExportingAnimated,
+            showWatermark: false, animateDrawing: !isExportingAnimated,
             looping: !isExportingAnimated
           )
           .preferredColorScheme(previewColorScheme)
@@ -507,7 +468,7 @@ struct ShareCardSelectorView: View {
         AnalyticsManager.shared.trackShareCardShared(
           style: self.selectedStyle.rawValue,
           format: "image",
-          includesWatermark: self.shouldShowWatermark,
+          includesWatermark: UserPreferences.shared.shareCardWatermarkEnabled,
           colorScheme: self.previewColorScheme == .dark ? "dark" : "light"
         )
 
@@ -523,7 +484,7 @@ struct ShareCardSelectorView: View {
     AnalyticsManager.shared.trackShareCardShared(
       style: selectedStyle.rawValue,
       format: format,
-      includesWatermark: shouldShowWatermark,
+      includesWatermark: UserPreferences.shared.shareCardWatermarkEnabled,
       colorScheme: previewColorScheme == .dark ? "dark" : "light"
     )
 
@@ -536,7 +497,7 @@ struct ShareCardSelectorView: View {
   private func shareCard() {
     guard shareItem == nil, !isExportingAnimated else { return }
 
-    let watermarkSetting = shouldShowWatermark
+    let watermarkSetting = UserPreferences.shared.shareCardWatermarkEnabled
 
     // Handle animated exports
     if selectedStyle.isAnimatedStyle {

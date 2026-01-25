@@ -34,6 +34,9 @@ enum Pref {
   // Notes prompt after doodling
   static let promptForNotesAfterDoodling = Key(key: "prompt_for_notes_after_doodling", default: true)
 
+  // Share card watermark preference
+  static let shareCardWatermarkEnabled = Key(key: "share_card_watermark_enabled", default: true)
+
   // Add new preferences here - just specify the default!
   // static let newSetting = Key(default: "defaultValue")
 
@@ -64,6 +67,7 @@ enum Pref {
     announcementCommunityEnabled.key,
     announcementTipsEnabled.key,
     promptForNotesAfterDoodling.key,
+    shareCardWatermarkEnabled.key,
   ]
 }
 
@@ -163,6 +167,13 @@ final class UserPreferences {
   var promptForNotesAfterDoodling: Bool = Pref.promptForNotesAfterDoodling.defaultValue {
     didSet {
       _promptForNotesAfterDoodlingWatcher = promptForNotesAfterDoodling
+    }
+  }
+
+  // Share card watermark preference
+  var shareCardWatermarkEnabled: Bool = Pref.shareCardWatermarkEnabled.defaultValue {
+    didSet {
+      _shareCardWatermarkEnabledWatcher = shareCardWatermarkEnabled
     }
   }
 
@@ -281,6 +292,11 @@ final class UserPreferences {
     set { set(Pref.promptForNotesAfterDoodling, newValue) }
   }
 
+  private var _shareCardWatermarkEnabledWatcher: Bool {
+    get { get(Pref.shareCardWatermarkEnabled) }
+    set { set(Pref.shareCardWatermarkEnabled, newValue) }
+  }
+
   // MARK: - Step 5: Add your property to load during initialization
   init() {
     // Load initial values from UserDefaults
@@ -298,6 +314,7 @@ final class UserPreferences {
     announcementCommunityEnabled = _announcementCommunityEnabledWatcher
     announcementTipsEnabled = _announcementTipsEnabledWatcher
     promptForNotesAfterDoodling = _promptForNotesAfterDoodlingWatcher
+    shareCardWatermarkEnabled = _shareCardWatermarkEnabledWatcher
   }
 
   // MARK: - Reset Method (automatically uses all registered keys!)
@@ -321,6 +338,7 @@ final class UserPreferences {
     announcementCommunityEnabled = Pref.announcementCommunityEnabled.defaultValue
     announcementTipsEnabled = Pref.announcementTipsEnabled.defaultValue
     promptForNotesAfterDoodling = Pref.promptForNotesAfterDoodling.defaultValue
+    shareCardWatermarkEnabled = Pref.shareCardWatermarkEnabled.defaultValue
   }
 
 }

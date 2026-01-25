@@ -7,12 +7,12 @@ import UniformTypeIdentifiers
 // MARK: - Navigation Coordinator for Swipe Back Gesture
 struct NavigationGestureEnabler: UIViewControllerRepresentable {
   var isEnabled: Bool = true
-
+  
   func makeUIViewController(context: Context) -> UIViewController {
     let controller = UIViewController()
     return controller
   }
-
+  
   func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
     DispatchQueue.main.async {
       if let navigationController = uiViewController.navigationController {
@@ -21,20 +21,20 @@ struct NavigationGestureEnabler: UIViewControllerRepresentable {
       }
     }
   }
-
+  
   func makeCoordinator() -> Coordinator {
     Coordinator()
   }
-
+  
   class Coordinator: NSObject, UIGestureRecognizerDelegate {
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
       return true
     }
-
+    
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
       return false
     }
-
+    
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
       return false
     }
@@ -45,7 +45,7 @@ struct NavigationGestureEnabler: UIViewControllerRepresentable {
 struct SettingsIconView: View {
   let systemName: String
   let backgroundColor: Color
-
+  
   var body: some View {
     Image(systemName: systemName)
       .font(.system(size: 14, weight: .semibold))
@@ -64,7 +64,7 @@ struct SettingsRowView: View {
   var trailingText: String? = nil
   var trailingView: AnyView? = nil
   var isExternal: Bool = false
-
+  
   var body: some View {
     HStack {
       SettingsIconView(systemName: icon, backgroundColor: iconColor)
@@ -96,7 +96,7 @@ struct MembershipBannerView: View {
   let joodleCount: Int
   let alarmCount: Int
   let onTap: () -> Void
-
+  
   var body: some View {
     Button(action: onTap) {
       ZStack(alignment: .topLeading) {
@@ -104,7 +104,7 @@ struct MembershipBannerView: View {
         Image(isSubscribed ? "Others/Pro Banner" : "Others/Free Banner")
           .resizable()
           .aspectRatio(2/1, contentMode: .fit)
-
+        
         // Content overlay - positioned at top to avoid mushroom glow at bottom
         VStack(alignment: .leading, spacing: 6) {
           HStack {
@@ -117,7 +117,7 @@ struct MembershipBannerView: View {
               .font(.caption)
               .foregroundColor(isSubscribed ? .white.opacity(0.8) : .black.opacity(0.8))
           }
-
+          
           if isSubscribed {
             if let statusMessage = statusMessage {
               Text(statusMessage)
@@ -137,7 +137,7 @@ struct MembershipBannerView: View {
                   .font(.caption)
               }
               .foregroundColor(joodleCount >= SubscriptionManager.freeJoodlesAllowed ? .red : .black.opacity(0.8))
-
+              
               HStack(spacing: 4) {
                 Image(systemName: "bell")
                   .font(.caption)
@@ -165,10 +165,10 @@ struct SettingsView: View {
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @StateObject private var storeKitManager = StoreKitManager.shared
   @StateObject private var reminderManager = ReminderManager.shared
-
+  
   /// When true, auto-navigates to Customization and scrolls to note prompt setting
   @Binding var navigateToNotePromptSetting: Bool
-
+  
   init(navigateToNotePromptSetting: Binding<Bool> = .constant(false)) {
     self._navigateToNotePromptSetting = navigateToNotePromptSetting
   }
@@ -178,46 +178,46 @@ struct SettingsView: View {
   @State private var showPaywall = false
   @State private var showSubscriptions = false
   @State private var showAppStats = false
-  #if DEBUG
+#if DEBUG
   @State private var showDataSeeder = false
-  #endif
+#endif
   @State private var currentJoodleCount: Int = 0
-
+  
   @State private var showSubscriptionTesting = false
   @State private var showRedeemCode = false
   @State private var showFaq = false
   @State private var showShareSheet = false
   @State private var showDeviceIdentifierAlert = false
   @State private var isAppUpdateAvailable = false
-  #if DEBUG
+#if DEBUG
   @State private var showBannerPreview = false
-  #endif
-
+#endif
+  
   // Theme color change state
   @State private var pendingThemeColor: ThemeColor?
   @State private var showThemeOverlay = false
   private var themeColorManager = ThemeColorManager.shared
-
+  
   /// Check if restart is needed for sync to work
   private var needsRestartForSync: Bool {
     userPreferences.isCloudSyncEnabled && ModelContainerManager.shared.needsRestartForSyncChange
   }
-
+  
   // Import/Export State
   @State private var showFileExporter = false
   @State private var showFileImporter = false
   @State private var exportDocument: JSONDocument?
   @State private var importMessage = ""
   @State private var showImportAlert = false
-
+  
   // Debug: Simulate production environment - bound to AppEnvironment
   @State private var simulateProductionEnvironment = AppEnvironment.simulateProductionEnvironment
-
+  
   // Navigation state for sub-pages
   @State private var showExperimentalFeatures = false
   @State private var showCustomization = false
   @State private var scrollToNotePromptSetting = false
-
+  
   // MARK: - Computed Bindings
   private var viewModeBinding: Binding<ViewMode> {
     Binding(
@@ -225,7 +225,7 @@ struct SettingsView: View {
       set: { userPreferences.defaultViewMode = $0 }
     )
   }
-
+  
   private var colorSchemeBinding: Binding<ColorScheme?> {
     Binding(
       get: { userPreferences.preferredColorScheme },
@@ -243,14 +243,14 @@ struct SettingsView: View {
       }
     )
   }
-
+  
   private var hapticBinding: Binding<Bool> {
     Binding(
       get: { userPreferences.enableHaptic },
       set: { userPreferences.enableHaptic = $0 }
     )
   }
-
+  
   private var dailyReminderTimeBinding: Binding<Date> {
     Binding(
       get: { userPreferences.dailyReminderTime },
@@ -260,14 +260,14 @@ struct SettingsView: View {
       }
     )
   }
-
+  
   private var startOfWeekBinding: Binding<String> {
     Binding(
       get: { userPreferences.startOfWeek },
       set: { userPreferences.startOfWeek = $0 }
     )
   }
-
+  
   var body: some View {
     Form {
       if isNonProductionEnvironment {
@@ -388,11 +388,11 @@ struct SettingsView: View {
         if !subscriptionManager.isSubscribed {
           currentJoodleCount = subscriptionManager.fetchTotalJoodleCount(in: modelContext)
         }
-
+        
         // Check if app update is available
         await checkForAppUpdate()
       }
-
+      
       // Auto-navigate to Customization if requested
       if navigateToNotePromptSetting {
         scrollToNotePromptSetting = true
@@ -408,7 +408,7 @@ struct SettingsView: View {
       }
     }
   }
-
+  
   // MARK: - Beta Tester Section
   @ViewBuilder
   private var betaTesterSection: some View {
@@ -434,7 +434,7 @@ struct SettingsView: View {
               .background(.gray.opacity(0.1))
               .clipShape(RoundedRectangle(cornerRadius: 6))
           }
-
+          
           Text("Download in App Store")
             .font(.body.weight(.medium))
             .foregroundColor(.primary)
@@ -448,9 +448,9 @@ struct SettingsView: View {
       Text("Joodle is now available in App Store!")
     }
   }
-
+  
   // MARK: - Membership Banner Section
-
+  
   @ViewBuilder
   private var membershipBannerSection: some View {
     Section {
@@ -468,7 +468,7 @@ struct SettingsView: View {
           }
         }
       )
-
+      
       // Redeem Promo Code
       Button {
         showRedeemCode = true
@@ -483,7 +483,7 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
         }
       }
-
+      
       // Tutorial for TestFlight users only - how to redeem promo code
       if isNonProductionEnvironment {
         NavigationLink {
@@ -502,9 +502,9 @@ struct SettingsView: View {
       }
     }
   }
-
+  
   // MARK: - General Section
-
+  
   @ViewBuilder
   private var generalSection: some View {
     Section {
@@ -520,7 +520,7 @@ struct SettingsView: View {
           iCloudSyncStatusView
         }
       }
-
+      
       // Daily Reminder
       NavigationLink {
         DailyReminderSettingsView()
@@ -541,7 +541,7 @@ struct SettingsView: View {
           }
         }
       }
-
+      
       // Anniversary Alarms
       NavigationLink {
         AnniversaryAlarmsSettingsView()
@@ -558,7 +558,7 @@ struct SettingsView: View {
           }
         }
       }
-
+      
       // Customization
       NavigationLink {
         CustomizationSettingsView(
@@ -574,7 +574,7 @@ struct SettingsView: View {
           Spacer()
         }
       }
-
+      
       // Interactions
       if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
         NavigationLink {
@@ -588,7 +588,7 @@ struct SettingsView: View {
           }
         }
       }
-
+      
       // Backup & Restore
       NavigationLink {
         BackupRestoreSettingsView()
@@ -600,7 +600,7 @@ struct SettingsView: View {
           Spacer()
         }
       }
-
+      
       // Announcements
       NavigationLink {
         AnnouncementsSettingsView()
@@ -621,7 +621,7 @@ struct SettingsView: View {
       Text("General")
     }
   }
-
+  
   @ViewBuilder
   private var iCloudSyncStatusView: some View {
     if !subscriptionManager.hasICloudSync {
@@ -648,9 +648,9 @@ struct SettingsView: View {
         .font(.caption)
     }
   }
-
+  
   // MARK: - Labs Section
-
+  
   @ViewBuilder
   private var labSection: some View {
     Section {
@@ -671,9 +671,9 @@ struct SettingsView: View {
       Text("Labs")
     }
   }
-
+  
   // MARK: - External Settings Section
-
+  
   @ViewBuilder
   private var externalSettingsSection: some View {
     Section {
@@ -689,7 +689,7 @@ struct SettingsView: View {
           isExternal: true
         )
       }
-
+      
       Button {
         if let url = URL(string: UIApplication.openSettingsURLString) {
           UIApplication.shared.open(url)
@@ -708,21 +708,21 @@ struct SettingsView: View {
       Text("Manage photos permission, Siri and search, and notification appearance in the system Settings app.")
     }
   }
-
+  
   // MARK: - Need Help Section
-
+  
   private var contactUsMailURL: URL? {
     let email = "joodle@liyuxuan.dev"
     let subject = "Feedback on Joodle"
     let iOSVersion = UIDevice.current.systemVersion
     let body = "\n\n\n\n\nJoodle \(AppEnvironment.fullVersionDisplayString) - iOS \(iOSVersion)\nID: \(deviceIdentifier)"
-
+    
     let subjectEncoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
     let bodyEncoded = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-
+    
     return URL(string: "mailto:\(email)?subject=\(subjectEncoded)&body=\(bodyEncoded)")
   }
-
+  
   @ViewBuilder
   private var needHelpSection: some View {
     Section {
@@ -751,7 +751,7 @@ struct SettingsView: View {
           ) : nil
         )
       }
-
+      
       NavigationLink {
         LearnCoreFeaturesView()
       } label: {
@@ -761,7 +761,7 @@ struct SettingsView: View {
           title: "Learn Core Features"
         )
       }
-
+      
       NavigationLink {
         FaqView()
       } label: {
@@ -771,7 +771,7 @@ struct SettingsView: View {
           title: "Frequently Asked Questions"
         )
       }
-
+      
       if let mailURL = contactUsMailURL {
         Link(destination: mailURL) {
           SettingsRowView(
@@ -786,14 +786,14 @@ struct SettingsView: View {
       Text("Need Help?")
     }
   }
-
+  
   // MARK: - Get Involved Section
-
+  
   /// Returns true if the app is running in a production App Store environment
   private var isProductionEnvironment: Bool {
     AppEnvironment.isAppStore
   }
-
+  
   @ViewBuilder
   private var getInvolvedSection: some View {
     Section {
@@ -815,7 +815,7 @@ struct SettingsView: View {
       .simultaneousGesture(TapGesture().onEnded {
         AnalyticsManager.shared.trackExternalLinkOpened(url: "whatsapp_community", type: "social")
       })
-
+      
       Link(destination: URL(string: "https://x.com/xmliszt")!) {
         HStack {
           Image("Social/twitter")
@@ -834,7 +834,7 @@ struct SettingsView: View {
       .simultaneousGesture(TapGesture().onEnded {
         AnalyticsManager.shared.trackExternalLinkOpened(url: "x.com/xmliszt", type: "social")
       })
-
+      
       Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle")!) {
         SettingsRowView(
           icon: "globe.americas.fill",
@@ -846,7 +846,7 @@ struct SettingsView: View {
       .simultaneousGesture(TapGesture().onEnded {
         AnalyticsManager.shared.trackExternalLinkOpened(url: "liyuxuan.dev/apps/joodle", type: "website")
       })
-
+      
       Button {
         AnalyticsManager.shared.trackExternalLinkOpened(url: "feedback", type: "feedback")
         openFeedback()
@@ -858,7 +858,7 @@ struct SettingsView: View {
           isExternal: true
         )
       }
-
+      
       if isProductionEnvironment {
         Link(destination: URL(string: "https://tinyurl.com/joodle-feedback")!) {
           SettingsRowView(
@@ -872,7 +872,7 @@ struct SettingsView: View {
           AnalyticsManager.shared.trackExternalLinkOpened(url: "joodle-feedback", type: "feedback")
         })
       }
-
+      
       Button {
         AnalyticsManager.shared.trackExternalLinkOpened(url: "share_sheet", type: "recommend")
         showShareSheet = true
@@ -897,9 +897,9 @@ struct SettingsView: View {
       Text("Get Involved")
     }
   }
-
+  
   // MARK: - Legal Section
-
+  
   @ViewBuilder
   private var legalSection: some View {
     Section {
@@ -914,7 +914,7 @@ struct SettingsView: View {
       .simultaneousGesture(TapGesture().onEnded {
         AnalyticsManager.shared.trackExternalLinkOpened(url: "privacy-policy", type: "legal")
       })
-
+      
       Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!) {
         SettingsRowView(
           icon: "doc.text.fill",
@@ -930,21 +930,21 @@ struct SettingsView: View {
       Text("Legal")
     }
   }
-
+  
   // MARK: - Footer Section
-
+  
   private var currentYear: String {
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy"
     return formatter.string(from: Date())
   }
-
+  
   private var deviceIdentifier: String {
     let vendorId = UIDevice.current.identifierForVendor?.uuidString ?? "Unknown"
     let appId = Bundle.main.bundleIdentifier ?? "Unknown"
     return "\(vendorId):\(appId)"
   }
-
+  
   @ViewBuilder
   private var footerSection: some View {
     Section {
@@ -965,11 +965,11 @@ struct SettingsView: View {
             .fontWeight(.semibold)
             .baselineOffset(10)
         }
-
+        
         Text("VERSION \(AppEnvironment.fullVersionDisplayString)")
           .font(.caption)
           .foregroundStyle(.secondary)
-
+        
         Text("© \(currentYear) Li Yuxuan. All Rights Reserved.")
           .font(.caption2)
           .foregroundStyle(.secondary)
@@ -989,19 +989,19 @@ struct SettingsView: View {
       }
     }
   }
-
+  
   // MARK: - Developer Options Section
-
+  
   /// Returns true if the app is running in a non-production environment
   private var isNonProductionEnvironment: Bool {
     !AppEnvironment.isAppStore
   }
-
+  
   /// Returns true if we're simulating production
   private var isSimulatingProduction: Bool {
     AppEnvironment.isSimulatingProduction
   }
-
+  
   @ViewBuilder
   private var developerOptionsSection: some View {
     if AppEnvironment.isDebug && !simulateProductionEnvironment {
@@ -1009,11 +1009,11 @@ struct SettingsView: View {
         Button("App Stats") {
           showAppStats = true
         }
-        #if DEBUG
+#if DEBUG
         Button("Data Seeder") {
           showDataSeeder = true
         }
-        #endif
+#endif
         Button("Generate Placeholder") {
           showPlaceholderGenerator = true
         }
@@ -1024,28 +1024,28 @@ struct SettingsView: View {
           cloudStore.synchronize()
           print("DEBUG: iCloud KVS sync history cleared!")
         }
-
+        
         Button("Reset Changelog State") {
           ChangelogManager.shared.resetChangelogState()
           print("DEBUG: Changelog state reset - will show on next launch")
         }
-
-        #if DEBUG
+        
+#if DEBUG
         Button("Show Test Remote Alert") {
           RemoteAlertService.shared.showTestAlert()
         }
-
+        
         Button("Reset Remote Alert State") {
           RemoteAlertService.shared.resetDismissedState()
         }
-
+        
         Button("Fetch Remote Alert Now") {
           Task {
             await RemoteAlertService.shared.checkForAlert()
           }
         }
-        #endif
-
+#endif
+        
         Toggle("Simulate Production Environment", isOn: Binding(
           get: { AppEnvironment.simulateProductionEnvironment },
           set: { newValue in
@@ -1053,13 +1053,13 @@ struct SettingsView: View {
             simulateProductionEnvironment = newValue
           }
         ))
-
+        
       } header: {
         Text("Developer Options")
       } footer: {
         Text("When enabled, the app will behave as if it's running in production (App Store release).")
       }
-
+      
       Section("Subscription Testing") {
         HStack {
           Text("App Status")
@@ -1067,27 +1067,27 @@ struct SettingsView: View {
           Text(subscriptionManager.isSubscribed ? "Subscribed ✓" : "Free")
             .foregroundColor(subscriptionManager.isSubscribed ? .green : .secondary)
         }
-
+        
         Button("Subscription Testing Console") {
           showSubscriptionTesting = true
         }
-
-        #if DEBUG
+        
+#if DEBUG
         Button("Preview Membership Banner") {
           showBannerPreview = true
         }
-        #endif
+#endif
       }
       .sheet(isPresented: $showSubscriptionTesting) {
         SubscriptionTestingView()
       }
-      #if DEBUG
+#if DEBUG
       .sheet(isPresented: $showBannerPreview) {
         MembershipBannerPreviewView()
       }
-      #endif
+#endif
     }
-
+    
     if isSimulatingProduction {
       Section {
         Button("Exit Production Simulation") {
@@ -1100,9 +1100,9 @@ struct SettingsView: View {
       }
     }
   }
-
+  
   // MARK: - Helper Methods
-
+  
   /// Check if a newer app version is available based on changelog
   private func checkForAppUpdate() async {
     do {
@@ -1116,10 +1116,10 @@ struct SettingsView: View {
       print("Failed to check for app update: \(error)")
     }
   }
-
+  
   private func openFeedback() {
     guard let url = AppEnvironment.feedbackURL else { return }
-
+    
     if UIApplication.shared.canOpenURL(url) {
       UIApplication.shared.open(url)
     } else {
@@ -1128,7 +1128,7 @@ struct SettingsView: View {
       }
     }
   }
-
+  
   private func exportData() {
     let container = modelContext.container
     Task.detached {
@@ -1147,7 +1147,7 @@ struct SettingsView: View {
           )
         }
         let data = try JSONEncoder().encode(dtos)
-
+        
         await MainActor.run {
           exportDocument = JSONDocument(data: data)
           showFileExporter = true
@@ -1157,18 +1157,18 @@ struct SettingsView: View {
       }
     }
   }
-
+  
   private func importData(from url: URL) {
     let container = modelContext.container
     Task.detached {
       guard url.startAccessingSecurityScopedResource() else { return }
       defer { url.stopAccessingSecurityScopedResource() }
-
+      
       do {
         let data = try Data(contentsOf: url)
         let dtos = try JSONDecoder().decode([DayEntryDTO].self, from: data)
         let context = ModelContext(container)
-
+        
         var importedCount = 0
         var mergedCount = 0
         var skippedCount = 0
@@ -1178,29 +1178,29 @@ struct SettingsView: View {
             skippedCount += 1
             continue
           }
-
+          
           let entry = DayEntry.findOrCreate(for: dto.createdAt, in: context)
           let hadContent = !entry.body.isEmpty || (entry.drawingData != nil && !entry.drawingData!.isEmpty)
-
+          
           if entry.body.isEmpty && !dto.body.isEmpty {
             entry.body = dto.body
           } else if !entry.body.isEmpty && !dto.body.isEmpty && entry.body != dto.body {
             entry.body = entry.body + "\n\n---\n\n" + dto.body
           }
-
+          
           if (entry.drawingData == nil || entry.drawingData?.isEmpty == true) && dto.drawingData != nil {
             entry.drawingData = dto.drawingData
             entry.drawingThumbnail20 = dto.drawingThumbnail20
             entry.drawingThumbnail200 = dto.drawingThumbnail200
           }
-
+          
           if hadContent {
             mergedCount += 1
           } else {
             importedCount += 1
           }
         }
-
+        
         try context.save()
         let finalImported = importedCount
         let finalMerged = mergedCount
@@ -1225,7 +1225,7 @@ struct DailyReminderSettingsView: View {
   @Environment(\.userPreferences) private var userPreferences
   @StateObject private var reminderManager = ReminderManager.shared
   @State private var showNotificationDeniedAlert = false
-
+  
   private var dailyReminderTimeBinding: Binding<Date> {
     Binding(
       get: { userPreferences.dailyReminderTime },
@@ -1235,7 +1235,7 @@ struct DailyReminderSettingsView: View {
       }
     )
   }
-
+  
   var body: some View {
     Form {
       Section {
@@ -1264,7 +1264,7 @@ struct DailyReminderSettingsView: View {
             Text("Enable Daily Reminder")
           }
         }
-
+        
         if userPreferences.isDailyReminderEnabled {
           HStack {
             SettingsIconView(systemName: "clock.fill", backgroundColor: .red)
@@ -1303,17 +1303,17 @@ struct CustomizationSettingsView: View {
   @Binding var pendingThemeColor: ThemeColor?
   @Binding var showThemeOverlay: Bool
   private var themeColorManager = ThemeColorManager.shared
-
+  
   /// When true, scrolls to the "Prompt for notes after doodling" toggle on appear
   var scrollToNotePromptSetting: Bool = false
-
+  
   init(showPaywall: Binding<Bool>, pendingThemeColor: Binding<ThemeColor?>, showThemeOverlay: Binding<Bool>, scrollToNotePromptSetting: Bool = false) {
     self._showPaywall = showPaywall
     self._pendingThemeColor = pendingThemeColor
     self._showThemeOverlay = showThemeOverlay
     self.scrollToNotePromptSetting = scrollToNotePromptSetting
   }
-
+  
   private var viewModeBinding: Binding<ViewMode> {
     Binding(
       get: { userPreferences.defaultViewMode },
@@ -1326,7 +1326,7 @@ struct CustomizationSettingsView: View {
       }
     )
   }
-
+  
   private var startOfWeekBinding: Binding<String> {
     Binding(
       get: { userPreferences.startOfWeek },
@@ -1339,7 +1339,7 @@ struct CustomizationSettingsView: View {
       }
     )
   }
-
+  
   private var colorSchemeBinding: Binding<ColorScheme?> {
     Binding(
       get: { userPreferences.preferredColorScheme },
@@ -1349,159 +1349,203 @@ struct CustomizationSettingsView: View {
       }
     )
   }
-
+  
+  private var shareCardWatermarkBinding: Binding<Bool> {
+    Binding(
+      get: { userPreferences.shareCardWatermarkEnabled },
+      set: { newValue in
+        let previousValue = userPreferences.shareCardWatermarkEnabled
+        
+        // For free users, show paywall when they try to disable it
+        if !subscriptionManager.isSubscribed && !newValue {
+          userPreferences.shareCardWatermarkEnabled = true // Revert to ON
+          showPaywall = true // Show paywall sheet
+          return
+        }
+        
+        userPreferences.shareCardWatermarkEnabled = newValue
+        if newValue != previousValue {
+          AnalyticsManager.shared.trackSettingChanged(
+            name: "share_card_watermark_enabled",
+            value: newValue,
+            previousValue: previousValue
+          )
+        }
+      }
+    )
+  }
+  
   var body: some View {
     ScrollViewReader { scrollProxy in
       Form {
-      // Default View Mode Section
-      Section {
-        VStack(spacing: 0) {
-          ZStack {
-            Image("Others/MinimizedView")
-              .resizable()
-              .scaledToFit()
-              .offset(y: userPreferences.defaultViewMode == .now ? 300 : 10)
-
-            Image("Others/NormalView")
-              .resizable()
-              .scaledToFit()
-              .offset(y: userPreferences.defaultViewMode == .now ? 10 : 300)
-          }
-          .frame(maxWidth: .infinity)
-          .frame(height: 300)
-          .clipShape(RoundedRectangle(cornerRadius: 12))
-          .animation(.spring(response: 0.4, dampingFraction: 0.75), value: userPreferences.defaultViewMode)
-
-          if #available(iOS 26.0, *) {
-            Picker("View Mode", selection: viewModeBinding) {
-              ForEach(ViewMode.allCases, id: \.self) { mode in
-                Text(mode.displayName).tag(mode)
+        // Default View Mode Section
+        Section {
+          VStack(spacing: 0) {
+            ZStack {
+              Image("Others/MinimizedView")
+                .resizable()
+                .scaledToFit()
+                .offset(y: userPreferences.defaultViewMode == .now ? 300 : 10)
+              
+              Image("Others/NormalView")
+                .resizable()
+                .scaledToFit()
+                .offset(y: userPreferences.defaultViewMode == .now ? 10 : 300)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 300)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .animation(.spring(response: 0.4, dampingFraction: 0.75), value: userPreferences.defaultViewMode)
+            
+            if #available(iOS 26.0, *) {
+              Picker("View Mode", selection: viewModeBinding) {
+                ForEach(ViewMode.allCases, id: \.self) { mode in
+                  Text(mode.displayName).tag(mode)
+                }
               }
-            }
-            .pickerStyle(.palette)
-            .glassEffect(.regular.interactive())
-          } else {
-            Picker("View Mode", selection: viewModeBinding) {
-              ForEach(ViewMode.allCases, id: \.self) { mode in
-                Text(mode.displayName).tag(mode)
+              .pickerStyle(.palette)
+              .glassEffect(.regular.interactive())
+            } else {
+              Picker("View Mode", selection: viewModeBinding) {
+                ForEach(ViewMode.allCases, id: \.self) { mode in
+                  Text(mode.displayName).tag(mode)
+                }
               }
+              .pickerStyle(.palette)
             }
-            .pickerStyle(.palette)
+            
+            VStack {
+              if userPreferences.defaultViewMode == .now {
+                Text("\"Normal\" view mode gives you a more focused view with 7 days per row representing the 7 days of a week. Layout is shifted to match the weekday.")
+                  .font(.caption)
+                  .foregroundColor(.secondary)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+              } else if userPreferences.defaultViewMode == .year {
+                Text("\"Minimized\" view mode gives you an overview of your entire year. Additional sharing is available in this view mode to share your entire year.")
+                  .font(.caption)
+                  .foregroundColor(.secondary)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+              }
+            }.padding(.top, 12)
           }
-
-          VStack {
-            if userPreferences.defaultViewMode == .now {
-              Text("\"Normal\" view mode gives you a more focused view with 7 days per row representing the 7 days of a week. Layout is shifted to match the weekday.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            } else if userPreferences.defaultViewMode == .year {
-              Text("\"Minimized\" view mode gives you an overview of your entire year. Additional sharing is available in this view mode to share your entire year.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-          }.padding(.top, 12)
+        } header: {
+          Text("Default View Mode")
         }
-      } header: {
-        Text("Default View Mode")
-      }
-
-      // Start of Week Section
-      Section {
-        VStack(spacing: 12) {
-          if #available(iOS 26.0, *) {
-            Picker("Start of Week", selection: startOfWeekBinding) {
-              Text("Sunday").tag("sunday")
-              Text("Monday").tag("monday")
+        
+        // Start of Week Section
+        Section {
+          VStack(spacing: 12) {
+            if #available(iOS 26.0, *) {
+              Picker("Start of Week", selection: startOfWeekBinding) {
+                Text("Sunday").tag("sunday")
+                Text("Monday").tag("monday")
+              }
+              .pickerStyle(.palette)
+              .glassEffect(.regular.interactive())
+            } else {
+              Picker("Start of Week", selection: startOfWeekBinding) {
+                Text("Sunday").tag("sunday")
+                Text("Monday").tag("monday")
+              }
+              .pickerStyle(.palette)
             }
-            .pickerStyle(.palette)
-            .glassEffect(.regular.interactive())
-          } else {
-            Picker("Start of Week", selection: startOfWeekBinding) {
-              Text("Sunday").tag("sunday")
-              Text("Monday").tag("monday")
-            }
-            .pickerStyle(.palette)
-          }
-
-          Text("Start of Week affects the layout in \"Normal\" view mode.")
-            .font(.caption)
-            .foregroundColor(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-      } header: {
-        Text("Start of Week")
-      }
-
-      // Color Scheme Section
-      Section {
-        if #available(iOS 26.0, *) {
-          Picker("Color Scheme", selection: colorSchemeBinding) {
-            Text("System").tag(nil as ColorScheme?)
-            Text("Light").tag(ColorScheme.light as ColorScheme?)
-            Text("Dark").tag(ColorScheme.dark as ColorScheme?)
-          }
-          .pickerStyle(.palette)
-          .glassEffect(.regular.interactive())
-        } else {
-          Picker("Color Scheme", selection: colorSchemeBinding) {
-            Text("System").tag(nil as ColorScheme?)
-            Text("Light").tag(ColorScheme.light as ColorScheme?)
-            Text("Dark").tag(ColorScheme.dark as ColorScheme?)
-          }
-          .pickerStyle(.palette)
-        }
-      } header: {
-        Text("Appearance")
-      }
-
-      // Theme Color Section
-      Section {
-        ThemeColorPaletteView(
-          subscriptionManager: subscriptionManager,
-          onLockedColorTapped: {
-            showPaywall = true
-          },
-          onColorChangeStarted: { color in
-            pendingThemeColor = color
-            showThemeOverlay = true
-          },
-          onColorChangeCompleted: {
-            // Let the overlay handle the completion
-          }
-        )
-        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-      } header: {
-        Text("Theme Color")
-      }
-
-      // Prompt for notes after doodling - no header
-      Section {
-        Toggle(isOn: Binding(
-          get: { userPreferences.promptForNotesAfterDoodling },
-          set: { newValue in
-            let previousValue = userPreferences.promptForNotesAfterDoodling
-            userPreferences.promptForNotesAfterDoodling = newValue
-            if newValue != previousValue {
-              AnalyticsManager.shared.trackSettingChanged(
-                name: "prompt_for_notes_after_doodling",
-                value: newValue,
-                previousValue: previousValue
-              )
-            }
-          }
-        )) {
-          VStack(alignment: .leading, spacing: 4) {
-            Text("Prompt for notes after doodling")
-            Text("Show a popup to add notes after doodling")
+            
+            Text("Start of Week affects the layout in \"Normal\" view mode.")
               .font(.caption)
-              .foregroundStyle(.secondary)
+              .foregroundColor(.secondary)
+              .frame(maxWidth: .infinity, alignment: .leading)
           }
+        } header: {
+          Text("Start of Week")
         }
-        .tint(.appAccent)
-        .id("notePromptSetting")
-      }
+        
+        // Color Scheme Section
+        Section {
+          if #available(iOS 26.0, *) {
+            Picker("Color Scheme", selection: colorSchemeBinding) {
+              Text("System").tag(nil as ColorScheme?)
+              Text("Light").tag(ColorScheme.light as ColorScheme?)
+              Text("Dark").tag(ColorScheme.dark as ColorScheme?)
+            }
+            .pickerStyle(.palette)
+            .glassEffect(.regular.interactive())
+          } else {
+            Picker("Color Scheme", selection: colorSchemeBinding) {
+              Text("System").tag(nil as ColorScheme?)
+              Text("Light").tag(ColorScheme.light as ColorScheme?)
+              Text("Dark").tag(ColorScheme.dark as ColorScheme?)
+            }
+            .pickerStyle(.palette)
+          }
+        } header: {
+          Text("Appearance")
+        }
+        
+        // Theme Color Section
+        Section {
+          ThemeColorPaletteView(
+            subscriptionManager: subscriptionManager,
+            onLockedColorTapped: {
+              showPaywall = true
+            },
+            onColorChangeStarted: { color in
+              pendingThemeColor = color
+              showThemeOverlay = true
+            },
+            onColorChangeCompleted: {
+              // Let the overlay handle the completion
+            }
+          )
+          .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+        } header: {
+          Text("Theme Color")
+        }
+        
+        // Prompt for notes after doodling - no header
+        Section {
+          Toggle(isOn: Binding(
+            get: { userPreferences.promptForNotesAfterDoodling },
+            set: { newValue in
+              let previousValue = userPreferences.promptForNotesAfterDoodling
+              userPreferences.promptForNotesAfterDoodling = newValue
+              if newValue != previousValue {
+                AnalyticsManager.shared.trackSettingChanged(
+                  name: "prompt_for_notes_after_doodling",
+                  value: newValue,
+                  previousValue: previousValue
+                )
+              }
+            }
+          )) {
+            VStack(alignment: .leading, spacing: 4) {
+              Text("Prompt for notes after doodling")
+              Text("Show a popup to add notes after doodling")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+          }
+          .tint(.appAccent)
+          .id("notePromptSetting")
+          
+          Toggle(isOn: shareCardWatermarkBinding) {
+            HStack(spacing: 8) {
+              VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                  Text("Watermark when sharing")
+                  if !subscriptionManager.isSubscribed {
+                    PremiumFeatureBadge()
+                  }
+                }
+                Text("Add a watermark on share cards")
+                  .font(.caption)
+                  .foregroundStyle(.secondary)
+              }
+              Spacer()
+            }
+          }
+          .tint(.appAccent)
+          .id("watermarkSharingToggle")
+        }
       }
       .onAppear {
         if scrollToNotePromptSetting {
@@ -1542,7 +1586,7 @@ struct AnniversaryAlarmsSettingsView: View {
   @StateObject private var reminderManager = ReminderManager.shared
   @State private var selectedReminders = Set<String>()
   @State private var showPastTimeAlert = false
-
+  
   /// Sorted reminders by date (ascending)
   private var sortedReminders: [Reminder] {
     reminderManager.reminders.sorted { lhs, rhs in
@@ -1554,7 +1598,7 @@ struct AnniversaryAlarmsSettingsView: View {
       return lhs.reminderDate < rhs.reminderDate
     }
   }
-
+  
   var body: some View {
     List(selection: $selectedReminders) {
       if sortedReminders.isEmpty {
@@ -1601,7 +1645,7 @@ struct AnniversaryAlarmsSettingsView: View {
           EditButton()
         }
       }
-
+      
       ToolbarItem(placement: .bottomBar) {
         if !selectedReminders.isEmpty {
           Button(role: .destructive) {
@@ -1619,21 +1663,21 @@ struct AnniversaryAlarmsSettingsView: View {
       Text("The selected time has already passed. Please choose a future time for your anniversary alarm.")
     }
   }
-
+  
   private func deleteReminders(at offsets: IndexSet) {
     let remindersToDelete = offsets.map { sortedReminders[$0] }
     for reminder in remindersToDelete {
       reminderManager.removeReminder(for: reminder.dateString)
     }
   }
-
+  
   private func deleteSelectedReminders() {
     for dateString in selectedReminders {
       reminderManager.removeReminder(for: dateString)
     }
     selectedReminders.removeAll()
   }
-
+  
   private func updateReminderTime(reminder: Reminder, newTime: Date) {
     Task {
       await reminderManager.addReminder(
@@ -1651,41 +1695,41 @@ struct AnniversaryAlarmRow: View {
   let reminder: Reminder
   let onTimeChange: (Date) -> Void
   let onPastTimeError: () -> Void
-
+  
   @State private var selectedTime: Date
-
+  
   init(reminder: Reminder, onTimeChange: @escaping (Date) -> Void, onPastTimeError: @escaping () -> Void) {
     self.reminder = reminder
     self.onTimeChange = onTimeChange
     self.onPastTimeError = onPastTimeError
     self._selectedTime = State(initialValue: reminder.reminderDate)
   }
-
+  
   private var displayDate: String {
     CalendarDate(dateString: reminder.dateString)?.displayString ?? reminder.dateString
   }
-
+  
   /// Combines the entry date with the selected time
   private func combinedReminderDate(from time: Date) -> Date {
     guard let entryDate = DayEntry.stringToLocalDate(reminder.dateString) else {
       return time
     }
-
+    
     let timeComponents = Calendar.current.dateComponents([.hour, .minute], from: time)
     var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: entryDate)
     dateComponents.hour = timeComponents.hour
     dateComponents.minute = timeComponents.minute
-
+    
     return Calendar.current.date(from: dateComponents) ?? time
   }
-
+  
   var body: some View {
     HStack {
       VStack(alignment: .leading, spacing: 4) {
         Text(displayDate)
           .font(.body)
           .foregroundStyle(.primary)
-
+        
         if let entryBody = reminder.entryBody, !entryBody.isEmpty {
           Text(entryBody)
             .font(.caption)
@@ -1693,9 +1737,9 @@ struct AnniversaryAlarmRow: View {
             .lineLimit(1)
         }
       }
-
+      
       Spacer()
-
+      
       DatePicker(
         "Alarm Time",
         selection: $selectedTime,
@@ -1718,14 +1762,14 @@ struct AnniversaryAlarmRow: View {
 
 struct InteractionsSettingsView: View {
   @Environment(\.userPreferences) private var userPreferences
-
+  
   private var hapticBinding: Binding<Bool> {
     Binding(
       get: { userPreferences.enableHaptic },
       set: { userPreferences.enableHaptic = $0 }
     )
   }
-
+  
   var body: some View {
     Form {
       Section {
@@ -1753,7 +1797,7 @@ struct BackupRestoreSettingsView: View {
   @State private var exportDocument: JSONDocument?
   @State private var importMessage = ""
   @State private var showImportAlert = false
-
+  
   var body: some View {
     Form {
       Section {
@@ -1768,7 +1812,7 @@ struct BackupRestoreSettingsView: View {
               .foregroundColor(.secondary)
           }
         }
-
+        
         Button(action: { showFileImporter = true }) {
           HStack {
             SettingsIconView(systemName: "square.and.arrow.down.fill", backgroundColor: .gray)
@@ -1816,7 +1860,7 @@ struct BackupRestoreSettingsView: View {
       Text(importMessage)
     }
   }
-
+  
   private func exportData() {
     let container = modelContext.container
     Task.detached {
@@ -1835,7 +1879,7 @@ struct BackupRestoreSettingsView: View {
           )
         }
         let data = try JSONEncoder().encode(dtos)
-
+        
         await MainActor.run {
           // Track data exported
           AnalyticsManager.shared.trackDataExported(entryCount: dtos.count)
@@ -1847,18 +1891,18 @@ struct BackupRestoreSettingsView: View {
       }
     }
   }
-
+  
   private func importData(from url: URL) {
     let container = modelContext.container
     Task.detached {
       guard url.startAccessingSecurityScopedResource() else { return }
       defer { url.stopAccessingSecurityScopedResource() }
-
+      
       do {
         let data = try Data(contentsOf: url)
         let dtos = try JSONDecoder().decode([DayEntryDTO].self, from: data)
         let context = ModelContext(container)
-
+        
         var importedCount = 0
         var mergedCount = 0
         var skippedCount = 0
@@ -1868,29 +1912,29 @@ struct BackupRestoreSettingsView: View {
             skippedCount += 1
             continue
           }
-
+          
           let entry = DayEntry.findOrCreate(for: dto.createdAt, in: context)
           let hadContent = !entry.body.isEmpty || (entry.drawingData != nil && !entry.drawingData!.isEmpty)
-
+          
           if entry.body.isEmpty && !dto.body.isEmpty {
             entry.body = dto.body
           } else if !entry.body.isEmpty && !dto.body.isEmpty && entry.body != dto.body {
             entry.body = entry.body + "\n\n---\n\n" + dto.body
           }
-
+          
           if (entry.drawingData == nil || entry.drawingData?.isEmpty == true) && dto.drawingData != nil {
             entry.drawingData = dto.drawingData
             entry.drawingThumbnail20 = dto.drawingThumbnail20
             entry.drawingThumbnail200 = dto.drawingThumbnail200
           }
-
+          
           if hadContent {
             mergedCount += 1
           } else {
             importedCount += 1
           }
         }
-
+        
         try context.save()
         let finalImported = importedCount
         let finalMerged = mergedCount
@@ -1922,7 +1966,7 @@ struct DayEntryDTO: Codable {
   let drawingData: Data?
   let drawingThumbnail20: Data?
   let drawingThumbnail200: Data?
-
+  
   enum CodingKeys: String, CodingKey {
     case body
     case createdAt
@@ -1931,7 +1975,7 @@ struct DayEntryDTO: Codable {
     case drawingThumbnail20
     case drawingThumbnail200
   }
-
+  
   init(body: String, createdAt: Date, dateString: String?, drawingData: Data?, drawingThumbnail20: Data?, drawingThumbnail200: Data?) {
     self.body = body
     self.createdAt = createdAt
@@ -1940,7 +1984,7 @@ struct DayEntryDTO: Codable {
     self.drawingThumbnail20 = drawingThumbnail20
     self.drawingThumbnail200 = drawingThumbnail200
   }
-
+  
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     body = try container.decode(String.self, forKey: .body)
@@ -1950,7 +1994,7 @@ struct DayEntryDTO: Codable {
     drawingThumbnail20 = try container.decodeIfPresent(Data.self, forKey: .drawingThumbnail20)
     drawingThumbnail200 = try container.decodeIfPresent(Data.self, forKey: .drawingThumbnail200)
   }
-
+  
   func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(body, forKey: .body)
@@ -1969,7 +2013,7 @@ struct AppStatsView: View {
   @Environment(\.cloudSyncManager) private var cloudSyncManager
   @Environment(\.dismiss) private var dismiss
   @StateObject private var subscriptionManager = SubscriptionManager.shared
-
+  
   @State private var totalEntries: Int = 0
   @State private var uniqueDateCount: Int = 0
   @State private var duplicateCount: Int = 0
@@ -1977,14 +2021,14 @@ struct AppStatsView: View {
   @State private var isCleaningDuplicates = false
   @State private var isCleaningEmpty = false
   @State private var cleanupResult: String?
-
+  
   // Debug breakdown
   @State private var entriesByYear: [Int: Int] = [:]
   @State private var entriesWithDrawing: Int = 0
   @State private var entriesWithText: Int = 0
   @State private var entriesEmpty: Int = 0
   @State private var entriesWithEmptyDateString: Int = 0
-
+  
   var body: some View {
     NavigationStack {
       List {
@@ -2008,7 +2052,7 @@ struct AppStatsView: View {
               .foregroundColor(duplicateCount > 0 ? .orange : .secondary)
           }
         }
-
+        
         Section("Content Breakdown") {
           HStack {
             Text("With Drawing")
@@ -2035,7 +2079,7 @@ struct AppStatsView: View {
               .foregroundColor(entriesWithEmptyDateString > 0 ? .red : .secondary)
           }
         }
-
+        
         if !entriesByYear.isEmpty {
           Section("Entries by Year") {
             ForEach(entriesByYear.keys.sorted().reversed(), id: \.self) { year in
@@ -2048,7 +2092,7 @@ struct AppStatsView: View {
             }
           }
         }
-
+        
         if duplicateCount > 0 {
           Section("Duplicate Details") {
             ForEach(duplicateDetails.keys.sorted(), id: \.self) { dateString in
@@ -2063,7 +2107,7 @@ struct AppStatsView: View {
             }
           }
         }
-
+        
         Section("Sync Status") {
           HStack {
             Text("iCloud Available")
@@ -2089,7 +2133,7 @@ struct AppStatsView: View {
             }
           }
         }
-
+        
         Section("Subscription") {
           HStack {
             Text("Status")
@@ -2107,14 +2151,14 @@ struct AppStatsView: View {
             }
           }
         }
-
+        
         Section("Actions") {
           Button {
             printDetailedDebugInfo()
           } label: {
             Text("Print Debug Info to Console")
           }
-
+          
           if duplicateCount > 0 {
             Button {
               clearDuplicates()
@@ -2130,7 +2174,7 @@ struct AppStatsView: View {
             }
             .disabled(isCleaningDuplicates)
           }
-
+          
           if entriesEmpty > 0 {
             Button(role: .destructive) {
               deleteEmptyEntries()
@@ -2147,7 +2191,7 @@ struct AppStatsView: View {
             .disabled(isCleaningEmpty)
           }
         }
-
+        
         if let result = cleanupResult {
           Section("Result") {
             Text(result)
@@ -2171,7 +2215,7 @@ struct AppStatsView: View {
       }
     }
   }
-
+  
   private func loadStats() {
     let descriptor = FetchDescriptor<DayEntry>()
     if let entries = try? modelContext.fetch(descriptor) {
@@ -2181,26 +2225,26 @@ struct AppStatsView: View {
       duplicateCount = totalEntries - uniqueDateCount
     }
   }
-
+  
   private func loadDebugBreakdown() {
     let descriptor = FetchDescriptor<DayEntry>()
     guard let entries = try? modelContext.fetch(descriptor) else { return }
-
+    
     var yearCounts: [Int: Int] = [:]
     var withDrawing = 0
     var withText = 0
     var empty = 0
     var emptyDateString = 0
     var dateDuplicates: [String: Int] = [:]
-
+    
     for entry in entries {
       let calendar = Calendar.current
       let year = calendar.component(.year, from: entry.createdAt)
       yearCounts[year, default: 0] += 1
-
+      
       let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
       let hasText = !entry.body.isEmpty
-
+      
       if hasDrawing {
         withDrawing += 1
       } else if hasText {
@@ -2208,14 +2252,14 @@ struct AppStatsView: View {
       } else {
         empty += 1
       }
-
+      
       if entry.dateString.isEmpty {
         emptyDateString += 1
       }
-
+      
       dateDuplicates[entry.dateString, default: 0] += 1
     }
-
+    
     entriesByYear = yearCounts
     entriesWithDrawing = withDrawing
     entriesWithText = withText
@@ -2223,23 +2267,23 @@ struct AppStatsView: View {
     entriesWithEmptyDateString = emptyDateString
     duplicateDetails = dateDuplicates.filter { $0.value > 1 }
   }
-
+  
   private func printDetailedDebugInfo() {
     let descriptor = FetchDescriptor<DayEntry>()
     guard let entries = try? modelContext.fetch(descriptor) else { return }
-
+    
     print("=== DETAILED DEBUG INFO ===")
     print("Total entries: \(entries.count)")
     print("")
-
+    
     let sortedEntries = entries.sorted { $0.createdAt < $1.createdAt }
     var dateGroups: [String: [DayEntry]] = [:]
-
+    
     for entry in sortedEntries {
       let key = entry.dateString.isEmpty ? "(empty)" : entry.dateString
       dateGroups[key, default: []].append(entry)
     }
-
+    
     print("=== ENTRIES BY DATE ===")
     for dateString in dateGroups.keys.sorted() {
       let group = dateGroups[dateString]!
@@ -2252,7 +2296,7 @@ struct AppStatsView: View {
         }
       }
     }
-
+    
     print("\n=== EMPTY ENTRIES ===")
     let emptyEntries = entries.filter { entry in
       let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
@@ -2262,13 +2306,13 @@ struct AppStatsView: View {
     for entry in emptyEntries {
       print("Empty: \(entry.dateString.isEmpty ? "(empty)" : entry.dateString) - Created: \(entry.createdAt)")
     }
-
+    
     print("\n=== END DEBUG INFO ===")
   }
-
+  
   private func clearDuplicates() {
     isCleaningDuplicates = true
-
+    
     Task {
       let result = DuplicateEntryCleanup.shared.forceCleanupDuplicates(modelContext: modelContext, markAsCompleted: false)
       await MainActor.run {
@@ -2279,10 +2323,10 @@ struct AppStatsView: View {
       }
     }
   }
-
+  
   private func deleteEmptyEntries() {
     isCleaningEmpty = true
-
+    
     Task {
       let descriptor = FetchDescriptor<DayEntry>()
       guard let entries = try? modelContext.fetch(descriptor) else {
@@ -2292,7 +2336,7 @@ struct AppStatsView: View {
         }
         return
       }
-
+      
       var deletedCount = 0
       for entry in entries {
         let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
@@ -2302,9 +2346,9 @@ struct AppStatsView: View {
           deletedCount += 1
         }
       }
-
+      
       try? modelContext.save()
-
+      
       await MainActor.run {
         cleanupResult = "Deleted \(deletedCount) empty entries"
         isCleaningEmpty = false
@@ -2320,18 +2364,18 @@ struct AppStatsView: View {
 struct JSONDocument: FileDocument {
   static var readableContentTypes: [UTType] { [.json] }
   var data: Data
-
+  
   init(data: Data) {
     self.data = data
   }
-
+  
   init(configuration: ReadConfiguration) throws {
     guard let data = configuration.file.regularFileContents else {
       throw CocoaError(.fileReadCorruptFile)
     }
     self.data = data
   }
-
+  
   func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
     FileWrapper(regularFileWithContents: data)
   }
@@ -2344,7 +2388,7 @@ struct LearnCoreFeaturesView: View {
   @State private var selectedTutorialStep: TutorialStepType?
   @State private var showRevisitOnboardingConfirmation = false
   @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
-
+  
   var body: some View {
     List {
       Section {
@@ -2366,7 +2410,7 @@ struct LearnCoreFeaturesView: View {
       } header: {
         Text("Interactive Tutorials")
       }
-
+      
       Section {
         ForEach(TutorialDefinitions.widgetTutorials) { tutorial in
           NavigationLink {
@@ -2390,7 +2434,7 @@ struct LearnCoreFeaturesView: View {
       } header: {
         Text("Widget Tutorials")
       }
-
+      
       Section {
         ForEach(TutorialDefinitions.otherTutorials) { tutorial in
           NavigationLink {
@@ -2412,7 +2456,7 @@ struct LearnCoreFeaturesView: View {
           }
         }
       }
-
+      
       Section {
         Button {
           showRevisitOnboardingConfirmation = true
@@ -2447,7 +2491,7 @@ struct LearnCoreFeaturesView: View {
         selectedTutorialStep = nil
       }
     }
-
+    
   }
 }
 
@@ -2461,7 +2505,7 @@ struct DebugDataSeederView: View {
   @State private var seedCount = 10
   @State private var currentDebugCount = 0
   @State private var isSeeding = false
-
+  
   var body: some View {
     NavigationStack {
       Form {
@@ -2473,14 +2517,14 @@ struct DebugDataSeederView: View {
               .foregroundStyle(.secondary)
           }
         }
-
+        
         Section("Seed Data") {
           Picker("Year", selection: $selectedYear) {
             ForEach((2020...2024).reversed(), id: \.self) { year in
               Text(String(year)).tag(year)
             }
           }
-
+          
           HStack {
             Text("Count")
             Spacer()
@@ -2488,20 +2532,20 @@ struct DebugDataSeederView: View {
               .keyboardType(.numberPad)
               .multilineTextAlignment(.trailing)
               .frame(width: 80)
-
+            
             Button("MAX") {
               seedCount = DebugDataSeeder.shared.daysInYear(selectedYear)
             }
             .buttonStyle(.bordered)
             .font(.caption)
           }
-
+          
           Button("Seed \(seedCount) Entries for \(selectedYear)") {
             seedData()
           }
           .disabled(isSeeding)
         }
-
+        
         Section("Danger Zone") {
           Button("Clear All Seeded Data", role: .destructive) {
             clearData()
@@ -2521,11 +2565,11 @@ struct DebugDataSeederView: View {
       }
     }
   }
-
+  
   private func refreshCount() {
     currentDebugCount = DebugDataSeeder.shared.getDebugEntryCount(container: modelContext.container)
   }
-
+  
   private func seedData() {
     isSeeding = true
     Task {
@@ -2535,7 +2579,7 @@ struct DebugDataSeederView: View {
       isSeeding = false
     }
   }
-
+  
   private func clearData() {
     isSeeding = true
     Task {
@@ -2553,7 +2597,7 @@ struct DebugDataSeederView: View {
 struct MembershipBannerPreviewView: View {
   @Environment(\.dismiss) private var dismiss
   @State private var selectedState: BannerPreviewState = .free
-
+  
   enum BannerPreviewState: String, CaseIterable {
     case free = "Free User"
     case freeNearLimit = "Free (Near Limit)"
@@ -2563,7 +2607,7 @@ struct MembershipBannerPreviewView: View {
     case proCancelled = "Pro (Cancelled)"
     case proExpiringSoon = "Pro (Expiring Soon)"
   }
-
+  
   var body: some View {
     NavigationStack {
       List {
@@ -2575,7 +2619,7 @@ struct MembershipBannerPreviewView: View {
           }
           .pickerStyle(.menu)
         }
-
+        
         Section("Preview") {
           MembershipBannerView(
             isSubscribed: isSubscribed,
@@ -2596,7 +2640,7 @@ struct MembershipBannerPreviewView: View {
       }
     }
   }
-
+  
   private var isSubscribed: Bool {
     switch selectedState {
     case .free, .freeNearLimit, .freeAtLimit:
@@ -2605,7 +2649,7 @@ struct MembershipBannerPreviewView: View {
       return true
     }
   }
-
+  
   private var statusMessage: String? {
     switch selectedState {
     case .proTrial:
@@ -2627,7 +2671,7 @@ struct MembershipBannerPreviewView: View {
       return nil
     }
   }
-
+  
   private var joodleCount: Int {
     switch selectedState {
     case .free:
@@ -2640,7 +2684,7 @@ struct MembershipBannerPreviewView: View {
       return 0
     }
   }
-
+  
   private var alarmCount: Int {
     switch selectedState {
     case .free:
