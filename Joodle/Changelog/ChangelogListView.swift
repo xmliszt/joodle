@@ -73,6 +73,7 @@ struct ChangelogListView: View {
         }
         .navigationTitle("What's New")
         .navigationBarTitleDisplayMode(.inline)
+        .postHogScreenView("Changelog")
         .task {
             await viewModel.fetchChangelogIndex()
         }

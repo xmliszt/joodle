@@ -61,9 +61,7 @@ struct AnnouncementsSettingsView: View {
         }
         .navigationTitle("Announcements")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            AnalyticsManager.shared.trackScreen(.settings, properties: [.source: "announcements"])
-        }
+        .postHogScreenView("Announcements")
         .animation(.easeInOut(duration: 0.2), value: userPreferences.announcementsEnabled)
     }
 

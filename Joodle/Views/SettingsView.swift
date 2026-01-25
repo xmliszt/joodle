@@ -286,6 +286,7 @@ struct SettingsView: View {
     .background(NavigationGestureEnabler(isEnabled: !showThemeOverlay))
     .navigationDestination(isPresented: $showExperimentalFeatures) {
       ExperimentalFeaturesView()
+        .postHogScreenView("Experimental Features")
     }
     .navigationDestination(isPresented: $showCustomization) {
       CustomizationSettingsView(
@@ -294,6 +295,7 @@ struct SettingsView: View {
         showThemeOverlay: $showThemeOverlay,
         scrollToNotePromptSetting: scrollToNotePromptSetting
       )
+      .postHogScreenView("Customization")
       .onDisappear {
         // Reset the scroll flag when leaving
         scrollToNotePromptSetting = false
@@ -301,10 +303,7 @@ struct SettingsView: View {
     }
     .navigationTitle("Settings")
     .navigationBarTitleDisplayMode(.inline)
-    .onAppear {
-      // Track settings screen viewed
-      AnalyticsManager.shared.trackScreen(.settings)
-    }
+    .postHogScreenView("Settings")
     .preferredColorScheme(userPreferences.preferredColorScheme)
     .navigationBarBackButtonHidden(showThemeOverlay)
     .interactiveDismissDisabled(showThemeOverlay)
@@ -345,6 +344,7 @@ struct SettingsView: View {
     }
     .navigationDestination(isPresented: $showSubscriptions) {
       SubscriptionsView()
+        .postHogScreenView("Subscriptions")
     }
     .fileExporter(
       isPresented: $showFileExporter,
@@ -1281,6 +1281,7 @@ struct DailyReminderSettingsView: View {
     }
     .navigationTitle("Daily Reminder")
     .navigationBarTitleDisplayMode(.inline)
+    .postHogScreenView("Daily Reminder Settings")
     .alert("Notifications Disabled", isPresented: $showNotificationDeniedAlert) {
       Button("Open Settings") {
         if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
@@ -1559,6 +1560,7 @@ struct CustomizationSettingsView: View {
     }
     .navigationTitle("Customization")
     .navigationBarTitleDisplayMode(.inline)
+    .postHogScreenView("Customization Settings")
     .preferredColorScheme(userPreferences.preferredColorScheme)
     .overlay {
       if showThemeOverlay, let color = pendingThemeColor {
@@ -1639,6 +1641,7 @@ struct AnniversaryAlarmsSettingsView: View {
     }
     .navigationTitle("Anniversary Alarms")
     .navigationBarTitleDisplayMode(.inline)
+    .postHogScreenView("Anniversary Alarms Settings")
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
         if !sortedReminders.isEmpty {
@@ -1785,6 +1788,7 @@ struct InteractionsSettingsView: View {
     }
     .navigationTitle("Interactions")
     .navigationBarTitleDisplayMode(.inline)
+    .postHogScreenView("Interactions Settings")
   }
 }
 
@@ -1830,6 +1834,7 @@ struct BackupRestoreSettingsView: View {
     }
     .navigationTitle("Backup & Restore")
     .navigationBarTitleDisplayMode(.inline)
+    .postHogScreenView("Backup & Restore Settings")
     .fileExporter(
       isPresented: $showFileExporter,
       document: exportDocument,
@@ -2486,6 +2491,7 @@ struct LearnCoreFeaturesView: View {
     }
     .navigationTitle("Learn Core Features")
     .navigationBarTitleDisplayMode(.inline)
+    .postHogScreenView("Learn Core Features")
     .fullScreenCover(item: $selectedTutorialStep) { stepType in
       InteractiveTutorialView(stepType: stepType) {
         selectedTutorialStep = nil

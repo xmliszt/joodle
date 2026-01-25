@@ -418,13 +418,12 @@ struct iCloudSyncView: View {
       syncManager.checkCloudAvailability()
       // Clear the pending restart flag since user can see the banner here
       UserDefaults.standard.removeObject(forKey: "pending_icloud_sync_restart")
-      // Track iCloud sync settings screen viewed
-      AnalyticsManager.shared.trackScreen(.iCloudSync)
       // Verify subscription status when accessing iCloud Sync view (premium feature)
       Task {
         await SubscriptionManager.shared.verifySubscriptionForAccess()
       }
     }
+    .postHogScreenView("iCloud Sync")
   }
 }
 

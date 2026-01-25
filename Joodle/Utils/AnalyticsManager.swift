@@ -2,7 +2,24 @@ import Foundation
 import PostHog
 
 /// Centralized analytics manager for PostHog event tracking
-/// Usage: AnalyticsManager.shared.track(.eventName, properties: [...])
+///
+/// **PostHog Autocapture (automatic, no action needed):**
+/// - Application lifecycle events: Opened, Backgrounded, Installed, Updated
+/// - Screen views: Use `.postHogScreenView()` modifier on SwiftUI views for automatic $screen events
+/// - UIKit interactions: Automatically captured via $autocapture
+///
+/// **Custom events (defined here):**
+/// - Business-critical user actions (e.g., entryCreated, subscriptionPurchased)
+/// - Feature engagement (e.g., drawingCreated, shareCardShared)
+/// - Use case: AnalyticsManager.shared.track(.eventName, properties: [...])
+///
+/// **Screen Tracking Best Practice:**
+/// For SwiftUI apps, add the `.postHogScreenView()` modifier to full-screen views:
+///   ```swift
+///   ContentView()
+///       .postHogScreenView("My Content View")
+///   ```
+/// This is preferred over manual screen tracking calls.
 final class AnalyticsManager {
     static let shared = AnalyticsManager()
 
@@ -11,11 +28,6 @@ final class AnalyticsManager {
     // MARK: - Event Definitions
 
     enum Event: String {
-        // App Lifecycle
-        case appLaunched = "app_launched"
-        case appBecameActive = "app_became_active"
-        case appEnteredBackground = "app_entered_background"
-
         // Onboarding
         case onboardingStepViewed = "onboarding_step_viewed"
         case onboardingCompleted = "onboarding_completed"
@@ -42,10 +54,6 @@ final class AnalyticsManager {
         case yearChanged = "year_changed"
         case scrubbingUsed = "scrubbing_used"
         case pinchGestureUsed = "pinch_gesture_used"
-
-        // Screens
-        case screenViewed = "screen_viewed"
-        case settingsOpened = "settings_opened"
 
         // Subscription
         case paywallViewed = "paywall_viewed"
@@ -89,7 +97,6 @@ final class AnalyticsManager {
         case tutorialSkipped = "tutorial_skipped"
 
         // Help & Support
-        case faqViewed = "faq_viewed"
         case faqQuestionExpanded = "faq_question_expanded"
         case changelogViewed = "changelog_viewed"
         case externalLinkOpened = "external_link_opened"
@@ -272,25 +279,8 @@ final class AnalyticsManager {
         #endif
     }
 
-    /// Track a screen view
-    func trackScreen(_ screen: ScreenName, properties: [PropertyKey: Any]? = nil) {
-        var props: [PropertyKey: Any] = [.screenName: screen.rawValue]
-        if let properties = properties {
-            props.merge(properties) { _, new in new }
-        }
-        track(.screenViewed, properties: props)
-    }
 
     // MARK: - Convenience Methods
-
-    // MARK: App Lifecycle
-
-    func trackAppLaunched(isFirstLaunch: Bool = false, hasCompletedOnboarding: Bool) {
-        track(.appLaunched, properties: [
-            .source: isFirstLaunch ? "first_launch" : "returning",
-            .settingValue: hasCompletedOnboarding ? "onboarded" : "not_onboarded"
-        ])
-    }
 
     // MARK: Onboarding
 
@@ -563,10 +553,6 @@ final class AnalyticsManager {
     }
 
     // MARK: Help & Support
-
-    func trackFAQViewed() {
-        trackScreen(.faq)
-    }
 
     func trackFAQQuestionExpanded(questionId: String, questionTitle: String, category: String) {
         track(.faqQuestionExpanded, properties: [

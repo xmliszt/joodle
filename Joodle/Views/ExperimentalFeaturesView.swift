@@ -83,10 +83,7 @@ struct ExperimentalFeaturesView: View {
     }
     .navigationTitle("Experimental Features")
     .navigationBarTitleDisplayMode(.inline)
-    .onAppear {
-      // Track experimental features screen viewed
-      AnalyticsManager.shared.trackScreen(.experimentalFeatures)
-    }
+    .postHogScreenView("Experimental Features")
   }
 }
 

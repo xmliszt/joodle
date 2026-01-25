@@ -42,6 +42,7 @@ struct StandalonePaywallView: View {
                 }
             }
         }
+        .postHogScreenView("Paywall - Standalone")
         .task {
             // Refresh subscription status from StoreKit before showing paywall
             await subscriptionManager.updateSubscriptionStatus()
@@ -51,9 +52,6 @@ struct StandalonePaywallView: View {
                 dismiss()
                 return
             }
-
-            // Track paywall viewed
-            AnalyticsManager.shared.trackPaywallViewed(source: "standalone")
 
             isCheckingSubscription = false
         }

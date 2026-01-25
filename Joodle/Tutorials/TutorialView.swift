@@ -47,6 +47,7 @@ struct TutorialView: View {
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
+        .postHogScreenView("Tutorial - \(title)")
     }
 }
 

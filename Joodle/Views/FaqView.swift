@@ -131,10 +131,7 @@ struct FaqView: View {
         }
         .navigationTitle("Frequently Asked Questions")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            // Track FAQ screen viewed
-            AnalyticsManager.shared.trackFAQViewed()
-        }
+        .postHogScreenView("FAQ")
         .refreshable {
             await faqManager.refresh()
         }

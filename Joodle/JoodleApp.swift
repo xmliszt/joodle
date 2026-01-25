@@ -462,12 +462,7 @@ struct JoodleApp: App {
                 if !hasSetupObservers {
                   setupColorSchemeObserver()
                   hasSetupObservers = true
-
-                  // Track app launch (main content appeared)
-                  AnalyticsManager.shared.trackAppLaunched(
-                    isFirstLaunch: false,
-                    hasCompletedOnboarding: hasCompletedOnboarding
-                  )
+                  // PostHog automatically tracks "Application Opened" event
                 }
               }
               .onOpenURL { url in

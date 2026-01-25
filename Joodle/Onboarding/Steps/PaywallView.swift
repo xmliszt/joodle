@@ -30,10 +30,7 @@ struct PaywallView: View {
                 }
             ))
         }
-        .onAppear {
-            // Track onboarding paywall viewed
-            AnalyticsManager.shared.trackPaywallViewed(source: "onboarding")
-        }
+        .postHogScreenView("Paywall")
         .overlay(alignment: .topTrailing) {
             Button {
                 // Track paywall skipped
