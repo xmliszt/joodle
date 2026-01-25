@@ -48,9 +48,9 @@ struct SettingsIconView: View {
   
   var body: some View {
     Image(systemName: systemName)
-      .font(.system(size: 14, weight: .semibold))
+      .font(.system(size: 12, weight: .semibold))
       .foregroundColor(.white)
-      .frame(width: 28, height: 28)
+      .frame(width: 24, height: 24)
       .background(backgroundColor)
       .clipShape(RoundedRectangle(cornerRadius: 6))
   }

@@ -32,12 +32,7 @@ struct AnnouncementsSettingsView: View {
                     }
                 )) {
                     HStack(spacing: 12) {
-                        Image(systemName: "megaphone.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(width: 28, height: 28)
-                            .background(Color.blue)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                        SettingsIconView(systemName: "megaphone.fill", backgroundColor: .blue)
 
                         Text("Enable Announcements")
                     }
@@ -71,12 +66,7 @@ struct AnnouncementsSettingsView: View {
     private func announcementTypeRow(for type: RemoteAlert.AnnouncementType) -> some View {
         Toggle(isOn: bindingForType(type)) {
             HStack(spacing: 12) {
-                Image(systemName: type.iconName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 28, height: 28)
-                    .background(type.iconColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                SettingsIconView(systemName: type.iconName, backgroundColor: type.iconColor)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(type.displayName)

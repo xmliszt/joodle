@@ -8,21 +8,6 @@
 import AVKit
 import SwiftUI
 
-// MARK: - Settings Icon View (shared component)
-struct ExperimentalSettingsIconView: View {
-  let systemName: String
-  let backgroundColor: Color
-
-  var body: some View {
-    Image(systemName: systemName)
-      .font(.system(size: 14, weight: .semibold))
-      .foregroundColor(.white)
-      .frame(width: 28, height: 28)
-      .background(backgroundColor)
-      .clipShape(RoundedRectangle(cornerRadius: 6))
-  }
-}
-
 struct ExperimentalFeaturesView: View {
   @Environment(\.userPreferences) private var userPreferences
 
@@ -55,7 +40,7 @@ struct ExperimentalFeaturesView: View {
             }
           )) {
             HStack {
-              ExperimentalSettingsIconView(systemName: "water.waves", backgroundColor: .cyan)
+              SettingsIconView(systemName: "water.waves", backgroundColor: .cyan)
               Text("Passing Time Backdrop")
                 .font(.body)
             }
@@ -69,7 +54,7 @@ struct ExperimentalFeaturesView: View {
       Section {
         VStack(alignment: .leading, spacing: 12) {
           HStack {
-            ExperimentalSettingsIconView(systemName: "flask.fill", backgroundColor: .purple)
+            SettingsIconView(systemName: "flask.fill", backgroundColor: .purple)
             Text("About Experimental Features")
               .font(.subheadline)
           }
