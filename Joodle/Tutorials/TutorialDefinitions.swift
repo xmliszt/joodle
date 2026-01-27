@@ -95,7 +95,7 @@ enum TutorialDefinitions {
       ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature3.png", dots: [TapDot(x: 488, y: 709)])
     ],
     description: "In \"Settings\", go to \"Labs\" section, then tap on \"Experimental Features\".",
-    isPremiumFeature: true
+    isPremiumFeature: false
   )
   
   /// Tutorial for viewing weekday in "Normal" view mode
