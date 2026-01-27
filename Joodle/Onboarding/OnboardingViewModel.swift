@@ -272,11 +272,7 @@ class OnboardingViewModel: ObservableObject {
             return
         }
 
-        // Check if user has active subscription
-        guard isPremium || StoreKitManager.shared.hasActiveSubscription else {
-            print("OnboardingViewModel: iCloud sync not enabled - no active subscription")
-            return
-        }
+        // iCloud sync is free for all users - no subscription check needed
 
         // Check if iCloud sync is already enabled
         guard !UserPreferences.shared.isCloudSyncEnabled else {

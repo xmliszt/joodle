@@ -16,7 +16,6 @@ import Combine
 enum PremiumFeature: String, CaseIterable, Identifiable {
     case unlimitedJoodles
     case widgets  // Free users have NO widget access
-    case iCloudSync
     case allShareTemplates
 
     var id: String { rawValue }
@@ -29,8 +28,6 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
             return "Unlimited Joodles"
         case .widgets:
             return "All Widgets"
-        case .iCloudSync:
-            return "iCloud Sync"
         case .allShareTemplates:
             return "All Share Templates"
         }
@@ -42,8 +39,6 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
             return "Draw as much as you want, no limits"
         case .widgets:
             return "Access to all Joodle widgets"
-        case .iCloudSync:
-            return "Sync your Joodles across all devices"
         case .allShareTemplates:
             return "Beautiful templates for sharing"
         }
@@ -55,8 +50,6 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
             return "scribble.variable"
         case .widgets:
             return "square.grid.3x3.fill"
-        case .iCloudSync:
-            return "icloud.fill"
         case .allShareTemplates:
             return "square.and.arrow.up.fill"
         }
@@ -504,7 +497,7 @@ struct JoodleAccessChecker {
         Text("Feature")
             .padding()
             .background(Color.blue)
-            .withPremiumBadge(.iCloudSync)
+            .withPremiumBadge(.allShareTemplates)
 
         RemainingJoodlesIndicator(currentCount: 55)
 

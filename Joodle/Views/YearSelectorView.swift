@@ -82,7 +82,8 @@ struct YearSelectorView: View {
   }
 
   private func getFormattedDate(_ date: Date) -> String {
-    return date.formatted(date: .abbreviated, time: .omitted)
+    let style = Date.FormatStyle().month(.abbreviated).day()
+    return date.formatted(style)
   }
 }
 
@@ -120,3 +121,4 @@ struct YearSelectorView: View {
   .modelContainer(for: DayEntry.self, inMemory: true)
   .padding()
 }
+

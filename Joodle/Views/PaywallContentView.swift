@@ -291,12 +291,14 @@ struct PaywallContentView: View {
   let configuration: PaywallConfiguration
 
   @StateObject private var storeManager = StoreKitManager.shared
+  @StateObject private var subscriptionManager = SubscriptionManager.shared
 
   @State private var selectedProductID: String?
   @State private var isPurchasing = false
   @State private var showError = false
   @State private var errorMessage: String?
   @State private var useProMode = true
+  @State private var showRedeemCode = false
 
   var body: some View {
     ScrollView {
@@ -333,6 +335,15 @@ struct PaywallContentView: View {
     .onChange(of: storeManager.products) { _, newProducts in
       if selectedProductID == nil, !newProducts.isEmpty {
         selectedProductID = storeManager.yearlyProduct?.id
+      }
+    }
+    .offerCodeRedemption(isPresented: $showRedeemCode) { _ in
+      Task {
+        await storeManager.updatePurchasedProducts()
+        await subscriptionManager.updateSubscriptionStatus()
+        if storeManager.hasActiveSubscription {
+          configuration.onRestoreComplete?()
+        }
       }
     }
   }
@@ -375,11 +386,6 @@ struct PaywallContentView: View {
       )
 
       FeatureRow(
-        icon: "checkmark.icloud.fill",
-        title: "iCloud Sync across all devices"
-      )
-
-      FeatureRow(
         icon: "square.and.arrow.up.fill",
         title: "Sharing without watermark"
       )
@@ -400,9 +406,50 @@ struct PaywallContentView: View {
         emptyProductsView
       } else {
         productCards
+        
+        // Savings and auto-renewal info
+        if let selectedID = selectedProductID,
+           let product = storeManager.products.first(where: { $0.id == selectedID }) {
+          savingsAndRenewalInfo(for: product)
+        }
       }
     }
     .padding(.horizontal, 24)
+  }
+  
+  /// Shows savings info for yearly plan and auto-renewal disclaimer
+  private func savingsAndRenewalInfo(for product: Product) -> some View {
+    let isYearly = product.id.contains("yearly")
+    let savingsAmount = storeManager.yearlySavingsAmount()
+    
+    return VStack(spacing: 4) {
+      // Savings text (only for yearly) - with fixed height container
+      ZStack {
+        // Invisible placeholder to maintain height
+        Text("Save $00.00 per year.")
+          .font(.subheadline.weight(.medium))
+          .opacity(0)
+        
+        // Actual savings text with animation
+        if isYearly, let amount = savingsAmount {
+          Text("Save \(amount) per year.")
+            .font(.subheadline.weight(.medium))
+            .foregroundColor(.appAccent)
+            .transition(.asymmetric(
+              insertion: .opacity.combined(with: .scale(scale: 0.8)).combined(with: .offset(y: -4)),
+              removal: .opacity.combined(with: .scale(scale: 0.8)).combined(with: .offset(y: 4))
+            ))
+        }
+      }
+      .animation(.springFkingSatifying, value: isYearly)
+      
+      // Auto-renewal disclaimer
+      Text("Auto renews \(isYearly ? "yearly" : "monthly") until canceled.")
+        .font(.caption)
+        .foregroundColor(.secondary)
+    }
+    .multilineTextAlignment(.center)
+    .padding(.top, 4)
   }
 
   private var emptyProductsView: some View {
@@ -424,43 +471,8 @@ struct PaywallContentView: View {
           .font(.subheadline)
       }
       .buttonStyle(.bordered)
-
-      // Debug info - shown when debug mode is enabled or in DEBUG builds
-      if shouldShowDebugInfo {
-        debugInfoView
-      }
     }
     .padding(.vertical, 40)
-  }
-
-  private var shouldShowDebugInfo: Bool {
-#if DEBUG
-    return true
-#else
-    return false
-#endif
-  }
-
-  private var debugInfoView: some View {
-    VStack(alignment: .leading, spacing: 4) {
-      Text("Debug Info:")
-        .font(.caption2.bold())
-      Text("Product IDs: dev.liyuxuan.joodle.pro.monthly, dev.liyuxuan.joodle.pro.yearly")
-        .font(.caption2)
-      if let error = storeManager.errorMessage {
-        Text("Error: \(error)")
-          .font(.caption2)
-          .foregroundColor(.red)
-      }
-
-      Text("Tap header 3x for full debug view")
-        .font(.caption2)
-        .foregroundColor(.blue)
-    }
-    .padding(8)
-    .background(Color.gray.opacity(0.1))
-    .cornerRadius(8)
-    .padding(.top, 8)
   }
 
   private var productCards: some View {
@@ -494,26 +506,43 @@ struct PaywallContentView: View {
   // MARK: - CTA Section
 
   private var ctaSection: some View {
-    VStack(spacing: 16) {
-      VStack(spacing: 4) {
-        // Main CTA Slider
-        mainCTAButton
+    VStack(spacing: 12) {
+      // Main CTA Slider
+      mainCTAButton
 
-        // Price disclaimer
-        if useProMode,
-           let selectedID = selectedProductID,
-           let product = storeManager.products.first(where: { $0.id == selectedID }) {
-          Text("Then \(product.displayPrice) / \(product.id.contains("monthly") ? "month" : "year"). Cancel anytime.")
-            .font(.caption)
-            .foregroundColor(.secondary)
-            .multilineTextAlignment(.center)
-        }
+      // Spotify-style disclaimer below CTA
+      if let selectedID = selectedProductID,
+         let product = storeManager.products.first(where: { $0.id == selectedID }) {
+        spotifyStyleDisclaimer(for: product)
       }
-
-      // Restore Purchase
-      restorePurchasesButton
     }
     .padding(.horizontal, 24)
+  }
+  
+  /// Spotify-style disclaimer text that clearly states what happens after trial/promo
+  private func spotifyStyleDisclaimer(for product: Product) -> some View {
+    Text(spotifyDisclaimerText(for: product))
+      .font(.caption2)
+      .foregroundColor(.secondary)
+      .multilineTextAlignment(.center)
+      .padding(.horizontal, 8)
+  }
+  
+  /// Generates Spotify-style disclaimer text
+  private func spotifyDisclaimerText(for product: Product) -> String {
+    let periodText = product.id.contains("yearly") ? "year" : "month"
+    
+    // Check if user is eligible for trial
+    if storeManager.isEligibleForIntroOffer,
+       let subscription = product.subscription,
+       let introOffer = subscription.introductoryOffer {
+      
+      let trialPeriod = formatTrialPeriod(introOffer.period)
+      return "Free for \(trialPeriod.lowercased()), then \(product.displayPrice) per \(periodText) after. Offer only available if you haven't tried Joodle Pro before. Cancel anytime."
+    }
+    
+    // No trial available
+    return "\(product.displayPrice) per \(periodText). Cancel anytime."
   }
 
   @ViewBuilder
@@ -578,31 +607,50 @@ struct PaywallContentView: View {
     }
   }
 
-  private var restorePurchasesButton: some View {
-    Button {
-      Task {
-        await storeManager.restorePurchases()
-        if storeManager.hasActiveSubscription {
-          configuration.onRestoreComplete?()
-        }
-      }
-    } label: {
-      Text("Restore Purchase")
-        .font(.caption)
-        .foregroundColor(.secondary)
-    }
-  }
-
   // MARK: - Legal Links Section
 
   private var legalLinksSection: some View {
-    HStack(spacing: 16) {
-      Link("Terms of Service", destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!)
-      Text("•")
-      Link("Privacy Policy", destination: URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!)
+    HStack(spacing: 0) {
+      // Restore Purchases
+      Button {
+        Task {
+          await storeManager.restorePurchases()
+          if storeManager.hasActiveSubscription {
+            configuration.onRestoreComplete?()
+          }
+        }
+      } label: {
+        Text("Restore Purchases")
+          .font(.caption)
+          .foregroundColor(.secondary)
+      }
+      
+      Spacer()
+      
+      // Terms
+      Link("Terms", destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!)
+        .font(.caption)
+        .foregroundColor(.secondary)
+      
+      Spacer()
+      
+      // Privacy
+      Link("Privacy", destination: URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!)
+        .font(.caption)
+        .foregroundColor(.secondary)
+      
+      Spacer()
+      
+      // Redeem
+      Button {
+        showRedeemCode = true
+      } label: {
+        Text("Redeem")
+          .font(.caption)
+          .foregroundColor(.secondary)
+      }
     }
-    .font(.caption2)
-    .foregroundColor(.secondary)
+    .padding(.horizontal, 32)
     .padding(.bottom, 20)
   }
 

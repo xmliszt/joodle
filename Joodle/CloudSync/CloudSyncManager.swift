@@ -75,9 +75,7 @@ enum CloudSyncStatePersistence {
   static func restoreSyncStateIfNeeded() -> Bool {
     guard isReinstallWithCloudData() else { return false }
 
-    // Check if user still has subscription (can't restore without it)
-    // Note: SubscriptionManager may not be fully initialized yet, so we check entitlement directly
-    // For now, we'll restore the preference and let the sync manager validate subscription later
+    // iCloud sync is free for all users - no subscription check needed
 
     print("CloudSyncStatePersistence: Detected reinstall with existing iCloud sync data")
     print("CloudSyncStatePersistence: Restoring sync state from iCloud")
@@ -111,9 +109,9 @@ final class CloudSyncManager {
   // Sync progress tracking for UI indication
   private var _isSyncing = false
 
-  /// Whether sync is actively in progress - only returns true if user has valid subscription
+  /// Whether sync is actively in progress
   var isSyncing: Bool {
-    get { _isSyncing && SubscriptionManager.shared.hasICloudSync }
+    get { _isSyncing }
     set { _isSyncing = newValue }
   }
   var syncProgress: String = ""
@@ -291,16 +289,8 @@ final class CloudSyncManager {
   }
 
   private func handleCloudKitEvent(_ notification: Notification) {
-    // Only process if sync is enabled AND user has active subscription
+    // Only process if sync is enabled
     guard userPreferences.isCloudSyncEnabled else { return }
-    guard SubscriptionManager.shared.hasICloudSync else {
-      // User doesn't have subscription - clear any sync status and return
-      if isSyncing {
-        isSyncing = false
-        syncProgress = ""
-      }
-      return
-    }
 
     // Extract the event from notification
     guard let userInfo = notification.userInfo,
@@ -363,16 +353,10 @@ final class CloudSyncManager {
 
   // MARK: - Enable/Disable Sync
   func enableSync() -> Bool {
-    // Check subscription first
-    guard SubscriptionManager.shared.hasICloudSync else {
-      hasError = true
-      errorMessage = "iCloud Sync requires Joodle Pro subscription."
-      return false
-    }
-
+    // Check system requirements (subscription is no longer needed)
     guard isSystemCloudEnabled else {
       hasError = true
-      errorMessage = "iCloud Documents & Data is disabled in Settings. Please enable it first."
+      errorMessage = "iCloud is disabled in Settings. Enable it in 'Settings → [Your Name] → iCloud → Saved to iCloud → Joodle'."
       return false
     }
 
@@ -413,19 +397,15 @@ final class CloudSyncManager {
     return true
   }
 
-  /// Check if user can enable sync (has subscription and system requirements met)
+  /// Check if user can enable sync (system requirements met)
   var canEnableSync: Bool {
-    return SubscriptionManager.shared.hasICloudSync &&
-           isSystemCloudEnabled &&
+    return isSystemCloudEnabled &&
            isCloudAvailable &&
            networkMonitor.isConnected
   }
 
   /// Reason why sync cannot be enabled (for UI display)
   var syncBlockedReason: String? {
-    if !SubscriptionManager.shared.hasICloudSync {
-      return "Requires Joodle Pro"
-    }
     if !isSystemCloudEnabled {
       return "iCloud disabled in Settings"
     }
@@ -508,17 +488,14 @@ final class CloudSyncManager {
   }
 
   var canSync: Bool {
-    return SubscriptionManager.shared.hasICloudSync &&
-           isSystemCloudEnabled &&
+    return isSystemCloudEnabled &&
            isCloudAvailable &&
            networkMonitor.isConnected &&
            userPreferences.isCloudSyncEnabled
   }
 
   var statusMessage: String {
-    if !SubscriptionManager.shared.hasICloudSync {
-      return "Requires Joodle Pro"
-    } else if !isSystemCloudEnabled {
+    if !isSystemCloudEnabled {
       return "iCloud Documents disabled in Settings"
     } else if !isCloudAvailable {
       return "iCloud not available"
@@ -533,9 +510,7 @@ final class CloudSyncManager {
 
   /// Detailed sync status message for UI display
   var syncStatusMessage: String {
-    if !SubscriptionManager.shared.hasICloudSync {
-      return "iCloud Sync is a Joodle Pro feature. Upgrade to sync your Joodles across devices."
-    } else if needsSystemSettingsChange {
+    if needsSystemSettingsChange {
       return "iCloud is disabled in iOS Settings. Enable it in \"Settings → [Your Name] → iCloud → Saved to iCloud -> Joodle\" to sync."
     } else if systemCloudEnabled && !appCloudEnabled {
       return "Sync is disabled in app. Enable it to sync with iCloud."

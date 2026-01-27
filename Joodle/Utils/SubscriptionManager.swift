@@ -100,9 +100,6 @@ class SubscriptionManager: ObservableObject {
             // Refresh from StoreKit on launch to get latest status
             await refreshSubscriptionFromStoreKit()
 
-            // Check iCloud sync status on launch - disable if not subscribed
-            await checkAndDisableCloudSyncIfNeeded()
-
             // Check premium theme color on launch - reset to default if not subscribed
             await checkAndResetPremiumThemeColorIfNeeded()
         }
@@ -139,10 +136,6 @@ class SubscriptionManager: ObservableObject {
     }
 
     var hasWidgets: Bool {
-        isSubscribed
-    }
-
-    var hasICloudSync: Bool {
         isSubscribed
     }
 
@@ -330,29 +323,6 @@ class SubscriptionManager: ObservableObject {
     private func handleSubscriptionGained() {
         print("🎉 Subscription gained!")
 
-        // Auto-enable iCloud sync when user upgrades or restores subscription
-        if !UserPreferences.shared.isCloudSyncEnabled {
-            let syncManager = CloudSyncManager.shared
-
-            if syncManager.isCloudAvailable && syncManager.systemCloudEnabled {
-                let cloudStore = NSUbiquitousKeyValueStore.default
-                cloudStore.synchronize()
-                let hadSyncEnabled = cloudStore.bool(forKey: "is_cloud_sync_enabled_backup") ||
-                                     cloudStore.bool(forKey: "cloud_sync_was_enabled")
-
-                print("   Auto-enabling iCloud sync for subscriber")
-                if hadSyncEnabled {
-                    print("   Detected previous sync history")
-                }
-
-                UserPreferences.shared.isCloudSyncEnabled = true
-
-                cloudStore.set(true, forKey: "is_cloud_sync_enabled_backup")
-                cloudStore.set(true, forKey: "cloud_sync_was_enabled")
-                cloudStore.synchronize()
-            }
-        }
-
         // Auto-disable watermark for new pro users (they can now remove it)
         if UserPreferences.shared.shareCardWatermarkEnabled {
             UserPreferences.shared.shareCardWatermarkEnabled = false
@@ -381,16 +351,6 @@ class SubscriptionManager: ObservableObject {
         // Reset watermark to enabled for free users (they can't disable it)
         if !UserPreferences.shared.shareCardWatermarkEnabled {
             UserPreferences.shared.shareCardWatermarkEnabled = true
-        }
-
-        // Disable iCloud sync for free users (premium feature)
-        if UserPreferences.shared.isCloudSyncEnabled {
-            UserPreferences.shared.isCloudSyncEnabled = false
-
-            let cloudStore = NSUbiquitousKeyValueStore.default
-            cloudStore.set(false, forKey: "is_cloud_sync_enabled_backup")
-            cloudStore.set(false, forKey: "cloud_sync_was_enabled")
-            cloudStore.synchronize()
         }
 
         // Update widget subscription status
@@ -433,28 +393,7 @@ class SubscriptionManager: ObservableObject {
         }
     }
 
-    // MARK: - Cloud Sync Check
-
-    func checkAndDisableCloudSyncIfNeeded() async {
-        guard !isSubscribed else { return }
-
-        if UserPreferences.shared.isCloudSyncEnabled {
-            print("☁️ Non-subscriber has iCloud sync enabled - disabling")
-            UserPreferences.shared.isCloudSyncEnabled = false
-
-            let cloudStore = NSUbiquitousKeyValueStore.default
-            cloudStore.set(false, forKey: "is_cloud_sync_enabled_backup")
-            cloudStore.set(false, forKey: "cloud_sync_was_enabled")
-            cloudStore.synchronize()
-        }
-    }
-
-    /// Reset the expired flag (call after user acknowledges)
-    func acknowledgeExpiry() {
-        subscriptionJustExpired = false
-    }
-
-    // MARK: - Status Message
+    // MARK: - Debug Methods
 
     var subscriptionStatusMessage: String? {
         guard isSubscribed else { return nil }
@@ -494,6 +433,11 @@ class SubscriptionManager: ObservableObject {
         }
 
         return nil
+    }
+
+    /// Reset the expired flag (call after user acknowledges)
+    func acknowledgeExpiry() {
+        subscriptionJustExpired = false
     }
 
     func formatExpirationDate(_ date: Date?) -> String? {

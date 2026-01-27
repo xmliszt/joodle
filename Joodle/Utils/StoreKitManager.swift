@@ -479,6 +479,20 @@ class StoreKitManager: NSObject, ObservableObject {
 
         return percentageInt
     }
+    
+    /// Returns the formatted yearly savings amount (e.g., "$24.99")
+    func yearlySavingsAmount() -> String? {
+        guard let monthly = monthlyProduct,
+              let yearly = yearlyProduct else {
+            return nil
+        }
+        
+        let monthlyYearlyCost = monthly.price * 12
+        let savings = monthlyYearlyCost - yearly.price
+        
+        // Format using the product's price format style
+        return savings.formatted(yearly.priceFormatStyle)
+    }
 }
 
 // MARK: - SKPaymentTransactionObserver (StoreKit 1)

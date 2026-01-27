@@ -624,13 +624,11 @@ struct SettingsView: View {
   
   @ViewBuilder
   private var iCloudSyncStatusView: some View {
-    if !subscriptionManager.hasICloudSync {
-      PremiumFeatureBadge()
-    } else if needsRestartForSync {
+    if needsRestartForSync {
       Image(systemName: "exclamationmark.triangle.fill")
         .foregroundStyle(.orange)
         .font(.caption)
-    } else if cloudSyncManager.isSyncing && subscriptionManager.hasICloudSync {
+    } else if cloudSyncManager.isSyncing {
       HStack(spacing: 6) {
         Text("Syncing")
           .font(.caption)

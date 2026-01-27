@@ -16,9 +16,6 @@ struct iCloudSyncView: View {
   @State private var showEnableWithRestartAlert = false
   @State private var showDisableAlert = false
   @State private var showSystemSettingsAlert = false
-  @State private var showPaywall = false
-  @State private var isCheckingSubscription = false
-  @State private var pendingToggleAction = false
 
   /// Check if restart is needed for sync to work
   /// This happens when user enabled sync during onboarding but chose "Later" for restart
@@ -69,38 +66,8 @@ struct iCloudSyncView: View {
         }
       }
 
-      // MARK: - Premium Feature Banner
-      if !subscriptionManager.hasICloudSync {
-        Section {
-          VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
-              Image(systemName: "crown.fill")
-                .foregroundStyle(.appAccent)
-                .font(.title2)
-
-              VStack(alignment: .leading, spacing: 4) {
-                Text("iCloud Sync is available with Joodle Pro. Upgrade to sync your Joodles across all your devices.")
-                  .font(.caption)
-                  .foregroundStyle(.secondary)
-                  .fixedSize(horizontal: false, vertical: true)
-              }
-            }
-
-            Button {
-              showPaywall = true
-            } label: {
-              Text("Upgrade to Joodle Pro")
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.appAccent)
-          }
-          .padding(.vertical, 8)
-        }
-      }
-
       // MARK: - System vs App Toggle Warning
-      if syncManager.needsSystemSettingsChange && subscriptionManager.hasICloudSync {
+      if syncManager.needsSystemSettingsChange {
         Section {
           VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
@@ -142,35 +109,18 @@ struct iCloudSyncView: View {
           get: { userPreferences.isCloudSyncEnabled },
           set: { newValue in
             if newValue {
-              // Verify subscription with online check before enabling iCloud sync
-              guard !isCheckingSubscription else { return }
-              isCheckingSubscription = true
-              pendingToggleAction = true
-
-              Task {
-                // Verify subscription with online check (required for iCloud Sync)
-                let hasAccess = await SubscriptionManager.shared.verifySubscriptionForAccess()
-
-                await MainActor.run {
-                  isCheckingSubscription = false
-                  pendingToggleAction = false
-
-                  // Check if user has access to iCloud Sync feature
-                  if !hasAccess {
-                    showPaywall = true
-                  } else if !syncManager.systemCloudEnabled {
-                    showSystemSettingsAlert = true
-                  } else if ModelContainerManager.shared.needsRestartForSyncChange {
-                    // Restart is required - show special alert
-                    showEnableWithRestartAlert = true
-                    // Track iCloud sync enabled
-                    AnalyticsManager.shared.trackICloudSyncEnabled()
-                  } else {
-                    showEnableAlert = true
-                    // Track iCloud sync enabled
-                    AnalyticsManager.shared.trackICloudSyncEnabled()
-                  }
-                }
+              // No subscription verification needed - iCloud Sync is always available (built-in iOS capability)
+              if !syncManager.systemCloudEnabled {
+                showSystemSettingsAlert = true
+              } else if ModelContainerManager.shared.needsRestartForSyncChange {
+                // Restart is required - show special alert
+                showEnableWithRestartAlert = true
+                // Track iCloud sync enabled
+                AnalyticsManager.shared.trackICloudSyncEnabled()
+              } else {
+                showEnableAlert = true
+                // Track iCloud sync enabled
+                AnalyticsManager.shared.trackICloudSyncEnabled()
               }
             } else {
               // No restart needed to disable - sync just stops on next app launch
@@ -185,15 +135,9 @@ struct iCloudSyncView: View {
             SettingsIconView(systemName: "icloud.fill", backgroundColor: .cyan)
             Text("iCloud Sync")
               .font(.body)
-
-            if !subscriptionManager.hasICloudSync {
-              Spacer()
-              PremiumFeatureBadge()
-            }
           }
         }
-        .disabled(isCheckingSubscription || (!subscriptionManager.hasICloudSync || !syncManager.systemCloudEnabled || !syncManager.isCloudAvailable || !networkMonitor.isConnected))
-        .opacity(isCheckingSubscription ? 0.6 : 1.0)
+        .disabled(!syncManager.systemCloudEnabled || !syncManager.isCloudAvailable || !networkMonitor.isConnected)
       } footer: {
         if syncManager.needsSystemSettingsChange {
           Text("Joodle can't sync with iCloud because \"Saved to iCloud\" is disabled in system settings.")
@@ -228,7 +172,7 @@ struct iCloudSyncView: View {
           // iCloud Status
           HStack {
             SettingsIconView(systemName: needsRestartForSync ? "icloud.slash" : (syncManager.isCloudAvailable ? "icloud.fill" : "icloud.slash"), backgroundColor: .cyan)
-            Text("iCloud")
+            Text("iCloud Account")
               .foregroundStyle(.primary)
 
             Spacer()
@@ -331,20 +275,6 @@ struct iCloudSyncView: View {
         // MARK: - Advanced
         Section {
           NavigationLink {
-            SyncActivityDetailView(needsRestartForSync: needsRestartForSync)
-          } label: {
-            HStack {
-              SettingsIconView(systemName: "chart.line.uptrend.xyaxis", backgroundColor: .gray)
-              Text("Sync Activity Details").foregroundStyle(.primary)
-              if needsRestartForSync {
-                Spacer()
-                Image(systemName: "exclamationmark.triangle.fill")
-                  .foregroundStyle(.orange)
-              }
-            }
-          }
-
-          NavigationLink {
             TroubleshootingView()
           } label: {
             HStack {
@@ -352,15 +282,10 @@ struct iCloudSyncView: View {
               Text("Troubleshooting Guide").foregroundStyle(.primary)
             }
           }
-        } header: {
-          Text("Advanced")
         }
       }
     }
     .navigationTitle("Sync to iCloud")
-    .sheet(isPresented: $showPaywall) {
-      StandalonePaywallView()
-    }
     .navigationBarTitleDisplayMode(.inline)
     .alert("Enable iCloud Sync", isPresented: $showEnableAlert) {
       Button("Cancel", role: .cancel) { }
@@ -403,143 +328,8 @@ struct iCloudSyncView: View {
       syncManager.checkCloudAvailability()
       // Clear the pending restart flag since user can see the banner here
       UserDefaults.standard.removeObject(forKey: "pending_icloud_sync_restart")
-      // Verify subscription status when accessing iCloud Sync view (premium feature)
-      Task {
-        await SubscriptionManager.shared.verifySubscriptionForAccess()
-      }
     }
     .postHogScreenView("iCloud Sync")
-  }
-}
-
-// MARK: - Sync Activity Detail View
-struct SyncActivityDetailView: View {
-  @Environment(\.cloudSyncManager) private var syncManager
-  @Environment(\.userPreferences) private var userPreferences
-  var needsRestartForSync: Bool = false
-
-  var body: some View {
-    List {
-      // MARK: - Restart Required Banner
-      if needsRestartForSync {
-        Section {
-          VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
-              Image(systemName: "arrow.clockwise.circle.fill")
-                .foregroundStyle(.appAccentContrast)
-                .font(.title2)
-
-              VStack(alignment: .leading, spacing: 4) {
-                Text("Restart Required")
-                  .font(.headline)
-                  .foregroundStyle(.appAccentContrast)
-
-                Text("iCloud Sync is enabled but requires a restart to start working. Sync activity will appear after you restart.")
-                  .font(.caption)
-                  .foregroundStyle(.appAccentContrast.opacity(0.9))
-                  .fixedSize(horizontal: false, vertical: true)
-              }
-            }
-
-            Button {
-              DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                exit(0)
-              }
-            } label: {
-              Text("Restart Now")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.appAccent)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 32))
-            }
-          }
-          .padding(.vertical, 8)
-          .listRowBackground(Color.appAccent)
-        }
-      }
-
-      Section("What Gets Synced") {
-        VStack(alignment: .leading, spacing: 12) {
-          HStack(spacing: 8) {
-            Image(systemName: "note.text")
-              .foregroundStyle(.primary)
-              .frame(width: 24)
-            VStack(alignment: .leading) {
-              Text("Journal Entries")
-                .font(.body)
-            }
-          }
-
-          HStack(spacing: 8) {
-            Image(systemName: "gear")
-              .foregroundStyle(.primary)
-              .frame(width: 24)
-            VStack(alignment: .leading) {
-              Text("User Preferences")
-                .font(.body)
-            }
-          }
-        }
-        .padding(.vertical, 4)
-      }
-
-
-      Section("Last sync activities") {
-        if let lastImport = syncManager.lastObservedImport {
-          VStack(alignment: .leading, spacing: 4) {
-            HStack {
-              Image(systemName: "arrow.down.circle.fill")
-                .foregroundStyle(.blue)
-              Text("Last download from iCloud")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-              Spacer()
-            }
-
-            Text(lastImport.formatted(date: .abbreviated, time: .standard))
-              .font(.caption)
-              .foregroundStyle(.secondary)
-          }
-          .padding(.vertical, 4)
-        } else {
-          HStack {
-            Image(systemName: "arrow.down.circle")
-              .foregroundStyle(.secondary)
-            Text("No download events observed yet")
-              .foregroundStyle(.secondary)
-          }
-        }
-
-        if let lastExport = syncManager.lastObservedExport {
-          VStack(alignment: .leading, spacing: 4) {
-            HStack {
-              Image(systemName: "arrow.up.circle.fill")
-                .foregroundStyle(.green)
-              Text("Last upload to iCloud")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-              Spacer()
-            }
-
-            Text(lastExport.formatted(date: .abbreviated, time: .standard))
-              .font(.caption)
-              .foregroundStyle(.secondary)
-          }
-          .padding(.vertical, 4)
-        } else {
-          HStack {
-            Image(systemName: "arrow.up.circle")
-              .foregroundStyle(.secondary)
-            Text("No upload events observed yet")
-              .foregroundStyle(.secondary)
-          }
-        }
-      }
-    }
-    .navigationTitle("Sync Activity Details")
-    .navigationBarTitleDisplayMode(.inline)
   }
 }
 

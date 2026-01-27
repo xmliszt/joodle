@@ -14,6 +14,7 @@ struct SubscriptionsView: View {
   @StateObject private var storeManager = StoreKitManager.shared
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var subscriptionGroupID: String?
+  @State private var showRedeemCode = false
 
   /// The current product comes directly from StoreKitManager for accuracy
   private var currentProduct: Product? {
@@ -38,7 +39,7 @@ struct SubscriptionsView: View {
           }
 
           // Legal info
-          legalSection
+          legalLinksSection
         }
         .padding(.vertical, 20)
         .padding(.bottom, 40)
@@ -72,6 +73,12 @@ struct SubscriptionsView: View {
 
       Task {
         await refreshSubscriptionStatus()
+      }
+    }
+    .offerCodeRedemption(isPresented: $showRedeemCode) { _ in
+      Task {
+        await storeManager.updatePurchasedProducts()
+        await subscriptionManager.updateSubscriptionStatus()
       }
     }
   }
@@ -207,20 +214,20 @@ struct SubscriptionsView: View {
       .padding(.horizontal, 20)
 
       if subscriptionManager.hasRedeemedOfferCode && subscriptionManager.willAutoRenew {
-        Text("Your promo code offer will automatically convert to a paid subscription on \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "the expiration date"). Cancel anytime before then to avoid charges.")
+        Text(pricingDisclaimerText(for: currentProduct, scenario: .promoCode))
           .font(.caption2)
           .foregroundColor(.secondary)
           .multilineTextAlignment(.leading)
           .padding(.horizontal, 32)
       } else if subscriptionManager.isInTrialPeriod && subscriptionManager.hasPendingOfferCode && subscriptionManager.willAutoRenew {
         // Trial with pending offer code - promo activates at next billing event (when trial ends)
-        Text("You have a promo code applied. When your free trial ends, the promo period will activate. After the promo period ends, your subscription will convert to paid. Cancel anytime to avoid charges.")
+        Text(pricingDisclaimerText(for: currentProduct, scenario: .trialWithPromo))
           .font(.caption2)
           .foregroundColor(.secondary)
           .multilineTextAlignment(.leading)
           .padding(.horizontal, 32)
       } else if subscriptionManager.isInTrialPeriod && subscriptionManager.willAutoRenew {
-        Text("Your free trial will automatically convert to a paid subscription on \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "the expiration date"). Cancel anytime before then to avoid charges.")
+        Text(pricingDisclaimerText(for: currentProduct, scenario: .trial))
           .font(.caption2)
           .foregroundColor(.secondary)
           .multilineTextAlignment(.leading)
@@ -250,16 +257,48 @@ struct SubscriptionsView: View {
   }
 
   // MARK: - Legal Section
-
-  private var legalSection: some View {
-    HStack(spacing: 16) {
-      Link("Terms of Service", destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!)
-      Text("•")
-      Link("Privacy Policy", destination: URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!)
+ 
+  private var legalLinksSection: some View {
+    HStack(spacing: 0) {
+      // Restore Purchases
+      Button {
+        Task {
+          await storeManager.restorePurchases()
+          await subscriptionManager.updateSubscriptionStatus()
+        }
+      } label: {
+        Text("Restore Purchases")
+          .font(.caption)
+          .foregroundColor(.secondary)
+      }
+      
+      Spacer()
+      
+      // Terms
+      Link("Terms", destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!)
+        .font(.caption)
+        .foregroundColor(.secondary)
+      
+      Spacer()
+      
+      // Privacy
+      Link("Privacy", destination: URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!)
+        .font(.caption)
+        .foregroundColor(.secondary)
+      
+      Spacer()
+      
+      // Redeem
+      Button {
+        showRedeemCode = true
+      } label: {
+        Text("Redeem")
+          .font(.caption)
+          .foregroundColor(.secondary)
+      }
     }
-    .font(.caption2)
-    .foregroundColor(.secondary)
-    .padding(.top, 8)
+    .padding(.horizontal, 32)
+    .padding(.bottom, 20)
   }
 
   // MARK: - Helper Methods
@@ -301,6 +340,38 @@ struct SubscriptionsView: View {
     formatter.timeZone = TimeZone.current
     let timeZoneAbbreviation = formatter.timeZone.abbreviation() ?? ""
     return "\(formatter.string(from: date)) (\(timeZoneAbbreviation))"
+  }
+
+  private enum PricingScenario {
+    case promoCode
+    case trialWithPromo
+    case trial
+  }
+
+  private func pricingDisclaimerText(for product: Product?, scenario: PricingScenario) -> String {
+    guard let product = product else {
+      // Fallback if product is unavailable
+      switch scenario {
+      case .promoCode:
+        return "Your promo code offer will automatically convert to a paid subscription on \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "the expiration date"). Cancel anytime before then to avoid charges."
+      case .trialWithPromo:
+        return "You have a promo code applied. When your free trial ends, the promo period will activate. After the promo period ends, your subscription will convert to paid. Cancel anytime to avoid charges."
+      case .trial:
+        return "Your free trial will automatically convert to a paid subscription on \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "the expiration date"). Cancel anytime before then to avoid charges."
+      }
+    }
+
+    let billingPeriod = product.id.contains("monthly") ? "month" : "year"
+    let price = product.displayPrice
+
+    switch scenario {
+    case .promoCode:
+      return "Your promo code offer will automatically convert to a paid subscription on \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "the expiration date"). After the promo period ends, your subscription will charge \(price) / \(billingPeriod). Cancel anytime before then to avoid charges."
+    case .trialWithPromo:
+      return "You have a promo code applied. When your free trial ends, the promo period will activate. After the promo period ends, your subscription will charge \(price) / \(billingPeriod). Cancel anytime to avoid charges."
+    case .trial:
+      return "Your free trial will automatically convert to a paid subscription on \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "the expiration date"). After the free trial period ends, your subscription will charge \(price) / \(billingPeriod). Cancel anytime before then to avoid charges."
+    }
   }
 
   private func formatExpirationDateFull(_ date: Date) -> String {

@@ -14,7 +14,7 @@ enum Pref {
   static let defaultViewMode = Key(key: "default_view_mode", default: ViewMode.now)
   static let preferredColorScheme = Key<ColorScheme?>(key: "preferred_color_scheme", default: nil)
   static let enableHaptic = Key(key: "enable_haptic", default: true)
-  static let isCloudSyncEnabled = Key(key: "is_cloud_sync_enabled", default: false)
+  static let isCloudSyncEnabled = Key(key: "is_cloud_sync_enabled", default: true)
   static let accentColor = Key(key: "accent_color", default: ThemeColor.defaultColor)
   static let isDailyReminderEnabled = Key(key: "is_daily_reminder_enabled", default: false)
   // Default to 9:00 AM - stored as seconds from midnight
