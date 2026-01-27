@@ -548,16 +548,6 @@ struct ContentView: View {
     dataProvider.selectDateItem(item)
     scrollToRelevantDate(itemId: item.id, scrollProxy: scrollProxy)
 
-    // Track entry selection with context
-    let entry = entries.first { Calendar.current.isDate($0.createdAt, inSameDayAs: item.date) }
-    let isToday = Calendar.current.isDateInToday(item.date)
-    let isFuture = item.date > Date()
-    AnalyticsManager.shared.trackEntrySelected(
-      hasDrawing: entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true),
-      hasText: !(entry?.body.isEmpty ?? true),
-      isToday: isToday,
-      isFuture: isFuture
-    )
   }
 
   /// Toggle the view mode to a specific mode

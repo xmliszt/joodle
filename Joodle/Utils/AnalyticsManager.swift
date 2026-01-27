@@ -34,21 +34,6 @@ final class AnalyticsManager {
         case onboardingSkipped = "onboarding_skipped"
         case onboardingDrawingCreated = "onboarding_drawing_created"
 
-        // Core Features - Entry
-        case entrySelected = "entry_selected"
-        case entryDeleted = "entry_deleted"
-
-        // Core Features - Drawing
-        case drawingCanvasOpened = "drawing_canvas_opened"
-        case drawingCreated = "drawing_created"
-        case drawingUpdated = "drawing_updated"
-        case drawingCleared = "drawing_cleared"
-        case drawingUndoUsed = "drawing_undo_used"
-        case drawingRedoUsed = "drawing_redo_used"
-
-        // Core Features - Note
-        case noteSaved = "note_saved"
-
         // Navigation & UI
         case viewModeChanged = "view_mode_changed"
         case yearChanged = "year_changed"
@@ -116,10 +101,6 @@ final class AnalyticsManager {
         case navigatedFromWidget = "navigated_from_widget"
         case navigatedFromNotification = "navigated_from_notification"
         case navigatedFromShortcut = "navigated_from_shortcut"
-
-        // Errors & Issues
-        case errorOccurred = "error_occurred"
-        case featureGated = "feature_gated"
 
         // Remote Alerts
         case remoteAlertShown = "remote_alert_shown"
@@ -298,57 +279,6 @@ final class AnalyticsManager {
     func trackOnboardingSkipped(atStep stepName: String) {
         track(.onboardingSkipped, properties: [
             .stepName: stepName
-        ])
-    }
-
-    // MARK: Entry
-
-    func trackEntrySelected(hasDrawing: Bool, hasText: Bool, isToday: Bool, isFuture: Bool) {
-        track(.entrySelected, properties: [
-            .hasDrawing: hasDrawing,
-            .hasText: hasText,
-            .isToday: isToday,
-            .isFuture: isFuture
-        ])
-    }
-
-    func trackEntryDeleted(hadDrawing: Bool, hadText: Bool) {
-        track(.entryDeleted, properties: [
-            .hasDrawing: hadDrawing,
-            .hasText: hadText
-        ])
-    }
-
-    // MARK: Drawing
-
-    func trackDrawingCanvasOpened(isNewDrawing: Bool) {
-        track(.drawingCanvasOpened, properties: [
-            .source: isNewDrawing ? "new" : "edit"
-        ])
-    }
-
-    func trackDrawingCreated(strokeCount: Int) {
-        track(.drawingCreated, properties: [
-            .strokeCount: strokeCount
-        ])
-    }
-
-    func trackDrawingUpdated(strokeCount: Int) {
-        track(.drawingUpdated, properties: [
-            .strokeCount: strokeCount
-        ])
-    }
-
-    func trackDrawingCleared() {
-        track(.drawingCleared)
-    }
-
-    // MARK: Note
-
-    func trackNoteSaved(textLength: Int, isNew: Bool) {
-        track(.noteSaved, properties: [
-            .textLength: textLength,
-            .source: isNew ? "new" : "edit"
         ])
     }
 
@@ -608,22 +538,6 @@ final class AnalyticsManager {
     func trackNavigatedFromNotification(notificationType: String) {
         track(.navigatedFromNotification, properties: [
             .source: notificationType
-        ])
-    }
-
-    // MARK: Errors
-
-    func trackError(type: String, context: String, message: String) {
-        track(.errorOccurred, properties: [
-            .errorType: type,
-            .errorContext: context,
-            .errorMessage: message
-        ])
-    }
-
-    func trackFeatureGated(featureName: String) {
-        track(.featureGated, properties: [
-            .featureName: featureName
         ])
     }
 

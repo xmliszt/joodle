@@ -779,11 +779,6 @@ private func deleteEntry() {
 
   guard let entry else { return }
 
-  // Track entry deletion
-  let hadDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
-  let hadText = !entry.body.isEmpty
-  AnalyticsManager.shared.trackEntryDeleted(hadDrawing: hadDrawing, hadText: hadText)
-
   // Remove any associated reminder
   if let date = date {
     // Use CalendarDate for timezone-agnostic date string
@@ -820,12 +815,6 @@ func saveNote(text: String, for date: Date) {
   // If text is empty and no existing entry, don't create an empty entry
   if text.isEmpty && entry == nil {
     return
-  }
-
-  // Track note saved (only if there's actual text)
-  if !text.isEmpty {
-    let isNew = entry == nil || entry?.body.isEmpty == true
-    AnalyticsManager.shared.trackNoteSaved(textLength: text.count, isNew: isNew)
   }
 
   // If we have an existing entry, update it

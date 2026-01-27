@@ -109,10 +109,6 @@ struct DrawingCanvasView: View {
         checkAccessState()
       }
       loadExistingDrawing()
-
-      // Track drawing canvas opened
-      let isNewDrawing = entry?.drawingData == nil || entry?.drawingData?.isEmpty == true
-      AnalyticsManager.shared.trackDrawingCanvasOpened(isNewDrawing: isNewDrawing)
     }
     .onChange(of: isShowing) { oldValue, newValue in
       if !isMockMode {
@@ -274,9 +270,6 @@ struct DrawingCanvasView: View {
 
   private func undoLastStroke() {
     guard !undoStack.isEmpty else { return }
-
-    // Track undo usage
-    AnalyticsManager.shared.track(.drawingUndoUsed)
 
     // Save current state to redo stack
     redoStack.append((paths, pathMetadata))
@@ -460,16 +453,6 @@ struct DrawingCanvasView: View {
       return
     }
 
-    // Track drawing event
-    let isNewDrawing = entry?.drawingData == nil || entry?.drawingData?.isEmpty == true
-    if !paths.isEmpty {
-      if isNewDrawing {
-        AnalyticsManager.shared.trackDrawingCreated(strokeCount: paths.count)
-      } else {
-        AnalyticsManager.shared.trackDrawingUpdated(strokeCount: paths.count)
-      }
-    }
-
     // If we have an existing entry but paths is empty, clear the drawing data
     // If entry becomes empty (no text either), delete it entirely
     if paths.isEmpty {
@@ -526,11 +509,6 @@ struct DrawingCanvasView: View {
 
 
   private func clearDrawing() {
-    // Track drawing cleared
-    if !paths.isEmpty {
-      AnalyticsManager.shared.trackDrawingCleared()
-    }
-
     // Save current state to undo stack before clearing
     if !paths.isEmpty {
       saveStateToUndoStack()

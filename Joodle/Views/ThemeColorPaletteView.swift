@@ -72,8 +72,6 @@ struct ThemeColorPaletteView: View {
 
     private func handleColorTap(_ colorInfo: ThemeColorInfo) {
         if colorInfo.isLocked {
-            // Track feature gated event
-            AnalyticsManager.shared.trackFeatureGated(featureName: "theme_color_\(colorInfo.themeColor.rawValue)")
             onLockedColorTapped?()
         } else {
             // Don't do anything if already selected or already regenerating
