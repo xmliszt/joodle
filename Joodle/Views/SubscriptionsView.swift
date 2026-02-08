@@ -502,6 +502,7 @@ struct GlossyCrownView: View {
   }
 }
 
+#if DEBUG
 #Preview("Lifetime User") {
   NavigationStack {
     SubscriptionsView()
@@ -604,3 +605,4 @@ struct GlossyCrownView: View {
       }
   }
 }
+#endif
