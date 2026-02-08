@@ -389,8 +389,8 @@ class SubscriptionManager: ObservableObject {
     }
 
     /// Resets all premium feature preferences to free tier defaults
-    /// Called when subscription is lost or user downgrades
-    private func resetPremiumFeaturesToDefaults() {
+    /// Called when subscription is lost, grace period expires, or user downgrades
+    func resetPremiumFeaturesToDefaults() {
         // Reset premium theme color to default if user was using a premium color
         let currentColor = UserPreferences.shared.accentColor
         if currentColor.isPremium {

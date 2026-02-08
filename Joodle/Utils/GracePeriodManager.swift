@@ -192,6 +192,12 @@ class GracePeriodManager: ObservableObject {
                 // Grace period just expired — track it
                 AnalyticsManager.shared.trackGracePeriodExpired()
                 print("⏰ Grace period expired")
+
+                // Reset premium features to free tier defaults if user is not subscribed
+                if !SubscriptionManager.shared.isSubscribed {
+                    SubscriptionManager.shared.resetPremiumFeaturesToDefaults()
+                    print("   Premium features reset to free tier defaults")
+                }
             }
         }
     }

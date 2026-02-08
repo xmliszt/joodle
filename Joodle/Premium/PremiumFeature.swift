@@ -189,6 +189,10 @@ final class PremiumAccessController: ObservableObject {
             object: nil
         )
 
+        // Reset all premium features to free tier defaults
+        // (theme color, watermark, widget status, etc.)
+        SubscriptionManager.shared.resetPremiumFeaturesToDefaults()
+
         // Disable iCloud sync if it was enabled
         if UserPreferences.shared.isCloudSyncEnabled {
             UserPreferences.shared.isCloudSyncEnabled = false
