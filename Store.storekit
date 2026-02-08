@@ -14,7 +14,21 @@
 
   ],
   "products" : [
-
+    {
+      "displayPrice" : "69.98",
+      "familyShareable" : false,
+      "internalID" : "6758905894",
+      "localizations" : [
+        {
+          "description" : "Unlock all features forever",
+          "displayName" : "Joodle Pro Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "dev.liyuxuan.joodle.pro.lifetime",
+      "referenceName" : "Joodle Pro Lifetime",
+      "type" : "NonConsumable"
+    }
   ],
   "settings" : {
     "_applicationInternalID" : "6756204776",
@@ -24,7 +38,7 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 789122394.56986201,
+    "_lastSynchronizedDate" : 792229084.97558403,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "SGP",
@@ -88,7 +102,7 @@
           "groupNumber" : 2,
           "internalID" : "6757140768",
           "introductoryOffer" : {
-            "internalID" : "A5A9E7CF",
+            "internalID" : "00DB1D5F",
             "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P1W"
@@ -116,16 +130,29 @@
           "codeOffers" : [
             {
               "eligibility" : [
+                "expired",
                 "new",
-                "existing",
-                "expired"
+                "existing"
               ],
-              "internalID" : "8A76387F",
+              "internalID" : "03F22C76",
               "isStackable" : true,
               "numberOfPeriods" : 1,
               "paymentMode" : "free",
               "referenceName" : "1 Month Free",
               "subscriptionPeriod" : "P1M"
+            },
+            {
+              "eligibility" : [
+                "new",
+                "expired",
+                "existing"
+              ],
+              "internalID" : "E5534FC9",
+              "isStackable" : true,
+              "numberOfPeriods" : 1,
+              "paymentMode" : "free",
+              "referenceName" : "1 Year Free",
+              "subscriptionPeriod" : "P1Y"
             }
           ],
           "displayPrice" : "49.98",
@@ -133,7 +160,7 @@
           "groupNumber" : 1,
           "internalID" : "6757140365",
           "introductoryOffer" : {
-            "internalID" : "6941B0CE",
+            "internalID" : "818C2C91",
             "numberOfPeriods" : 1,
             "paymentMode" : "free",
             "subscriptionPeriod" : "P2W"

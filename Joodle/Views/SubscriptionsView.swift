@@ -34,7 +34,7 @@ struct SubscriptionsView: View {
           }
 
           // Manage Subscription Button
-          if subscriptionManager.isSubscribed {
+          if subscriptionManager.isSubscribed && !subscriptionManager.isLifetimeUser {
             manageSubscriptionButton
           }
 
@@ -134,11 +134,19 @@ struct SubscriptionsView: View {
         Text("Joodle Pro")
           .font(.system(size: 28, weight: .bold))
 
-        Text("You have full access to all features. Thank you for your support!")
-          .font(.subheadline)
-          .foregroundColor(.secondary)
-          .multilineTextAlignment(.center)
-          .padding(.horizontal, 32)
+        if subscriptionManager.isLifetimeUser {
+          Text("You own Joodle Pro forever. Thank you for your support!")
+            .font(.subheadline)
+            .foregroundColor(.secondary)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 32)
+        } else {
+          Text("You have full access to all features. Thank you for your support!")
+            .font(.subheadline)
+            .foregroundColor(.secondary)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 32)
+        }
 
         // Show trial, offer code, or cancellation status
         if let statusMessage = subscriptionManager.subscriptionStatusMessage {
@@ -305,7 +313,9 @@ struct SubscriptionsView: View {
 
   /// Returns the appropriate badge text for the current plan
   private var currentPlanBadge: String? {
-    if subscriptionManager.hasRedeemedOfferCode {
+    if subscriptionManager.isLifetimeUser {
+      return "LIFETIME"
+    } else if subscriptionManager.hasRedeemedOfferCode {
       return "PROMO CODE"
     } else if subscriptionManager.isInTrialPeriod {
       // Show promo badge if there's a pending offer code (it replaces the trial)
@@ -319,7 +329,9 @@ struct SubscriptionsView: View {
 
   /// Returns the appropriate icon name for the current subscription status
   private var statusIconName: String {
-    if subscriptionManager.hasRedeemedOfferCode {
+    if subscriptionManager.isLifetimeUser {
+      return "infinity"
+    } else if subscriptionManager.hasRedeemedOfferCode {
       return "ticket.fill"
     } else if subscriptionManager.isInTrialPeriod {
       // Show ticket icon if there's also a pending offer code
@@ -461,8 +473,105 @@ struct GlossyCrownView: View {
   }
 }
 
-#Preview {
+#Preview("Lifetime User") {
   NavigationStack {
     SubscriptionsView()
+      .task {
+        SubscriptionManager.shared.configureForPreview(
+          subscribed: true,
+          lifetime: true,
+          productID: "dev.liyuxuan.joodle.pro.lifetime"
+        )
+        await SubscriptionManager.shared.loadProductsForPreview()
+      }
+  }
+}
+
+#Preview("Active Subscription") {
+  NavigationStack {
+    SubscriptionsView()
+      .task {
+        SubscriptionManager.shared.configureForPreview(
+          subscribed: true,
+          autoRenew: true,
+          expiration: Date().addingTimeInterval(60 * 60 * 24 * 30),
+          productID: "dev.liyuxuan.joodle.pro.yearly"
+        )
+        await SubscriptionManager.shared.loadProductsForPreview()
+      }
+  }
+}
+
+#Preview("Free Trial") {
+  NavigationStack {
+    SubscriptionsView()
+      .task {
+        SubscriptionManager.shared.configureForPreview(
+          subscribed: true,
+          trial: true,
+          autoRenew: true,
+          expiration: Date().addingTimeInterval(60 * 60 * 24 * 7),
+          productID: "dev.liyuxuan.joodle.pro.yearly"
+        )
+        await SubscriptionManager.shared.loadProductsForPreview()
+      }
+  }
+}
+
+#Preview("Trial + Pending Promo") {
+  NavigationStack {
+    SubscriptionsView()
+      .task {
+        SubscriptionManager.shared.configureForPreview(
+          subscribed: true,
+          trial: true,
+          autoRenew: true,
+          pendingOfferCode: true,
+          expiration: Date().addingTimeInterval(60 * 60 * 24 * 7),
+          productID: "dev.liyuxuan.joodle.pro.yearly"
+        )
+        await SubscriptionManager.shared.loadProductsForPreview()
+      }
+  }
+}
+
+#Preview("Promo Code Active") {
+  NavigationStack {
+    SubscriptionsView()
+      .task {
+        SubscriptionManager.shared.configureForPreview(
+          subscribed: true,
+          autoRenew: true,
+          offerCode: true,
+          expiration: Date().addingTimeInterval(60 * 60 * 24 * 30),
+          productID: "dev.liyuxuan.joodle.pro.yearly"
+        )
+        await SubscriptionManager.shared.loadProductsForPreview()
+      }
+  }
+}
+
+#Preview("Cancelled (Expiring)") {
+  NavigationStack {
+    SubscriptionsView()
+      .task {
+        SubscriptionManager.shared.configureForPreview(
+          subscribed: true,
+          autoRenew: false,
+          expiration: Date().addingTimeInterval(60 * 60 * 24 * 5),
+          productID: "dev.liyuxuan.joodle.pro.yearly"
+        )
+        await SubscriptionManager.shared.loadProductsForPreview()
+      }
+  }
+}
+
+#Preview("Not Subscribed") {
+  NavigationStack {
+    SubscriptionsView()
+      .task {
+        SubscriptionManager.shared.configureForPreview()
+        await SubscriptionManager.shared.loadProductsForPreview()
+      }
   }
 }

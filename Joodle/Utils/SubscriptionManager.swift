@@ -42,6 +42,9 @@ class SubscriptionManager: ObservableObject {
     /// Flag indicating subscription just expired (for UI alerts)
     @Published var subscriptionJustExpired: Bool = false
 
+    /// Whether the user has a lifetime (non-consumable) purchase
+    @Published var isLifetimeUser: Bool = false
+
     /// The stored subscription expiration date - this is the source of truth for local checks
     var subscriptionExpirationDate: Date? {
         get {
@@ -78,6 +81,11 @@ class SubscriptionManager: ObservableObject {
     /// Flag to prevent triggering side effects during initialization
     private var isInitializing = true
 
+    #if DEBUG
+    /// When true, prevents StoreKit refreshes from overwriting preview state
+    private var isPreviewMode = false
+    #endif
+
     /// Minimum interval between StoreKit refreshes (in seconds) to avoid rate limiting
     private let refreshInterval: TimeInterval = 30
 
@@ -88,7 +96,12 @@ class SubscriptionManager: ObservableObject {
 
     private init() {
         // Set initial subscription state from stored date WITHOUT triggering didSet side effects
-        if let expirationDate = subscriptionExpirationDate, Date() < expirationDate {
+        let storedProduct = UserDefaults.standard.string(forKey: "subscriptionProductID")
+        if storedProduct == "dev.liyuxuan.joodle.pro.lifetime" {
+            // Lifetime purchase - always active, no expiration check needed
+            isSubscribed = true
+            isLifetimeUser = true
+        } else if let expirationDate = subscriptionExpirationDate, Date() < expirationDate {
             isSubscribed = true
         }
 
@@ -165,6 +178,15 @@ class SubscriptionManager: ObservableObject {
     /// Verify subscription with online check before granting access
     /// Returns true if access should be granted, false otherwise
     @discardableResult func verifySubscriptionForAccess() async -> Bool {
+        // Lifetime users always have access
+        if isLifetimeUser {
+            // Still refresh from StoreKit to confirm, but default to allowing access
+            if isNetworkAvailable {
+                await refreshSubscriptionFromStoreKit()
+            }
+            return isSubscribed
+        }
+
         // If network is available, always refresh from StoreKit to get latest status
         if isNetworkAvailable {
             await refreshSubscriptionFromStoreKit()
@@ -189,6 +211,15 @@ class SubscriptionManager: ObservableObject {
 
     /// Updates isSubscribed based on the stored expiration date (no network call)
     private func updateSubscribedStateFromStoredDate() {
+        // Lifetime users are always subscribed
+        if storedProductID == "dev.liyuxuan.joodle.pro.lifetime" {
+            if !isSubscribed {
+                isSubscribed = true
+            }
+            isLifetimeUser = true
+            return
+        }
+
         if let expirationDate = subscriptionExpirationDate {
             let wasSubscribed = isSubscribed
             let nowSubscribed = Date() < expirationDate
@@ -208,6 +239,10 @@ class SubscriptionManager: ObservableObject {
 
     /// Refreshes subscription status from StoreKit and updates stored expiration date
     func refreshSubscriptionFromStoreKit() async {
+        #if DEBUG
+        guard !isPreviewMode else { return }
+        #endif
+
         // Check if network is available
         // When offline, StoreKit returns inconsistent cached results
         // So we skip the StoreKit query and just use local expiry date
@@ -242,6 +277,7 @@ class SubscriptionManager: ObservableObject {
             offerCodeId = storeManager.offerCodeId
             hasPendingOfferCode = storeManager.hasPendingOfferCode
             pendingOfferCodeId = storeManager.pendingOfferCodeId
+            isLifetimeUser = storeManager.hasLifetimePurchase
 
             // Update subscribed state
             if !isSubscribed {
@@ -260,6 +296,7 @@ class SubscriptionManager: ObservableObject {
             offerCodeId = nil
             hasPendingOfferCode = false
             pendingOfferCodeId = nil
+            isLifetimeUser = false
 
             if isSubscribed {
                 isSubscribed = false
@@ -294,6 +331,8 @@ class SubscriptionManager: ObservableObject {
     /// Local check - just compares current time with stored expiration date
     private func checkExpiration() {
         guard isSubscribed else { return }
+        // Lifetime users never expire
+        guard !isLifetimeUser else { return }
 
         if let expirationDate = subscriptionExpirationDate {
             if Date() >= expirationDate {
@@ -398,6 +437,11 @@ class SubscriptionManager: ObservableObject {
     var subscriptionStatusMessage: String? {
         guard isSubscribed else { return nil }
 
+        // Lifetime users have permanent access
+        if isLifetimeUser {
+            return nil
+        }
+
         if !willAutoRenew {
             if let expirationDate = subscriptionExpirationDate {
                 let formatter = DateFormatter()
@@ -493,6 +537,48 @@ class SubscriptionManager: ObservableObject {
         subscriptionExpirationDate = nil
         storedProductID = nil
         isSubscribed = false
+    }
+
+    /// Configure subscription state for SwiftUI previews
+    func configureForPreview(
+        subscribed: Bool = false,
+        lifetime: Bool = false,
+        trial: Bool = false,
+        autoRenew: Bool = true,
+        offerCode: Bool = false,
+        pendingOfferCode: Bool = false,
+        expiration: Date? = nil,
+        productID: String? = nil
+    ) {
+        isPreviewMode = true
+        isInitializing = true
+        isSubscribed = subscribed
+        isLifetimeUser = lifetime
+        isInTrialPeriod = trial
+        willAutoRenew = autoRenew
+        hasRedeemedOfferCode = offerCode
+        hasPendingOfferCode = pendingOfferCode
+        subscriptionExpirationDate = expiration
+        isInitializing = false
+
+        // Also configure StoreKitManager so PricingCard can resolve the Product
+        let storeManager = StoreKitManager.shared
+        storeManager.isPreviewMode = true
+        storeManager.currentProductID = productID
+        storeManager.isInTrialPeriod = trial
+        storeManager.willAutoRenew = autoRenew
+        storeManager.subscriptionExpirationDate = expiration
+        storeManager.hasRedeemedOfferCode = offerCode
+        storeManager.hasPendingOfferCode = pendingOfferCode
+        storeManager.hasLifetimePurchase = lifetime
+        if subscribed {
+            storeManager.purchasedProductIDs = productID.map { Set([$0]) } ?? []
+        }
+    }
+
+    /// Ensure StoreKit products are loaded for previews
+    func loadProductsForPreview() async {
+        await StoreKitManager.shared.loadProducts()
     }
     #endif
 

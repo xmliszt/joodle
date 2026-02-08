@@ -31,11 +31,20 @@ class StoreKitManager: NSObject, ObservableObject {
 
     private let productIDs: [String] = [
         "dev.liyuxuan.joodle.pro.monthly",
-        "dev.liyuxuan.joodle.pro.yearly"
+        "dev.liyuxuan.joodle.pro.yearly",
+        "dev.liyuxuan.joodle.pro.lifetime"
     ]
+
+    /// Whether the user owns the lifetime (non-consumable) purchase
+    @Published var hasLifetimePurchase = false
 
     private var updateListenerTask: Task<Void, Never>?
     private var foregroundObserver: AnyCancellable?
+
+    #if DEBUG
+    /// When true, prevents updatePurchasedProducts from overwriting preview state
+    var isPreviewMode = false
+    #endif
 
     override init() {
         super.init()
@@ -262,6 +271,10 @@ class StoreKitManager: NSObject, ObservableObject {
     // MARK: - Check Subscription Status
 
     func updatePurchasedProducts() async {
+        #if DEBUG
+        guard !isPreviewMode else { return }
+        #endif
+
         var purchasedIDs: Set<String> = []
         var expirationDate: Date?
         var inTrial = false
@@ -341,24 +354,38 @@ class StoreKitManager: NSObject, ObservableObject {
             eligibleForIntro = await subscription.isEligibleForIntroOffer
         }
 
-        // Fallback: If we didn't find status via subscription.status, check currentEntitlements
-        if currentProduct == nil {
-            for await result in Transaction.currentEntitlements {
-                do {
-                    let transaction = try checkVerified(result)
+        // Check for lifetime (non-consumable) purchase via currentEntitlements
+        // Also serves as fallback if subscription.status found nothing
+        var foundLifetime = false
+        for await result in Transaction.currentEntitlements {
+            do {
+                let transaction = try checkVerified(result)
 
-                    if transaction.revocationDate == nil {
-                        purchasedIDs.insert(transaction.productID)
+                if transaction.revocationDate == nil {
+                    purchasedIDs.insert(transaction.productID)
 
-                        // Only set as current if we don't have one yet
-                        if currentProduct == nil {
-                            currentProduct = transaction.productID
-                        }
+                    // Lifetime purchase takes priority
+                    if transaction.productID == "dev.liyuxuan.joodle.pro.lifetime" {
+                        foundLifetime = true
+                        currentProduct = transaction.productID
+                    } else if currentProduct == nil {
+                        // Only set subscription as current if we don't have one yet
+                        currentProduct = transaction.productID
                     }
-                } catch {
-                    debugPrint("Failed to verify transaction: \(error)")
                 }
+            } catch {
+                debugPrint("Failed to verify transaction: \(error)")
             }
+        }
+
+        // If lifetime is found, override subscription details
+        if foundLifetime {
+            currentProduct = "dev.liyuxuan.joodle.pro.lifetime"
+            expirationDate = nil  // Lifetime has no expiration
+            autoRenew = false
+            inTrial = false
+            redeemedOfferCode = false
+            pendingOfferCode = false
         }
 
         // StoreKit is the source of truth - always trust its response
@@ -373,6 +400,7 @@ class StoreKitManager: NSObject, ObservableObject {
         self.offerCodeId = offerCode
         self.hasPendingOfferCode = pendingOfferCode
         self.pendingOfferCodeId = pendingOfferCodeId
+        self.hasLifetimePurchase = foundLifetime
 
         print("📊 Subscription Status:")
         print("   Active: \(!purchasedIDs.isEmpty)")
@@ -385,6 +413,7 @@ class StoreKitManager: NSObject, ObservableObject {
         print("   Expiration: \(expirationDate?.formatted() ?? "N/A")")
         print("   Auto-Renew: \(autoRenew)")
         print("   Eligible for Intro Offer: \(eligibleForIntro)")
+        print("   Lifetime Purchase: \(foundLifetime)")
     }
 
     // MARK: - Transaction Verification
@@ -450,6 +479,15 @@ class StoreKitManager: NSObject, ObservableObject {
 
     var yearlyProduct: Product? {
         products.first { $0.id.contains("yearly") }
+    }
+
+    var lifetimeProduct: Product? {
+        products.first { $0.id.contains("lifetime") }
+    }
+
+    /// Whether the current active product is the lifetime (non-consumable) purchase
+    var isLifetimeUser: Bool {
+        currentProductID == "dev.liyuxuan.joodle.pro.lifetime"
     }
 
     func savingsPercentage() -> Int? {

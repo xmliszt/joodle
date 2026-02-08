@@ -41,6 +41,9 @@ struct SliderCTAButton: View {
   /// Optional trial period text to display (e.g., "7-Day", "1-Month", "3-Month")
   let trialPeriodText: String?
 
+  /// Custom text to show when there's no trial (defaults to "Subscribe to Joodle Pro")
+  let fallbackButtonText: String
+
   /// Called when the user completes the slide action
   let onSlideComplete: () -> Void
 
@@ -171,7 +174,7 @@ struct SliderCTAButton: View {
     if let trialText = trialPeriodText {
       return "Start \(trialText) Free Trial"
     }
-    return "Subscribe to Joodle Pro"
+    return fallbackButtonText
   }
 
   private func startShimmerAnimation() {
@@ -334,7 +337,7 @@ struct PaywallContentView: View {
     }
     .onChange(of: storeManager.products) { _, newProducts in
       if selectedProductID == nil, !newProducts.isEmpty {
-        selectedProductID = storeManager.yearlyProduct?.id
+        selectedProductID = storeManager.lifetimeProduct?.id ?? storeManager.yearlyProduct?.id
       }
     }
     .offerCodeRedemption(isPresented: $showRedeemCode) { _ in
@@ -355,12 +358,6 @@ struct PaywallContentView: View {
       Text("Get Joodle Pro")
         .font(.system(size: 34, weight: .bold))
         .multilineTextAlignment(.center)
-
-      Text("Supercharge your creativity!")
-        .font(.body)
-        .foregroundColor(.secondary)
-        .multilineTextAlignment(.center)
-        .padding(.horizontal)
     }
     .padding(.top, 24)
     .padding(.horizontal, 8)
@@ -420,6 +417,7 @@ struct PaywallContentView: View {
   /// Shows savings info for yearly plan and auto-renewal disclaimer
   private func savingsAndRenewalInfo(for product: Product) -> some View {
     let isYearly = product.id.contains("yearly")
+    let isLifetime = product.id.contains("lifetime")
     let savingsAmount = storeManager.yearlySavingsAmount()
     
     return VStack(spacing: 4) {
@@ -439,14 +437,29 @@ struct PaywallContentView: View {
               insertion: .opacity.combined(with: .scale(scale: 0.8)).combined(with: .offset(y: -4)),
               removal: .opacity.combined(with: .scale(scale: 0.8)).combined(with: .offset(y: 4))
             ))
+        } else if isLifetime {
+          Text("Pay once, own it forever.")
+            .font(.subheadline.weight(.medium))
+            .foregroundColor(.appAccent)
+            .transition(.asymmetric(
+              insertion: .opacity.combined(with: .scale(scale: 0.8)).combined(with: .offset(y: -4)),
+              removal: .opacity.combined(with: .scale(scale: 0.8)).combined(with: .offset(y: 4))
+            ))
         }
       }
       .animation(.springFkingSatifying, value: isYearly)
+      .animation(.springFkingSatifying, value: isLifetime)
       
-      // Auto-renewal disclaimer
-      Text("Auto renews \(isYearly ? "yearly" : "monthly") until canceled.")
-        .font(.caption)
-        .foregroundColor(.secondary)
+      // Auto-renewal disclaimer (not for lifetime)
+      if isLifetime {
+        Text("One-time purchase. No subscription.")
+          .font(.caption)
+          .foregroundColor(.secondary)
+      } else {
+        Text("Auto renews \(isYearly ? "yearly" : "monthly") until canceled.")
+          .font(.caption)
+          .foregroundColor(.secondary)
+      }
     }
     .multilineTextAlignment(.center)
     .padding(.top, 4)
@@ -476,29 +489,49 @@ struct PaywallContentView: View {
   }
 
   private var productCards: some View {
-    VStack(spacing: 16) {
-      if let yearly = storeManager.yearlyProduct {
+    VStack(spacing: 24) {
+      // Top row: Lifetime centered
+      if let lifetime = storeManager.lifetimeProduct {
         PricingCard(
-          product: yearly,
-          isSelected: selectedProductID == yearly.id,
-          badge: savingsBadgeText(),
-          isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
+          product: lifetime,
+          isSelected: selectedProductID == lifetime.id,
+          badge: "BEST VALUE",
+          isEligibleForIntroOffer: false,
+          layout: .compact,
           onSelect: {
-            selectedProductID = yearly.id
+            selectedProductID = lifetime.id
           }
         )
+        .frame(maxWidth: .infinity)
       }
 
-      if let monthly = storeManager.monthlyProduct {
-        PricingCard(
-          product: monthly,
-          isSelected: selectedProductID == monthly.id,
-          badge: nil,
-          isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
-          onSelect: {
-            selectedProductID = monthly.id
-          }
-        )
+      // Bottom row: Yearly + Monthly side by side
+      HStack(spacing: 24) {
+        if let yearly = storeManager.yearlyProduct {
+          PricingCard(
+            product: yearly,
+            isSelected: selectedProductID == yearly.id,
+            badge: savingsBadgeText(),
+            isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
+            layout: .compact,
+            onSelect: {
+              selectedProductID = yearly.id
+            }
+          )
+        }
+
+        if let monthly = storeManager.monthlyProduct {
+          PricingCard(
+            product: monthly,
+            isSelected: selectedProductID == monthly.id,
+            badge: nil,
+            isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
+            layout: .compact,
+            onSelect: {
+              selectedProductID = monthly.id
+            }
+          )
+        }
       }
     }
   }
@@ -530,6 +563,11 @@ struct PaywallContentView: View {
   
   /// Generates Spotify-style disclaimer text
   private func spotifyDisclaimerText(for product: Product) -> String {
+    // Lifetime purchase - no subscription
+    if product.id.contains("lifetime") {
+      return "One-time payment of \(product.displayPrice). No subscription, no recurring charges. Unlock all features forever."
+    }
+    
     let periodText = product.id.contains("yearly") ? "year" : "month"
     
     // Check if user is eligible for trial
@@ -552,12 +590,19 @@ struct PaywallContentView: View {
       allowModeToggle: false,
       isLoading: isPurchasing || storeManager.hasActiveSubscription,
       trialPeriodText: selectedTrialPeriodText,
+      fallbackButtonText: selectedProductIsLifetime ? "Buy Joodle Pro" : "Subscribe to Joodle Pro",
       onSlideComplete: handleSlideComplete
     )
   }
 
+  /// Whether the currently selected product is the lifetime purchase
+  private var selectedProductIsLifetime: Bool {
+    selectedProductID?.contains("lifetime") == true
+  }
+
   /// Returns the formatted trial period text for the currently selected product
   /// Returns nil if user is not eligible for introductory offer (e.g., already used free trial)
+  /// Returns nil for lifetime product (no trial for one-time purchase)
   private var selectedTrialPeriodText: String? {
     // Check if user is eligible for intro offer (hasn't used trial before)
     guard storeManager.isEligibleForIntroOffer else {
@@ -566,6 +611,7 @@ struct PaywallContentView: View {
 
     guard let selectedID = selectedProductID,
           let product = storeManager.products.first(where: { $0.id == selectedID }),
+          !product.id.contains("lifetime"),
           let subscription = product.subscription,
           let introOffer = subscription.introductoryOffer else {
       return nil
@@ -596,8 +642,11 @@ struct PaywallContentView: View {
       if let selectedID = selectedProductID,
          let product = storeManager.products.first(where: { $0.id == selectedID }) {
         handlePurchase(product)
+      } else if let lifetime = storeManager.lifetimeProduct {
+        // Auto-select lifetime if nothing selected
+        selectedProductID = lifetime.id
+        handlePurchase(lifetime)
       } else if let yearly = storeManager.yearlyProduct {
-        // Auto-select yearly if nothing selected
         selectedProductID = yearly.id
         handlePurchase(yearly)
       }
@@ -658,7 +707,7 @@ struct PaywallContentView: View {
 
   private func handleOnAppear() {
     if selectedProductID == nil, !storeManager.products.isEmpty {
-      selectedProductID = storeManager.yearlyProduct?.id
+      selectedProductID = storeManager.lifetimeProduct?.id ?? storeManager.yearlyProduct?.id
     }
 
     if storeManager.products.isEmpty && !storeManager.isLoading {
@@ -795,6 +844,7 @@ struct PaywallContentView: View {
       allowModeToggle: true,
       isLoading: false,
       trialPeriodText: "3-Month",
+      fallbackButtonText: "Subscribe to Joodle Pro",
       onSlideComplete: {}
     )
     .padding(.horizontal, 24)
@@ -804,6 +854,7 @@ struct PaywallContentView: View {
       allowModeToggle: true,
       isLoading: false,
       trialPeriodText: nil,
+      fallbackButtonText: "Subscribe to Joodle Pro",
       onSlideComplete: {}
     )
     .padding(.horizontal, 24)
