@@ -60,13 +60,13 @@ struct PinchGestureHint: View {
             // Left outward arrow (only for pinch out)
             if direction == .out {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.appFont(size: 24, weight: .bold))
                     .foregroundColor(.white.opacity(arrowOpacity))
                     .offset(x: -arrowOffset)
                     .padding(.trailing, 8)
             } else if direction == .in {
               Image(systemName: "chevron.right")
-                  .font(.system(size: 24, weight: .bold))
+                  .font(.appFont(size: 24, weight: .bold))
                   .foregroundColor(.white.opacity(arrowOpacity))
                   .offset(x: arrowOffset)
                   .padding(.trailing, 8)
@@ -83,13 +83,13 @@ struct PinchGestureHint: View {
             // Right outward arrow (only for pinch out)
             if direction == .out {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.appFont(size: 24, weight: .bold))
                     .foregroundColor(.white.opacity(arrowOpacity))
                     .offset(x: arrowOffset)
                     .padding(.leading, 8)
             }  else if direction == .in {
               Image(systemName: "chevron.left")
-                  .font(.system(size: 24, weight: .bold))
+                  .font(.appFont(size: 24, weight: .bold))
                   .foregroundColor(.white.opacity(arrowOpacity))
                   .offset(x: -arrowOffset)
                   .padding(.trailing, 8)
@@ -180,7 +180,7 @@ struct TapAndHoldHint: View {
 
             // Finger pressing down icon
             Image(systemName: "hand.point.up.fill")
-                .font(.system(size: 50))
+                .font(.appFont(size: 50))
                 .foregroundColor(.white)
                 .scaleEffect(scale)
                 .offset(y: isPressed ? 5 : -10)
@@ -247,7 +247,7 @@ struct SwipeHint: View {
         ZStack {
             // Main hand
             Image(systemName: iconName)
-                .font(.system(size: 50))
+                .font(.appFont(size: 50))
                 .foregroundColor(.white)
                 .rotationEffect(handRotation)
                 .offset(swipeOffset(for: offset))

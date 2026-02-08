@@ -275,9 +275,9 @@ struct InteractiveTutorialView: View {
                 } label: {
                   HStack(spacing: 6) {
                     Image(systemName: "xmark.circle.fill")
-                      .font(.body)
+                      .font(.appBody())
                     Text(isOnboarding ? "Skip tutorial" : "Exit tutorial")
-                      .font(.subheadline.weight(.medium))
+                      .font(.appSubheadline(weight: .medium))
                   }
                   .foregroundColor(.primary)
                   .padding(.horizontal, 16)
@@ -292,9 +292,9 @@ struct InteractiveTutorialView: View {
                 } label: {
                   HStack(spacing: 6) {
                     Image(systemName: "xmark.circle.fill")
-                      .font(.body)
+                      .font(.appBody())
                     Text(isOnboarding ? "Skip tutorial" : "Exit tutorial")
-                      .font(.subheadline.weight(.medium))
+                      .font(.appSubheadline(weight: .medium))
                   }
                   .foregroundColor(.white.opacity(0.9))
                   .padding(.horizontal, 16)
@@ -859,7 +859,7 @@ private struct SheetTutorialOverlay: View {
 
                     // Tooltip bubble
                     Text(tooltip.message)
-                        .font(.subheadline.weight(.medium))
+                        .font(.appSubheadline(weight: .medium))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
@@ -936,7 +936,7 @@ private struct TutorialHeaderView: View {
                         }
                     } label: {
                         Text(String(mockStore.selectedYear))
-                            .font(.title.bold())
+                            .font(.appTitle(weight: .bold))
                             .foregroundColor(.textColor)
                     }
                     .menuStyle(.borderlessButton)

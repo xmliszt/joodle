@@ -27,10 +27,10 @@ struct OnboardingCompletionView: View {
 
                 VStack(spacing: 16) {
                     Text("You're all set!")
-                        .font(.largeTitle.bold())
+                        .font(.appLargeTitle(weight: .bold))
 
                     Text("Open your Joodle and let your fingertips capture the moments that matter. Each stroke adds a memory, building a collection that grows with you.")
-                        .font(.body)
+                        .font(.appBody())
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
                         .lineSpacing(4)

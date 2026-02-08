@@ -70,10 +70,10 @@ struct AnnouncementsSettingsView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(type.displayName)
-                        .font(.body)
+                        .font(.appBody())
 
                     Text(type.description)
-                        .font(.caption)
+                        .font(.appCaption())
                         .foregroundStyle(.secondary)
                 }
             }

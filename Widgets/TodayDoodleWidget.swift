@@ -167,21 +167,21 @@ struct TodayDoodleWidgetLockedView: View {
     if family == .accessoryCircular {
       VStack(spacing: 2) {
         Image(systemName: "crown.fill")
-          .font(.system(size: 16))
+          .font(.appFont(size: 16))
           .foregroundStyle(themeColor)
         VStack(alignment: .center) {
           Text("Unlock")
-            .font(.system(size: 8))
+            .font(.appFont(size: 8))
             .foregroundColor(.primary)
           Text("Pro")
-            .font(.system(size: 8))
+            .font(.appFont(size: 8))
             .foregroundColor(.primary)
         }
       }
     } else {
       VStack(spacing: family == .systemLarge ? 16 : (family == .systemMedium ? 12 : 8)) {
         Image(systemName: "crown.fill")
-          .font(.system(size: family == .systemLarge ? 40 : (family == .systemMedium ? 28 : 24)))
+          .font(.appFont(size: family == .systemLarge ? 40 : (family == .systemMedium ? 28 : 24)))
           .foregroundStyle(
             LinearGradient(
               colors: [themeColor.opacity(0.5), themeColor],
@@ -192,11 +192,11 @@ struct TodayDoodleWidgetLockedView: View {
 
         VStack(spacing: 4) {
           Text("Joodle Pro")
-            .font(family == .systemLarge ? .headline : .caption.bold())
+            .font(family == .systemLarge ? .appHeadline() : .appCaption(weight: .bold))
             .foregroundColor(.primary)
 
           Text("Upgrade to unlock widgets")
-            .font(family == .systemLarge ? .subheadline : .caption2)
+            .font(family == .systemLarge ? .appSubheadline() : .appCaption2())
             .foregroundColor(.secondary)
             .multilineTextAlignment(.center)
             .lineSpacing(4)
@@ -228,7 +228,7 @@ struct CircularTodayDoodleView: View {
     } else {
       ZStack {
         Image(systemName: "scribble.variable")
-          .font(.system(size: 24))
+          .font(.appFont(size: 24))
           .foregroundStyle(.secondary)
       }
       .containerBackground(for: .widget) {
@@ -253,7 +253,7 @@ struct SmallTodayDoodleView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if todayData.hasText, let text = todayData.text {
           Text(text)
-            .font(.system(size: 12))
+            .font(.appFont(size: 12))
             .lineLimit(4)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 12)
@@ -277,7 +277,7 @@ struct MediumTodayDoodleView: View {
       // Top bar with date
       HStack {
         Text(formatDate(todayData.date))
-          .font(.system(size: 12))
+          .font(.appFont(size: 12))
           .foregroundColor(.secondary)
         Spacer()
       }
@@ -294,7 +294,7 @@ struct MediumTodayDoodleView: View {
             .padding(10)
         } else {
           Image(systemName: "scribble.variable")
-            .font(.system(size: 40))
+            .font(.appFont(size: 40))
             .foregroundColor(.secondary.opacity(0.3))
             .frame(width: 80, height: 80)
             .padding(10)
@@ -303,12 +303,12 @@ struct MediumTodayDoodleView: View {
         // Right side: Text or placeholder
         if todayData.hasText, let text = todayData.text {
           Text(text)
-            .font(.system(size: 12))
+            .font(.appFont(size: 12))
             .lineLimit(5)
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {
           Text("No notes for today.")
-            .font(.system(size: 12))
+            .font(.appFont(size: 12))
             .foregroundColor(.secondary.opacity(0.5))
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -343,7 +343,7 @@ struct LargeTodayDoodleView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if todayData.hasText, let text = todayData.text {
           Text(text)
-            .font(.system(size: 20))
+            .font(.appFont(size: 20))
             .multilineTextAlignment(.center)
             .padding(.horizontal, 12)
         }
@@ -460,7 +460,7 @@ struct NoTodayDoodleView: View {
           .foregroundStyle(.secondary.opacity(0.3))
 
         Image(systemName: "scribble.variable")
-          .font(.system(size: 24))
+          .font(.appFont(size: 24))
           .foregroundStyle(.secondary)
       }
       .containerBackground(for: .widget) {
@@ -469,10 +469,10 @@ struct NoTodayDoodleView: View {
     } else {
       VStack(alignment: .center, spacing: 8) {
         Image(systemName: "scribble.variable")
-          .font(.system(size: family == .systemSmall ? 32 : family == .systemMedium ? 40 : 48))
+          .font(.appFont(size: family == .systemSmall ? 32 : family == .systemMedium ? 40 : 48))
           .foregroundColor(.secondary.opacity(0.3))
         Text("No Joodle today")
-          .font(family == .systemSmall ? .system(size: 11) : family == .systemMedium ? .system(size: 11) : .system(size: 15))
+          .font(family == .systemSmall ? .appFont(size: 11) : family == .systemMedium ? .appFont(size: 11) : .appFont(size: 15))
           .foregroundColor(.secondary)
           .multilineTextAlignment(.center)
       }

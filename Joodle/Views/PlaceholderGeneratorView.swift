@@ -19,7 +19,7 @@ struct PlaceholderGeneratorView: View {
   var body: some View {
     VStack(spacing: 20) {
       Text("Draw Placeholder")
-        .font(.headline)
+        .font(.appHeadline())
         .padding(.top)
 
       SharedCanvasView(

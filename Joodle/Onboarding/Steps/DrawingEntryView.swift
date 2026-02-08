@@ -8,14 +8,14 @@ struct DrawingEntryView: View {
       Spacer()
       VStack(alignment: .center, spacing: 16) {
         Text("Rough day? Great day?")
-          .font(.title)
+          .font(.appTitle())
           .fontWeight(.semibold)
           .foregroundColor(.secondary)
           .frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 24)
         VStack(alignment: .leading, spacing: 0) {
           Text("Capture a moment of your day on the canvas below.")
-            .font(.title3)
+            .font(.appTitle3())
             .foregroundColor(.primary)
             .fontWeight(.semibold)
         }

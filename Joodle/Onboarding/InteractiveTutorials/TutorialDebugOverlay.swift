@@ -47,7 +47,7 @@ struct TutorialDebugOverlay: View {
                 }
             } label: {
                 Image(systemName: isExpanded ? "xmark.circle.fill" : "ladybug.fill")
-                    .font(.title2)
+                    .font(.appTitle2())
                     .foregroundColor(.white)
                     .padding(10)
                     .background(Color.black.opacity(0.7))
@@ -67,7 +67,7 @@ struct TutorialDebugOverlay: View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
             Text("Tutorial Debug")
-                .font(.headline)
+                .font(.appHeadline())
                 .foregroundColor(.white)
 
             Divider().background(Color.white.opacity(0.3))
@@ -103,7 +103,7 @@ struct TutorialDebugOverlay: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("Step")
-                    .font(.caption.bold())
+                    .font(.appCaption(weight: .bold))
                 Spacer()
                 Text("\(coordinator.currentStepIndex + 1) / \(coordinator.steps.count)")
                     .font(.caption.monospaced())
@@ -112,7 +112,7 @@ struct TutorialDebugOverlay: View {
             if let step = coordinator.currentStep {
                 HStack {
                     Text("Type")
-                        .font(.caption.bold())
+                        .font(.appCaption(weight: .bold))
                     Spacer()
                     Text(step.type.rawValue)
                         .font(.caption.monospaced())
@@ -121,7 +121,7 @@ struct TutorialDebugOverlay: View {
 
                 HStack {
                     Text("Anchor")
-                        .font(.caption.bold())
+                        .font(.appCaption(weight: .bold))
                     Spacer()
                     Text(anchorDescription(step.highlightAnchor))
                         .font(.caption.monospaced())
@@ -130,7 +130,7 @@ struct TutorialDebugOverlay: View {
 
                 HStack {
                     Text("End")
-                        .font(.caption.bold())
+                        .font(.appCaption(weight: .bold))
                     Spacer()
                     Text(endConditionDescription(step.endCondition))
                         .font(.caption.monospaced())
@@ -141,7 +141,7 @@ struct TutorialDebugOverlay: View {
                 if let prerequisite = step.prerequisiteSetup {
                     HStack {
                         Text("Setup")
-                            .font(.caption.bold())
+                            .font(.appCaption(weight: .bold))
                         Spacer()
                         Text(prerequisiteDescription(prerequisite))
                             .font(.caption.monospaced())
@@ -171,7 +171,7 @@ struct TutorialDebugOverlay: View {
     private var frameInfoSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Highlight Frame")
-                .font(.caption.bold())
+                .font(.appCaption(weight: .bold))
 
             if let step = coordinator.currentStep,
                let frame = coordinator.getHighlightFrame(for: step.highlightAnchor) {
@@ -181,7 +181,7 @@ struct TutorialDebugOverlay: View {
                     Text("(\(Int(frame.minX)), \(Int(frame.minY)))")
                         .font(.caption.monospaced())
                 }
-                .font(.caption)
+                .font(.appCaption())
 
                 HStack {
                     Text("Size")
@@ -189,10 +189,10 @@ struct TutorialDebugOverlay: View {
                     Text("\(Int(frame.width)) × \(Int(frame.height))")
                         .font(.caption.monospaced())
                 }
-                .font(.caption)
+                .font(.appCaption())
             } else {
                 Text("No frame registered")
-                    .font(.caption)
+                    .font(.appCaption())
                     .foregroundColor(.orange)
             }
 
@@ -203,7 +203,7 @@ struct TutorialDebugOverlay: View {
                 Text("\(coordinator.highlightFrames.count) frames")
                     .font(.caption.monospaced())
             }
-            .font(.caption)
+            .font(.appCaption())
             .foregroundColor(.gray)
         }
     }
@@ -224,7 +224,7 @@ struct TutorialDebugOverlay: View {
                         Image(systemName: "chevron.left")
                         Text("Back")
                     }
-                    .font(.caption)
+                    .font(.appCaption())
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(Color.white.opacity(0.2))
@@ -240,7 +240,7 @@ struct TutorialDebugOverlay: View {
                         Text("Next")
                         Image(systemName: "chevron.right")
                     }
-                    .font(.caption)
+                    .font(.appCaption())
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(Color.white.opacity(0.2))
@@ -257,7 +257,7 @@ struct TutorialDebugOverlay: View {
                     }
                 } label: {
                     Text("Reset")
-                        .font(.caption)
+                        .font(.appCaption())
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Color.blue.opacity(0.3))
@@ -268,7 +268,7 @@ struct TutorialDebugOverlay: View {
                     coordinator.skipAll()
                 } label: {
                     Text("Skip All")
-                        .font(.caption)
+                        .font(.appCaption())
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Color.red.opacity(0.3))
@@ -284,13 +284,13 @@ struct TutorialDebugOverlay: View {
         VStack(spacing: 8) {
             Toggle(isOn: $coordinator.isActive) {
                 Text("Show Overlay")
-                    .font(.caption)
+                    .font(.appCaption())
             }
             .toggleStyle(SwitchToggleStyle(tint: .appAccent))
 
             Toggle(isOn: $coordinator.showGestureHint) {
                 Text("Gesture Hint")
-                    .font(.caption)
+                    .font(.appCaption())
             }
             .toggleStyle(SwitchToggleStyle(tint: .appAccent))
         }

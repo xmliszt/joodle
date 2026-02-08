@@ -85,7 +85,7 @@ struct FaqView: View {
                         Image(systemName: "wifi.slash")
                             .foregroundColor(.secondary)
                         Text(errorMessage)
-                            .font(.footnote)
+                            .font(.appFootnote())
                             .foregroundColor(.secondary)
                     }
                     .padding(.vertical, 4)
@@ -120,7 +120,7 @@ struct FaqView: View {
                                 .foregroundColor(.primary)
                             Spacer()
                             Image(systemName: "arrow.up.right")
-                                .font(.caption)
+                                .font(.appCaption())
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -212,7 +212,7 @@ struct FaqContentView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text(item.title)
-                    .font(.title)
+                    .font(.appTitle())
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
 

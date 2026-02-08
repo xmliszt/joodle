@@ -318,7 +318,7 @@ extension CachedAsyncImage {
         }
 
         Text("Cached Async Image Demo")
-            .font(.caption)
+            .font(.appCaption())
     }
     .padding()
 }

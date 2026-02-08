@@ -32,15 +32,15 @@ struct iCloudSyncView: View {
             HStack(alignment: .top, spacing: 12) {
               Image(systemName: "arrow.clockwise.circle.fill")
                 .foregroundStyle(.appAccentContrast)
-                .font(.title2)
+                .font(.appTitle2())
 
               VStack(alignment: .leading, spacing: 4) {
                 Text("Restart Required")
-                  .font(.headline)
+                  .font(.appHeadline())
                   .foregroundStyle(.appAccentContrast)
 
                 Text("iCloud Sync is enabled but requires a restart to start working. Your data will sync after you restart the app.")
-                  .font(.caption)
+                  .font(.appCaption())
                   .foregroundStyle(.appAccentContrast.opacity(0.9))
                   .fixedSize(horizontal: false, vertical: true)
               }
@@ -53,7 +53,7 @@ struct iCloudSyncView: View {
               }
             } label: {
               Text("Restart Now")
-                .font(.subheadline.weight(.semibold))
+                .font(.appSubheadline(weight: .semibold))
                 .foregroundStyle(.appAccent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
@@ -73,15 +73,15 @@ struct iCloudSyncView: View {
             HStack(alignment: .top, spacing: 12) {
               Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.appAccent)
-                .font(.title2)
+                .font(.appTitle2())
 
               VStack(alignment: .leading, spacing: 4) {
                 Text("iCloud Disabled in System Settings")
-                  .font(.headline)
+                  .font(.appHeadline())
                   .foregroundStyle(.primary)
 
                 Text("To enable sync, you must enable \"Saved to iCloud\" for Joodle in iCloud Settings: Settings → [Your Name] → iCloud → Saved to iCloud → Joodle. ")
-                  .font(.caption)
+                  .font(.appCaption())
                   .foregroundStyle(.secondary)
                   .fixedSize(horizontal: false, vertical: true)
               }
@@ -134,34 +134,34 @@ struct iCloudSyncView: View {
           HStack {
             SettingsIconView(systemName: "icloud.fill", backgroundColor: .cyan)
             Text("iCloud Sync")
-              .font(.body)
+              .font(.appBody())
           }
         }
         .disabled(!syncManager.systemCloudEnabled || !syncManager.isCloudAvailable || !networkMonitor.isConnected)
       } footer: {
         if syncManager.needsSystemSettingsChange {
           Text("Joodle can't sync with iCloud because \"Saved to iCloud\" is disabled in system settings.")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundStyle(.appAccent)
         } else if !syncManager.systemCloudEnabled {
           Text("\"Saved to iCloud\" is disabled. Enable it in Settings → [Your Name] → iCloud → Saved to iCloud → Joodle.")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundStyle(.red)
         } else if !syncManager.isCloudAvailable {
           Text("No iCloud account found. Please sign in to iCloud in Settings.")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundStyle(.red)
         } else if !networkMonitor.isConnected {
           Text("Connect to the internet to enable iCloud sync.")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundStyle(.red)
         } else if userPreferences.isCloudSyncEnabled {
           Text("Joodle will automatically sync your journal entries and preferences to iCloud.")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundStyle(.secondary)
         } else {
           Text("When enabled, Joodle automatically syncs your journal entries and preferences to iCloud.")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundStyle(.secondary)
         }
       }
@@ -257,14 +257,14 @@ struct iCloudSyncView: View {
               if syncManager.isSyncing {
                 HStack(spacing: 6) {
                   Text("Syncing now")
-                    .font(.caption)
+                    .font(.appCaption())
                     .foregroundStyle(.appAccent)
                   ProgressView()
                     .scaleEffect(0.6)
                 }
               } else {
                 Text(syncManager.syncActivityDescription)
-                  .font(.caption)
+                  .font(.appCaption())
                   .foregroundStyle(.secondary)
               }
             }
@@ -392,7 +392,7 @@ struct TroubleshootingView: View {
             Text("Open iOS Settings")
             Spacer()
             Image(systemName: "arrow.up.right")
-              .font(.caption)
+              .font(.appCaption())
           }
         }
 
@@ -456,7 +456,7 @@ struct TroubleshootingStep: View {
   var body: some View {
     HStack(alignment: .top, spacing: 12) {
       Text(number)
-        .font(.title2)
+        .font(.appTitle2())
         .fontWeight(.semibold)
         .foregroundStyle(.appAccent)
         .frame(width: 32, height: 32)
@@ -467,11 +467,11 @@ struct TroubleshootingStep: View {
 
       VStack(alignment: .leading, spacing: 4) {
         Text(title)
-          .font(.subheadline)
+          .font(.appSubheadline())
           .fontWeight(.semibold)
 
         Text(description)
-          .font(.caption)
+          .font(.appCaption())
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)
       }

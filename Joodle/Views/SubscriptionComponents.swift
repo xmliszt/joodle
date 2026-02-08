@@ -16,12 +16,12 @@ struct FeatureRow: View {
   var body: some View {
     HStack(alignment: .center, spacing: 8) {
       Image(systemName: icon)
-        .font(.system(size: 20))
+        .font(.appFont(size: 20))
         .foregroundColor(.appAccent)
         .frame(width: 32, height: 32)
       
       Text(title)
-        .font(.subheadline)
+        .font(.appSubheadline())
         .foregroundColor(.primary)
       
       Spacer()

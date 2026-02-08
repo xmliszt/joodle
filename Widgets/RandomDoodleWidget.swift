@@ -271,7 +271,7 @@ struct WidgetLockedView: View {
   var body: some View {
     VStack(spacing: family == .systemLarge ? 16 : 8) {
       Image(systemName: "crown.fill")
-        .font(.system(size: family == .systemLarge ? 40 : 24))
+        .font(.appFont(size: family == .systemLarge ? 40 : 24))
         .foregroundStyle(
           LinearGradient(
             colors: [themeColor.opacity(0.5), themeColor],
@@ -283,11 +283,11 @@ struct WidgetLockedView: View {
       if family != .accessoryCircular {
         VStack(spacing: 4) {
           Text("Joodle Pro")
-            .font(family == .systemLarge ? .headline : .caption.bold())
+            .font(family == .systemLarge ? .appHeadline() : .appCaption(weight: .bold))
             .foregroundColor(.primary)
 
           Text("Upgrade to unlock widgets")
-            .font(family == .systemLarge ? .subheadline : .caption2)
+            .font(family == .systemLarge ? .appSubheadline() : .appCaption2())
             .foregroundColor(.secondary)
             .multilineTextAlignment(.center)
             .lineSpacing(4)
@@ -295,10 +295,10 @@ struct WidgetLockedView: View {
       } else {
         VStack (alignment: .center) {
           Text("Unlock")
-            .font(.system(size: 8))
+            .font(.appFont(size: 8))
             .foregroundColor(.primary)
           Text("Pro")
-            .font(.system(size: 8))
+            .font(.appFont(size: 8))
             .foregroundColor(.primary)
         }
       }
@@ -329,7 +329,7 @@ struct LockScreenCircularView: View {
           .foregroundStyle(.secondary.opacity(0.3))
 
         Image(systemName: "scribble.variable")
-          .font(.system(size: 24))
+          .font(.appFont(size: 24))
           .foregroundStyle(.secondary)
       }
       .widgetURL(URL(string: "joodle://today"))
@@ -415,10 +415,10 @@ struct NotFoundView: View {
   var body: some View {
     VStack(alignment: .center, spacing: 8) {
       Image(systemName: "scribble.variable")
-        .font(.system(size: family == .systemLarge ? 50 : 32))
+        .font(.appFont(size: family == .systemLarge ? 50 : 32))
         .foregroundColor(.secondary.opacity(0.3))
       Text(prompt)
-        .font(family == .systemLarge ? .system(size: 16) : .system(size: 12))
+        .font(family == .systemLarge ? .appFont(size: 16) : .appFont(size: 12))
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
     }

@@ -98,14 +98,14 @@ struct YearGridJoodlesView: View {
           // Header
           HStack {
             Text(String(year))
-              .font(.system(size: fontSize, weight: .semibold))
+              .font(.appFont(size: fontSize, weight: .semibold))
               .foregroundColor(.primary)
 
             Spacer()
 
             if let percentage = percentage {
               Text(String(format: "%.1f%%", percentage))
-                .font(.system(size: fontSize, weight: .semibold))
+                .font(.appFont(size: fontSize, weight: .semibold))
                 .foregroundColor(.appAccent)
             }
           }

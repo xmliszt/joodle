@@ -223,13 +223,13 @@ struct YearGridWidgetView: View {
           // Header
           HStack {
             Text(String(entry.year))
-              .font(.system(size: 20))
+              .font(.appFont(size: 20))
               .foregroundColor(.primary)
 
             Spacer()
 
             Text(String(format: "%.1f%%", entry.percentage))
-              .font(.system(size: 20))
+              .font(.appFont(size: 20))
               .foregroundColor(themeColor)
           }
           .padding(.horizontal, horizontalPadding)
@@ -325,7 +325,7 @@ struct YearGridWidgetLockedView: View {
   var body: some View {
     VStack(spacing: widgetFamily == .systemLarge ? 16 : 8) {
       Image(systemName: "crown.fill")
-        .font(.system(size: widgetFamily == .systemLarge ? 40 : (widgetFamily == .systemMedium ? 28 : 24)))
+        .font(.appFont(size: widgetFamily == .systemLarge ? 40 : (widgetFamily == .systemMedium ? 28 : 24)))
         .foregroundStyle(
           LinearGradient(
             colors: [themeColor.opacity(0.5), themeColor],
@@ -336,11 +336,11 @@ struct YearGridWidgetLockedView: View {
 
       VStack(spacing: 4) {
         Text("Joodle Pro")
-          .font(widgetFamily == .systemLarge ? .headline : .caption.bold())
+          .font(widgetFamily == .systemLarge ? .appHeadline() : .appCaption(weight: .bold))
           .foregroundColor(.primary)
 
         Text("Upgrade to unlock widgets")
-          .font(widgetFamily == .systemLarge ? .subheadline : .caption2)
+          .font(widgetFamily == .systemLarge ? .appSubheadline() : .appCaption2())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.center)
           .lineSpacing(4)

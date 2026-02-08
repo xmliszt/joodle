@@ -137,28 +137,28 @@ struct DrawingCanvasView: View {
   private var accessDeniedOverlay: some View {
     VStack(spacing: 16) {
       Image(systemName: "lock.fill")
-        .font(.system(size: 40))
+        .font(.appFont(size: 40))
         .foregroundColor(.appTextPrimary)
 
       switch accessState {
       case .limitReached:
         Text("You've reached your free Joodle limit")
-          .font(.headline)
+          .font(.appHeadline())
           .foregroundColor(.appTextPrimary)
           .multilineTextAlignment(.center)
 
         Text("Upgrade to Joodle Pro for unlimited Joodles")
-          .font(.subheadline)
+          .font(.appSubheadline())
           .foregroundColor(.appTextPrimary.opacity(0.8))
           .multilineTextAlignment(.center)
 
       case .editingLocked(let reason):
         Text("Editing Locked")
-          .font(.headline)
+          .font(.appHeadline())
           .foregroundColor(.appTextPrimary)
 
         Text(reason)
-          .font(.subheadline)
+          .font(.appSubheadline())
           .foregroundColor(.appTextPrimary.opacity(0.8))
           .multilineTextAlignment(.center)
 
@@ -173,7 +173,7 @@ struct DrawingCanvasView: View {
           Image(systemName: "crown.fill")
           Text("Upgrade")
         }
-        .font(.headline)
+        .font(.appHeadline())
         .foregroundColor(.appAccentContrast)
         .padding(.horizontal, 24)
         .padding(.vertical, 12)

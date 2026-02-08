@@ -52,11 +52,11 @@ struct SubscriptionTestingView: View {
           if !storeKitManager.purchasedProductIDs.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
               Text("Active Products")
-                .font(.subheadline)
+                .font(.appSubheadline())
                 .foregroundColor(.secondary)
               ForEach(Array(storeKitManager.purchasedProductIDs), id: \.self) { productID in
                 Text(productID)
-                  .font(.caption)
+                  .font(.appCaption())
                   .foregroundColor(.primary)
               }
             }
@@ -238,10 +238,10 @@ struct SubscriptionTestingView: View {
   private func statusRow(_ label: String, value: String, isActive: Bool) -> some View {
     HStack {
       Text(label)
-        .font(.subheadline)
+        .font(.appSubheadline())
       Spacer()
       Text(value)
-        .font(.subheadline)
+        .font(.appSubheadline())
         .foregroundColor(isActive ? .green : .secondary)
     }
   }
@@ -249,10 +249,10 @@ struct SubscriptionTestingView: View {
   private func xcodeInstructionRow(title: String, instruction: String) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       Text(title)
-        .font(.subheadline)
+        .font(.appSubheadline())
         .fontWeight(.medium)
       Text(instruction)
-        .font(.caption)
+        .font(.appCaption())
         .foregroundColor(.secondary)
         .textSelection(.enabled)
     }
@@ -451,7 +451,7 @@ struct SubscriptionTestingView: View {
           Spacer().frame(height: 4)
         } else {
           Text(step)
-            .font(.caption)
+            .font(.appCaption())
             .foregroundColor(step.hasPrefix("•") || step.hasPrefix("1") || step.hasPrefix("2") || step.hasPrefix("3") || step.hasPrefix("4") || step.hasPrefix("5") || step.hasPrefix("6") || step.hasPrefix("7") ? .primary : .secondary)
             .fontWeight(step.contains(":") && !step.hasPrefix(" ") && !step.contains("→") ? .medium : .regular)
         }

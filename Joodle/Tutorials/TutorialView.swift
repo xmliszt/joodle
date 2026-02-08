@@ -36,7 +36,7 @@ struct TutorialView: View {
             // Description below screenshots (if provided)
             if let description {
                 Text(description)
-                    .font(.body)
+                    .font(.appBody())
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
@@ -129,7 +129,7 @@ struct DotPositionTweakerView: View {
 
             if !tappedPositions.isEmpty {
                 Text("All taps: \(tappedPositions.map { "(\(Int($0.x)), \(Int($0.y)))" }.joined(separator: ", "))")
-                    .font(.caption)
+                    .font(.appCaption())
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
@@ -139,7 +139,7 @@ struct DotPositionTweakerView: View {
                 tappedPositions.removeAll()
                 lastTapCoordinate = "Tap on screenshot"
             }
-            .font(.caption)
+            .font(.appCaption())
             .disabled(tappedPositions.isEmpty)
         }
     }
@@ -170,7 +170,7 @@ struct DotPositionTweakerView: View {
                 tappedPositions.removeAll()
                 lastTapCoordinate = "Tap on screenshot"
             }
-            .font(.caption2)
+            .font(.appCaption2())
             .disabled(tappedPositions.isEmpty)
         }
     }
@@ -265,7 +265,7 @@ struct DotPositionTweakerView: View {
                     lastTapCoordinate = "Tap on screenshot"
                 } label: {
                     Text("\(index + 1)")
-                        .font(.caption.bold())
+                        .font(.appCaption(weight: .bold))
                         .frame(width: 32, height: 32)
                         .background(index == currentIndex ? Color.appAccent : Color.secondary.opacity(0.2))
                         .foregroundColor(index == currentIndex ? .appAccentContrast : .primary)
@@ -289,7 +289,7 @@ struct DotPositionTweakerView: View {
                     lastTapCoordinate = "Tap on screenshot"
                 } label: {
                     Text("\(index + 1)")
-                        .font(.caption2.bold())
+                        .font(.appCaption2(weight: .bold))
                         .frame(width: 28, height: 28)
                         .background(index == currentIndex ? Color.appAccent : Color.secondary.opacity(0.2))
                         .foregroundColor(index == currentIndex ? .appAccentContrast : .primary)

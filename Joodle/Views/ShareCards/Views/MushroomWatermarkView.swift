@@ -30,7 +30,7 @@ struct MushroomWatermarkView: View {
           .opacity(0.8)
 
         Text("Made with Joodle")
-          .font(.system(size: 32 * scale))
+          .font(.appFont(size: 32 * scale))
           .foregroundColor(.appTextSecondary)
           .opacity(0.5)
         if alignment == .bottomLeading {

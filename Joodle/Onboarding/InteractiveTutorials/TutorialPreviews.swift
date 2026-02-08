@@ -142,7 +142,7 @@ struct MockUIElementsView: View {
                         )
                         .overlay(
                             Text(shortLabel(for: key))
-                                .font(.system(size: 8))
+                                .font(.appFont(size: 8))
                                 .foregroundColor(.secondary)
                         )
                         .position(x: frame.midX, y: frame.midY)
@@ -347,7 +347,7 @@ struct MockUIElementsView: View {
         var body: some View {
             VStack(spacing: 16) {
                 Text("Mock Data Store")
-                    .font(.headline)
+                    .font(.appHeadline())
 
                 Group {
                     Text("Year: \(store.selectedYear)")
@@ -355,7 +355,7 @@ struct MockUIElementsView: View {
                     Text("Entries: \(store.entries.count)")
                     Text("Selected: \(store.selectedDateItem?.date.formatted() ?? "None")")
                 }
-                .font(.caption)
+                .font(.appCaption())
 
                 Divider()
 
@@ -371,7 +371,7 @@ struct MockUIElementsView: View {
                             Image(systemName: "text.alignleft")
                         }
                     }
-                    .font(.caption)
+                    .font(.appCaption())
                     .padding(.horizontal)
                 }
 
@@ -395,7 +395,7 @@ struct MockUIElementsView: View {
                         store.reset()
                     }
                 }
-                .font(.caption)
+                .font(.appCaption())
             }
             .padding()
         }
@@ -413,10 +413,10 @@ struct MockUIElementsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text("\(index + 1).")
-                            .font(.caption.bold())
+                            .font(.appCaption(weight: .bold))
                             .foregroundColor(.secondary)
                         Text(step.type.title)
-                            .font(.subheadline.bold())
+                            .font(.appSubheadline(weight: .bold))
                     }
 
                     HStack {
@@ -425,7 +425,7 @@ struct MockUIElementsView: View {
                         } icon: {
                             Image(systemName: "scope")
                         }
-                        .font(.caption)
+                        .font(.appCaption())
                         .foregroundColor(.blue)
 
                         Spacer()
@@ -435,12 +435,12 @@ struct MockUIElementsView: View {
                         } icon: {
                             Image(systemName: "flag.checkered")
                         }
-                        .font(.caption)
+                        .font(.appCaption())
                         .foregroundColor(.green)
                     }
 
                     Text(step.tooltip.message)
-                        .font(.caption)
+                        .font(.appCaption())
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }

@@ -33,7 +33,7 @@ struct iCloudConfigView: View {
                     .frame(width: 100, height: 100)
 
               Image(systemName: viewModel.canEnableCloudSync && enableSync ? "icloud.fill" : "xmark.icloud")
-                    .font(.system(size: 48))
+                    .font(.appFont(size: 48))
                     .foregroundStyle(.appAccent)
                     .animation(.springFkingSatifying, value: enableSync)
             }
@@ -42,13 +42,13 @@ struct iCloudConfigView: View {
 
             // Title
             Text("Sync to iCloud")
-                .font(.title.weight(.bold))
+                .font(.appTitle(weight: .bold))
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 12)
 
             // Description
             Text("Keep your Joodles synced across all your devices with iCloud.")
-                .font(.body)
+                .font(.appBody())
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
@@ -59,7 +59,7 @@ struct iCloudConfigView: View {
                 VStack(spacing: 16) {
                     Toggle(isOn: $enableSync) {
                       Text("Enable iCloud Sync")
-                          .font(.body)
+                          .font(.appBody())
                     }
                     .toggleStyle(SwitchToggleStyle(tint: .appAccent))
                     .padding()
@@ -76,7 +76,7 @@ struct iCloudConfigView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                         Text(viewModel.cloudSyncBlockedReason ?? "iCloud is not available")
-                            .font(.subheadline)
+                            .font(.appSubheadline())
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -88,7 +88,7 @@ struct iCloudConfigView: View {
                     .padding(.horizontal, 24)
 
                     Text("To enable sync, you must enable \"Saved to iCloud\" for Joodle in iCloud Settings: Settings → [Your Name] → iCloud → Saved to iCloud → Joodle.")
-                        .font(.caption)
+                        .font(.appCaption())
                         .foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
                 }

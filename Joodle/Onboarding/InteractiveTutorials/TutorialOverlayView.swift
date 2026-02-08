@@ -173,7 +173,7 @@ struct TutorialCompletionView: View {
 
                     // Checkmark icon
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 60, weight: .medium))
+                        .font(.appFont(size: 60, weight: .medium))
                         .foregroundColor(.white)
                         .scaleEffect(checkmarkScale)
                 }
@@ -181,13 +181,13 @@ struct TutorialCompletionView: View {
                 // Completion text
                 VStack(spacing: 8) {
                     Text("Tutorial Complete!")
-                        .font(.title2.bold())
+                        .font(.appTitle2(weight: .bold))
                         .foregroundColor(.white)
 
                     // Only show "ready to start" message during onboarding
                     if isOnboarding {
                         Text("You're ready to start Joodling")
-                            .font(.subheadline)
+                            .font(.appSubheadline())
                             .foregroundColor(.white.opacity(0.8))
                     }
                 }

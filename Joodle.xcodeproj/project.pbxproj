@@ -81,13 +81,6 @@
 			);
 			target = FA85D44C2EB7AECA007D82EE /* WidgetsExtension */;
 		};
-		FABB3D932EBF4E7900C8CCBA /* Exceptions for "Fonts" folder in "WidgetsExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"Mansalva-Regular.ttf",
-			);
-			target = FA85D44C2EB7AECA007D82EE /* WidgetsExtension */;
-		};
 		FADC35A62E48C2E2007AE111 /* Exceptions for "Joodle" folder in "Joodle" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -109,9 +102,6 @@
 		};
 		FABB3D8E2EBF4E7300C8CCBA /* Fonts */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				FABB3D932EBF4E7900C8CCBA /* Exceptions for "Fonts" folder in "WidgetsExtension" target */,
-			);
 			path = Fonts;
 			sourceTree = "<group>";
 		};

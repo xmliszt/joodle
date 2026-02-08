@@ -26,7 +26,7 @@ struct ChangelogDetailView: View {
                 // Header with date and version
               VStack(alignment: .leading) {
                   Text(entry.displayHeader)
-                    .font(.caption)
+                    .font(.appCaption())
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
                     .tracking(0.5)

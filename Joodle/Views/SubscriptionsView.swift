@@ -132,17 +132,17 @@ struct SubscriptionsView: View {
 
       if subscriptionManager.hasPremiumAccess && !GracePeriodManager.shared.isInGracePeriod {
         Text("Joodle Pro")
-          .font(.system(size: 28, weight: .bold))
+          .font(.appFont(size: 28, weight: .bold))
 
         if subscriptionManager.isLifetimeUser {
           Text("You own Joodle Pro forever. Thank you for your support!")
-            .font(.subheadline)
+            .font(.appSubheadline())
             .foregroundColor(.secondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 32)
         } else {
           Text("You have full access to all features. Thank you for your support!")
-            .font(.subheadline)
+            .font(.appSubheadline())
             .foregroundColor(.secondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 32)
@@ -152,10 +152,10 @@ struct SubscriptionsView: View {
         if let statusMessage = subscriptionManager.subscriptionStatusMessage {
           HStack(spacing: 6) {
             Image(systemName: statusIconName)
-              .font(.caption2)
+              .font(.appCaption2())
               .foregroundStyle(.appAccent)
             Text(statusMessage)
-              .font(.caption)
+              .font(.appCaption())
           }
           .foregroundColor(.secondary)
           .padding(.horizontal, 20)
@@ -169,21 +169,21 @@ struct SubscriptionsView: View {
 
       } else if GracePeriodManager.shared.isInGracePeriod {
         Text("Joodle Pro")
-          .font(.system(size: 28, weight: .bold))
+          .font(.appFont(size: 28, weight: .bold))
 
         let daysLeft = GracePeriodManager.shared.gracePeriodDaysRemaining
         Text("You have free access to all Pro features for \(daysLeft) more day\(daysLeft == 1 ? "" : "s").")
-          .font(.subheadline)
+          .font(.appSubheadline())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.center)
           .padding(.horizontal, 32)
 
         HStack(spacing: 6) {
           Image(systemName: "clock.fill")
-            .font(.caption2)
+            .font(.appCaption2())
             .foregroundStyle(.appAccent)
           Text("Free access · \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
-            .font(.caption)
+            .font(.appCaption())
         }
         .foregroundColor(.secondary)
         .padding(.horizontal, 20)
@@ -196,7 +196,7 @@ struct SubscriptionsView: View {
 
       } else {
         Text("No active subscription")
-          .font(.subheadline)
+          .font(.appSubheadline())
           .foregroundColor(.secondary)
       }
     }
@@ -208,7 +208,7 @@ struct SubscriptionsView: View {
   private func currentPlanSection(product: Product) -> some View {
     VStack(alignment: .leading, spacing: 12) {
       Text("Your Current Plan")
-        .font(.caption)
+        .font(.appCaption())
         .foregroundColor(.secondary)
         .padding(.horizontal, 20)
 
@@ -232,11 +232,11 @@ struct SubscriptionsView: View {
       }) {
         HStack {
           Text(subscriptionManager.willAutoRenew ? "Manage Subscription" : "Re-subscribe")
-            .font(.body)
+            .font(.appBody())
             .foregroundColor(.primary)
           Spacer()
           Image(systemName: "chevron.right")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundColor(.secondary)
         }
         .padding(20)
@@ -250,39 +250,39 @@ struct SubscriptionsView: View {
 
       if subscriptionManager.hasRedeemedOfferCode && subscriptionManager.willAutoRenew {
         Text(pricingDisclaimerText(for: currentProduct, scenario: .promoCode))
-          .font(.caption2)
+          .font(.appCaption2())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.leading)
           .padding(.horizontal, 32)
       } else if subscriptionManager.isInTrialPeriod && subscriptionManager.hasPendingOfferCode && subscriptionManager.willAutoRenew {
         // Trial with pending offer code - promo activates at next billing event (when trial ends)
         Text(pricingDisclaimerText(for: currentProduct, scenario: .trialWithPromo))
-          .font(.caption2)
+          .font(.appCaption2())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.leading)
           .padding(.horizontal, 32)
       } else if subscriptionManager.isInTrialPeriod && subscriptionManager.willAutoRenew {
         Text(pricingDisclaimerText(for: currentProduct, scenario: .trial))
-          .font(.caption2)
+          .font(.appCaption2())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.leading)
           .padding(.horizontal, 32)
       } else if !subscriptionManager.willAutoRenew {
         Text("You'll continue to have access to Joodle Pro until \(formatExpirationDate(subscriptionManager.subscriptionExpirationDate) ?? "your subscription expires"). After that, you'll lose access to all premium features. Re-subscribe to continue enjoying Joodle Pro after your current period ends.")
-          .font(.caption2)
+          .font(.appCaption2())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.leading)
           .padding(.horizontal, 32)
       } else {
         if let renewalDate = subscriptionManager.subscriptionExpirationDate {
           Text("Your subscription will automatically renew on \(formatExpirationDate(renewalDate) ?? "the renewal date"). Manage your subscription, change plans, or cancel anytime.")
-            .font(.caption2)
+            .font(.appCaption2())
             .foregroundColor(.secondary)
             .multilineTextAlignment(.leading)
             .padding(.horizontal, 32)
         } else {
           Text("Manage your subscription, change plans, or cancel anytime.")
-            .font(.caption2)
+            .font(.appCaption2())
             .foregroundColor(.secondary)
             .multilineTextAlignment(.leading)
             .padding(.horizontal, 32)
@@ -303,7 +303,7 @@ struct SubscriptionsView: View {
         }
       } label: {
         Text("Restore Purchases")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.secondary)
       }
       
@@ -311,14 +311,14 @@ struct SubscriptionsView: View {
       
       // Terms
       Link("Terms", destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!)
-        .font(.caption)
+        .font(.appCaption())
         .foregroundColor(.secondary)
       
       Spacer()
       
       // Privacy
       Link("Privacy", destination: URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!)
-        .font(.caption)
+        .font(.appCaption())
         .foregroundColor(.secondary)
       
       Spacer()
@@ -328,7 +328,7 @@ struct SubscriptionsView: View {
         showRedeemCode = true
       } label: {
         Text("Redeem")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.secondary)
       }
     }
@@ -452,7 +452,7 @@ struct GlossyCrownView: View {
 
   var body: some View {
     Image(systemName: "crown.fill")
-      .font(.system(size: 50))
+      .font(.appFont(size: 50))
       .foregroundColor(isSubscribed ? .appAccent : .appBorder)
       .overlay {
         if isSubscribed {
@@ -472,7 +472,7 @@ struct GlossyCrownView: View {
           .blur(radius: 2)
           .mask {
             Image(systemName: "crown.fill")
-              .font(.system(size: 50))
+              .font(.appFont(size: 50))
           }
         }
       }

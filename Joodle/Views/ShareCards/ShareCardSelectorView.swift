@@ -123,12 +123,12 @@ struct ShareCardSelectorView: View {
             VStack(spacing: 8) {
               HStack(spacing: 8) {
                 Text(selectedStyle.rawValue)
-                  .font(.system(size: 16).bold())
+                  .font(.appFont(size: 16, weight: .bold))
                   .foregroundColor(.textColor)
               }
 
               Text(selectedStyle.description)
-                .font(.system(size: 14))
+                .font(.appFont(size: 14))
                 .foregroundColor(.secondaryTextColor)
             }
             .animation(.springFkingSatifying, value: selectedStyle)
@@ -170,15 +170,15 @@ struct ShareCardSelectorView: View {
                 HStack(spacing: 12) {
                   if isSharing || isExportingAnimated {
                     Text("\(Int(exportProgress * 100))%")
-                      .font(.system(size: 18, weight: .semibold))
+                      .font(.appFont(size: 18, weight: .semibold))
                       .contentTransition(.numericText())
                       .animation(.springFkingSatifying, value: exportProgress)
                   } else {
                     Image(systemName: shareButtonIcon)
-                      .font(.system(size: 18, weight: .semibold))
+                      .font(.appFont(size: 18, weight: .semibold))
 
                     Text(shareButtonText)
-                      .font(.system(size: 18, weight:.semibold))
+                      .font(.appFont(size: 18, weight:.semibold))
                   }
                 }
                 .foregroundColor(.appAccentContrast)
@@ -212,14 +212,14 @@ struct ShareCardSelectorView: View {
               HStack(spacing: 12) {
                 if isSharing || isExportingAnimated {
                   Text("\(Int(exportProgress * 100))%")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.appFont(size: 18, weight: .semibold))
                     .contentTransition(.numericText())
                 } else {
                   Image(systemName: shareButtonIcon)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.appFont(size: 18, weight: .semibold))
 
                   Text(shareButtonText)
-                    .font(.system(size: 18, weight:.semibold))
+                    .font(.appFont(size: 18, weight:.semibold))
                 }
               }
               .foregroundColor(.appAccentContrast)
@@ -284,7 +284,7 @@ struct ShareCardSelectorView: View {
   @ViewBuilder
   private func formatBadge(text: String, color: Color) -> some View {
     Text(text)
-      .font(.system(size: 10, weight: .bold))
+      .font(.appFont(size: 10, weight: .bold))
       .foregroundColor(.white)
       .padding(.horizontal, 6)
       .padding(.vertical, 2)

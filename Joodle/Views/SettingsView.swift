@@ -48,7 +48,7 @@ struct SettingsIconView: View {
   
   var body: some View {
     Image(systemName: systemName)
-      .font(.system(size: 12, weight: .semibold))
+      .font(.appFont(size: 12, weight: .semibold))
       .foregroundColor(.white)
       .frame(width: 24, height: 24)
       .background(backgroundColor)
@@ -73,7 +73,7 @@ struct SettingsRowView: View {
       Spacer()
       if let text = trailingText {
         Text(text)
-          .font(.subheadline)
+          .font(.appSubheadline())
           .foregroundColor(.secondary)
       }
       if let view = trailingView {
@@ -81,7 +81,7 @@ struct SettingsRowView: View {
       }
       if isExternal {
         Image(systemName: "arrow.up.right")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.secondary)
       }
     }
@@ -112,44 +112,44 @@ struct MembershipBannerView: View {
         VStack(alignment: .leading, spacing: 6) {
           HStack {
             Text(hasPremiumAccess ? "Joodle Pro" : "Unlock Joodle Pro")
-              .font(.headline)
+              .font(.appHeadline())
               .fontWeight(.bold)
               .foregroundColor(hasPremiumAccess ? .white : .black)
             Spacer()
             Image(systemName: "chevron.right")
-              .font(.caption)
+              .font(.appCaption())
               .foregroundColor(hasPremiumAccess ? .white.opacity(0.8) : .black.opacity(0.8))
           }
           
           if hasPremiumAccess {
             if isInGracePeriod {
               Text("Free access · \(gracePeriodDaysRemaining) day\(gracePeriodDaysRemaining == 1 ? "" : "s") left")
-                .font(.subheadline)
+                .font(.appSubheadline())
                 .foregroundColor(.white.opacity(0.9))
             } else if let statusMessage = statusMessage {
               Text(statusMessage)
-                .font(.subheadline)
+                .font(.appSubheadline())
                 .foregroundColor(.white.opacity(0.9))
             } else {
               Text("Thanks for supporting Joodle!")
-                .font(.subheadline)
+                .font(.appSubheadline())
                 .foregroundColor(.white.opacity(0.9))
             }
           } else {
             HStack(spacing: 16) {
               HStack(spacing: 4) {
                 Image(systemName: "doc.text")
-                  .font(.caption)
+                  .font(.appCaption())
                 Text("\(joodleCount)/\(SubscriptionManager.freeJoodlesAllowed)")
-                  .font(.caption)
+                  .font(.appCaption())
               }
               .foregroundColor(joodleCount >= SubscriptionManager.freeJoodlesAllowed ? .red : .black.opacity(0.8))
               
               HStack(spacing: 4) {
                 Image(systemName: "bell")
-                  .font(.caption)
+                  .font(.appCaption())
                 Text("\(alarmCount)/5")
-                  .font(.caption)
+                  .font(.appCaption())
               }
               .foregroundColor(alarmCount >= 5 ? .red : .black.opacity(0.8))
             }
@@ -424,7 +424,7 @@ struct SettingsView: View {
         HStack {
           if #available(iOS 18.0, *) {
             Image(systemName: "fireworks")
-              .font(.system(size: 14, weight: .semibold))
+              .font(.appFont(size: 14, weight: .semibold))
               .frame(width: 28, height: 28)
               .symbolRenderingMode(.palette)
               .symbolEffect(.bounce)
@@ -434,7 +434,7 @@ struct SettingsView: View {
           } else {
             // Fallback on earlier versions
             Image(systemName: "fireworks")
-              .font(.system(size: 14, weight: .semibold))
+              .font(.appFont(size: 14, weight: .semibold))
               .frame(width: 28, height: 28)
               .symbolRenderingMode(.palette)
               .foregroundStyle(.accent, .red, .yellow)
@@ -443,11 +443,11 @@ struct SettingsView: View {
           }
           
           Text("Download in App Store")
-            .font(.body.weight(.medium))
+            .font(.appBody(weight: .medium))
             .foregroundColor(.primary)
           Spacer()
           Image(systemName: "arrow.up.right")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundColor(.secondary)
         }
       }
@@ -488,7 +488,7 @@ struct SettingsView: View {
             .foregroundColor(.primary)
           Spacer()
           Image(systemName: "arrow.up.right")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundColor(.secondary)
         }
       }
@@ -541,11 +541,11 @@ struct SettingsView: View {
           Spacer()
           if userPreferences.isDailyReminderEnabled {
             Text(userPreferences.dailyReminderTime.formatted(date: .omitted, time: .shortened))
-              .font(.subheadline)
+              .font(.appSubheadline())
               .foregroundColor(.secondary)
           } else {
             Text("Off")
-              .font(.subheadline)
+              .font(.appSubheadline())
               .foregroundColor(.secondary)
           }
         }
@@ -562,7 +562,7 @@ struct SettingsView: View {
           Spacer()
           if !reminderManager.reminders.isEmpty {
             Text("\(reminderManager.reminders.count)")
-              .font(.subheadline)
+              .font(.appSubheadline())
               .foregroundColor(.secondary)
           }
         }
@@ -621,7 +621,7 @@ struct SettingsView: View {
           Spacer()
           if !userPreferences.announcementsEnabled {
             Text("Off")
-              .font(.subheadline)
+              .font(.appSubheadline())
               .foregroundColor(.secondary)
           }
         }
@@ -636,11 +636,11 @@ struct SettingsView: View {
     if needsRestartForSync {
       Image(systemName: "exclamationmark.triangle.fill")
         .foregroundStyle(.orange)
-        .font(.caption)
+        .font(.appCaption())
     } else if cloudSyncManager.isSyncing {
       HStack(spacing: 6) {
         Text("Syncing")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundStyle(.secondary)
         ProgressView()
           .scaleEffect(0.6)
@@ -648,11 +648,11 @@ struct SettingsView: View {
     } else if !cloudSyncManager.canSync {
       Image(systemName: "xmark.circle.fill")
         .foregroundStyle(.red)
-        .font(.caption)
+        .font(.appCaption())
     } else if userPreferences.isCloudSyncEnabled && CloudSyncManager.shared.isCloudAvailable {
       Image(systemName: "checkmark.circle.fill")
         .foregroundStyle(.green)
-        .font(.caption)
+        .font(.appCaption())
     }
   }
   
@@ -670,7 +670,7 @@ struct SettingsView: View {
             .foregroundColor(.primary)
           Spacer()
           Image(systemName: "chevron.right")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundColor(.secondary)
         }
       }
@@ -742,7 +742,7 @@ struct SettingsView: View {
           title: "What's New",
           trailingView: isAppUpdateAvailable ? AnyView(
             Text("UPDATE")
-              .font(.system(size: 10).bold())
+              .font(.appFont(size: 10, weight: .bold))
               .fontWeight(.semibold)
               .padding(.horizontal, 6)
               .padding(.vertical, 2)
@@ -815,7 +815,7 @@ struct SettingsView: View {
             .foregroundColor(.primary)
           Spacer()
           Image(systemName: "arrow.up.right")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundColor(.secondary)
         }
       }
@@ -834,7 +834,7 @@ struct SettingsView: View {
             .foregroundColor(.primary)
           Spacer()
           Image(systemName: "arrow.up.right")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundColor(.secondary)
         }
       }
@@ -890,7 +890,7 @@ struct SettingsView: View {
           title: "Recommend Joodle",
           trailingView: AnyView(
             Image(systemName: "square.and.arrow.up")
-              .font(.caption)
+              .font(.appCaption())
               .foregroundColor(.secondary)
           )
         )
@@ -965,20 +965,20 @@ struct SettingsView: View {
             .frame(width: 32, height: 32)
             .clipShape(RoundedRectangle(cornerRadius: 8))
           Text("Joodle")
-            .font(.title2)
+            .font(.appTitle2())
             .fontWeight(.semibold)
           + Text("®")
-            .font(.caption)
+            .font(.appCaption())
             .fontWeight(.semibold)
             .baselineOffset(10)
         }
         
         Text("VERSION \(AppEnvironment.fullVersionDisplayString)")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundStyle(.secondary)
         
         Text("© \(currentYear) Li Yuxuan. All Rights Reserved.")
-          .font(.caption2)
+          .font(.appCaption2())
           .foregroundStyle(.secondary)
       }
       .frame(maxWidth: .infinity)
@@ -1433,12 +1433,12 @@ struct CustomizationSettingsView: View {
             VStack {
               if userPreferences.defaultViewMode == .now {
                 Text("\"Normal\" view mode gives you a more focused view with 7 days per row representing the 7 days of a week. Layout is shifted to match the weekday.")
-                  .font(.caption)
+                  .font(.appCaption())
                   .foregroundColor(.secondary)
                   .frame(maxWidth: .infinity, alignment: .leading)
               } else if userPreferences.defaultViewMode == .year {
                 Text("\"Minimized\" view mode gives you an overview of your entire year. Additional sharing is available in this view mode to share your entire year.")
-                  .font(.caption)
+                  .font(.appCaption())
                   .foregroundColor(.secondary)
                   .frame(maxWidth: .infinity, alignment: .leading)
               }
@@ -1467,7 +1467,7 @@ struct CustomizationSettingsView: View {
             }
             
             Text("Start of Week affects the layout in \"Normal\" view mode.")
-              .font(.caption)
+              .font(.appCaption())
               .foregroundColor(.secondary)
               .frame(maxWidth: .infinity, alignment: .leading)
           }
@@ -1536,7 +1536,7 @@ struct CustomizationSettingsView: View {
             VStack(alignment: .leading, spacing: 4) {
               Text("Prompt for notes after doodling")
               Text("Show a popup to add notes after doodling")
-                .font(.caption)
+                .font(.appCaption())
                 .foregroundStyle(.secondary)
             }
           }
@@ -1553,7 +1553,7 @@ struct CustomizationSettingsView: View {
                   }
                 }
                 Text("Add a watermark on share cards")
-                  .font(.caption)
+                  .font(.appCaption())
                   .foregroundStyle(.secondary)
               }
               Spacer()
@@ -1622,13 +1622,13 @@ struct AnniversaryAlarmsSettingsView: View {
         Section {
           VStack(spacing: 12) {
             Image(systemName: "alarm")
-              .font(.system(size: 40))
+              .font(.appFont(size: 40))
               .foregroundStyle(.secondary)
             Text("No Anniversary Alarms")
-              .font(.headline)
+              .font(.appHeadline())
               .foregroundStyle(.secondary)
             Text("Set alarms for future Joodle entries to get notified on special dates.")
-              .font(.subheadline)
+              .font(.appSubheadline())
               .foregroundStyle(.tertiary)
               .multilineTextAlignment(.center)
           }
@@ -1745,12 +1745,12 @@ struct AnniversaryAlarmRow: View {
     HStack {
       VStack(alignment: .leading, spacing: 4) {
         Text(displayDate)
-          .font(.body)
+          .font(.appBody())
           .foregroundStyle(.primary)
         
         if let entryBody = reminder.entryBody, !entryBody.isEmpty {
           Text(entryBody)
-            .font(.caption)
+            .font(.appCaption())
             .foregroundStyle(.secondary)
             .lineLimit(1)
         }
@@ -1827,7 +1827,7 @@ struct BackupRestoreSettingsView: View {
               .foregroundColor(.primary)
             Spacer()
             Image(systemName: "chevron.right")
-              .font(.caption)
+              .font(.appCaption())
               .foregroundColor(.secondary)
           }
         }
@@ -1839,7 +1839,7 @@ struct BackupRestoreSettingsView: View {
               .foregroundColor(.primary)
             Spacer()
             Image(systemName: "chevron.right")
-              .font(.caption)
+              .font(.appCaption())
               .foregroundColor(.secondary)
           }
         }
@@ -2118,10 +2118,10 @@ struct AppStatsView: View {
             ForEach(duplicateDetails.keys.sorted(), id: \.self) { dateString in
               HStack {
                 Text(dateString)
-                  .font(.caption)
+                  .font(.appCaption())
                 Spacer()
                 Text("\(duplicateDetails[dateString] ?? 0) entries")
-                  .font(.caption)
+                  .font(.appCaption())
                   .foregroundColor(.orange)
               }
             }
@@ -2166,7 +2166,7 @@ struct AppStatsView: View {
               Text("Details")
               Spacer()
               Text(message)
-                .font(.caption)
+                .font(.appCaption())
                 .foregroundColor(.secondary)
             }
           }
@@ -2215,7 +2215,7 @@ struct AppStatsView: View {
         if let result = cleanupResult {
           Section("Result") {
             Text(result)
-              .font(.caption)
+              .font(.appCaption())
               .foregroundColor(.secondary)
           }
         }
@@ -2422,7 +2422,7 @@ struct LearnCoreFeaturesView: View {
                 .foregroundColor(.textColor)
               Spacer()
               Image(systemName: "chevron.right")
-                .font(.caption)
+                .font(.appCaption())
                 .foregroundColor(.secondaryTextColor)
             }
           }
@@ -2558,7 +2558,7 @@ struct DebugDataSeederView: View {
               seedCount = DebugDataSeeder.shared.daysInYear(selectedYear)
             }
             .buttonStyle(.bordered)
-            .font(.caption)
+            .font(.appCaption())
           }
           
           Button("Seed \(seedCount) Entries for \(selectedYear)") {

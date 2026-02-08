@@ -389,7 +389,7 @@ struct AnniversaryWidgetLockedView: View {
   var body: some View {
     VStack(spacing: family == .systemLarge ? 16 : (family == .systemMedium ? 12 : 8)) {
       Image(systemName: "crown.fill")
-        .font(.system(size: family == .systemLarge ? 40 : (family == .systemMedium ? 28 : 24)))
+        .font(.appFont(size: family == .systemLarge ? 40 : (family == .systemMedium ? 28 : 24)))
         .foregroundStyle(
           LinearGradient(
             colors: [themeColor.opacity(0.5), themeColor],
@@ -400,11 +400,11 @@ struct AnniversaryWidgetLockedView: View {
 
       VStack(spacing: 4) {
         Text("Joodle Pro")
-          .font(family == .systemLarge ? .headline : .caption.bold())
+          .font(family == .systemLarge ? .appHeadline() : .appCaption(weight: .bold))
           .foregroundColor(.primary)
 
         Text("Upgrade to unlock widgets")
-          .font(family == .systemLarge ? .subheadline : .caption2)
+          .font(family == .systemLarge ? .appSubheadline() : .appCaption2())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.center)
           .lineSpacing(4)
@@ -430,7 +430,7 @@ struct SmallAnniversaryView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if anniversaryData.hasText, let text = anniversaryData.text {
           Text(text)
-            .font(.system(size: 12))
+            .font(.appFont(size: 12))
             .lineLimit(4)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 12)
@@ -442,7 +442,7 @@ struct SmallAnniversaryView: View {
 
       // Countdown text at bottom
       Text(CountdownHelper.countdownText(from: currentDate, to: anniversaryData.date))
-        .font(.system(size: 10))
+        .font(.appFont(size: 10))
         .foregroundColor(.secondary)
         .padding(.horizontal, 8)
         .multilineTextAlignment(.center)
@@ -464,11 +464,11 @@ struct MediumAnniversaryView: View {
       // Top bar with date and countdown
       HStack {
         Text(CountdownHelper.dateText(for: anniversaryData.date))
-          .font(.system(size: 12))
+          .font(.appFont(size: 12))
           .foregroundColor(.secondary)
         Spacer()
         Text(CountdownHelper.countdownText(from: currentDate, to: anniversaryData.date))
-          .font(.system(size: 12))
+          .font(.appFont(size: 12))
           .foregroundColor(.secondary)
       }
       .padding(.horizontal, 16)
@@ -484,7 +484,7 @@ struct MediumAnniversaryView: View {
             .padding(10)
         } else {
           Image(systemName: "scribble.variable")
-            .font(.system(size: 40))
+            .font(.appFont(size: 40))
             .foregroundColor(.secondary.opacity(0.3))
             .frame(width: 80, height: 80)
             .padding(10)
@@ -493,12 +493,12 @@ struct MediumAnniversaryView: View {
         // Right side: Text or placeholder
         if anniversaryData.hasText, let text = anniversaryData.text {
           Text(text)
-            .font(.system(size: 12))
+            .font(.appFont(size: 12))
             .lineLimit(5)
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {
           Text("No notes for this special day.")
-            .font(.system(size: 12))
+            .font(.appFont(size: 12))
             .foregroundColor(.secondary.opacity(0.5))
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -527,7 +527,7 @@ struct LargeAnniversaryView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if anniversaryData.hasText, let text = anniversaryData.text {
           Text(text)
-            .font(.system(size: 20))
+            .font(.appFont(size: 20))
             .multilineTextAlignment(.center)
             .padding(.horizontal, 12)
         }
@@ -536,7 +536,7 @@ struct LargeAnniversaryView: View {
 
       // Countdown text at bottom
       Text(CountdownHelper.countdownText(from: currentDate, to: anniversaryData.date))
-        .font(.system(size: 16))
+        .font(.appFont(size: 16))
         .foregroundColor(.secondary)
         .padding(.horizontal, 16)
     }
@@ -644,10 +644,10 @@ struct NoAnniversaryView: View {
   var body: some View {
     VStack(alignment: .center, spacing: 8) {
       Image(systemName: "calendar.badge.clock")
-        .font(.system(size: family == .systemSmall ? 32 : family == .systemMedium ? 40 : 48))
+        .font(.appFont(size: family == .systemSmall ? 32 : family == .systemMedium ? 40 : 48))
         .foregroundColor(.secondary.opacity(0.3))
       Text("No future anniversaries")
-        .font(family == .systemSmall ? .system(size: 11) : family == .systemMedium ? .system(size: 11) : .system(size: 15))
+        .font(family == .systemSmall ? .appFont(size: 11) : family == .systemMedium ? .appFont(size: 11) : .appFont(size: 15))
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
     }

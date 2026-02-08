@@ -150,7 +150,7 @@ struct ReminderSheet: View {
                 } label: {
                     Text(hasExistingReminder ? "Update Alarm" : "Set Alarm")
                         .frame(maxWidth: .infinity)
-                        .font(.headline)
+                        .font(.appHeadline())
                 }
                 .reminderButtonStyle()
                 .padding(.horizontal)

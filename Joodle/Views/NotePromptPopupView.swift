@@ -35,14 +35,14 @@ struct NotePromptPopupView: View {
         // Header
         VStack(spacing: 8) {
           Image(systemName: "pencil.and.outline")
-            .font(.system(size: 32))
+            .font(.appFont(size: 32))
             .foregroundStyle(.appAccent)
 
           Text("Add a Note?")
-            .font(.headline)
+            .font(.appHeadline())
 
           Text("Write something about this moment")
-            .font(.subheadline)
+            .font(.appSubheadline())
             .foregroundStyle(.secondary)
         }
         .padding(.top, 24)
@@ -50,7 +50,7 @@ struct NotePromptPopupView: View {
 
         // Text Editor
         TextEditor(text: $noteText)
-          .font(.body)
+          .font(.appBody())
           .focused($isTextFieldFocused)
           .frame(minHeight: 120, maxHeight: 160)
           .padding(12)
@@ -62,7 +62,7 @@ struct NotePromptPopupView: View {
         VStack {
           HStack(spacing: 0) {
             Text("You can turn off this prompt in ")
-              .font(.system(size: 10))
+              .font(.appFont(size: 10))
               .foregroundStyle(.secondary)
             Button {
               dismissPopup()
@@ -72,7 +72,7 @@ struct NotePromptPopupView: View {
               }
             } label: {
               Text("Settings > Customization")
-                .font(.system(size: 10))
+                .font(.appFont(size: 10))
                 .foregroundStyle(.blue)
             }
           }
@@ -87,7 +87,7 @@ struct NotePromptPopupView: View {
             dismissPopup()
           } label: {
             Text("Cancel")
-              .font(.headline)
+              .font(.appHeadline())
               .foregroundColor(.primary)
               .frame(maxWidth: 237)
               .frame(height: 48)

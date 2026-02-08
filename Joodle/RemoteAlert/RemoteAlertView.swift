@@ -29,7 +29,7 @@ struct RemoteAlertView: View {
     var body: some View {
         VStack(spacing: 24) {
             Image(systemName: alert.type.iconName)
-              .font(.system(size: 16, weight: .semibold))
+              .font(.appFont(size: 16, weight: .semibold))
               .foregroundColor(.white)
               .frame(width: 40, height: 40)
               .background(alert.type.iconColor)
@@ -37,7 +37,7 @@ struct RemoteAlertView: View {
 
             // Title
             Text(alert.title)
-                .font(.title2.bold())
+                .font(.appTitle2(weight: .bold))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .opacity(showTitle ? 1 : 0)
@@ -68,7 +68,7 @@ struct RemoteAlertView: View {
 
             // Message
             Text(alert.message)
-                .font(.body)
+                .font(.appBody())
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -80,7 +80,7 @@ struct RemoteAlertView: View {
                 // Primary button
                 Button(action: onPrimaryAction) {
                   Text(alert.primaryButton.text)
-                    .font(.headline)
+                    .font(.appHeadline())
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                 }.buttonStyle(OnboardingButtonStyle())
@@ -89,7 +89,7 @@ struct RemoteAlertView: View {
                 if let secondary = alert.secondaryButton {
                     Button(action: onSecondaryAction) {
                         Text(secondary.text)
-                            .font(.subheadline)
+                            .font(.appSubheadline())
                     }
                     .foregroundStyle(.secondary)
                     .padding(.top, 4)

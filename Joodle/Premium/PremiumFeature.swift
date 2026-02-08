@@ -281,11 +281,11 @@ struct PremiumLockedOverlayModifier: ViewModifier {
 
                         VStack(spacing: 8) {
                             Image(systemName: "lock.fill")
-                                .font(.title)
+                                .font(.appTitle())
                                 .foregroundColor(.appAccentContrast)
 
                             Text("Joodle Pro")
-                                .font(.caption.bold())
+                                .font(.appCaption(weight: .bold))
                                 .foregroundColor(.appAccentContrast)
                         }
                     }
@@ -333,9 +333,9 @@ struct PremiumFeatureBadge: View {
     var body: some View {
         HStack(spacing: 2) {
             Image(systemName: "crown.fill")
-                .font(.system(size: 8))
+                .font(.appFont(size: 8))
             Text("PRO")
-                .font(.system(size: 7, weight: .bold))
+                .font(.appFont(size: 7, weight: .bold))
         }
         .foregroundColor(.appAccentContrast)
         .padding(.horizontal, 6)
@@ -386,7 +386,7 @@ struct PremiumGatedButton<Label: View>: View {
                 .overlay(alignment: .topTrailing) {
                     if !accessController.hasPremiumAccess {
                         Image(systemName: "lock.fill")
-                            .font(.caption2)
+                            .font(.appCaption2())
                             .foregroundColor(.secondary)
                             .offset(x: 2, y: -2)
                     }
@@ -409,14 +409,14 @@ struct RemainingJoodlesIndicator: View {
 
             HStack(spacing: 4) {
                 Image(systemName: remaining > 0 ? "scribble.variable" : "lock.fill")
-                    .font(.caption)
+                    .font(.appCaption())
 
                 if remaining > 0 {
                     Text("\(remaining) Joodles left")
-                        .font(.caption)
+                        .font(.appCaption())
                 } else {
                     Text("Limit reached")
-                        .font(.caption)
+                        .font(.appCaption())
                 }
             }
             .foregroundColor(remaining > 10 ? .secondary : (remaining > 0 ? .appAccent : .red))

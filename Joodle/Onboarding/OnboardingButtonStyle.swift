@@ -6,7 +6,7 @@ struct OnboardingButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
       if #available(iOS 26.0, *) {
         configuration.label
-          .font(.headline)
+          .font(.appHeadline())
           .foregroundColor(.appBackground)
           .frame(maxWidth: 237)
           .frame(height: 48)
@@ -16,7 +16,7 @@ struct OnboardingButtonStyle: ButtonStyle {
           .shadow(color: .appBackground.opacity(0.15), radius: 8, x: 0, y: 4)
       } else {
         configuration.label
-          .font(.headline)
+          .font(.appHeadline())
           .foregroundColor(.appBackground)
           .frame(maxWidth: 237)
           .frame(height: 48)
@@ -33,7 +33,7 @@ struct OnboardingSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
       if #available(iOS 26.0, *) {
         configuration.label
-          .font(.headline)
+          .font(.appHeadline())
           .foregroundColor(.appTextPrimary)
           .frame(maxWidth: 237)
           .frame(height: 48)
@@ -45,7 +45,7 @@ struct OnboardingSecondaryButtonStyle: ButtonStyle {
       } else {
         // Fallback on earlier versions
         configuration.label
-          .font(.headline)
+          .font(.appHeadline())
           .foregroundColor(.appTextSecondary)
           .frame(maxWidth: 237)
           .frame(height: 48)

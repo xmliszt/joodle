@@ -75,20 +75,20 @@ struct ValuePropView: View {
             if isReturnUser {
               // Combined messaging for returning subscribers
               Text("Welcome back!")
-                .font(.title3.bold())
+                .font(.appTitle3(weight: .bold))
 
               Text("Your memories are still here, quietly waiting for you. Rediscover the Joodles you once created, each carrying a piece of your story.")
-                .font(.mansalva(size: 18))
+                .font(.appFont(size: 18))
                 .multilineTextAlignment(.center)
                 .foregroundColor(.appTextSecondary)
                 .lineSpacing(1)
             } else {
               // Standard messaging for new users
               Text("You created your first Joodle!")
-                .font(.title3.bold())
+                .font(.appTitle3(weight: .bold))
 
               Text("Imagine seeing a year of your life in a single glance. Each Joodle carries a special piece of memory. Always private. Always yours.")
-              .font(.mansalva(size: 18))
+              .font(.appFont(size: 18))
               .multilineTextAlignment(.center)
               .foregroundColor(.appTextSecondary)
               .lineSpacing(1)

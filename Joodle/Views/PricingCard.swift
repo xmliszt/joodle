@@ -66,7 +66,7 @@ struct PricingCard: View {
         // Badge - overlaid on top
         if let badge = badge {
           Text(badge)
-            .font(.caption2.weight(.bold))
+            .font(.appCaption2(weight: .bold))
             .foregroundColor(.appAccentContrast)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
@@ -89,7 +89,7 @@ struct PricingCard: View {
         VStack(alignment: .leading, spacing: 8) {
           HStack {
             Text(productTitle)
-              .font(.title3.weight(.bold))
+              .font(.appTitle3(weight: .bold))
               .foregroundColor(.primary)
 
             Spacer()
@@ -101,15 +101,15 @@ struct PricingCard: View {
           // Primary pricing
           HStack(alignment: .firstTextBaseline, spacing: 4) {
             Text(product.displayPrice)
-              .font(.title2.weight(.bold))
+              .font(.appTitle2(weight: .bold))
               .foregroundColor(.primary)
             if isLifetime {
               Text("one-time")
-                .font(.subheadline)
+                .font(.appSubheadline())
                 .foregroundColor(.secondary)
             } else {
               Text("per \(product.id.contains("yearly") ? "year" : "month")")
-                .font(.subheadline)
+                .font(.appSubheadline())
                 .foregroundColor(.secondary)
             }
           }
@@ -126,22 +126,22 @@ struct PricingCard: View {
     VStack(spacing: 8) {
       // Title
       Text(productTitle)
-        .font(.headline.weight(.bold))
+        .font(.appHeadline(weight: .bold))
         .foregroundColor(.primary)
 
       // Price
       VStack(spacing: 2) {
         Text(product.displayPrice)
-          .font(.title3.weight(.bold))
+          .font(.appTitle3(weight: .bold))
           .foregroundColor(.primary)
 
         if isLifetime {
           Text("one-time")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundColor(.secondary)
         } else {
           Text("per \(product.id.contains("yearly") ? "year" : "month")")
-            .font(.caption)
+            .font(.appCaption())
             .foregroundColor(.secondary)
         }
       }
@@ -172,23 +172,23 @@ struct PricingCard: View {
     HStack(spacing: 4) {
       if isLifetime {
         Text("Unlock all features forever")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.appAccent)
       } else if product.id.contains("yearly") {
         Text("Only \(yearlyMonthlyPrice()) / month")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.secondary)
       } else {
         Text("\(product.displayPrice) / month")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.secondary)
       }
       if !isLifetime, let trialText = trialPeriodText {
         Text("•")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.secondary)
         Text("\(trialText) free trial")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.appAccent)
       }
     }
@@ -199,19 +199,19 @@ struct PricingCard: View {
     Group {
       if isLifetime {
         Text("Forever yours")
-          .font(.caption2)
+          .font(.appCaption2())
           .foregroundColor(.appAccent)
       } else if let trialText = trialPeriodText {
         Text("\(trialText) free trial")
-          .font(.caption2)
+          .font(.appCaption2())
           .foregroundColor(.appAccent)
       } else if product.id.contains("yearly") {
         Text("\(yearlyMonthlyPrice()) / mo")
-          .font(.caption2)
+          .font(.appCaption2())
           .foregroundColor(.secondary)
       } else {
         Text("Cancel anytime")
-          .font(.caption2)
+          .font(.appCaption2())
           .foregroundColor(.secondary)
       }
     }

@@ -39,7 +39,7 @@ struct ThemeColorLoadingOverlay: View {
                     .overlay {
                         if showCompletionScreen {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 28, weight: .bold))
+                                .font(.appFont(size: 28, weight: .bold))
                                 .foregroundStyle(.white)
                                 .transition(.scale.combined(with: .opacity))
                         }
@@ -47,7 +47,7 @@ struct ThemeColorLoadingOverlay: View {
 
                 // Title
                 Text(showCompletionScreen ? "Theme Changed" : "Updating Theme")
-                    .font(.headline)
+                    .font(.appHeadline())
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
 
@@ -55,12 +55,12 @@ struct ThemeColorLoadingOverlay: View {
                 VStack(spacing: 16) {
                     if showCompletionScreen {
                         Text("Your new theme is ready!")
-                            .font(.subheadline)
+                            .font(.appSubheadline())
                             .foregroundStyle(.secondary)
                             .transition(.opacity)
                     } else if themeColorManager.totalEntriesToProcess > 0 {
                         Text("Regenerating thumbnails...")
-                            .font(.subheadline)
+                            .font(.appSubheadline())
                             .foregroundStyle(.secondary)
 
                         // Progress bar
@@ -71,7 +71,7 @@ struct ThemeColorLoadingOverlay: View {
 
                         // Count
                         Text("\(themeColorManager.entriesProcessed) / \(themeColorManager.totalEntriesToProcess)")
-                            .font(.caption)
+                            .font(.appCaption())
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
                     } else {
@@ -80,7 +80,7 @@ struct ThemeColorLoadingOverlay: View {
                             .tint(.secondary)
 
                         Text("Preparing...")
-                            .font(.subheadline)
+                            .font(.appSubheadline())
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -199,16 +199,16 @@ private struct ThemeColorLoadingOverlayCompletionPreview: View {
                 }
                 .overlay {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.appFont(size: 28, weight: .bold))
                         .foregroundStyle(.white)
                 }
 
             Text("Theme Changed")
-                .font(.headline)
+                .font(.appHeadline())
                 .foregroundStyle(.primary)
 
             Text("Your new theme is ready!")
-                .font(.subheadline)
+                .font(.appSubheadline())
                 .foregroundStyle(.secondary)
         }
         .padding(32)

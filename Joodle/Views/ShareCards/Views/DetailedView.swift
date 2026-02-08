@@ -40,7 +40,7 @@ struct DetailedView: View {
           // Text content that wraps around the image
           ExclusionTextView(
             text: entry?.body ?? "",
-            font: .systemFont(ofSize: 40 * scale),
+            font: .appFont(ofSize: 40 * scale),
             textColor: UIColor.label,
             lineSpacing: 4 * scale,
             exclusionRect: hasDrawing ? CGRect(
@@ -62,7 +62,7 @@ struct DetailedView: View {
           VStack (alignment: .trailing) {
             Spacer()
             Text(dateString)
-              .font(.system(size: 32 * scale))
+              .font(.appFont(size: 32 * scale))
               .foregroundColor(.appTextSecondary)
           }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
         }
@@ -125,7 +125,7 @@ struct ExclusionTextView: UIViewRepresentable {
 /// Custom UIView that draws text with exclusion paths using TextKit
 class ExclusionTextUIView: UIView {
   var text: String = ""
-  var font: UIFont = .systemFont(ofSize: 16)
+  var font: UIFont = .appFont(ofSize: 16)
   var textColor: UIColor = .label
   var lineSpacing: CGFloat = 4
   var exclusionRect: CGRect = .zero

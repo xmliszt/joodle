@@ -50,11 +50,11 @@ struct ExcerptView: View {
           Spacer()
           VStack(spacing: 14 * scale) {
             Text(entry?.body ?? "")
-              .font(.system(size: 52 * scale))
+              .font(.appFont(size: 52 * scale))
               .lineLimit(1)
               .padding(.horizontal, 140 * scale)
             Text(dateString)
-              .font(.system(size: 48 * scale))
+              .font(.appFont(size: 48 * scale))
               .foregroundColor(.appTextSecondary)
           }
         }

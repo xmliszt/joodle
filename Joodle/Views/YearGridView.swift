@@ -212,7 +212,7 @@ struct YearGridView: View {
               .frame(width: viewMode.dotSize, height: viewMode.dotSize)
               .overlay {
                 Text(weekdayLabels[index])
-                  .font(.system(size: 10, weight: .medium))
+                  .font(.appFont(size: 10, weight: .medium))
                   .foregroundStyle(.secondary)
                   .fixedSize()
               }

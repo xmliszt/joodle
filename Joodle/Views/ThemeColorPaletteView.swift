@@ -132,7 +132,7 @@ private struct ColorCircleButton: View {
                 // Checkmark for selected state
                 if isSelected && !colorInfo.isLocked {
                     Image(systemName: "checkmark")
-                        .font(.system(size: size * 0.4, weight: .bold))
+                        .font(.appFont(size: size * 0.4, weight: .bold))
                         .foregroundStyle(isNeutralColor ? .gray : .white)
                 }
             }
@@ -144,7 +144,7 @@ private struct ColorCircleButton: View {
                         .frame(width: size, height: size)
 
                     Image(systemName: "crown.fill")
-                        .font(.system(size: size * 0.35, weight: .semibold))
+                        .font(.appFont(size: size * 0.35, weight: .semibold))
                         .foregroundStyle(.white)
                 }
             }
@@ -210,7 +210,7 @@ private struct NeutralColorCircle: View {
 #Preview("Color Palette - Free User") {
     VStack(alignment: .leading, spacing: 20) {
         Text("Accent Color")
-            .font(.headline)
+            .font(.appHeadline())
 
         ThemeColorPaletteView(
             subscriptionManager: SubscriptionManager.shared,

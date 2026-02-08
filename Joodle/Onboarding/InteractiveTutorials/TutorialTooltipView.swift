@@ -127,7 +127,7 @@ struct TooltipBubble: View {
 
     var body: some View {
         Text(message)
-            .font(.body)
+            .font(.appBody())
             .foregroundColor(.appAccentContrast)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 16)

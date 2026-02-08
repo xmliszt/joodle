@@ -44,14 +44,14 @@ struct DailyReminderConfigView: View {
 
                   if #available(iOS 18.0, *) {
                     Image(systemName: enableReminder ? "bell.badge.waveform.fill" : "bell.slash")
-                      .font(.system(size: 48))
+                      .font(.appFont(size: 48))
                       .foregroundStyle(.appAccent)
                       .contentTransition(.symbolEffect(.replace))
                       .symbolEffect(.wiggle.byLayer, options: .nonRepeating, value: wiggleTrigger)
                   } else {
                     // Fallback on earlier versions
                     Image(systemName: enableReminder ? "bell.badge.waveform.fill" : "bell.slash")
-                      .font(.system(size: 48))
+                      .font(.appFont(size: 48))
                       .foregroundStyle(.appAccent)
                       .contentTransition(.symbolEffect(.replace))
                   }
@@ -60,13 +60,13 @@ struct DailyReminderConfigView: View {
 
                 // Title
                 Text("Daily Reminder")
-                    .font(.title.weight(.bold))
+                    .font(.appTitle(weight: .bold))
                     .multilineTextAlignment(.center)
                     .padding(.bottom, 12)
 
                 // Description
                 Text("Get a gentle nudge every day to capture your moment in Joodle.")
-                    .font(.body)
+                    .font(.appBody())
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
@@ -82,7 +82,7 @@ struct DailyReminderConfigView: View {
                     )) {
                         HStack {
                             Text("Enable Daily Reminder")
-                                .font(.body)
+                                .font(.appBody())
 
                             if isRequestingPermission {
                                 ProgressView()
@@ -103,7 +103,7 @@ struct DailyReminderConfigView: View {
                     // Time picker row (always visible, disabled when reminder is off)
                     HStack {
                         Text("Reminder Time")
-                            .font(.body)
+                            .font(.appBody())
                             .foregroundStyle(enableReminder ? .primary : .secondary)
 
                         Spacer()

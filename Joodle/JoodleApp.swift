@@ -441,7 +441,7 @@ struct JoodleApp: App {
           OnboardingFlowView()
             .environment(\.userPreferences, UserPreferences.shared)
             .preferredColorScheme(colorScheme)
-            .font(.system(size: 17))
+            .font(.appFont(size: 17))
             .onChange(of: hasCompletedOnboarding) { _, completed in
               if completed {
                 // Track onboarding completion
@@ -459,7 +459,7 @@ struct JoodleApp: App {
               .environment(\.networkMonitor, NetworkMonitor.shared)
               .environment(\.preferencesSyncManager, PreferencesSyncManager.shared)
               .preferredColorScheme(colorScheme)
-              .font(.system(size: 17))
+              .font(.appFont(size: 17))
               .onAppear {
                 // Only setup observers once to prevent duplicate notifications
                 if !hasSetupObservers {

@@ -103,21 +103,21 @@ private struct UpdateAvailableBanner: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "arrow.down.circle.fill")
-                    .font(.title2)
+                    .font(.appTitle2())
                     .foregroundStyle(.white)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Download New Version")
-                        .font(.headline)
+                        .font(.appHeadline())
                         .foregroundStyle(.white)
 
                     if let version = latestVersion {
                         Text("Version \(version) is now available")
-                            .font(.subheadline)
+                            .font(.appSubheadline())
                             .foregroundStyle(.white.opacity(0.9))
                     } else {
                         Text("A new version is available")
-                            .font(.subheadline)
+                            .font(.appSubheadline())
                             .foregroundStyle(.white.opacity(0.9))
                     }
                 }
@@ -125,7 +125,7 @@ private struct UpdateAvailableBanner: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.body.weight(.semibold))
+                    .font(.appBody(weight: .semibold))
                     .foregroundStyle(.white.opacity(0.7))
             }
             .padding()
@@ -154,11 +154,11 @@ private struct ChangelogRowView: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Version \(indexEntry.displayVersion)")
-                    .font(.headline)
+                    .font(.appHeadline())
 
                 if let date = indexEntry.parsedDate {
                   Text(date, style: .date)
-                        .font(.subheadline)
+                        .font(.appSubheadline())
                         .foregroundStyle(.secondary)
                 }
             }
@@ -169,7 +169,7 @@ private struct ChangelogRowView: View {
             // Show "Current" badge if this is the running app version
             if isCurrentVersion {
                 Text("Current")
-                    .font(.caption)
+                    .font(.appCaption())
                     .fontWeight(.medium)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)

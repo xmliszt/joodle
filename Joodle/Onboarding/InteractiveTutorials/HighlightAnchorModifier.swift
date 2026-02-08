@@ -175,7 +175,7 @@ extension View {
             ZStack {
                 VStack(spacing: 20) {
                     Text("Highlight Anchor Demo")
-                        .font(.headline)
+                        .font(.appHeadline())
 
                     Button("Button 1") { }
                         .padding()
@@ -199,7 +199,7 @@ extension View {
                     // Display captured frames
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Captured Frames:")
-                            .font(.caption.bold())
+                            .font(.appCaption(weight: .bold))
                         ForEach(Array(frames.keys.sorted()), id: \.self) { key in
                             if let frame = frames[key] {
                                 Text("\(key): (\(Int(frame.minX)), \(Int(frame.minY))) \(Int(frame.width))x\(Int(frame.height))")

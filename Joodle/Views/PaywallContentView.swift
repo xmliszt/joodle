@@ -161,7 +161,7 @@ struct SliderCTAButton: View {
           .progressViewStyle(CircularProgressViewStyle())
       } else {
         Text(isProMode ? trialButtonText : "Continue for Free")
-          .font(.headline)
+          .font(.appHeadline())
           .foregroundColor(isProMode ? .appTextPrimary : .appTextSecondary)
       }
     }
@@ -283,7 +283,7 @@ struct SliderCTAButton: View {
 
   private var thumbIcon: some View {
     Image(systemName: isProMode ? "crown.fill" : "arrow.right")
-      .font(.system(size: 24, weight: .semibold))
+      .font(.appFont(size: 24, weight: .semibold))
       .foregroundColor(isProMode ? .white : .appBackground)
   }
 }
@@ -356,7 +356,7 @@ struct PaywallContentView: View {
   private var headerSection: some View {
     VStack(spacing: 8) {
       Text("Get Joodle Pro")
-        .font(.system(size: 34, weight: .bold))
+        .font(.appFont(size: 34, weight: .bold))
         .multilineTextAlignment(.center)
     }
     .padding(.top, 24)
@@ -425,13 +425,13 @@ struct PaywallContentView: View {
       ZStack {
         // Invisible placeholder to maintain height
         Text("Save $00.00 per year.")
-          .font(.subheadline.weight(.medium))
+          .font(.appSubheadline(weight: .medium))
           .opacity(0)
         
         // Actual savings text with animation
         if isYearly, let amount = savingsAmount {
           Text("Save \(amount) per year.")
-            .font(.subheadline.weight(.medium))
+            .font(.appSubheadline(weight: .medium))
             .foregroundColor(.appAccent)
             .transition(.asymmetric(
               insertion: .opacity.combined(with: .scale(scale: 0.8)).combined(with: .offset(y: -4)),
@@ -439,7 +439,7 @@ struct PaywallContentView: View {
             ))
         } else if isLifetime {
           Text("Pay once, own it forever.")
-            .font(.subheadline.weight(.medium))
+            .font(.appSubheadline(weight: .medium))
             .foregroundColor(.appAccent)
             .transition(.asymmetric(
               insertion: .opacity.combined(with: .scale(scale: 0.8)).combined(with: .offset(y: -4)),
@@ -453,11 +453,11 @@ struct PaywallContentView: View {
       // Auto-renewal disclaimer (not for lifetime)
       if isLifetime {
         Text("One-time purchase. No subscription.")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.secondary)
       } else {
         Text("Auto renews \(isYearly ? "yearly" : "monthly") until canceled.")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.secondary)
       }
     }
@@ -471,7 +471,7 @@ struct PaywallContentView: View {
         .foregroundColor(.secondary)
 
       Text("Please check your internet connection and try again.")
-        .font(.caption)
+        .font(.appCaption())
         .foregroundColor(.secondary)
         .multilineTextAlignment(.center)
 
@@ -481,7 +481,7 @@ struct PaywallContentView: View {
         }
       } label: {
         Label("Retry", systemImage: "arrow.clockwise")
-          .font(.subheadline)
+          .font(.appSubheadline())
       }
       .buttonStyle(.bordered)
     }
@@ -555,7 +555,7 @@ struct PaywallContentView: View {
   /// Spotify-style disclaimer text that clearly states what happens after trial/promo
   private func spotifyStyleDisclaimer(for product: Product) -> some View {
     Text(spotifyDisclaimerText(for: product))
-      .font(.caption2)
+      .font(.appCaption2())
       .foregroundColor(.secondary)
       .multilineTextAlignment(.center)
       .padding(.horizontal, 8)
@@ -647,7 +647,7 @@ struct PaywallContentView: View {
         }
       } label: {
         Text("Restore Purchases")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.secondary)
       }
       
@@ -655,14 +655,14 @@ struct PaywallContentView: View {
       
       // Terms
       Link("Terms", destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!)
-        .font(.caption)
+        .font(.appCaption())
         .foregroundColor(.secondary)
       
       Spacer()
       
       // Privacy
       Link("Privacy", destination: URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!)
-        .font(.caption)
+        .font(.appCaption())
         .foregroundColor(.secondary)
       
       Spacer()
@@ -672,7 +672,7 @@ struct PaywallContentView: View {
         showRedeemCode = true
       } label: {
         Text("Redeem")
-          .font(.caption)
+          .font(.appCaption())
           .foregroundColor(.secondary)
       }
     }

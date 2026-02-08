@@ -21,7 +21,7 @@ struct FeatureIntroStepView: View {
             VStack(spacing: 16) {
                 // Title at the top
                 Text(title)
-                    .font(.title2.bold())
+                    .font(.appTitle2(weight: .bold))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
                     .padding(.vertical, 16) // Space for back button
@@ -36,7 +36,7 @@ struct FeatureIntroStepView: View {
                 VStack (spacing: 32) {
                   // Description below screenshots
                   Text(description)
-                      .font(.body)
+                      .font(.appBody())
                       .foregroundColor(.secondary)
                       .multilineTextAlignment(.center)
                       .lineSpacing(4)

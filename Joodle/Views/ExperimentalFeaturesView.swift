@@ -42,7 +42,7 @@ struct ExperimentalFeaturesView: View {
             HStack {
               SettingsIconView(systemName: "water.waves", backgroundColor: .cyan)
               Text("Passing Time Backdrop")
-                .font(.body)
+                .font(.appBody())
             }
           }
         }
@@ -56,11 +56,11 @@ struct ExperimentalFeaturesView: View {
           HStack {
             SettingsIconView(systemName: "flask.fill", backgroundColor: .purple)
             Text("About Experimental Features")
-              .font(.subheadline)
+              .font(.appSubheadline())
           }
 
           Text("Experimental features are fun little projects that we are testing. These features may affect performance or battery life.")
-            .font(.subheadline)
+            .font(.appSubheadline())
             .foregroundColor(.secondary)
         }
         .padding(.vertical, 8)

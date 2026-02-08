@@ -219,7 +219,7 @@ struct EntryEditingView: View {
             ZStack(alignment: .topLeading) {
               // Both mock mode and real mode use TextEditor for full editing
               TextEditor(text: $textContent)
-                .font(.body)
+                .font(.appBody())
                 .lineSpacing(4)
                 .foregroundColor(.textColor)
                 .background(.backgroundColor)
@@ -286,7 +286,7 @@ struct EntryEditingView: View {
                 .scrollDismissesKeyboard(.never)
               if textContent.isEmpty {
                 Text("Tap to write a note...")
-                  .font(.body)
+                  .font(.appBody())
                   .foregroundColor(.textColor.opacity(0.3))
                   .offset(y: 20)
                   .allowsHitTesting(false)  // Important: prevents blocking TextEditor
@@ -593,17 +593,17 @@ struct EntryEditingView: View {
         VStack(alignment: .center) {
           if let date {
             Text(CalendarDate.from(date).displayStringWithoutYear)
-              .font(.headline)
+              .font(.appHeadline())
               .foregroundColor(.textColor)
           }
           HStack(spacing: 8) {
             if let countdown = countdownText {
               Text(countdown)
-                .font(.subheadline)
+                .font(.appSubheadline())
                 .foregroundColor(.appAccent.opacity(0.7))
             } else {
               Text(weekdayLabel)
-                .font(.subheadline)
+                .font(.appSubheadline())
                 .foregroundColor(isToday ? .appAccent : .secondaryTextColor)
             }
           }
