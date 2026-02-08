@@ -264,6 +264,7 @@ struct ContentView: View {
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(UIDevice.screenCornerRadius)
+        .disableLiquidGlass()
       }
       // Navigate to setting view
       .navigationDestination(isPresented: $navigateToSettings) {

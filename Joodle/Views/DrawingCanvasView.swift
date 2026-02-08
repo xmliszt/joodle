@@ -54,6 +54,34 @@ struct DrawingCanvasView: View {
     mockStore != nil
   }
 
+  // MARK: - Concentric Corner Radius
+
+  /// Padding between DrawingCanvasView edges and the canvas.
+  /// Kept small to maximise drawing area.
+  private let canvasPadding: CGFloat = 8
+
+  /// Canvas corner radius computed to be concentric with the device screen
+  /// corners and the DI container border.
+  private var canvasCornerRadius: CGFloat {
+    if UIDevice.hasDynamicIsland {
+      // DI container clips at (R - d) with 20pt padding,
+      // so content area corner = R - d - 20.
+      // Canvas is inset by canvasPadding from that content area.
+      let diContainerPadding: CGFloat = 20
+      return max(
+        UIDevice.screenCornerRadius
+          - UIDevice.dynamicIslandFrame.origin.y
+          - diContainerPadding
+          - canvasPadding,
+        0
+      )
+    } else {
+      // Sheet presentationCornerRadius = R.
+      // Canvas is inset by canvasPadding horizontally.
+      return max(UIDevice.screenCornerRadius - canvasPadding, 0)
+    }
+  }
+
   /// Whether editing is allowed based on subscription status
   private var canEditOrCreate: Bool {
     // Always allow in mock mode
@@ -85,6 +113,7 @@ struct DrawingCanvasView: View {
             canRedo: !redoStack.isEmpty,
             showClearConfirmation: $showClearConfirmation
           ),
+          canvasCornerRadius: canvasCornerRadius,
           onCommitStroke: commitCurrentStroke
         ) {
           // Save button
@@ -95,8 +124,8 @@ struct DrawingCanvasView: View {
         }
         .disabled(!canEditOrCreate)
       }
-      .padding(20)
-      .background(.backgroundColor)
+      .padding(canvasPadding)
+      .background(Color.appBackground)
       .overlay {
         // Show lock overlay when access is denied (not in mock mode)
         if !isMockMode && !canEditOrCreate {
@@ -184,7 +213,7 @@ struct DrawingCanvasView: View {
     .padding(32)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(.ultraThinMaterial.quaternary)
-    .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius - UIDevice.dynamicIslandFrame.origin.y - 36, style: .continuous))
+    .clipShape(RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous))
   }
 
   // MARK: - Access Check

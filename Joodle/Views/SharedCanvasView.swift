@@ -47,6 +47,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
 
   var placeholderData: Data? = nil
   var buttonsConfig: CanvasButtonsConfig? = nil
+  var canvasCornerRadius: CGFloat = 32
 
   /// Track the maximum distance from start point during a gesture to detect dots vs strokes
   @State private var maxDistanceFromStart: CGFloat = 0
@@ -69,6 +70,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     isDrawing: Binding<Bool>,
     placeholderData: Data? = nil,
     buttonsConfig: CanvasButtonsConfig? = nil,
+    canvasCornerRadius: CGFloat = 32,
     onCommitStroke: @escaping () -> Void,
     @ViewBuilder trailingHeader: @escaping () -> TrailingHeader
   ) {
@@ -79,6 +81,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self._isDrawing = isDrawing
     self.placeholderData = placeholderData
     self.buttonsConfig = buttonsConfig
+    self.canvasCornerRadius = canvasCornerRadius
     self.onCommitStroke = onCommitStroke
     self.TrailingHeaderView = trailingHeader
   }
@@ -148,7 +151,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
 
       ZStack {
         // Canvas background
-        RoundedRectangle(cornerRadius: 32, style: .continuous)
+        RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous)
           .fill(.backgroundColor)
           .stroke(.borderColor, lineWidth: 1.0)
           .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
@@ -216,7 +219,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           }
         }
         .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous))
         .id(placeholderID)
         .gesture(
           DragGesture(minimumDistance: 0)
@@ -348,6 +351,7 @@ extension SharedCanvasView where TrailingHeader == EmptyView {
     isDrawing: Binding<Bool>,
     placeholderData: Data? = nil,
     buttonsConfig: CanvasButtonsConfig? = nil,
+    canvasCornerRadius: CGFloat = 32,
     onCommitStroke: @escaping () -> Void
   ) {
     self.init(
@@ -358,6 +362,7 @@ extension SharedCanvasView where TrailingHeader == EmptyView {
       isDrawing: isDrawing,
       placeholderData: placeholderData,
       buttonsConfig: buttonsConfig,
+      canvasCornerRadius: canvasCornerRadius,
       onCommitStroke: onCommitStroke,
       trailingHeader: { EmptyView() }
     )

@@ -85,7 +85,17 @@ extension View {
     }
   }
 
-func circularGlassButton(tintColor: Color? = nil) -> some View {
+  func circularGlassButton(tintColor: Color? = nil) -> some View {
     self.modifier(CircularGlassButtonStyle(tintColor: tintColor))
+  }
+
+  /// Disables the iOS 26 liquid glass effect by using a blur background style. No-op on earlier versions.
+  @ViewBuilder
+  func disableLiquidGlass() -> some View {
+    if #available(iOS 26.0, *) {
+      self.presentationBackground(Color.appBackground)
+    } else {
+      self
+    }
   }
 }
