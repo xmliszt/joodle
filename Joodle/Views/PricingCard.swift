@@ -108,7 +108,7 @@ struct PricingCard: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             } else {
-              Text("/ \(product.id.contains("\"yearly\"") ? "year" : "month")")
+              Text("per \(product.id.contains("yearly") ? "year" : "month")")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
             }
@@ -140,7 +140,7 @@ struct PricingCard: View {
             .font(.caption)
             .foregroundColor(.secondary)
         } else {
-          Text("/ \(product.id.contains("\"yearly\"") ? "year" : "month")")
+          Text("per \(product.id.contains("yearly") ? "year" : "month")")
             .font(.caption)
             .foregroundColor(.secondary)
         }
@@ -167,6 +167,7 @@ struct PricingCard: View {
     }
   }
 
+  /// Deprecated
   private var fullSecondaryInfo: some View {
     HStack(spacing: 4) {
       if isLifetime {
@@ -193,6 +194,7 @@ struct PricingCard: View {
     }
   }
 
+  /// Deprecated
   private var compactSecondaryInfo: some View {
     Group {
       if isLifetime {
