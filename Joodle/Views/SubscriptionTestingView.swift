@@ -37,7 +37,9 @@ struct SubscriptionTestingView: View {
       List {
         // MARK: - Current Status Section
         Section {
-          statusRow("App Status", value: subscriptionManager.isSubscribed ? "Subscribed ✓" : "Free", isActive: subscriptionManager.isSubscribed)
+          statusRow("Subscription", value: subscriptionManager.isSubscribed ? "Subscribed ✓" : "Not Subscribed", isActive: subscriptionManager.isSubscribed)
+          statusRow("Grace Period", value: GracePeriodManager.shared.isInGracePeriod ? "Active (\(GracePeriodManager.shared.gracePeriodDaysRemaining)d left)" : (GracePeriodManager.shared.hasGracePeriodExpired ? "Expired" : "N/A"), isActive: GracePeriodManager.shared.isInGracePeriod)
+          statusRow("Premium Access", value: subscriptionManager.hasPremiumAccess ? "Yes ✓" : "No", isActive: subscriptionManager.hasPremiumAccess)
           statusRow("StoreKit Status", value: storeKitManager.hasActiveSubscription ? "Active ✓" : "None", isActive: storeKitManager.hasActiveSubscription)
           statusRow("In Trial", value: storeKitManager.isInTrialPeriod ? "Yes" : "No", isActive: storeKitManager.isInTrialPeriod)
           statusRow("Eligible for Intro Offer", value: storeKitManager.isEligibleForIntroOffer ? "Yes" : "No", isActive: storeKitManager.isEligibleForIntroOffer)

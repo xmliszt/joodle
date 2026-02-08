@@ -106,6 +106,12 @@ final class AnalyticsManager {
         case remoteAlertShown = "remote_alert_shown"
         case remoteAlertActionTaken = "remote_alert_action_taken"
         case remoteAlertDismissed = "remote_alert_dismissed"
+
+        // Grace Period
+        case gracePeriodStarted = "grace_period_started"
+        case gracePeriodExpired = "grace_period_expired"
+        case graceExpiredPaywallShown = "grace_expired_paywall_shown"
+        case graceExpiredPaywallDismissed = "grace_expired_paywall_dismissed"
     }
 
     // MARK: - Property Keys
@@ -195,6 +201,10 @@ final class AnalyticsManager {
         // Counts
         case entryCount = "entry_count"
         case reminderCount = "reminder_count"
+
+        // Grace Period
+        case gracePeriodStartDate = "grace_period_start_date"
+        case gracePeriodDaysRemaining = "grace_period_days_remaining"
     }
 
     // MARK: - Screen Names
@@ -351,6 +361,30 @@ final class AnalyticsManager {
     func trackRestorePurchasesAttempted(success: Bool) {
         track(.restorePurchasesAttempted, properties: [
             .settingValue: success ? "success" : "no_purchases_found"
+        ])
+    }
+
+    // MARK: Grace Period
+
+    func trackGracePeriodStarted(startDate: Date) {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        track(.gracePeriodStarted, properties: [
+            .gracePeriodStartDate: formatter.string(from: startDate)
+        ])
+    }
+
+    func trackGracePeriodExpired() {
+        track(.gracePeriodExpired)
+    }
+
+    func trackGraceExpiredPaywallShown() {
+        track(.graceExpiredPaywallShown)
+    }
+
+    func trackGraceExpiredPaywallDismissed(didPurchase: Bool) {
+        track(.graceExpiredPaywallDismissed, properties: [
+            .settingValue: didPurchase ? "purchased" : "dismissed"
         ])
     }
 

@@ -33,7 +33,7 @@ struct SubscriptionsView: View {
             currentPlanSection(product: product)
           }
 
-          // Manage Subscription Button
+          // Manage Subscription Button (show when user has an actual subscription, not just grace period)
           if subscriptionManager.isSubscribed && !subscriptionManager.isLifetimeUser {
             manageSubscriptionButton
           }
@@ -128,9 +128,9 @@ struct SubscriptionsView: View {
 
   private var headerSection: some View {
     VStack(spacing: 12) {
-      GlossyCrownView(isSubscribed: subscriptionManager.isSubscribed)
+      GlossyCrownView(isSubscribed: subscriptionManager.hasPremiumAccess)
 
-      if subscriptionManager.isSubscribed {
+      if subscriptionManager.hasPremiumAccess && !GracePeriodManager.shared.isInGracePeriod {
         Text("Joodle Pro")
           .font(.system(size: 28, weight: .bold))
 
@@ -166,6 +166,33 @@ struct SubscriptionsView: View {
           )
           .padding(.top, 8)
         }
+
+      } else if GracePeriodManager.shared.isInGracePeriod {
+        Text("Joodle Pro")
+          .font(.system(size: 28, weight: .bold))
+
+        let daysLeft = GracePeriodManager.shared.gracePeriodDaysRemaining
+        Text("You have free access to all Pro features for \(daysLeft) more day\(daysLeft == 1 ? "" : "s").")
+          .font(.subheadline)
+          .foregroundColor(.secondary)
+          .multilineTextAlignment(.center)
+          .padding(.horizontal, 32)
+
+        HStack(spacing: 6) {
+          Image(systemName: "clock.fill")
+            .font(.caption2)
+            .foregroundStyle(.appAccent)
+          Text("Free access · \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
+            .font(.caption)
+        }
+        .foregroundColor(.secondary)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 8)
+        .background(
+          RoundedRectangle(cornerRadius: 32, style: .continuous)
+            .fill(.appAccent.opacity(0.1))
+        )
+        .padding(.top, 8)
 
       } else {
         Text("No active subscription")
@@ -323,6 +350,8 @@ struct SubscriptionsView: View {
         return "PROMO APPLIED"
       }
       return "FREE TRIAL"
+    } else if GracePeriodManager.shared.isInGracePeriod {
+      return "FREE ACCESS"
     }
     return nil
   }

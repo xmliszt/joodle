@@ -13,14 +13,20 @@ import UIKit
 
 /// Subscription status shared between main app and widget extension
 struct WidgetSubscriptionStatus: Codable {
-  let isSubscribed: Bool
+  let hasPremiumAccess: Bool
   let expirationDate: Date?
   let lastUpdated: Date
 
-  init(isSubscribed: Bool, expirationDate: Date? = nil) {
-    self.isSubscribed = isSubscribed
+  init(hasPremiumAccess: Bool, expirationDate: Date? = nil) {
+    self.hasPremiumAccess = hasPremiumAccess
     self.expirationDate = expirationDate
     self.lastUpdated = Date()
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case hasPremiumAccess = "isSubscribed"
+    case expirationDate
+    case lastUpdated
   }
 
   /// Check if status is still valid (updated within last hour)
@@ -148,8 +154,8 @@ struct WidgetDataManager {
 
   // MARK: - Subscription Status
 
-  /// Check if user has active subscription for widget features
-  func isSubscribed() -> Bool {
+  /// Check if user has premium access for widget features
+  func hasPremiumAccess() -> Bool {
     guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
       return false
     }
@@ -162,7 +168,7 @@ struct WidgetDataManager {
       let status = try JSONDecoder().decode(WidgetSubscriptionStatus.self, from: data)
 
       // If not marked as subscribed, return false immediately
-      guard status.isSubscribed else {
+      guard status.hasPremiumAccess else {
         return false
       }
 

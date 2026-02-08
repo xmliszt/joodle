@@ -2,7 +2,7 @@
 //  PaywallContentView.swift
 //  Joodle
 //
-//  Shared paywall content component used by both PaywallView and StandalonePaywallView
+//  Shared paywall content component used by StandalonePaywallView
 //
 
 import SwiftUI
@@ -570,15 +570,6 @@ struct PaywallContentView: View {
     
     let periodText = product.id.contains("yearly") ? "year" : "month"
     
-    // Check if user is eligible for trial
-    if storeManager.isEligibleForIntroOffer,
-       let subscription = product.subscription,
-       let introOffer = subscription.introductoryOffer {
-      
-      let trialPeriod = formatTrialPeriod(introOffer.period)
-      return "Free for \(trialPeriod.lowercased()), then \(product.displayPrice) per \(periodText) after. Offer only available if you haven't tried Joodle Pro before. Cancel anytime."
-    }
-    
     // No trial available
     return "\(product.displayPrice) per \(periodText). Cancel anytime."
   }
@@ -601,23 +592,9 @@ struct PaywallContentView: View {
   }
 
   /// Returns the formatted trial period text for the currently selected product
-  /// Returns nil if user is not eligible for introductory offer (e.g., already used free trial)
-  /// Returns nil for lifetime product (no trial for one-time purchase)
+  /// No introductory offers are used — always returns nil
   private var selectedTrialPeriodText: String? {
-    // Check if user is eligible for intro offer (hasn't used trial before)
-    guard storeManager.isEligibleForIntroOffer else {
-      return nil
-    }
-
-    guard let selectedID = selectedProductID,
-          let product = storeManager.products.first(where: { $0.id == selectedID }),
-          !product.id.contains("lifetime"),
-          let subscription = product.subscription,
-          let introOffer = subscription.introductoryOffer else {
-      return nil
-    }
-
-    return formatTrialPeriod(introOffer.period)
+    return nil
   }
 
   /// Formats a subscription period into a user-friendly string (e.g., "7-Day", "1-Month", "3-Month")

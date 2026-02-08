@@ -15,18 +15,18 @@ struct YearGridProvider: TimelineProvider {
       year: Calendar.current.component(.year, from: Date()),
       percentage: 0.0,
       entries: [],
-      isSubscribed: true
+      hasPremiumAccess: true
     )
   }
 
   func getSnapshot(in context: Context, completion: @escaping (YearGridEntry) -> Void) {
-    let isSubscribed = WidgetDataManager.shared.isSubscribed()
+    let hasPremiumAccess = WidgetDataManager.shared.hasPremiumAccess()
     let entry = YearGridEntry(
       date: Date(),
       year: Calendar.current.component(.year, from: Date()),
       percentage: calculateYearProgress(),
-      entries: isSubscribed ? loadEntries() : [],
-      isSubscribed: isSubscribed
+      entries: hasPremiumAccess ? loadEntries() : [],
+      hasPremiumAccess: hasPremiumAccess
     )
     completion(entry)
   }
@@ -35,15 +35,15 @@ struct YearGridProvider: TimelineProvider {
     let currentDate = Date()
     let year = Calendar.current.component(.year, from: currentDate)
     let percentage = calculateYearProgress()
-    let isSubscribed = WidgetDataManager.shared.isSubscribed()
-    let entries = isSubscribed ? loadEntries() : []
+    let hasPremiumAccess = WidgetDataManager.shared.hasPremiumAccess()
+    let entries = hasPremiumAccess ? loadEntries() : []
 
     let entry = YearGridEntry(
       date: currentDate,
       year: year,
       percentage: percentage,
       entries: entries,
-      isSubscribed: isSubscribed
+      hasPremiumAccess: hasPremiumAccess
     )
 
     // Update widget at midnight for the new day
@@ -100,7 +100,7 @@ struct YearGridEntry: TimelineEntry {
   let year: Int
   let percentage: Double
   let entries: [WidgetDayEntry]
-  let isSubscribed: Bool
+  let hasPremiumAccess: Bool
 }
 
 struct WidgetDayEntry {
@@ -149,7 +149,7 @@ struct YearGridWidgetView: View {
 
   // Check if widget should show locked view
   private var shouldShowLockedView: Bool {
-    !entry.isSubscribed
+    !entry.hasPremiumAccess
   }
 
   private func calculateDotsPerRow(availableWidth: CGFloat) -> Int {

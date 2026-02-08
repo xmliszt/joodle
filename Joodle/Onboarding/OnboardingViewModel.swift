@@ -8,8 +8,7 @@ enum OnboardingStep: Hashable, CaseIterable {
     case valueProposition          // Confetti + Explanation
     case yearGridDemo              // Interactive tutorial in sandboxed environment
     case featureIntroWidgets       // Feature intro: Widgets (kept - can't be interactive)
-    case paywall                   // Subscription choice
-    case icloudConfig              // iCloud sync configuration (only for subscribers)
+    case icloudConfig              // iCloud sync configuration
     case dailyReminder             // Daily reminder configuration
     case onboardingCompletion      // Completion step
 }
@@ -22,7 +21,6 @@ class OnboardingViewModel: ObservableObject {
     // Data collected during onboarding
     // We store the raw JSON data representing [PathData]
     @Published var firstJoodleData: Data?
-    @Published var isPremium: Bool = false
     @Published var shouldDismiss = false
 
     // iCloud sync preference set during onboarding
@@ -62,9 +60,6 @@ class OnboardingViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        // Monitor subscription status changes
-        SubscriptionManager.shared.$isSubscribed
-            .assign(to: &$isPremium)
     }
 
     // Actions
@@ -101,23 +96,9 @@ class OnboardingViewModel: ObservableObject {
             navigationPath.append(OnboardingStep.featureIntroWidgets)
 
         case .featureIntroWidgets:
-            // After widgets intro, proceed to paywall or iCloud config
-            if StoreKitManager.shared.hasActiveSubscription {
-                // User is already subscribed, show iCloud config
-                navigationPath.append(OnboardingStep.icloudConfig)
-            } else {
-                navigationPath.append(OnboardingStep.paywall)
-            }
-
-        case .paywall:
-            // After paywall, check if user subscribed
-            if isPremium || StoreKitManager.shared.hasActiveSubscription {
-                // User subscribed, show iCloud config
-                navigationPath.append(OnboardingStep.icloudConfig)
-            } else {
-                // User skipped subscription, go to daily reminder
-                navigationPath.append(OnboardingStep.dailyReminder)
-            }
+            // After widgets intro, always go to iCloud config
+            // (iCloud sync is free for all users, and grace period grants Pro access)
+            navigationPath.append(OnboardingStep.icloudConfig)
 
         case .icloudConfig:
             // After iCloud config, go to daily reminder setup
@@ -152,7 +133,7 @@ class OnboardingViewModel: ObservableObject {
     private func finishOnboarding() {
         // Track onboarding completion with user properties
         AnalyticsManager.shared.setUserProperties(
-            isSubscribed: isPremium || StoreKitManager.shared.hasActiveSubscription,
+            isSubscribed: StoreKitManager.shared.hasActiveSubscription,
             hasCompletedOnboarding: true,
             entryCount: 1  // At least the onboarding drawing
         )
@@ -162,12 +143,7 @@ class OnboardingViewModel: ObservableObject {
         // Clear the revisit from settings flag
         UserDefaults.standard.removeObject(forKey: "isRevisitFromSettings")
 
-        // Update subscription status if premium was set during onboarding
-        #if DEBUG
-        if isPremium {
-            SubscriptionManager.shared.grantSubscription()
-        }
-        #endif
+        // Update subscription status if premium was set during onboarding\n        #if DEBUG\n        // No longer needed - grace period handles free Pro access\n        #endif
 
         // Always save the drawing immediately to local database
         // This ensures the drawing is never lost, regardless of sync state
@@ -333,7 +309,6 @@ class OnboardingViewModel: ObservableObject {
         case .valueProposition: return "value_proposition"
         case .yearGridDemo: return "year_grid_demo"
         case .featureIntroWidgets: return "feature_intro_widgets"
-        case .paywall: return "paywall"
         case .icloudConfig: return "icloud_config"
         case .dailyReminder: return "daily_reminder"
         case .onboardingCompletion: return "completion"

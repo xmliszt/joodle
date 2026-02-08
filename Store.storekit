@@ -101,12 +101,7 @@
           "familyShareable" : false,
           "groupNumber" : 2,
           "internalID" : "6757140768",
-          "introductoryOffer" : {
-            "internalID" : "00DB1D5F",
-            "numberOfPeriods" : 1,
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P1W"
-          },
+          "introductoryOffer" : null,
           "localizations" : [
             {
               "description" : "Unlock all features for a month",
@@ -159,12 +154,7 @@
           "familyShareable" : true,
           "groupNumber" : 1,
           "internalID" : "6757140365",
-          "introductoryOffer" : {
-            "internalID" : "818C2C91",
-            "numberOfPeriods" : 1,
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P2W"
-          },
+          "introductoryOffer" : null,
           "localizations" : [
             {
               "description" : "Unlock all features for a year",

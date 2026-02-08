@@ -204,20 +204,20 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
       date: Date(),
       anniversaryData: nil,
       configuration: AnniversaryConfigurationIntent(),
-      isSubscribed: true
+      hasPremiumAccess: true
     )
   }
 
   func snapshot(for configuration: AnniversaryConfigurationIntent, in context: Context) async
     -> AnniversaryEntry
   {
-    let isSubscribed = WidgetDataManager.shared.isSubscribed()
-    let anniversaryData = isSubscribed ? getAnniversary(for: configuration) : nil
+    let hasPremiumAccess = WidgetDataManager.shared.hasPremiumAccess()
+    let anniversaryData = hasPremiumAccess ? getAnniversary(for: configuration) : nil
     return AnniversaryEntry(
       date: Date(),
       anniversaryData: anniversaryData,
       configuration: configuration,
-      isSubscribed: isSubscribed
+      hasPremiumAccess: hasPremiumAccess
     )
   }
 
@@ -225,14 +225,14 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
     -> Timeline<AnniversaryEntry>
   {
     let currentDate = Date()
-    let isSubscribed = WidgetDataManager.shared.isSubscribed()
-    let anniversaryData = isSubscribed ? getAnniversary(for: configuration) : nil
+    let hasPremiumAccess = WidgetDataManager.shared.hasPremiumAccess()
+    let anniversaryData = hasPremiumAccess ? getAnniversary(for: configuration) : nil
 
     let entry = AnniversaryEntry(
       date: currentDate,
       anniversaryData: anniversaryData,
       configuration: configuration,
-      isSubscribed: isSubscribed
+      hasPremiumAccess: hasPremiumAccess
     )
 
     // Update widget at midnight since we only show day-level countdown
@@ -309,7 +309,7 @@ struct AnniversaryEntry: TimelineEntry {
   let date: Date
   let anniversaryData: AnniversaryData?
   let configuration: AnniversaryConfigurationIntent
-  let isSubscribed: Bool
+  let hasPremiumAccess: Bool
 }
 
 struct AnniversaryData {
@@ -351,7 +351,7 @@ struct AnniversaryWidgetView: View {
 
   var body: some View {
     // Check subscription status first
-    if !entry.isSubscribed {
+    if !entry.hasPremiumAccess {
       AnniversaryWidgetLockedView(family: family)
         .widgetURL(URL(string: "joodle://paywall"))
         .containerBackground(for: .widget) {
@@ -697,7 +697,7 @@ private func futureDateString(daysFromNow: Int) -> String {
       drawingData: createMockDrawingData()
     ),
     configuration: AnniversaryConfigurationIntent(),
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 
   // Preview with text only
@@ -709,7 +709,7 @@ private func futureDateString(daysFromNow: Int) -> String {
       drawingData: nil
     ),
     configuration: AnniversaryConfigurationIntent(),
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 
   // Preview with no anniversary
@@ -717,7 +717,7 @@ private func futureDateString(daysFromNow: Int) -> String {
     date: Date(),
     anniversaryData: nil,
     configuration: AnniversaryConfigurationIntent(),
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 }
 
@@ -735,7 +735,7 @@ private func futureDateString(daysFromNow: Int) -> String {
       drawingData: createMockDrawingData()
     ),
     configuration: AnniversaryConfigurationIntent(),
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 
   // Preview with text only
@@ -747,7 +747,7 @@ private func futureDateString(daysFromNow: Int) -> String {
       drawingData: nil
     ),
     configuration: AnniversaryConfigurationIntent(),
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 
   // Preview with both
@@ -759,7 +759,7 @@ private func futureDateString(daysFromNow: Int) -> String {
       drawingData: createMockDrawingData()
     ),
     configuration: AnniversaryConfigurationIntent(),
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 
   // Preview with no anniversary
@@ -767,7 +767,7 @@ private func futureDateString(daysFromNow: Int) -> String {
     date: Date(),
     anniversaryData: nil,
     configuration: AnniversaryConfigurationIntent(),
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 }
 
@@ -785,7 +785,7 @@ private func futureDateString(daysFromNow: Int) -> String {
       drawingData: createMockDrawingData()
     ),
     configuration: AnniversaryConfigurationIntent(),
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 
   // Preview with text only
@@ -798,7 +798,7 @@ private func futureDateString(daysFromNow: Int) -> String {
       drawingData: nil
     ),
     configuration: AnniversaryConfigurationIntent(),
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 
   // Preview with no anniversary
@@ -806,6 +806,6 @@ private func futureDateString(daysFromNow: Int) -> String {
     date: Date(),
     anniversaryData: nil,
     configuration: AnniversaryConfigurationIntent(),
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 }

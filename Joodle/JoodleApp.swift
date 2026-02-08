@@ -233,6 +233,9 @@ struct JoodleApp: App {
     // Restore daily reminder if it was enabled
     ReminderManager.shared.restoreDailyReminderIfNeeded()
 
+    // Start grace period tracking for new users (stores start date on first launch)
+    GracePeriodManager.shared.startGracePeriodIfNeeded()
+
     // DEBUG: Seed test entries for 2023 and 2024
     #if DEBUG
     DebugDataSeeder.shared.seedTestEntriesIfNeeded(container: container)
@@ -608,7 +611,7 @@ struct JoodleApp: App {
         await SubscriptionManager.shared.updateSubscriptionStatus()
 
         // If not subscribed, show the paywall
-        if !SubscriptionManager.shared.isSubscribed {
+        if !SubscriptionManager.shared.hasPremiumAccess {
           showPaywallFromWidget = true
         }
       }

@@ -48,7 +48,7 @@ struct StandalonePaywallView: View {
             await subscriptionManager.updateSubscriptionStatus()
 
             // If user is already subscribed, dismiss immediately
-            if subscriptionManager.isSubscribed {
+            if subscriptionManager.hasPremiumAccess {
                 dismiss()
                 return
             }

@@ -69,7 +69,7 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
     /// Note: Must be called from MainActor context
     @MainActor
     var isAvailable: Bool {
-        SubscriptionManager.shared.isSubscribed
+        SubscriptionManager.shared.hasPremiumAccess
     }
 }
 
@@ -81,7 +81,7 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
 final class PremiumAccessController: ObservableObject {
     static let shared = PremiumAccessController()
 
-    @Published private(set) var isSubscribed: Bool = false
+    @Published private(set) var hasPremiumAccess: Bool = false
     @Published private(set) var subscriptionExpired: Bool = false
 
     private var cancellables = Set<AnyCancellable>()
@@ -96,11 +96,26 @@ final class PremiumAccessController: ObservableObject {
         // Observe subscription manager changes
         SubscriptionManager.shared.$isSubscribed
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] newValue in
-                let wasSubscribed = self?.isSubscribed ?? false
-                self?.isSubscribed = newValue
+            .sink { [weak self] _ in
+                let newValue = SubscriptionManager.shared.hasPremiumAccess
+                let wasSubscribed = self?.hasPremiumAccess ?? false
+                self?.hasPremiumAccess = newValue
 
-                // Detect subscription expiry
+                // Detect subscription expiry (only if grace period also expired)
+                if wasSubscribed && !newValue {
+                    self?.handleSubscriptionExpired()
+                }
+            }
+            .store(in: &cancellables)
+
+        // Also observe grace period changes
+        GracePeriodManager.shared.$isInGracePeriod
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                let newValue = SubscriptionManager.shared.hasPremiumAccess
+                let wasSubscribed = self?.hasPremiumAccess ?? false
+                self?.hasPremiumAccess = newValue
+
                 if wasSubscribed && !newValue {
                     self?.handleSubscriptionExpired()
                 }
@@ -108,7 +123,7 @@ final class PremiumAccessController: ObservableObject {
             .store(in: &cancellables)
 
         // Initial state
-        isSubscribed = SubscriptionManager.shared.isSubscribed
+        hasPremiumAccess = SubscriptionManager.shared.hasPremiumAccess
     }
 
     // MARK: - Feature Access Checks
@@ -118,7 +133,7 @@ final class PremiumAccessController: ObservableObject {
     func canAccess(_ feature: PremiumFeature) -> Bool {
         // Trigger background refresh when checking premium features
         triggerBackgroundRefreshIfNeeded()
-        return isSubscribed
+        return hasPremiumAccess
     }
 
     /// Check if a feature is accessible after refreshing from StoreKit first
@@ -126,7 +141,7 @@ final class PremiumAccessController: ObservableObject {
     func checkAccessWithRefresh(_ feature: PremiumFeature) async -> Bool {
         // Refresh from StoreKit first to get the latest status
         await refreshSubscriptionStatus()
-        return isSubscribed
+        return hasPremiumAccess
     }
 
     /// Triggers a background StoreKit refresh if enough time has passed since the last refresh
@@ -139,7 +154,7 @@ final class PremiumAccessController: ObservableObject {
 
     /// Check if user can create a new Joodle based on current total count
     func canCreateJoodle(currentTotalCount: Int) -> Bool {
-        if isSubscribed {
+        if hasPremiumAccess {
             return true
         }
         return currentTotalCount < (PremiumFeature.unlimitedJoodles.freeLimit ?? SubscriptionManager.freeJoodlesAllowed)
@@ -147,7 +162,7 @@ final class PremiumAccessController: ObservableObject {
 
     /// Check if user can edit a specific Joodle (by index in total order)
     func canEditJoodle(atIndex index: Int) -> Bool {
-        if isSubscribed {
+        if hasPremiumAccess {
             return true
         }
         // Free users can only edit their first N Joodles
@@ -156,7 +171,7 @@ final class PremiumAccessController: ObservableObject {
 
     /// Get remaining Joodles for free users
     func remainingJoodles(currentTotalCount: Int) -> Int {
-        if isSubscribed {
+        if hasPremiumAccess {
             return Int.max
         }
         let limit = PremiumFeature.unlimitedJoodles.freeLimit ?? SubscriptionManager.freeJoodlesAllowed
@@ -303,7 +318,7 @@ extension View {
     /// Shows a premium badge on the view
     func withPremiumBadge(_ feature: PremiumFeature, show: Bool = true) -> some View {
         self.overlay(alignment: .topTrailing) {
-            if show && !PremiumAccessController.shared.isSubscribed {
+            if show && !PremiumAccessController.shared.hasPremiumAccess {
                 PremiumFeatureBadge()
                     .offset(x: 4, y: -4)
             }
@@ -369,7 +384,7 @@ struct PremiumGatedButton<Label: View>: View {
         } label: {
             label()
                 .overlay(alignment: .topTrailing) {
-                    if !accessController.isSubscribed {
+                    if !accessController.hasPremiumAccess {
                         Image(systemName: "lock.fill")
                             .font(.caption2)
                             .foregroundColor(.secondary)
@@ -389,7 +404,7 @@ struct RemainingJoodlesIndicator: View {
     @ObservedObject private var accessController = PremiumAccessController.shared
 
     var body: some View {
-        if !accessController.isSubscribed {
+        if !accessController.hasPremiumAccess {
             let remaining = accessController.remainingJoodles(currentTotalCount: currentCount)
 
             HStack(spacing: 4) {
@@ -460,7 +475,7 @@ struct JoodleAccessChecker {
         let accessController = PremiumAccessController.shared
 
         // Subscribed users can edit any Joodle
-        if accessController.isSubscribed {
+        if accessController.hasPremiumAccess {
             return true
         }
 

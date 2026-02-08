@@ -15,30 +15,30 @@ struct TodayDoodleProvider: TimelineProvider {
     return TodayDoodleEntry(
       date: Date(),
       todayData: nil,
-      isSubscribed: true
+      hasPremiumAccess: true
     )
   }
 
   func getSnapshot(in context: Context, completion: @escaping (TodayDoodleEntry) -> Void) {
-    let isSubscribed = WidgetDataManager.shared.isSubscribed()
-    let todayData = isSubscribed ? getTodayEntry() : nil
+    let hasPremiumAccess = WidgetDataManager.shared.hasPremiumAccess()
+    let todayData = hasPremiumAccess ? getTodayEntry() : nil
     let entry = TodayDoodleEntry(
       date: Date(),
       todayData: todayData,
-      isSubscribed: isSubscribed
+      hasPremiumAccess: hasPremiumAccess
     )
     completion(entry)
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<TodayDoodleEntry>) -> Void) {
     let currentDate = Date()
-    let isSubscribed = WidgetDataManager.shared.isSubscribed()
-    let todayData = isSubscribed ? getTodayEntry() : nil
+    let hasPremiumAccess = WidgetDataManager.shared.hasPremiumAccess()
+    let todayData = hasPremiumAccess ? getTodayEntry() : nil
 
     let entry = TodayDoodleEntry(
       date: currentDate,
       todayData: todayData,
-      isSubscribed: isSubscribed
+      hasPremiumAccess: hasPremiumAccess
     )
 
     // Update widget at midnight to refresh for the new day
@@ -83,7 +83,7 @@ struct TodayDoodleProvider: TimelineProvider {
 struct TodayDoodleEntry: TimelineEntry {
   let date: Date
   let todayData: TodayDoodleData?
-  let isSubscribed: Bool
+  let hasPremiumAccess: Bool
 }
 
 struct TodayDoodleData {
@@ -125,7 +125,7 @@ struct TodayDoodleWidgetView: View {
 
   var body: some View {
     // Check subscription status first
-    if !entry.isSubscribed {
+    if !entry.hasPremiumAccess {
       TodayDoodleWidgetLockedView(family: family)
         .widgetURL(URL(string: "joodle://paywall"))
         .containerBackground(for: .widget) {

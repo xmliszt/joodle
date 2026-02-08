@@ -50,7 +50,7 @@ struct ThemeColorPaletteView: View {
     /// All available theme colors with their lock state
     private var themeColors: [ThemeColorInfo] {
         ThemeColor.allCases.map { color in
-            ThemeColorInfo(themeColor: color, isSubscribed: subscriptionManager.isSubscribed)
+            ThemeColorInfo(themeColor: color, hasPremiumAccess: subscriptionManager.hasPremiumAccess)
         }
     }
 

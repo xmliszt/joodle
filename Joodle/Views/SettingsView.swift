@@ -91,7 +91,9 @@ struct SettingsRowView: View {
 // MARK: - Membership Banner View (Reusable Component)
 
 struct MembershipBannerView: View {
-  let isSubscribed: Bool
+  let hasPremiumAccess: Bool
+  let isInGracePeriod: Bool
+  let gracePeriodDaysRemaining: Int
   let statusMessage: String?
   let joodleCount: Int
   let alarmCount: Int
@@ -101,25 +103,30 @@ struct MembershipBannerView: View {
     Button(action: onTap) {
       ZStack(alignment: .topLeading) {
         // Background image (1200x600 = 2:1 aspect ratio)
-        Image(isSubscribed ? "Others/Pro Banner" : "Others/Free Banner")
+        // Pro Banner for subscribed and grace period, Free Banner otherwise
+        Image(hasPremiumAccess ? "Others/Pro Banner" : "Others/Free Banner")
           .resizable()
           .aspectRatio(2/1, contentMode: .fit)
         
         // Content overlay - positioned at top to avoid mushroom glow at bottom
         VStack(alignment: .leading, spacing: 6) {
           HStack {
-            Text(isSubscribed ? "Joodle Pro" : "Unlock Joodle Pro")
+            Text(hasPremiumAccess ? "Joodle Pro" : "Unlock Joodle Pro")
               .font(.headline)
               .fontWeight(.bold)
-              .foregroundColor(isSubscribed ? .white : .black)
+              .foregroundColor(hasPremiumAccess ? .white : .black)
             Spacer()
             Image(systemName: "chevron.right")
               .font(.caption)
-              .foregroundColor(isSubscribed ? .white.opacity(0.8) : .black.opacity(0.8))
+              .foregroundColor(hasPremiumAccess ? .white.opacity(0.8) : .black.opacity(0.8))
           }
           
-          if isSubscribed {
-            if let statusMessage = statusMessage {
+          if hasPremiumAccess {
+            if isInGracePeriod {
+              Text("Free access · \(gracePeriodDaysRemaining) day\(gracePeriodDaysRemaining == 1 ? "" : "s") left")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.9))
+            } else if let statusMessage = statusMessage {
               Text(statusMessage)
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.9))
@@ -385,7 +392,7 @@ struct SettingsView: View {
       Task {
         await StoreKitManager.shared.updatePurchasedProducts()
         await subscriptionManager.updateSubscriptionStatus()
-        if !subscriptionManager.isSubscribed {
+        if !subscriptionManager.hasPremiumAccess {
           currentJoodleCount = subscriptionManager.fetchTotalJoodleCount(in: modelContext)
         }
         
@@ -456,12 +463,14 @@ struct SettingsView: View {
     Section {
       // Membership Banner - only this should trigger paywall
       MembershipBannerView(
-        isSubscribed: subscriptionManager.isSubscribed,
+        hasPremiumAccess: subscriptionManager.hasPremiumAccess,
+        isInGracePeriod: GracePeriodManager.shared.isInGracePeriod,
+        gracePeriodDaysRemaining: GracePeriodManager.shared.gracePeriodDaysRemaining,
         statusMessage: subscriptionManager.subscriptionStatusMessage,
         joodleCount: currentJoodleCount,
         alarmCount: reminderManager.reminders.count,
         onTap: {
-          if subscriptionManager.isSubscribed {
+          if subscriptionManager.hasPremiumAccess {
             showSubscriptions = true
           } else {
             showPaywall = true
@@ -1062,8 +1071,16 @@ struct SettingsView: View {
         HStack {
           Text("App Status")
           Spacer()
-          Text(subscriptionManager.isSubscribed ? "Subscribed ✓" : "Free")
-            .foregroundColor(subscriptionManager.isSubscribed ? .green : .secondary)
+          if subscriptionManager.isSubscribed {
+            Text("Subscribed ✓")
+              .foregroundColor(.green)
+          } else if GracePeriodManager.shared.isInGracePeriod {
+            Text("Grace Period (\(GracePeriodManager.shared.gracePeriodDaysRemaining)d)")
+              .foregroundColor(.orange)
+          } else {
+            Text("Free")
+              .foregroundColor(.secondary)
+          }
         }
         
         Button("Subscription Testing Console") {
@@ -1356,7 +1373,7 @@ struct CustomizationSettingsView: View {
         let previousValue = userPreferences.shareCardWatermarkEnabled
         
         // For free users, show paywall when they try to disable it
-        if !subscriptionManager.isSubscribed && !newValue {
+        if !subscriptionManager.hasPremiumAccess && !newValue {
           userPreferences.shareCardWatermarkEnabled = true // Revert to ON
           showPaywall = true // Show paywall sheet
           return
@@ -1531,7 +1548,7 @@ struct CustomizationSettingsView: View {
               VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                   Text("Watermark when sharing")
-                  if !subscriptionManager.isSubscribed {
+                  if !subscriptionManager.hasPremiumAccess {
                     PremiumFeatureBadge()
                   }
                 }
@@ -2141,8 +2158,8 @@ struct AppStatsView: View {
           HStack {
             Text("Status")
             Spacer()
-            Text(subscriptionManager.isSubscribed ? "Pro" : "Free")
-              .foregroundColor(subscriptionManager.isSubscribed ? .green : .secondary)
+            Text(subscriptionManager.hasPremiumAccess ? "Pro" : "Free")
+              .foregroundColor(subscriptionManager.hasPremiumAccess ? .green : .secondary)
           }
           if let message = subscriptionManager.subscriptionStatusMessage {
             HStack {
@@ -2428,7 +2445,7 @@ struct LearnCoreFeaturesView: View {
               Text(tutorial.title)
                 .foregroundColor(.primary)
               Spacer()
-              if !subscriptionManager.isSubscribed && tutorial.isPremiumFeature {
+              if !subscriptionManager.hasPremiumAccess && tutorial.isPremiumFeature {
                 PremiumFeatureBadge()
               }
             }
@@ -2452,7 +2469,7 @@ struct LearnCoreFeaturesView: View {
               Text(tutorial.title)
                 .foregroundColor(.primary)
               Spacer()
-              if !subscriptionManager.isSubscribed && tutorial.isPremiumFeature {
+              if !subscriptionManager.hasPremiumAccess && tutorial.isPremiumFeature {
                 PremiumFeatureBadge()
               }
             }
@@ -2606,6 +2623,8 @@ struct MembershipBannerPreviewView: View {
     case free = "Free User"
     case freeNearLimit = "Free (Near Limit)"
     case freeAtLimit = "Free (At Limit)"
+    case gracePeriod = "Grace Period (5 days)"
+    case gracePeriodLastDay = "Grace Period (1 day)"
     case proActive = "Pro (Active)"
     case proTrial = "Pro (Trial)"
     case proCancelled = "Pro (Cancelled)"
@@ -2626,7 +2645,9 @@ struct MembershipBannerPreviewView: View {
         
         Section("Preview") {
           MembershipBannerView(
-            isSubscribed: isSubscribed,
+            hasPremiumAccess: hasPremiumAccess,
+            isInGracePeriod: isInGracePeriod,
+            gracePeriodDaysRemaining: gracePeriodDaysRemaining,
             statusMessage: statusMessage,
             joodleCount: joodleCount,
             alarmCount: alarmCount,
@@ -2645,12 +2666,32 @@ struct MembershipBannerPreviewView: View {
     }
   }
   
-  private var isSubscribed: Bool {
+  private var hasPremiumAccess: Bool {
     switch selectedState {
     case .free, .freeNearLimit, .freeAtLimit:
       return false
-    case .proActive, .proTrial, .proCancelled, .proExpiringSoon:
+    case .gracePeriod, .gracePeriodLastDay, .proActive, .proTrial, .proCancelled, .proExpiringSoon:
       return true
+    }
+  }
+  
+  private var isInGracePeriod: Bool {
+    switch selectedState {
+    case .gracePeriod, .gracePeriodLastDay:
+      return true
+    default:
+      return false
+    }
+  }
+  
+  private var gracePeriodDaysRemaining: Int {
+    switch selectedState {
+    case .gracePeriod:
+      return 5
+    case .gracePeriodLastDay:
+      return 1
+    default:
+      return 0
     }
   }
   

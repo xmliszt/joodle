@@ -54,7 +54,7 @@ struct ShareCardSelectorView: View {
 
   /// Check if user is a Joodle Pro subscriber
   private var isJoodlePro: Bool {
-    SubscriptionManager.shared.isSubscribed
+    SubscriptionManager.shared.hasPremiumAccess
   }
 
   /// Check if the entry has a drawing (required for animated styles)

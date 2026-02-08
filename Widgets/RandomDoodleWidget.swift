@@ -45,21 +45,21 @@ struct SeededRandomNumberGenerator: RandomNumberGenerator {
 struct RandomJoodleProvider: TimelineProvider {
   func placeholder(in context: Context) -> RandomJoodleEntry {
     var (generator, _) = makeSeededGenerator(for: Date(), family: context.family)
-    return RandomJoodleEntry(date: Date(), Joodle: nil, prompt: getRandomPrompt(using: &generator), isSubscribed: true)
+    return RandomJoodleEntry(date: Date(), Joodle: nil, prompt: getRandomPrompt(using: &generator), hasPremiumAccess: true)
   }
 
   func getSnapshot(in context: Context, completion: @escaping (RandomJoodleEntry) -> Void) {
     let currentDate = Date()
-    let isSubscribed = WidgetDataManager.shared.isSubscribed()
+    let hasPremiumAccess = WidgetDataManager.shared.hasPremiumAccess()
 
     // Use a seeded random generator based on the current date and widget family
     var (generator, _) = makeSeededGenerator(for: currentDate, family: context.family)
 
     let entry = RandomJoodleEntry(
       date: currentDate,
-      Joodle: isSubscribed ? getRandomJoodle(using: &generator, family: context.family) : nil,
+      Joodle: hasPremiumAccess ? getRandomJoodle(using: &generator, family: context.family) : nil,
       prompt: getRandomPrompt(using: &generator),
-      isSubscribed: isSubscribed
+      hasPremiumAccess: hasPremiumAccess
     )
     completion(entry)
   }
@@ -67,18 +67,18 @@ struct RandomJoodleProvider: TimelineProvider {
   func getTimeline(in context: Context, completion: @escaping (Timeline<RandomJoodleEntry>) -> Void)
   {
     let currentDate = Date()
-    let isSubscribed = WidgetDataManager.shared.isSubscribed()
+    let hasPremiumAccess = WidgetDataManager.shared.hasPremiumAccess()
 
     // Use a seeded random generator based on the current date and widget family to ensure
     // consistent random selection for the same day, but different results per widget type
     var (generator, _) = makeSeededGenerator(for: currentDate, family: context.family)
-    let Joodle = isSubscribed ? getRandomJoodle(using: &generator, family: context.family) : nil
+    let Joodle = hasPremiumAccess ? getRandomJoodle(using: &generator, family: context.family) : nil
 
     let entry = RandomJoodleEntry(
       date: currentDate,
       Joodle: Joodle,
       prompt: getRandomPrompt(using: &generator),
-      isSubscribed: isSubscribed
+      hasPremiumAccess: hasPremiumAccess
     )
 
     // Update widget at midnight for the new day
@@ -175,7 +175,7 @@ struct RandomJoodleEntry: TimelineEntry {
   let date: Date
   let Joodle: JoodleData?
   let prompt: String
-  let isSubscribed: Bool
+  let hasPremiumAccess: Bool
 }
 
 struct JoodleData {
@@ -227,7 +227,7 @@ struct RandomJoodleWidgetView: View {
 
   var body: some View {
     // Check subscription status first
-    if !entry.isSubscribed {
+    if !entry.hasPremiumAccess {
       WidgetLockedView(family: family)
         .widgetURL(URL(string: "joodle://paywall"))
         .containerBackground(for: .widget) {
@@ -449,11 +449,11 @@ struct RandomJoodleWidget: Widget {
     date: Date(),
     Joodle: JoodleData(dateString: todayString, drawingData: mockDrawingData),
     prompt: "Draw something",
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 
   // Preview without subscription (locked)
-  RandomJoodleEntry(date: Date(), Joodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
+  RandomJoodleEntry(date: Date(), Joodle: nil, prompt: "Your canvas is lonely 🥺", hasPremiumAccess: false)
 }
 
 #Preview(as: .systemLarge) {
@@ -468,11 +468,11 @@ struct RandomJoodleWidget: Widget {
     date: Date(),
     Joodle: JoodleData(dateString: fiveDaysAgoString, drawingData: mockDrawingData),
     prompt: "Draw something",
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 
   // Preview without subscription (locked)
-  RandomJoodleEntry(date: Date(), Joodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
+  RandomJoodleEntry(date: Date(), Joodle: nil, prompt: "Your canvas is lonely 🥺", hasPremiumAccess: false)
 }
 
 #Preview(as: .accessoryCircular) {
@@ -486,9 +486,9 @@ struct RandomJoodleWidget: Widget {
     date: Date(),
     Joodle: JoodleData(dateString: todayString, drawingData: mockDrawingData),
     prompt: "Draw something",
-    isSubscribed: true
+    hasPremiumAccess: true
   )
 
   // Preview without subscription (locked)
-  RandomJoodleEntry(date: Date(), Joodle: nil, prompt: "Your canvas is lonely 🥺", isSubscribed: false)
+  RandomJoodleEntry(date: Date(), Joodle: nil, prompt: "Your canvas is lonely 🥺", hasPremiumAccess: false)
 }

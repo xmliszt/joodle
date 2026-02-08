@@ -32,7 +32,7 @@ struct iCloudConfigView: View {
                 .fill(Color.appBorder.opacity(0.4))
                     .frame(width: 100, height: 100)
 
-              Image(systemName: viewModel.canEnableCloudSync && enableSync ? "icloud.fill" : "icloud.dashed")
+              Image(systemName: viewModel.canEnableCloudSync && enableSync ? "icloud.fill" : "xmark.icloud")
                     .font(.system(size: 48))
                     .foregroundStyle(.appAccent)
                     .animation(.springFkingSatifying, value: enableSync)

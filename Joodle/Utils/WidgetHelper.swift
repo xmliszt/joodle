@@ -14,14 +14,20 @@ import SwiftData
 
 /// Subscription status shared between main app and widget extension
 struct WidgetSubscriptionStatus: Codable {
-  let isSubscribed: Bool
+  let hasPremiumAccess: Bool
   let expirationDate: Date?
   let lastUpdated: Date
 
-  init(isSubscribed: Bool, expirationDate: Date? = nil) {
-    self.isSubscribed = isSubscribed
+  init(hasPremiumAccess: Bool, expirationDate: Date? = nil) {
+    self.hasPremiumAccess = hasPremiumAccess
     self.expirationDate = expirationDate
     self.lastUpdated = Date()
+  }
+
+  private enum CodingKeys: String, CodingKey {
+    case hasPremiumAccess = "isSubscribed"
+    case expirationDate
+    case lastUpdated
   }
 
   /// Check if status is still valid (updated within last hour)
@@ -61,7 +67,7 @@ class WidgetHelper {
     }
 
     let status = WidgetSubscriptionStatus(
-      isSubscribed: SubscriptionManager.shared.isSubscribed,
+      hasPremiumAccess: SubscriptionManager.shared.hasPremiumAccess,
       expirationDate: SubscriptionManager.shared.subscriptionExpirationDate
     )
 

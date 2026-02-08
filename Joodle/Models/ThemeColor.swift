@@ -87,9 +87,9 @@ struct ThemeColorInfo: Identifiable {
     var displayName: String { themeColor.displayName }
     var isPremium: Bool { themeColor.isPremium }
 
-    init(themeColor: ThemeColor, isSubscribed: Bool) {
+    init(themeColor: ThemeColor, hasPremiumAccess: Bool) {
         self.themeColor = themeColor
         // A color is locked if it's premium AND user is not subscribed
-        self.isLocked = themeColor.isPremium && !isSubscribed
+        self.isLocked = themeColor.isPremium && !hasPremiumAccess
     }
 }

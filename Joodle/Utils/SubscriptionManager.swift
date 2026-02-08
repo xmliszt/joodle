@@ -81,6 +81,12 @@ class SubscriptionManager: ObservableObject {
     /// Flag to prevent triggering side effects during initialization
     private var isInitializing = true
 
+    /// Whether the user has premium access (subscription OR grace period)
+    /// Use this for all feature gating instead of `isSubscribed` directly
+    var hasPremiumAccess: Bool {
+        isSubscribed || GracePeriodManager.shared.isInGracePeriod
+    }
+
     #if DEBUG
     /// When true, prevents StoreKit refreshes from overwriting preview state
     private var isPreviewMode = false
@@ -145,26 +151,26 @@ class SubscriptionManager: ObservableObject {
     // MARK: - Subscription Features
 
     var hasUnlimitedJoodles: Bool {
-        isSubscribed
+        hasPremiumAccess
     }
 
     var hasWidgets: Bool {
-        isSubscribed
+        hasPremiumAccess
     }
 
     var hasAllShareTemplates: Bool {
-        isSubscribed
+        hasPremiumAccess
     }
 
     var hasWatermarkRemoval: Bool {
-        isSubscribed
+        hasPremiumAccess
     }
 
     // Free plan limits - maximum total Joodles allowed for free users
     nonisolated static let freeJoodlesAllowed = 30
 
     var maxJoodlesAllowed: Int {
-        isSubscribed ? Int.max : Self.freeJoodlesAllowed
+        hasPremiumAccess ? Int.max : Self.freeJoodlesAllowed
     }
 
     // MARK: - Network-Aware Access Control
@@ -178,6 +184,11 @@ class SubscriptionManager: ObservableObject {
     /// Verify subscription with online check before granting access
     /// Returns true if access should be granted, false otherwise
     @discardableResult func verifySubscriptionForAccess() async -> Bool {
+        // Grace period grants full access — no StoreKit check needed
+        if GracePeriodManager.shared.isInGracePeriod {
+            return true
+        }
+
         // Lifetime users always have access
         if isLifetimeUser {
             // Still refresh from StoreKit to confirm, but default to allowing access
@@ -397,7 +408,15 @@ class SubscriptionManager: ObservableObject {
     }
 
     private func handleSubscriptionLost() {
-        print("⚠️ Subscription lost - disabling premium features")
+        print("⚠️ Subscription lost")
+
+        // If grace period is still active, don't strip premium features
+        if GracePeriodManager.shared.isInGracePeriod {
+            print("   Grace period still active — keeping premium features")
+            return
+        }
+
+        print("   Disabling premium features")
 
         // Reset all premium features to free tier defaults
         resetPremiumFeaturesToDefaults()
@@ -422,7 +441,7 @@ class SubscriptionManager: ObservableObject {
     // MARK: - Theme Color Check
 
     func checkAndResetPremiumThemeColorIfNeeded() async {
-        guard !isSubscribed else { return }
+        guard !hasPremiumAccess else { return }
 
         let currentColor = UserPreferences.shared.accentColor
         if currentColor.isPremium {
@@ -587,7 +606,7 @@ class SubscriptionManager: ObservableObject {
     /// Synchronous check - uses cached subscription state
     /// For critical access points, use verifySubscriptionForAccess() first
     func canCreateJoodle(currentTotalCount: Int) -> Bool {
-        if isSubscribed {
+        if hasPremiumAccess {
             return true
         }
         return currentTotalCount < Self.freeJoodlesAllowed
@@ -604,7 +623,7 @@ class SubscriptionManager: ObservableObject {
     }
 
     func remainingJoodles(currentTotalCount: Int) -> Int {
-        if isSubscribed {
+        if hasPremiumAccess {
             return Int.max
         }
         return max(0, Self.freeJoodlesAllowed - currentTotalCount)
@@ -645,7 +664,7 @@ class SubscriptionManager: ObservableObject {
     }
 
     func canEditJoodle(entry: DayEntry, in modelContext: ModelContext) -> Bool {
-        if isSubscribed {
+        if hasPremiumAccess {
             return true
         }
 
@@ -669,7 +688,7 @@ class SubscriptionManager: ObservableObject {
     }
 
     func canEditJoodle(atIndex index: Int) -> Bool {
-        if isSubscribed {
+        if hasPremiumAccess {
             return true
         }
         return index < Self.freeJoodlesAllowed

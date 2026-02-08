@@ -63,7 +63,7 @@ class ReminderManager: ObservableObject {
 
     /// Whether the user has reached the free reminder limit
     var hasReachedFreeLimit: Bool {
-        !SubscriptionManager.shared.isSubscribed && reminders.count >= maxFreeReminders
+        !SubscriptionManager.shared.hasPremiumAccess && reminders.count >= maxFreeReminders
     }
 
     // MARK: - Persistence
@@ -223,7 +223,7 @@ class ReminderManager: ObservableObject {
     /// Synchronous check - uses cached subscription state
     /// For critical access points, use canAddReminderWithVerification() first
     func canAddReminder() -> Bool {
-        if SubscriptionManager.shared.isSubscribed {
+        if SubscriptionManager.shared.hasPremiumAccess {
             return true
         }
         return reminders.count < maxFreeReminders

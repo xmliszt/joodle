@@ -116,7 +116,7 @@ struct DrawingCanvasView: View {
       }
       loadExistingDrawing()
     }
-    .onChange(of: subscriptionManager.isSubscribed) { _, _ in
+    .onChange(of: subscriptionManager.hasPremiumAccess) { _, _ in
       // Re-check access when subscription changes (not in mock mode)
       if !isMockMode {
         checkAccessState()

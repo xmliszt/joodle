@@ -18,6 +18,9 @@ struct ContentView: View {
   @Query private var entries: [DayEntry]
   @StateObject private var subscriptionManager = SubscriptionManager.shared
 
+  /// Grace period manager for one-time expired paywall
+  @StateObject private var gracePeriodManager = GracePeriodManager.shared
+
   /// Data provider for the grid (abstracts data source for shared JoodleGridInteractionView)
   @StateObject private var dataProvider = AppDataProvider()
 
@@ -41,6 +44,7 @@ struct ContentView: View {
   @State private var navigateToSettings = false
   @State private var navigateToNotePromptSetting = false
   @State private var hideDynamicIslandView = false
+  @State private var showGraceExpiredPaywall = false
   private let headerHeight: CGFloat = 100.0
 
   // Hit testing optimization (O(1) lookup)
@@ -326,6 +330,9 @@ struct ContentView: View {
     } message: {
       Text("Your Joodle Pro subscription has ended. Some features are now limited.")
     }
+    .sheet(isPresented: $showGraceExpiredPaywall) {
+      StandalonePaywallView()
+    }
     .onAppear {
       // Sync widget data when app launches
       WidgetHelper.shared.updateWidgetData(in: modelContext)
@@ -333,6 +340,13 @@ struct ContentView: View {
       // Refresh subscription status
       Task {
         await subscriptionManager.updateSubscriptionStatus()
+      }
+
+      // Show one-time paywall after grace period expires
+      if gracePeriodManager.shouldShowGraceExpiredPaywall && !subscriptionManager.hasPremiumAccess {
+        showGraceExpiredPaywall = true
+        gracePeriodManager.markGraceExpiredPaywallShown()
+        AnalyticsManager.shared.trackGraceExpiredPaywallShown()
       }
     }
     .onChange(of: scenePhase) { _, newPhase in

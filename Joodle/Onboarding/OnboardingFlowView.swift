@@ -21,8 +21,6 @@ struct OnboardingFlowView: View {
                         InteractiveTutorialView(viewModel: viewModel)
                     case .featureIntroWidgets:
                         FeatureIntroWidgetsView(viewModel: viewModel)
-                    case .paywall:
-                        PaywallView(viewModel: viewModel)
                     case .icloudConfig:
                         iCloudConfigView(viewModel: viewModel)
                     case .dailyReminder:
