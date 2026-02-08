@@ -224,6 +224,9 @@ struct JoodleApp: App {
     // Run legacy thumbnail cleanup migration
     Self.runLegacyThumbnailCleanup(container: container)
 
+    // Migrate existing drawings from 300px → 342px canvas (centers old doodles)
+    CanvasSizeMigration.runIfNeeded(container: container)
+
     // Regenerate thumbnails with dual sizes (runs async in background)
     Self.runDualThumbnailRegeneration(container: container)
 

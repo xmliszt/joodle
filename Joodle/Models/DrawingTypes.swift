@@ -8,7 +8,9 @@
 import Foundation
 import SwiftUI
 
-let CANVAS_SIZE: CGFloat = 300
+let CANVAS_SIZE: CGFloat = 342
+/// Previous canvas size before the 342 migration, used for centering legacy drawings
+let LEGACY_CANVAS_SIZE: CGFloat = 300
 let DRAWING_LINE_WIDTH: CGFloat = 5.0
 
 // MARK: - Drawing Data Types

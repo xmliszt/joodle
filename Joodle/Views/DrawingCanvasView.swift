@@ -64,10 +64,10 @@ struct DrawingCanvasView: View {
   /// corners and the DI container border.
   private var canvasCornerRadius: CGFloat {
     if UIDevice.hasDynamicIsland {
-      // DI container clips at (R - d) with 20pt padding,
-      // so content area corner = R - d - 20.
+      // DI container clips at (R - d) with 10pt padding,
+      // so content area corner = R - d - 10.
       // Canvas is inset by canvasPadding from that content area.
-      let diContainerPadding: CGFloat = 20
+      let diContainerPadding: CGFloat = 8
       return max(
         UIDevice.screenCornerRadius
           - UIDevice.dynamicIslandFrame.origin.y
@@ -97,33 +97,31 @@ struct DrawingCanvasView: View {
 
   var body: some View {
     ZStack {
-      VStack(spacing: 16) {
-        SharedCanvasView(
-          paths: $paths,
-          pathMetadata: $pathMetadata,
-          currentPath: $currentPath,
-          currentPathIsDot: $currentPathIsDot,
-          isDrawing: $isDrawing,
-          buttonsConfig: CanvasButtonsConfig(
-            onClear: clearDrawing,
-            onUndo: undoLastStroke,
-            onRedo: redoLastStroke,
-            canClear: !paths.isEmpty || !currentPath.isEmpty,
-            canUndo: !undoStack.isEmpty,
-            canRedo: !redoStack.isEmpty,
-            showClearConfirmation: $showClearConfirmation
-          ),
-          canvasCornerRadius: canvasCornerRadius,
-          onCommitStroke: commitCurrentStroke
-        ) {
-          // Save button
-          Button(action: saveDrawing) {
-            Image(systemName: "checkmark")
-          }
-          .circularGlassButton()
+      SharedCanvasView(
+        paths: $paths,
+        pathMetadata: $pathMetadata,
+        currentPath: $currentPath,
+        currentPathIsDot: $currentPathIsDot,
+        isDrawing: $isDrawing,
+        buttonsConfig: CanvasButtonsConfig(
+          onClear: clearDrawing,
+          onUndo: undoLastStroke,
+          onRedo: redoLastStroke,
+          canClear: !paths.isEmpty || !currentPath.isEmpty,
+          canUndo: !undoStack.isEmpty,
+          canRedo: !redoStack.isEmpty,
+          showClearConfirmation: $showClearConfirmation
+        ),
+        canvasCornerRadius: canvasCornerRadius,
+        onCommitStroke: commitCurrentStroke
+      ) {
+        // Save button
+        Button(action: saveDrawing) {
+          Image(systemName: "checkmark")
         }
-        .disabled(!canEditOrCreate)
+        .circularGlassButton()
       }
+      .disabled(!canEditOrCreate)
       .padding(canvasPadding)
       .background(Color.appBackground)
       .overlay {
@@ -575,12 +573,16 @@ struct DrawingCanvasView: View {
 }
 
 #Preview {
-  DrawingCanvasView(
-    date: Date(),
-    entry: DayEntry(body: "HELLO", createdAt: Date(), drawingData: nil),
-    onDismiss: {},
-    isShowing: true
-  )
+  ZStack {
+    Color.black
+    DrawingCanvasView(
+      date: Date(),
+      entry: DayEntry(body: "HELLO", createdAt: Date(), drawingData: nil),
+      onDismiss: {},
+      isShowing: true
+    )
+  }
+ 
 }
 
 #Preview("Mock Mode - Tutorial") {

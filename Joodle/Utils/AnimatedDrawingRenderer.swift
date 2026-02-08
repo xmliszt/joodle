@@ -36,7 +36,7 @@ class AnimatedDrawingRenderer {
     // Calculate current elapsed time based on progress
     let currentElapsedTime = progress * CGFloat(totalDuration)
 
-    // Scale from CANVAS_SIZE (300x300) to output size
+    // Scale from CANVAS_SIZE (342x342) to output size
     let canvasScale = size.width / CANVAS_SIZE
 
     let format = UIGraphicsImageRendererFormat()

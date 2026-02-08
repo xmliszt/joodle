@@ -9,8 +9,8 @@ import SwiftUI
 
 // MARK: - Shared Constants
 
-/// Canvas size used for drawing (300x300)
-let DOODLE_CANVAS_SIZE: CGFloat = 300
+/// Canvas size used for drawing (342x342)
+let DOODLE_CANVAS_SIZE: CGFloat = 342
 
 /// Default line width for drawing strokes
 let DOODLE_LINE_WIDTH: CGFloat = 5.0

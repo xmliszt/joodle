@@ -48,13 +48,13 @@ struct DynamicIslandExpandedView<Content: View>: View {
 
           // The content
           content
-            .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius - UIDevice.dynamicIslandFrame.origin.y - 20, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius - UIDevice.dynamicIslandFrame.origin.y - 8, style: .continuous))
             .opacity(isExpanded ? 1 : 0)
             .blur(radius: isExpanded ? 0 : 50)
             .scaleEffect(isExpanded ? 1 : 0)
             .animation(.springFkingSatifying, value: isExpanded)
         }
-        .padding(20)
+        .padding(8)
         .frame(
           width: isExpanded ? UIScreen.main.bounds.width - (UIDevice.dynamicIslandFrame.origin.y * 2) : UIDevice.dynamicIslandSize.width,
           height: isExpanded ? nil : UIDevice.dynamicIslandSize.height,

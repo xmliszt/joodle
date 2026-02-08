@@ -562,9 +562,9 @@ struct AnniversaryJoodleView: View {
       let paths = decodePaths(from: drawingData)
 
       // Calculate scale to fit drawing in widget
-      let scale = min(size.width / 300, size.height / 300)
-      let offsetX = (size.width - 300 * scale) / 2
-      let offsetY = (size.height - 300 * scale) / 2
+      let scale = min(size.width / DOODLE_CANVAS_SIZE, size.height / DOODLE_CANVAS_SIZE)
+      let offsetX = (size.width - DOODLE_CANVAS_SIZE * scale) / 2
+      let offsetY = (size.height - DOODLE_CANVAS_SIZE * scale) / 2
 
       for pathData in paths {
         var scaledPath = Path()
