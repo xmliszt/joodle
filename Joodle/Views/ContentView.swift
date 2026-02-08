@@ -359,6 +359,15 @@ struct ContentView: View {
         break
       }
     }
+    .onChange(of: entries.count) { _, newCount in
+      // Check if we should prompt for App Store review after reaching 10 entries
+      let meaningfulCount = entries.filter { entry in
+        let hasDrawing = entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true)
+        let hasText = !entry.body.isEmpty
+        return hasDrawing || hasText
+      }.count
+      ReviewRequestManager.shared.checkAndRequestReviewIfNeeded(entryCount: meaningfulCount)
+    }
     .onChange(of: selectedDateFromWidget) { _, newDate in
       // Handle deep link from widget
       guard let date = newDate, let scrollProxy = scrollProxy else { return }
