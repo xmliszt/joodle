@@ -338,16 +338,17 @@ struct ContentView: View {
       // Sync widget data when app launches
       WidgetHelper.shared.updateWidgetData(in: modelContext)
 
-      // Refresh subscription status
+      // Refresh subscription status FIRST, then check grace period paywall
       Task {
         await subscriptionManager.updateSubscriptionStatus()
-      }
 
-      // Show one-time paywall after grace period expires
-      if gracePeriodManager.shouldShowGraceExpiredPaywall && !subscriptionManager.hasPremiumAccess {
-        showGraceExpiredPaywall = true
-        gracePeriodManager.markGraceExpiredPaywallShown()
-        AnalyticsManager.shared.trackGraceExpiredPaywallShown()
+        // Show one-time paywall after grace period expires
+        // Must run AFTER subscription status is refreshed to avoid showing paywall to active subscribers
+        if gracePeriodManager.shouldShowGraceExpiredPaywall && !subscriptionManager.hasPremiumAccess {
+          showGraceExpiredPaywall = true
+          gracePeriodManager.markGraceExpiredPaywallShown()
+          AnalyticsManager.shared.trackGraceExpiredPaywallShown()
+        }
       }
     }
     .onChange(of: scenePhase) { _, newPhase in
