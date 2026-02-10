@@ -123,7 +123,7 @@ struct DrawingCanvasView: View {
       }
       .disabled(!canEditOrCreate)
       .padding(canvasPadding)
-      .background(Color.appBackground)
+      .background(Color.clear)
       .overlay {
         // Show lock overlay when access is denied (not in mock mode)
         if !isMockMode && !canEditOrCreate {
