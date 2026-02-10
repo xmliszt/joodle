@@ -28,6 +28,7 @@ class StoreKitManager: NSObject, ObservableObject {
     @Published var offerCodeId: String?  // The offer code identifier if applicable
     @Published var hasPendingOfferCode = false  // Whether there's an offer code queued for next renewal
     @Published var pendingOfferCodeId: String?  // The pending offer code identifier
+    @Published var pendingPlanProductID: String?  // The product the subscription will renew to (if different from current)
 
     private let productIDs: [String] = [
         "dev.liyuxuan.joodle.pro.monthly",
@@ -285,6 +286,7 @@ class StoreKitManager: NSObject, ObservableObject {
         var offerCode: String?
         var pendingOfferCode = false
         var pendingOfferCodeId: String?
+        var pendingPlanProduct: String?
 
         // Use Product.SubscriptionInfo.status for accurate current subscription detection
         // This is more reliable than Transaction.currentEntitlements for determining the CURRENT plan
@@ -326,6 +328,15 @@ class StoreKitManager: NSObject, ObservableObject {
                     // Check auto-renewal status
                     // renewalInfo.currentProductID shows what they'll renew to (could be different if they changed plans)
                     autoRenew = renewalInfo.willAutoRenew
+
+                    // Detect pending plan change (e.g. user switched from yearly to monthly)
+                    // renewalInfo.currentProductID = product that will be used at next renewal
+                    // transactionInfo.productID = currently active product
+                    // NOTE: StoreKit Testing (Xcode) does NOT report deferred downgrades via this API,
+                    // even though its debug UI shows the change. This works correctly in production/TestFlight.
+                    if renewalInfo.currentProductID != transactionInfo.productID {
+                        pendingPlanProduct = renewalInfo.currentProductID
+                    }
 
                     // Check for pending offer code in renewal info
                     // This detects when user redeems an offer code while still in intro/trial period
@@ -386,6 +397,7 @@ class StoreKitManager: NSObject, ObservableObject {
             inTrial = false
             redeemedOfferCode = false
             pendingOfferCode = false
+            pendingPlanProduct = nil
         }
 
         // StoreKit is the source of truth - always trust its response
@@ -400,6 +412,7 @@ class StoreKitManager: NSObject, ObservableObject {
         self.offerCodeId = offerCode
         self.hasPendingOfferCode = pendingOfferCode
         self.pendingOfferCodeId = pendingOfferCodeId
+        self.pendingPlanProductID = pendingPlanProduct
         self.hasLifetimePurchase = foundLifetime
 
         print("📊 Subscription Status:")
@@ -414,6 +427,7 @@ class StoreKitManager: NSObject, ObservableObject {
         print("   Auto-Renew: \(autoRenew)")
         print("   Eligible for Intro Offer: \(eligibleForIntro)")
         print("   Lifetime Purchase: \(foundLifetime)")
+        print("   Pending Plan Change: \(pendingPlanProduct ?? "None")")
     }
 
     // MARK: - Transaction Verification

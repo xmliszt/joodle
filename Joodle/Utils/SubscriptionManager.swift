@@ -38,6 +38,7 @@ class SubscriptionManager: ObservableObject {
     @Published var offerCodeId: String? = nil
     @Published var hasPendingOfferCode: Bool = false  // Offer code queued for next renewal
     @Published var pendingOfferCodeId: String? = nil
+    @Published var pendingPlanProductID: String? = nil  // Product the subscription will renew to (if plan changed)
 
     /// Flag indicating subscription just expired (for UI alerts)
     @Published var subscriptionJustExpired: Bool = false
@@ -288,6 +289,7 @@ class SubscriptionManager: ObservableObject {
             offerCodeId = storeManager.offerCodeId
             hasPendingOfferCode = storeManager.hasPendingOfferCode
             pendingOfferCodeId = storeManager.pendingOfferCodeId
+            pendingPlanProductID = storeManager.pendingPlanProductID
             isLifetimeUser = storeManager.hasLifetimePurchase
 
             // Update subscribed state
@@ -307,6 +309,7 @@ class SubscriptionManager: ObservableObject {
             offerCodeId = nil
             hasPendingOfferCode = false
             pendingOfferCodeId = nil
+            pendingPlanProductID = nil
             isLifetimeUser = false
 
             if isSubscribed {
@@ -566,6 +569,7 @@ class SubscriptionManager: ObservableObject {
         autoRenew: Bool = true,
         offerCode: Bool = false,
         pendingOfferCode: Bool = false,
+        pendingPlanProductID: String? = nil,
         expiration: Date? = nil,
         productID: String? = nil
     ) {
@@ -577,6 +581,7 @@ class SubscriptionManager: ObservableObject {
         willAutoRenew = autoRenew
         hasRedeemedOfferCode = offerCode
         hasPendingOfferCode = pendingOfferCode
+        self.pendingPlanProductID = pendingPlanProductID
         subscriptionExpirationDate = expiration
         isInitializing = false
 
@@ -589,6 +594,7 @@ class SubscriptionManager: ObservableObject {
         storeManager.subscriptionExpirationDate = expiration
         storeManager.hasRedeemedOfferCode = offerCode
         storeManager.hasPendingOfferCode = pendingOfferCode
+        storeManager.pendingPlanProductID = pendingPlanProductID
         storeManager.hasLifetimePurchase = lifetime
         if subscribed {
             storeManager.purchasedProductIDs = productID.map { Set([$0]) } ?? []

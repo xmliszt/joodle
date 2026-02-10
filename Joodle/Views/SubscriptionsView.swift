@@ -15,6 +15,7 @@ struct SubscriptionsView: View {
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @State private var subscriptionGroupID: String?
   @State private var showRedeemCode = false
+  @State private var showManagePlanSheet = false
 
   /// The current product comes directly from StoreKitManager for accuracy
   private var currentProduct: Product? {
@@ -33,8 +34,14 @@ struct SubscriptionsView: View {
             currentPlanSection(product: product)
           }
 
-          // Manage Subscription Button (show when user has an actual subscription, not just grace period)
-          if subscriptionManager.isSubscribed && !subscriptionManager.isLifetimeUser {
+          // Pending plan change banner
+          if let pendingProductID = subscriptionManager.pendingPlanProductID,
+             let pendingProduct = storeManager.products.first(where: { $0.id == pendingProductID }) {
+            pendingPlanChangeBanner(newProduct: pendingProduct)
+          }
+
+          // Manage Subscription Button (show for all subscribed users including lifetime)
+          if subscriptionManager.isSubscribed {
             manageSubscriptionButton
           }
 
@@ -223,15 +230,71 @@ struct SubscriptionsView: View {
     }
   }
 
+  // MARK: - Pending Plan Change Banner
+
+  private func pendingPlanChangeBanner(newProduct: Product) -> some View {
+    VStack(spacing: 8) {
+      HStack(spacing: 10) {
+        Image(systemName: "arrow.triangle.2.circlepath")
+          .font(.appBody())
+          .foregroundStyle(.appAccent)
+
+        VStack(alignment: .leading, spacing: 3) {
+          Text("Plan change scheduled")
+            .font(.appCaption(weight: .medium))
+            .foregroundColor(.primary)
+
+          if let expirationDate = subscriptionManager.subscriptionExpirationDate {
+            Text("Switching to \(newProduct.displayName) (\(newProduct.displayPrice)) on \(formatExpirationDateShort(expirationDate))")
+              .font(.appCaption2())
+              .foregroundColor(.secondary)
+          } else {
+            Text("Switching to \(newProduct.displayName) (\(newProduct.displayPrice)) at next renewal")
+              .font(.appCaption2())
+              .foregroundColor(.secondary)
+          }
+        }
+
+        Spacer()
+      }
+      .padding(14)
+      .background(
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+          .fill(.appAccent.opacity(0.08))
+          .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+              .strokeBorder(.appAccent.opacity(0.2), lineWidth: 1)
+          )
+      )
+    }
+    .padding(.horizontal, 20)
+  }
+
+  private func formatExpirationDateShort(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .medium
+    formatter.timeStyle = .none
+    return formatter.string(from: date)
+  }
+
   // MARK: - Manage Subscription Button
+
+  /// Returns the appropriate label for the manage button based on subscription state
+  private var manageButtonLabel: String {
+    if subscriptionManager.willAutoRenew {
+      return "Manage Subscription"
+    } else {
+      return "View All Plans"
+    }
+  }
 
   private var manageSubscriptionButton: some View {
     VStack(spacing: 12) {
       Button(action: {
-        openSubscriptionManagement()
+        showManagePlanSheet = true
       }) {
         HStack {
-          Text(subscriptionManager.willAutoRenew ? "Manage Subscription" : "Re-subscribe")
+          Text(manageButtonLabel)
             .font(.appBody())
             .foregroundColor(.primary)
           Spacer()
@@ -247,8 +310,13 @@ struct SubscriptionsView: View {
         )
       }
       .padding(.horizontal, 20)
+      .sheet(isPresented: $showManagePlanSheet) {
+        ManagePlanSheet()
+      }
 
-      if subscriptionManager.hasRedeemedOfferCode && subscriptionManager.willAutoRenew {
+      if subscriptionManager.isLifetimeUser {
+        // No disclaimer needed for lifetime users
+      } else if subscriptionManager.hasRedeemedOfferCode && subscriptionManager.willAutoRenew {
         Text(pricingDisclaimerText(for: currentProduct, scenario: .promoCode))
           .font(.appCaption2())
           .foregroundColor(.secondary)
@@ -423,25 +491,7 @@ struct SubscriptionsView: View {
     return "\(formatter.string(from: date)) (\(timeZoneAbbreviation))"
   }
 
-  private func openSubscriptionManagement() {
-    Task { @MainActor in
-      do {
-        // Get the active window scene
-        guard let windowScene = UIApplication.shared.connectedScenes
-          .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene else {
-          print("No active window scene found")
-          return
-        }
 
-        try await AppStore.showManageSubscriptions(in: windowScene)
-
-        // Refresh subscription status after the sheet is dismissed
-        await refreshSubscriptionStatus()
-      } catch {
-        print("Failed to show manage subscriptions: \(error)")
-      }
-    }
-  }
 }
 
 // MARK: - Glossy Crown View
@@ -589,6 +639,22 @@ struct GlossyCrownView: View {
           subscribed: true,
           autoRenew: false,
           expiration: Date().addingTimeInterval(60 * 60 * 24 * 5),
+          productID: "dev.liyuxuan.joodle.pro.yearly"
+        )
+        await SubscriptionManager.shared.loadProductsForPreview()
+      }
+  }
+}
+
+#Preview("Plan Change Pending") {
+  NavigationStack {
+    SubscriptionsView()
+      .task {
+        SubscriptionManager.shared.configureForPreview(
+          subscribed: true,
+          autoRenew: true,
+          pendingPlanProductID: "dev.liyuxuan.joodle.pro.monthly",
+          expiration: Date().addingTimeInterval(60 * 60 * 24 * 30),
           productID: "dev.liyuxuan.joodle.pro.yearly"
         )
         await SubscriptionManager.shared.loadProductsForPreview()
