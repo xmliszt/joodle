@@ -41,14 +41,16 @@ struct TodayDoodleProvider: TimelineProvider {
       hasPremiumAccess: hasPremiumAccess
     )
 
-    // Update widget at midnight to refresh for the new day
-    // Subscription changes are handled by WidgetCenter.reloadAllTimelines() in the main app
+    // Update widget at midnight to refresh for the new day, or every 4 hours as a
+    // safety net in case WidgetCenter.reloadAllTimelines() is throttled by the system.
     let calendar = Calendar.current
-    let nextUpdate = calendar.date(
+    let nextMidnight = calendar.date(
       byAdding: .day,
       value: 1,
       to: calendar.startOfDay(for: currentDate)
     ) ?? currentDate
+    let oneHourLater = currentDate.addingTimeInterval(3600)
+    let nextUpdate = min(nextMidnight, oneHourLater)
 
     let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
     completion(timeline)

@@ -10,32 +10,8 @@ import SwiftUI
 import WidgetKit
 import SwiftData
 
-// MARK: - Subscription Status for Widget
-
-/// Subscription status shared between main app and widget extension
-struct WidgetSubscriptionStatus: Codable {
-  let hasPremiumAccess: Bool
-  let expirationDate: Date?
-  let lastUpdated: Date
-
-  init(hasPremiumAccess: Bool, expirationDate: Date? = nil) {
-    self.hasPremiumAccess = hasPremiumAccess
-    self.expirationDate = expirationDate
-    self.lastUpdated = Date()
-  }
-
-  private enum CodingKeys: String, CodingKey {
-    case hasPremiumAccess = "isSubscribed"
-    case expirationDate
-    case lastUpdated
-  }
-
-  /// Check if status is still valid (updated within last hour)
-  var isValid: Bool {
-    let oneHourAgo = Date().addingTimeInterval(-3600)
-    return lastUpdated > oneHourAgo
-  }
-}
+// NOTE: WidgetSubscriptionStatus is defined in Shared/WidgetSubscriptionStatus.swift
+// and compiled into both the main app and widget extension targets.
 
 // Note: WidgetEntryData is defined in Widgets/WidgetDataManager.swift
 // This file uses the same model via App Group shared storage
@@ -66,9 +42,15 @@ class WidgetHelper {
       return
     }
 
+    // For lifetime users, use .distantFuture so the widget always has a concrete
+    // expiration date to check against, avoiding any nil-expiration edge cases.
+    let expirationDate: Date? = SubscriptionManager.shared.isLifetimeUser
+      ? .distantFuture
+      : SubscriptionManager.shared.subscriptionExpirationDate
+
     let status = WidgetSubscriptionStatus(
       hasPremiumAccess: SubscriptionManager.shared.hasPremiumAccess,
-      expirationDate: SubscriptionManager.shared.subscriptionExpirationDate
+      expirationDate: expirationDate
     )
 
     do {

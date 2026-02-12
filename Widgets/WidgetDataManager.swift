@@ -9,32 +9,8 @@ import Foundation
 import SwiftUI
 import UIKit
 
-// MARK: - Subscription Status for Widget
-
-/// Subscription status shared between main app and widget extension
-struct WidgetSubscriptionStatus: Codable {
-  let hasPremiumAccess: Bool
-  let expirationDate: Date?
-  let lastUpdated: Date
-
-  init(hasPremiumAccess: Bool, expirationDate: Date? = nil) {
-    self.hasPremiumAccess = hasPremiumAccess
-    self.expirationDate = expirationDate
-    self.lastUpdated = Date()
-  }
-
-  private enum CodingKeys: String, CodingKey {
-    case hasPremiumAccess = "isSubscribed"
-    case expirationDate
-    case lastUpdated
-  }
-
-  /// Check if status is still valid (updated within last hour)
-  var isValid: Bool {
-    let oneHourAgo = Date().addingTimeInterval(-3600)
-    return lastUpdated > oneHourAgo
-  }
-}
+// NOTE: WidgetSubscriptionStatus is defined in Shared/WidgetSubscriptionStatus.swift
+// and compiled into both the main app and widget extension targets.
 
 /// Data model for encoding/decoding entries to share with widget
 /// Note: Drawing data is included optionally for widgets that need to display the actual drawing
@@ -167,20 +143,22 @@ struct WidgetDataManager {
     do {
       let status = try JSONDecoder().decode(WidgetSubscriptionStatus.self, from: data)
 
-      // If not marked as subscribed, return false immediately
+      // If not marked as having premium access, return false immediately
       guard status.hasPremiumAccess else {
         return false
       }
 
       // If we have an expiration date, use it to determine validity
-      // This handles the case where user cancelled but still has active trial/subscription
+      // This handles regular subscriptions and trials
       if let expirationDate = status.expirationDate {
         return Date() < expirationDate
       }
 
-      // No expiration date but marked as subscribed - trust the cached status if recent
-      // Fall back to validity check only when there's no expiration date
-      return status.isValid
+      // No expiration date but marked as premium — this means lifetime purchase
+      // or grace period. Trust the cached status unconditionally.
+      // The main app is responsible for writing hasPremiumAccess=false when
+      // access is actually revoked.
+      return true
     } catch {
       print("Failed to decode subscription status: \(error)")
       return false

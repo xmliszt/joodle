@@ -235,14 +235,16 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
       hasPremiumAccess: hasPremiumAccess
     )
 
-    // Update widget at midnight since we only show day-level countdown
-    // Subscription changes are handled by WidgetCenter.reloadAllTimelines() in the main app
+    // Update widget at midnight since we only show day-level countdown, or every
+    // 1 hour as a safety net in case WidgetCenter.reloadAllTimelines() is throttled.
     let calendar = Calendar.current
-    let nextUpdate = calendar.date(
+    let nextMidnight = calendar.date(
       byAdding: .day,
       value: 1,
       to: calendar.startOfDay(for: currentDate)
     ) ?? currentDate
+    let oneHourLater = currentDate.addingTimeInterval(3600)
+    let nextUpdate = min(nextMidnight, oneHourLater)
 
     let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
     return timeline
