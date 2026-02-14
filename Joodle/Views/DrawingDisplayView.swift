@@ -17,6 +17,8 @@ struct DrawingDisplayView: View {
   let useThumbnail: Bool  // Use pre-rendered thumbnail for performance
   let animateDrawing: Bool  // Animate path drawing replay
   let looping: Bool  // Loop animation infinitely
+  let strokeMultiplier: CGFloat  // Multiplier for stroke width (useful for small cells)
+  let immediateAppear: Bool  // Skip appear animation (for off-screen rendering)
 
   // Animation timing constants
   private static let maxAnimationDuration: Double = 3.0  // Maximum total animation duration
@@ -89,7 +91,9 @@ struct DrawingDisplayView: View {
     scale: CGFloat = 1.0,
     useThumbnail: Bool = false,
     animateDrawing: Bool = false,
-    looping: Bool = false
+    looping: Bool = false,
+    strokeMultiplier: CGFloat = 1.0,
+    immediateAppear: Bool = false
   ) {
     self.entry = entry
     self.displaySize = displaySize
@@ -100,6 +104,15 @@ struct DrawingDisplayView: View {
     self.useThumbnail = useThumbnail
     self.animateDrawing = animateDrawing
     self.looping = looping
+    self.strokeMultiplier = strokeMultiplier
+    self.immediateAppear = immediateAppear
+    _isVisible = State(initialValue: immediateAppear)
+
+    // Pre-load drawing paths eagerly for off-screen rendering so the Canvas
+    // has data on the very first render pass (no need to wait for .onAppear)
+    if immediateAppear, let drawingData = entry?.drawingData, !drawingData.isEmpty {
+      _pathsWithMetadata = State(initialValue: DrawingPathCache.shared.getPathsWithMetadata(for: drawingData))
+    }
   }
 
   private var foregroundColor: Color {
@@ -168,8 +181,10 @@ struct DrawingDisplayView: View {
     .onAppear {
       // Load data immediately and animate
       loadDrawingData()
-      withAnimation(.springFkingSatifying) {
-        isVisible = true
+      if !isVisible {
+        withAnimation(.springFkingSatifying) {
+          isVisible = true
+        }
       }
       // Start drawing animation if enabled and not yet animated
       startDrawingAnimationIfNeeded()
@@ -290,7 +305,7 @@ struct DrawingDisplayView: View {
           trimmedPath,
           with: .color(foregroundColor),
           style: StrokeStyle(
-            lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1),
+            lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1) * strokeMultiplier,
             lineCap: .round,
             lineJoin: .round
           )
@@ -387,7 +402,7 @@ struct DrawingDisplayView: View {
             trimmedPath,
             with: .color(foregroundColor),
             style: StrokeStyle(
-              lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1),
+              lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1) * strokeMultiplier,
               lineCap: .round,
               lineJoin: .round
             )
@@ -428,7 +443,7 @@ struct DrawingDisplayView: View {
           path,
           with: .color(foregroundColor),
           style: StrokeStyle(
-            lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1),
+            lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1) * strokeMultiplier,
             lineCap: .round,
             lineJoin: .round
           )

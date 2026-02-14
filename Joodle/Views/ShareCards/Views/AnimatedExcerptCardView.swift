@@ -44,6 +44,7 @@ struct AnimatedExcerptCardView: View {
             animateDrawing: animateDrawing,
             looping: looping
           )
+          .clipShape(RoundedRectangle(cornerRadius: 80 * scale, style: .continuous))
           .background(
             RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
               .foregroundStyle(.appSurface)

@@ -20,8 +20,9 @@ class ShareCardRenderer {
   ///   - targetPixelSize: The desired output size in physical pixels
   ///   - colorScheme: The color scheme to use for rendering (affects dynamic colors like .appAccent)
   ///   - logicalDisplaySize: The logical display size for stroke calculations (should match the view's logicalDisplaySize)
+  ///   - strokeMultiplier: Multiplier for stroke width (default 1.0, use higher values for small cells)
   /// - Returns: A high-resolution UIImage at 1x scale that will be downsized by SwiftUI
-  private func renderDrawingAtHighResolution(entry: DayEntry, targetPixelSize: CGSize, colorScheme: ColorScheme, logicalDisplaySize: CGFloat) -> UIImage? {
+  private func renderDrawingAtHighResolution(entry: DayEntry, targetPixelSize: CGSize, colorScheme: ColorScheme, logicalDisplaySize: CGFloat, strokeMultiplier: CGFloat = 1.0) -> UIImage? {
     guard let drawingData = entry.drawingData, !drawingData.isEmpty else {
       return nil
     }
@@ -40,13 +41,17 @@ class ShareCardRenderer {
       accent: true,
       highlighted: false,
       scale: renderSize.width / logicalDisplaySize,  // Scale to achieve target pixel size
-      useThumbnail: false
+      useThumbnail: false,
+      strokeMultiplier: strokeMultiplier,
+      immediateAppear: true  // Skip appear animation for off-screen rendering
     )
     .frame(width: renderSize.width, height: renderSize.height)
+    .ignoresSafeArea()
     .environment(\.colorScheme, colorScheme)
 
     // Render to high-res image
     let controller = UIHostingController(rootView: drawingView)
+    controller.safeAreaRegions = []  // Remove safe area insets that cause padding
     controller.view.bounds = CGRect(origin: .zero, size: renderSize)
     controller.view.backgroundColor = .clear
 
@@ -120,28 +125,14 @@ class ShareCardRenderer {
     // Pre-render drawing at high resolution if present
     var highResDrawing: UIImage?
     if let entry = entry, entry.drawingData != nil {
-      // Determine the logical display size based on the card style
-      // This should match what the view uses for logicalDisplaySize
-      let logicalDisplaySize: CGFloat
-      switch style {
-      case .minimal:
-        logicalDisplaySize = 800  // MinimalView uses nil → defaults to size/scale = 800
-      case .excerpt, .anniversary:
-        logicalDisplaySize = 450  // ExcerptView and AnniversaryView use 450
-      case .detailed:
-        logicalDisplaySize = 200  // DetailedView uses 200
-      default:
-        logicalDisplaySize = 800  // Default fallback
-      }
-      
-      // Render at high pixel resolution (2700x2700) max limit.
-      // Use the same logicalDisplaySize as the view for consistent stroke calculations
-      let highResPixelSize = CGSize(width: 2700, height: 2700)  // High resolution pixels
+      // logicalDisplaySize only affects the stroke width threshold (displaySize <= 20).
+      // The canvas scale calculation cancels it out, so 800 works universally.
+      let highResPixelSize = CGSize(width: 2700, height: 2700)
       highResDrawing = renderDrawingAtHighResolution(
         entry: entry,
         targetPixelSize: highResPixelSize,
         colorScheme: colorScheme,
-        logicalDisplaySize: logicalDisplaySize
+        logicalDisplaySize: 800
       )
     }
 
@@ -244,6 +235,9 @@ class ShareCardRenderer {
       AnniversaryView(entry: entry, date: date, highResDrawing: highResDrawing, showWatermark: showWatermark)
     case .yearGridDots, .yearGridJoodles, .yearGridJoodlesOnly:
       // Year grid styles should use renderYearGridCard instead
+      EmptyView()
+    case .weekGrid, .monthGrid:
+      // Week/month grid styles should use renderWeekGridCard/renderMonthGridCard instead
       EmptyView()
     case .animatedMinimalVideo, .animatedExcerptVideo:
       // Animated styles should use renderAnimatedVideo instead
@@ -470,6 +464,203 @@ class ShareCardRenderer {
       return dayEntries.map { ShareCardDayEntry(from: $0) }
     } catch {
       print("ShareCardRenderer: Failed to load entries for year \(year): \(error)")
+      return []
+    }
+  }
+
+  /// Pre-renders high-resolution drawings for a batch of entries
+  /// - Parameters:
+  ///   - entries: The entries containing drawing data
+  ///   - targetPixelSize: The desired output size in physical pixels per drawing
+  ///   - colorScheme: The color scheme to use for rendering
+  ///   - logicalDisplaySize: The logical display size for stroke calculations
+  ///   - strokeMultiplier: Multiplier for stroke width (higher = thicker strokes)
+  /// - Returns: A dictionary mapping dateString to high-res UIImage
+  private func renderHighResDrawings(
+    for entries: [DayEntry],
+    targetPixelSize: CGSize,
+    colorScheme: ColorScheme,
+    logicalDisplaySize: CGFloat,
+    strokeMultiplier: CGFloat = 1.0
+  ) -> [String: UIImage] {
+    var result: [String: UIImage] = [:]
+    for entry in entries {
+      guard entry.drawingData != nil, !(entry.drawingData?.isEmpty ?? true) else { continue }
+      if let image = renderDrawingAtHighResolution(
+        entry: entry,
+        targetPixelSize: targetPixelSize,
+        colorScheme: colorScheme,
+        logicalDisplaySize: logicalDisplaySize,
+        strokeMultiplier: strokeMultiplier
+      ) {
+        result[entry.dateString] = image
+      }
+    }
+    return result
+  }
+
+  // MARK: - Week Grid
+
+  /// Renders a week grid card style as a UIImage
+  @MainActor
+  func renderWeekGridCard(
+    style: ShareCardStyle,
+    year: Int,
+    weekStartDate: Date,
+    startOfWeek: String,
+    entries: [DayEntry],
+    colorScheme: ColorScheme,
+    showWatermark: Bool = true
+  ) -> UIImage? {
+    guard style.isWeekStyle else { return nil }
+
+    // Calculate exact cell pixel size from card layout math
+    // Layout: horizontalPadding=80 on each side, cellSpacing=24 between 7 cells
+    let baseCellSize: CGFloat = (style.cardSize.width - 80 * 2 - 24 * 6) / 7
+    // Render at 3× cell pixel size for crisp quality when exported
+    let renderScale: CGFloat = 3.0
+    let highResPixelSize = CGSize(width: baseCellSize * renderScale, height: baseCellSize * renderScale)
+    let highResDrawings = renderHighResDrawings(
+      for: entries,
+      targetPixelSize: highResPixelSize,
+      colorScheme: colorScheme,
+      logicalDisplaySize: baseCellSize,
+      strokeMultiplier: 1.0
+    )
+
+    let padding: CGFloat = 60
+    let paddedSize = CGSize(
+      width: style.cardSize.width + padding * 2,
+      height: style.cardSize.height + padding * 2
+    )
+    let cardBackground = colorScheme == .dark ? Color.black : Color.white
+
+    let cardView = ZStack(alignment: .center) {
+      WeekGridView(
+        year: year,
+        weekStartDate: weekStartDate,
+        startOfWeek: startOfWeek,
+        entries: entries,
+        highResDrawings: highResDrawings,
+        showWatermark: showWatermark
+      )
+      .frame(width: style.cardSize.width, height: style.cardSize.height)
+      .background(cardBackground)
+      .clipShape(RoundedRectangle(cornerRadius: 80))
+      .shadow(color: .black.opacity(0.07), radius: 10, x: 0, y: 8)
+    }
+    .frame(width: paddedSize.width, height: paddedSize.height, alignment: .center)
+    .environment(\.colorScheme, colorScheme)
+    .fixedSize()
+
+    return render(view: cardView, size: paddedSize)
+  }
+
+  /// Loads entries for a specific week from the model context
+  /// - Parameters:
+  ///   - weekStart: The start date of the week
+  ///   - modelContext: The SwiftData model context
+  /// - Returns: An array of ShareCardDayEntry for the week
+  func loadEntriesForWeek(_ weekStart: Date, from modelContext: ModelContext) -> [DayEntry] {
+    let calendar = Calendar.current
+    let dateStrings = (0..<7).compactMap { offset -> String? in
+      guard let date = calendar.date(byAdding: .day, value: offset, to: weekStart) else { return nil }
+      return CalendarDate.from(date).dateString
+    }
+
+    // Fetch all entries that match any of the 7 date strings
+    var results: [DayEntry] = []
+    for dateString in dateStrings {
+      let predicate = #Predicate<DayEntry> { entry in
+        entry.dateString == dateString
+      }
+      let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+      do {
+        let dayEntries = try modelContext.fetch(descriptor)
+        results.append(contentsOf: dayEntries)
+      } catch {
+        print("ShareCardRenderer: Failed to load entry for \(dateString): \(error)")
+      }
+    }
+    return results
+  }
+
+  // MARK: - Month Grid
+
+  /// Renders a month grid card style as a UIImage
+  @MainActor
+  func renderMonthGridCard(
+    style: ShareCardStyle,
+    year: Int,
+    month: Int,
+    startOfWeek: String,
+    entries: [DayEntry],
+    colorScheme: ColorScheme,
+    showWatermark: Bool = true
+  ) -> UIImage? {
+    guard style.isMonthStyle else { return nil }
+
+    // Calculate exact cell pixel size from card layout math
+    // Layout: horizontalPadding=60 on each side, cellSpacing=12 between 7 cells
+    let baseCellSize: CGFloat = (style.cardSize.width - 60 * 2 - 12 * 6) / 7
+    // Render at 4× cell pixel size for crisp quality (month cells are smaller, need more oversampling)
+    let renderScale: CGFloat = 3.0
+    let highResPixelSize = CGSize(width: baseCellSize * renderScale, height: baseCellSize * renderScale)
+    let highResDrawings = renderHighResDrawings(
+      for: entries,
+      targetPixelSize: highResPixelSize,
+      colorScheme: colorScheme,
+      logicalDisplaySize: baseCellSize,
+      strokeMultiplier: 1.0
+    )
+
+    let padding: CGFloat = 60
+    let paddedSize = CGSize(
+      width: style.cardSize.width + padding * 2,
+      height: style.cardSize.height + padding * 2
+    )
+    let cardBackground = colorScheme == .dark ? Color.black : Color.white
+
+    let cardView = ZStack(alignment: .center) {
+      MonthGridView(
+        year: year,
+        month: month,
+        startOfWeek: startOfWeek,
+        entries: entries,
+        highResDrawings: highResDrawings,
+        showWatermark: showWatermark
+      )
+      .frame(width: style.cardSize.width, height: style.cardSize.height)
+      .background(cardBackground)
+      .clipShape(RoundedRectangle(cornerRadius: 80))
+      .shadow(color: .black.opacity(0.07), radius: 10, x: 0, y: 8)
+    }
+    .frame(width: paddedSize.width, height: paddedSize.height, alignment: .center)
+    .environment(\.colorScheme, colorScheme)
+    .fixedSize()
+
+    return render(view: cardView, size: paddedSize)
+  }
+
+  /// Loads entries for a specific month from the model context
+  /// - Parameters:
+  ///   - year: The year
+  ///   - month: The month (1-12)
+  ///   - modelContext: The SwiftData model context
+  /// - Returns: An array of ShareCardDayEntry for the month
+  func loadEntriesForMonth(_ year: Int, month: Int, from modelContext: ModelContext) -> [DayEntry] {
+    let monthStr = String(format: "%02d", month)
+    let monthPrefix = "\(year)-\(monthStr)-"
+    let predicate = #Predicate<DayEntry> { entry in
+      entry.dateString.starts(with: monthPrefix)
+    }
+    let descriptor = FetchDescriptor<DayEntry>(predicate: predicate)
+
+    do {
+      let dayEntries = try modelContext.fetch(descriptor)
+      return dayEntries
+    } catch {
+      print("ShareCardRenderer: Failed to load entries for \(year)-\(monthStr): \(error)")
       return []
     }
   }

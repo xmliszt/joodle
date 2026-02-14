@@ -12,6 +12,9 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   case excerpt = "Excerpt"
   case detailed = "Detailed"
   case anniversary = "Anniversary"
+  // Week & Month grid styles
+  case weekGrid = "Week Grid"
+  case monthGrid = "Month Grid"
   case yearGridDots = "Year Grid"
   case yearGridJoodles = "Year Grid with Joodles"
   case yearGridJoodlesOnly = "Year Grid with Joodles Only"
@@ -26,7 +29,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     switch self {
     case .minimal, .excerpt, .detailed, .anniversary:
       return "photo.on.rectangle"
-    case .yearGridDots, .yearGridJoodles, .yearGridJoodlesOnly:
+    case .weekGrid, .monthGrid, .yearGridDots, .yearGridJoodles, .yearGridJoodlesOnly:
       return "calendar"
     case .animatedMinimalVideo, .animatedExcerptVideo:
       return "video.fill"
@@ -49,6 +52,10 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return "Year progress with doodles"
     case .yearGridJoodlesOnly:
       return "Year progress with doodles only"
+    case .weekGrid:
+      return "Your week in doodles"
+    case .monthGrid:
+      return "Your month in doodles"
     case .animatedMinimalVideo:
       return "Animated doodle"
     case .animatedExcerptVideo:
@@ -64,6 +71,16 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     default:
       return false
     }
+  }
+
+  /// Whether this style is a week grid style
+  var isWeekStyle: Bool {
+    self == .weekGrid
+  }
+
+  /// Whether this style is a month grid style
+  var isMonthStyle: Bool {
+    self == .monthGrid
   }
 
   /// Whether this style is an animated export (GIF or Video)
@@ -106,6 +123,21 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     [.yearGridDots, .yearGridJoodles, .yearGridJoodlesOnly]
   }
 
+  /// Styles for week grid sharing
+  static var weekGridStyles: [ShareCardStyle] {
+    [.weekGrid]
+  }
+
+  /// Styles for month grid sharing
+  static var monthGridStyles: [ShareCardStyle] {
+    [.monthGrid]
+  }
+
+  /// All grid-based styles (week + month + year)
+  static var allGridStyles: [ShareCardStyle] {
+    weekGridStyles + monthGridStyles + yearGridStyles
+  }
+
   /// Animated styles for entry sharing
   static var animatedStyles: [ShareCardStyle] {
     [.animatedMinimalVideo, .animatedExcerptVideo]
@@ -119,10 +151,10 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Size for the actual share card, this is the dimension of the image/video saved.
   var cardSize: CGSize {
     switch self {
-    // Video uses full size
+    case .weekGrid:
+      return CGSize(width: 1920, height: 960)
     case .animatedMinimalVideo, .animatedExcerptVideo:
       return CGSize(width: 1080, height: 1080)
-    // Static images use full size
     default:
       return CGSize(width: 1080, height: 1080)
     }
@@ -130,7 +162,12 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
 
   /// Size for the preview in the carousel, this is the display size on device
   var previewSize: CGSize {
-    return CGSize(width: 300, height: 300)
+    switch self {
+    case .weekGrid:
+      return CGSize(width: 300, height: 150)
+    default:
+      return CGSize(width: 300, height: 300)
+    }
   }
 
   /// Animation configuration for this style

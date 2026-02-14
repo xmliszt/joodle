@@ -7,6 +7,7 @@ struct DrawingPreviewView: View {
   let scale: CGFloat
   var animateDrawing: Bool = false
   var looping: Bool = false
+  var strokeMultiplier: CGFloat = 1.0
   
   var actualSize: CGFloat {
     size * scale
@@ -30,7 +31,8 @@ struct DrawingPreviewView: View {
         scale: scale,
         useThumbnail: false,
         animateDrawing: animateDrawing,
-        looping: looping
+        looping: looping,
+        strokeMultiplier: strokeMultiplier
       )
       .frame(width: size, height: size)
     } else {

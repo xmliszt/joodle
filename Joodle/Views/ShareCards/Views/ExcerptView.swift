@@ -39,6 +39,7 @@ struct ExcerptView: View {
             RoundedRectangle(cornerRadius: 80 * scale, style: .continuous)
               .foregroundStyle(.appSurface)
           )
+          .clipShape(RoundedRectangle(cornerRadius: 80 * scale, style: .continuous))
           .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 2)
 
           Spacer()
