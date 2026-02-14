@@ -41,6 +41,10 @@ struct ShareCardSelectorView: View {
   @State private var selectedMonth: Int = Calendar.current.component(.month, from: Date())
   @State private var monthEntries: [DayEntry] = []
 
+  // Quick-jump picker sheets
+  @State private var showWeekPicker: Bool = false
+  @State private var showMonthPicker: Bool = false
+
   // Animated export progress
   @State private var exportProgress: Double = 0.0
   @State private var isExportingAnimated: Bool = false
@@ -302,6 +306,27 @@ struct ShareCardSelectorView: View {
       .sheet(item: $shareItem) { item in
         ShareSheet(items: item.items)
       }
+      .sheet(isPresented: $showWeekPicker) {
+        WeekPickerSheet(
+          year: currentModeYear,
+          startOfWeek: UserPreferences.shared.startOfWeek,
+          selectedWeekStart: $selectedWeekStart
+        ) {
+          loadWeekData(for: selectedWeekStart)
+        }
+        .presentationDetents([.height(300)])
+        .presentationDragIndicator(.visible)
+      }
+      .sheet(isPresented: $showMonthPicker) {
+        MonthPickerSheet(
+          year: currentModeYear,
+          selectedMonth: $selectedMonth
+        ) {
+          loadMonthData(for: currentModeYear, month: selectedMonth)
+        }
+        .presentationDetents([.height(300)])
+        .presentationDragIndicator(.visible)
+      }
       .onAppear {
         setupInitialState()
       }
@@ -405,10 +430,19 @@ struct ShareCardSelectorView: View {
       }
       .disabled(!canNavigateWeekBackward)
 
-      Text(weekDateRangeString)
-        .font(.appFont(size: 14, weight: .medium))
-        .foregroundColor(.textColor)
+      Button {
+        showWeekPicker = true
+      } label: {
+        HStack(spacing: 4) {
+          Text(weekDateRangeString)
+            .font(.appFont(size: 14, weight: .medium))
+            .foregroundColor(.textColor)
+          Image(systemName: "chevron.up.chevron.down")
+            .font(.appFont(size: 10, weight: .medium))
+            .foregroundColor(.secondaryTextColor)
+        }
         .frame(minWidth: 140)
+      }
 
       Button {
         navigateWeek(by: 1)
@@ -433,10 +467,19 @@ struct ShareCardSelectorView: View {
       }
       .disabled(!canNavigateMonthBackward)
 
-      Text(monthDisplayString)
-        .font(.appFont(size: 14, weight: .medium))
-        .foregroundColor(.textColor)
+      Button {
+        showMonthPicker = true
+      } label: {
+        HStack(spacing: 4) {
+          Text(monthDisplayString)
+            .font(.appFont(size: 14, weight: .medium))
+            .foregroundColor(.textColor)
+          Image(systemName: "chevron.up.chevron.down")
+            .font(.appFont(size: 10, weight: .medium))
+            .foregroundColor(.secondaryTextColor)
+        }
         .frame(minWidth: 140)
+      }
 
       Button {
         navigateMonth(by: 1)
