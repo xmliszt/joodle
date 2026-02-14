@@ -23,10 +23,10 @@ struct WeekGridView: View {
   private let baseBottomPadding: CGFloat = 40
   private let baseHeaderSpacing: CGFloat = 40
   private let baseFontSize: CGFloat = 56
-  private let baseLabelFontSize: CGFloat = 36
-  private let baseCellCornerRadius: CGFloat = 24
-  private let baseCellSpacing: CGFloat = 24
-  private let baseLabelSpacing: CGFloat = 16
+  private let baseLabelFontSize: CGFloat = 28
+  private let baseCellCornerRadius: CGFloat = 16
+  private let baseCellSpacing: CGFloat = 12
+  private let baseLabelSpacing: CGFloat = 12
 
   @Environment(\.colorScheme) private var colorScheme
 

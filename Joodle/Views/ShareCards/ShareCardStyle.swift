@@ -152,7 +152,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   var cardSize: CGSize {
     switch self {
     case .weekGrid:
-      return CGSize(width: 1920, height: 960)
+      return CGSize(width: 1080, height: 540)
     case .animatedMinimalVideo, .animatedExcerptVideo:
       return CGSize(width: 1080, height: 1080)
     default:

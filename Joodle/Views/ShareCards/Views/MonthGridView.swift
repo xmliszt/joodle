@@ -21,7 +21,7 @@ struct MonthGridView: View {
   private let baseHorizontalPadding: CGFloat = 60
   private let baseTopPadding: CGFloat = 60
   private let baseBottomPadding: CGFloat = 40
-  private let baseHeaderSpacing: CGFloat = 32
+  private let baseHeaderSpacing: CGFloat = 40
   private let baseFontSize: CGFloat = 56
   private let baseMonthFontSize: CGFloat = 56
   private let baseLabelFontSize: CGFloat = 28
