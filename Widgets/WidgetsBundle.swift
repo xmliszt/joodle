@@ -11,11 +11,13 @@ import WidgetKit
 @main
 struct WidgetsBundle: WidgetBundle {
   var body: some Widget {
+    TodayDoodleWidget()
+    WeekGridWidget()
+    MonthGridWidget()
+    RandomJoodleWidget()
+    AnniversaryWidget()
     YearGridWidget()
     YearGridJoodleWidget()
     YearGridJoodleNoEmptyDotsWidget()
-    TodayDoodleWidget()
-    RandomJoodleWidget()
-    AnniversaryWidget()
   }
 }

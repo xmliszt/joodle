@@ -30,6 +30,7 @@ class WidgetHelper {
   private let entriesKey = "widgetEntries"
   private let subscriptionKey = "widgetSubscriptionStatus"
   private let themeColorKey = "widgetThemeColor"
+  private let startOfWeekKey = "widgetStartOfWeek"
 
   private init() {}
 
@@ -106,6 +107,23 @@ class WidgetHelper {
       return ThemeColor.defaultColor.color
     }
     return themeColor.color
+  }
+
+  // MARK: - Start of Week
+
+  /// Update start-of-week preference for widget extension
+  @MainActor func updateStartOfWeek() {
+    guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
+      print("Failed to access shared UserDefaults for widget start of week")
+      return
+    }
+
+    let startOfWeek = UserPreferences.shared.startOfWeek
+    sharedDefaults.set(startOfWeek, forKey: startOfWeekKey)
+    sharedDefaults.synchronize()
+
+    // Reload widgets to reflect start-of-week change
+    WidgetCenter.shared.reloadAllTimelines()
   }
 
   /// Update widget data with current entries from SwiftData and reload widget timelines

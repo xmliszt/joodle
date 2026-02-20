@@ -233,6 +233,9 @@ struct JoodleApp: App {
     // Sync theme color to widgets on startup
     Self.syncThemeColorToWidgets()
 
+    // Sync start-of-week preference to widgets on startup
+    Self.syncStartOfWeekToWidgets()
+
     // Restore daily reminder if it was enabled
     ReminderManager.shared.restoreDailyReminderIfNeeded()
 
@@ -249,6 +252,13 @@ struct JoodleApp: App {
   private static func syncThemeColorToWidgets() {
     Task { @MainActor in
       WidgetHelper.shared.updateThemeColor()
+    }
+  }
+
+  /// Syncs the current start-of-week preference to widgets via App Group
+  private static func syncStartOfWeekToWidgets() {
+    Task { @MainActor in
+      WidgetHelper.shared.updateStartOfWeek()
     }
   }
 

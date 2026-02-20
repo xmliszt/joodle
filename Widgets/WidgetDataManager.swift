@@ -125,6 +125,7 @@ struct WidgetDataManager {
   private let entriesKey = "widgetEntries"
   private let subscriptionKey = "widgetSubscriptionStatus"
   private let themeColorKey = "widgetThemeColor"
+  private let startOfWeekKey = "widgetStartOfWeek"
 
   private init() {}
 
@@ -193,6 +194,17 @@ struct WidgetDataManager {
     }
     // Fallback to a default orange color if asset not found
     return Color(UIColor(red: 1.0, green: 0.36, blue: 0.1, alpha: 1.0))
+  }
+
+  // MARK: - Start of Week
+
+  /// Load the user's start-of-week preference for widget display
+  /// - Returns: "sunday" or "monday"
+  func loadStartOfWeek() -> String {
+    guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
+      return "sunday"
+    }
+    return sharedDefaults.string(forKey: startOfWeekKey) ?? "sunday"
   }
 
   /// Save entries to shared container for widget access

@@ -271,7 +271,10 @@ struct SettingsView: View {
   private var startOfWeekBinding: Binding<String> {
     Binding(
       get: { userPreferences.startOfWeek },
-      set: { userPreferences.startOfWeek = $0 }
+      set: {
+        userPreferences.startOfWeek = $0
+        WidgetHelper.shared.updateStartOfWeek()
+      }
     )
   }
   
@@ -1362,6 +1365,7 @@ struct CustomizationSettingsView: View {
       set: { newValue in
         let previousValue = userPreferences.startOfWeek
         userPreferences.startOfWeek = newValue
+        WidgetHelper.shared.updateStartOfWeek()
         if newValue != previousValue {
           AnalyticsManager.shared.trackSettingChanged(name: "start_of_week", value: newValue, previousValue: previousValue)
         }
