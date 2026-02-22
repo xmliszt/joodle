@@ -14,7 +14,6 @@ struct DynamicIslandExpandedView<Content: View>: View {
   let hidden: Bool
   let onDismiss: (() -> Void)?
 
-  private let CONTAINER_MIN_HEIGHT: CGFloat = 200
   private let SHADOW_RADIUS: CGFloat = 16
 
   init(
@@ -41,7 +40,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
       // Optional to set background to make content below opaque
       VStack {
         // Visible content
-        VStack {
+        VStack(spacing: 0) {
           // Safe area spacer to prevent content from going behind the Dynamic Island
           Spacer()
             .frame(maxWidth: .infinity, maxHeight: UIDevice.dynamicIslandSize.height)

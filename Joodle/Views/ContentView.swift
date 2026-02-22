@@ -261,7 +261,6 @@ struct ContentView: View {
           },
           isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland
         )
-        .padding(.top, 32)
         .fixedSize(horizontal: false, vertical: true)
         .readHeight($drawingCanvasSheetHeight)
         .disabled(dataProvider.selectedDateItem == nil)
@@ -302,7 +301,6 @@ struct ContentView: View {
               },
               isShowing: showDrawingCanvas
             )
-            .padding(.vertical, 8)
           },
           // Hide dynamic island view when navigate to setting
           hidden: hideDynamicIslandView,

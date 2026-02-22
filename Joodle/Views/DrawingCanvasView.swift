@@ -61,10 +61,6 @@ struct DrawingCanvasView: View {
 
   // MARK: - Concentric Corner Radius
 
-  /// Padding between DrawingCanvasView edges and the canvas.
-  /// Kept small to maximise drawing area.
-  private let canvasPadding: CGFloat = 8
-
   /// Canvas corner radius computed to be concentric with the device screen
   /// corners and the DI container border.
   private var canvasCornerRadius: CGFloat {
@@ -76,14 +72,13 @@ struct DrawingCanvasView: View {
       return max(
         UIDevice.screenCornerRadius
           - UIDevice.dynamicIslandFrame.origin.y
-          - diContainerPadding
-          - canvasPadding,
+          - diContainerPadding,
         0
       )
     } else {
       // Sheet presentationCornerRadius = R.
       // Canvas is inset by canvasPadding horizontally.
-      return max(UIDevice.screenCornerRadius - canvasPadding, 0)
+      return max(UIDevice.screenCornerRadius, 0)
     }
   }
 
@@ -102,7 +97,7 @@ struct DrawingCanvasView: View {
 
   var body: some View {
     ZStack(alignment: .top) {
-      VStack(spacing: 4) {
+      VStack(spacing: 12) {
         SharedCanvasView(
           paths: $paths,
           pathMetadata: $pathMetadata,
@@ -129,7 +124,6 @@ struct DrawingCanvasView: View {
           .circularGlassButton()
         }
         .disabled(!canEditOrCreate)
-        .padding(canvasPadding)
         .background(Color.clear)
         .overlay {
           // Show lock overlay when access is denied (not in mock mode)
@@ -144,13 +138,16 @@ struct DrawingCanvasView: View {
           InspirationPromptView(prompt: prompt)
             .id(promptID)
             .transition(.opacity.combined(with: .scale(scale: 0.95)))
-            .padding(.horizontal, canvasPadding + 12)
-            .padding(.bottom, 12)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 4)
         }
       }
       .animation(.springFkingSatifying, value: currentPrompt == nil)
       .animation(.springFkingSatifying, value: promptID)
     }
+    .padding(8)
+    .padding(.top, 16)
+    .padding(.bottom, 10)
     .onAppear {
       if !isMockMode {
         checkAccessState()
@@ -318,6 +315,9 @@ struct DrawingCanvasView: View {
   private func rollInspirationPrompt() {
     let candidates = PromptsManager.shared.allPrompts.filter { $0 != currentPrompt }
     guard let newPrompt = candidates.randomElement() else { return }
+    
+    // Add a haptic feedback
+    Haptic.play(with: .light)
 
     // Swap prompt directly and force view recreation for fresh animation
     withAnimation(.springFkingSatifying) {
