@@ -26,6 +26,8 @@ struct InteractiveTutorialView: View {
     // View state
     @State private var showDrawingCanvas = false
     @State private var showReminderSheet = false
+    /// Tracks the natural content height of the drawing canvas sheet (non-DI devices) for adaptive detent
+    @State private var drawingCanvasSheetHeight: CGFloat = 460
     @State private var isScrubbing = false
     @State private var highlightedId: String?
 
@@ -399,18 +401,17 @@ struct InteractiveTutorialView: View {
         }
         // Drawing canvas sheet - for devices WITHOUT Dynamic Island
         .sheet(isPresented: hasDynamicIsland ? .constant(false) : $showDrawingCanvas) {
-            ZStack {
-                DrawingCanvasView(
-                    date: mockStore.selectedDateItem?.date ?? Date(),
-                    entry: nil,
-                    onDismiss: {
-                        showDrawingCanvas = false
-                    },
-                    isShowing: showDrawingCanvas,
-                    mockStore: mockStore,
-                    mockEntry: mockStore.selectedEntry
-                )
-
+            DrawingCanvasView(
+                date: mockStore.selectedDateItem?.date ?? Date(),
+                entry: nil,
+                onDismiss: {
+                    showDrawingCanvas = false
+                },
+                isShowing: showDrawingCanvas,
+                mockStore: mockStore,
+                mockEntry: mockStore.selectedEntry
+            )
+            .overlay {
                 // Tutorial overlay inside the sheet for non-Dynamic Island devices
                 // Only show when on the drawing canvas sub-step of drawAndEdit
                 if coordinator.isActive,
@@ -422,7 +423,9 @@ struct InteractiveTutorialView: View {
                     )
                 }
             }
-            .presentationDetents([.medium])
+            .fixedSize(horizontal: false, vertical: true)
+            .readHeight($drawingCanvasSheetHeight)
+            .presentationDetents([.height(drawingCanvasSheetHeight)])
             .presentationDragIndicator(.visible)
         }
         // Reminder sheet - using real view with mock store

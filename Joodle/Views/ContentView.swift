@@ -37,6 +37,8 @@ struct ContentView: View {
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
   @State private var showNotePromptPopup: Bool = false
+  /// Tracks the natural content height of the drawing canvas sheet (non-DI devices) for adaptive detent
+  @State private var drawingCanvasSheetHeight: CGFloat = 460
   @State private var dateForNotePrompt: Date? = nil
   /// Tracks whether the entry had a doodle when the drawing canvas was opened (for note prompt logic)
   @State private var entryHadDoodleOnCanvasOpen: Bool = false
@@ -260,8 +262,10 @@ struct ContentView: View {
           isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland
         )
         .padding(.top, 32)
+        .fixedSize(horizontal: false, vertical: true)
+        .readHeight($drawingCanvasSheetHeight)
         .disabled(dataProvider.selectedDateItem == nil)
-        .presentationDetents([.medium])
+        .presentationDetents([.height(drawingCanvasSheetHeight)])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(UIDevice.screenCornerRadius)
         .disableLiquidGlass()
@@ -298,6 +302,7 @@ struct ContentView: View {
               },
               isShowing: showDrawingCanvas
             )
+            .padding(.vertical, 8)
           },
           // Hide dynamic island view when navigate to setting
           hidden: hideDynamicIslandView,

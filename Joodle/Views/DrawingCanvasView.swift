@@ -49,6 +49,11 @@ struct DrawingCanvasView: View {
   @State private var undoStack: [([Path], [PathMetadata])] = []
   @State private var redoStack: [([Path], [PathMetadata])] = []
 
+  // Inspiration prompt state
+  @State private var currentPrompt: String? = nil
+  @State private var promptID = UUID()
+  @State private var isIlluminated = false
+
   /// Whether we're in mock/tutorial mode
   private var isMockMode: Bool {
     mockStore != nil
@@ -96,40 +101,55 @@ struct DrawingCanvasView: View {
   }
 
   var body: some View {
-    ZStack {
-      SharedCanvasView(
-        paths: $paths,
-        pathMetadata: $pathMetadata,
-        currentPath: $currentPath,
-        currentPathIsDot: $currentPathIsDot,
-        isDrawing: $isDrawing,
-        buttonsConfig: CanvasButtonsConfig(
-          onClear: clearDrawing,
-          onUndo: undoLastStroke,
-          onRedo: redoLastStroke,
-          canClear: !paths.isEmpty || !currentPath.isEmpty,
-          canUndo: !undoStack.isEmpty,
-          canRedo: !redoStack.isEmpty,
-          showClearConfirmation: $showClearConfirmation
-        ),
-        canvasCornerRadius: canvasCornerRadius,
-        onCommitStroke: commitCurrentStroke
-      ) {
-        // Save button
-        Button(action: saveDrawing) {
-          Image(systemName: "checkmark")
+    ZStack(alignment: .top) {
+      VStack(spacing: 4) {
+        SharedCanvasView(
+          paths: $paths,
+          pathMetadata: $pathMetadata,
+          currentPath: $currentPath,
+          currentPathIsDot: $currentPathIsDot,
+          isDrawing: $isDrawing,
+          buttonsConfig: CanvasButtonsConfig(
+            onClear: clearDrawing,
+            onUndo: undoLastStroke,
+            onRedo: redoLastStroke,
+            canClear: !paths.isEmpty || !currentPath.isEmpty,
+            canUndo: !undoStack.isEmpty,
+            canRedo: !redoStack.isEmpty,
+            showClearConfirmation: $showClearConfirmation,
+            centerContent: AnyView(inspirationBulbButton)
+          ),
+          canvasCornerRadius: canvasCornerRadius,
+          onCommitStroke: commitCurrentStroke
+        ) {
+          // Save button
+          Button(action: saveDrawing) {
+            Image(systemName: "checkmark")
+          }
+          .circularGlassButton()
         }
-        .circularGlassButton()
-      }
-      .disabled(!canEditOrCreate)
-      .padding(canvasPadding)
-      .background(Color.clear)
-      .overlay {
-        // Show lock overlay when access is denied (not in mock mode)
-        if !isMockMode && !canEditOrCreate {
-          accessDeniedOverlay
+        .disabled(!canEditOrCreate)
+        .padding(canvasPadding)
+        .background(Color.clear)
+        .overlay {
+          // Show lock overlay when access is denied (not in mock mode)
+          if !isMockMode && !canEditOrCreate {
+            accessDeniedOverlay
+          }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        
+        // Inspiration prompt text — centered, below the canvas
+        if let prompt = currentPrompt {
+          InspirationPromptView(prompt: prompt)
+            .id(promptID)
+            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            .padding(.horizontal, canvasPadding + 12)
+            .padding(.bottom, 12)
         }
       }
+      .animation(.springFkingSatifying, value: currentPrompt == nil)
+      .animation(.springFkingSatifying, value: promptID)
     }
     .onAppear {
       if !isMockMode {
@@ -158,6 +178,7 @@ struct DrawingCanvasView: View {
     .sheet(isPresented: $showPaywall) {
       StandalonePaywallView()
     }
+    .preferredColorScheme(.dark)
   }
 
   // MARK: - Access Control UI
@@ -214,6 +235,39 @@ struct DrawingCanvasView: View {
     .clipShape(RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous))
   }
 
+  // MARK: - Inspiration Bulb Button
+
+  private var inspirationBulbButton: some View {
+    Button(action: rollInspirationPrompt) {
+      Image(systemName: "lightbulb.max.fill")
+    }
+    .circularGlassButton()
+    .overlay {
+      if isIlluminated {
+        TorchlightGlowView()
+          .transition(.opacity)
+          .allowsHitTesting(false)
+      }
+    }
+    .animation(.easeIn(duration: 0.15), value: isIlluminated)
+    .simultaneousGesture(
+      DragGesture(minimumDistance: 0)
+        .onChanged { _ in
+          // Fires immediately on first finger contact
+          guard !isIlluminated else { return }
+          isIlluminated = true
+        }
+        .onEnded { _ in
+          // Fires when finger lifts — hold for a moment then fade out
+          DispatchQueue.main.async {
+            withAnimation(.easeIn(duration: 0.25)) {
+              isIlluminated = false
+            }
+          }
+        }
+    )
+  }
+
   // MARK: - Access Check
 
   private func checkAccessState() {
@@ -256,6 +310,19 @@ struct DrawingCanvasView: View {
           }
         }
       }
+    }
+  }
+
+  // MARK: - Inspiration Prompt
+
+  private func rollInspirationPrompt() {
+    let candidates = joodlePrompts.filter { $0 != currentPrompt }
+    guard let newPrompt = candidates.randomElement() else { return }
+
+    // Swap prompt directly and force view recreation for fresh animation
+    withAnimation(.springFkingSatifying) {
+      currentPrompt = newPrompt
+      promptID = UUID()
     }
   }
 
@@ -345,6 +412,10 @@ struct DrawingCanvasView: View {
   }
 
   private func loadExistingDrawing() {
+    // Reset inspiration prompt for new session
+    currentPrompt = nil
+    isIlluminated = false
+
     // Check mock mode first
     if isMockMode {
       loadMockDrawing()

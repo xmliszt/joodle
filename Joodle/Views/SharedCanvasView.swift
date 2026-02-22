@@ -16,6 +16,8 @@ struct CanvasButtonsConfig {
   let canUndo: Bool
   let canRedo: Bool
   let showClearConfirmation: Binding<Bool>?
+  /// Optional view shown in the center slot when undo/redo buttons are hidden
+  let centerContent: AnyView?
 
   init(
     onClear: @escaping () -> Void,
@@ -24,7 +26,8 @@ struct CanvasButtonsConfig {
     canClear: Bool = true,
     canUndo: Bool = false,
     canRedo: Bool = false,
-    showClearConfirmation: Binding<Bool>? = nil
+    showClearConfirmation: Binding<Bool>? = nil,
+    centerContent: AnyView? = nil
   ) {
     self.onClear = onClear
     self.onUndo = onUndo
@@ -33,6 +36,7 @@ struct CanvasButtonsConfig {
     self.canUndo = canUndo
     self.canRedo = canRedo
     self.showClearConfirmation = showClearConfirmation
+    self.centerContent = centerContent
   }
 }
 
@@ -134,6 +138,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
                 .opacity(config.canRedo ? 1.0 : 0.3)
               }
             }
+            .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
           } else {
             Spacer()
           }
@@ -145,8 +150,20 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           }
 
         }
+        .overlay {
+          // Center content absolutely centered, ignoring left/right widths
+          if let config = buttonsConfig,
+             !(config.canUndo || config.canRedo),
+             let centerContent = config.centerContent {
+            centerContent
+              .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
+          }
+        }
         .frame(maxWidth: .infinity, minHeight: 32)
         .padding(.horizontal, 12)
+        // Elevate buttons row above the canvas in z-order so overlays
+        // (e.g. TorchlightGlowView on the bulb button) render on top of the canvas.
+        .zIndex(1)
       }
 
       ZStack {

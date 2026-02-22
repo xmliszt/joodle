@@ -43,7 +43,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
         // Visible content
         VStack {
           // Safe area spacer to prevent content from going behind the Dynamic Island
-          Color.black
+          Spacer()
             .frame(maxWidth: .infinity, maxHeight: UIDevice.dynamicIslandSize.height)
 
           // The content
@@ -54,7 +54,6 @@ struct DynamicIslandExpandedView<Content: View>: View {
             .scaleEffect(isExpanded ? 1 : 0)
             .animation(.springFkingSatifying, value: isExpanded)
         }
-        .padding(8)
         .frame(
           width: isExpanded ? UIScreen.main.bounds.width - (UIDevice.dynamicIslandFrame.origin.y * 2) : UIDevice.dynamicIslandSize.width,
           height: isExpanded ? nil : UIDevice.dynamicIslandSize.height,
