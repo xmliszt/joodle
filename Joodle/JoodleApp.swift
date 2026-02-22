@@ -597,6 +597,11 @@ struct JoodleApp: App {
     guard hasCompletedOnboarding else { return }
 
     // Small delay to ensure app is fully ready, then fetch async
+    // Fetch remote prompts independently — fire-and-forget, no UI dependency
+    Task {
+      await PromptsManager.shared.fetchRemotePrompts()
+    }
+
     Task { @MainActor in
       try? await Task.sleep(for: .milliseconds(300))
       await ChangelogManager.shared.checkAndPrepareChangelog()

@@ -316,7 +316,7 @@ struct DrawingCanvasView: View {
   // MARK: - Inspiration Prompt
 
   private func rollInspirationPrompt() {
-    let candidates = joodlePrompts.filter { $0 != currentPrompt }
+    let candidates = PromptsManager.shared.allPrompts.filter { $0 != currentPrompt }
     guard let newPrompt = candidates.randomElement() else { return }
 
     // Swap prompt directly and force view recreation for fresh animation
