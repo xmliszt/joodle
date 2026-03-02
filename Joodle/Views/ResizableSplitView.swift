@@ -9,7 +9,6 @@ import Combine
 import SwiftUI
 
 struct ResizableSplitView<Top: View, Bottom: View>: View {
-  @State private var isDragging = false
   @State private var isLandscape: Bool = false
   @State private var viewSize: CGSize?
   @State private var splitPosition: CGFloat = 1.0
@@ -17,8 +16,10 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   @State private var hasShownBottomView: Bool = false
   @State private var isKeyboardVisible: Bool = false
   @State private var isDraggable: Bool = true
-  /// Captures splitPosition at drag start to avoid feedback loop with cumulative translation
-  @State private var dragStartSplitPosition: CGFloat?
+  /// Temporary drag offset tracked by the gesture system; resets to 0 when drag ends.
+  /// Using @GestureState avoids the feedback loop where updating @State during drag
+  /// causes the handle to re-layout and jitter under the user's finger.
+  @GestureState private var dragOffset: CGFloat = 0
 
   let topView: Top
   let bottomView: Bottom
@@ -62,15 +63,21 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
 
   var body: some View {
     GeometryReader { _geometry in
-      let topHeight = _geometry.size.height * splitPosition
-      let bottomHeight = _geometry.size.height * (1 - splitPosition)
+      // Combine the committed split position with the live drag offset
+      let effectiveSplit = clamp(
+        value: splitPosition + (dragOffset / _geometry.size.height),
+        min: MIN_SPLIT_POSITION,
+        max: MAX_SPLIT_POSITION
+      )
+      let topHeight = _geometry.size.height * effectiveSplit
+      let bottomHeight = _geometry.size.height * (1 - effectiveSplit)
 
       ZStack {
         // Background color - animate opacity based on splitPosition for smooth transition
         // Map splitPosition 1.0->0.5 to opacity 0.0->1.0
         Color.appAccent
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .opacity(splitPosition >= 1.0 ? 0.0 : min(1.0, (1.0 - splitPosition) * 2))
+          .opacity(effectiveSplit >= 1.0 ? 0.0 : min(1.0, (1.0 - effectiveSplit) * 2))
 
         VStack(spacing: 0) {
           // Top View - YearGridView
@@ -118,49 +125,18 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
               (!isDraggable || !allowHandleDrag)
               ? nil
               : DragGesture(minimumDistance: 0, coordinateSpace: .named("splitContainer"))
-                .onChanged { value in
-                  isDragging = true
-                  if dragStartSplitPosition == nil {
-                    dragStartSplitPosition = splitPosition
-                  }
-                  let startPos = dragStartSplitPosition ?? splitPosition
-                  let newPosition = startPos + value.translation.height / _geometry.size.height
-                  splitPosition = clamp(
-                    value: newPosition, min: MIN_SPLIT_POSITION,
-                    max: MAX_SPLIT_POSITION)
+                .updating($dragOffset) { value, state, transaction in
+                  state = value.translation.height
+                  transaction.animation = nil
                 }
-                .onEnded { _ in
-                  isDragging = false
-                  dragStartSplitPosition = nil
-                  // Find the closest position to snap
-                  let result: (minDiff: CGFloat, closestValue: CGFloat?) = SNAP_POSITIONS.reduce(
-                    (minDiff: .infinity, closestValue: nil)
-                  ) { acc, value in
-                    let diff = abs(value - splitPosition)
-                    if diff < acc.minDiff {
-                      return (minDiff: diff, closestValue: value)
-                    }
-                    return acc
-                  }
-                  // If we managed to find a closest position to snap, we snap
-                  guard let closestPosition = result.closestValue else { return }
-                  isSnapping = true
-                  withAnimation(.springFkingSatifying) {
-                    if splitPosition >= DISMISS_POSITION {
-                      splitPosition = 1.0
-                    } else {
-                      splitPosition = closestPosition
-                    }
-                  } completion: {
-                    let newHeight = _geometry.size.height * splitPosition
-                    self.onTopViewHeightChange?(newHeight)
-                    DispatchQueue.main.async {
-                      isSnapping = false
-                      if splitPosition == 1.0 {
-                        self.onBottomDismissed?()
-                      }
-                    }
-                  }
+                .onEnded { value in
+                  let movement = value.translation.height / _geometry.size.height
+                  let finalPos = clamp(
+                    value: splitPosition + movement,
+                    min: MIN_SPLIT_POSITION,
+                    max: MAX_SPLIT_POSITION
+                  )
+                  snapToPosition(finalPos, totalHeight: _geometry.size.height)
                 }
             )
 
@@ -178,56 +154,25 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
               (!isDraggable || !allowHandleDrag)
               ? nil
               : DragGesture(minimumDistance: 0, coordinateSpace: .named("splitContainer"))
-                .onChanged { value in
-                  isDragging = true
-                  if dragStartSplitPosition == nil {
-                    dragStartSplitPosition = splitPosition
-                  }
-                  let startPos = dragStartSplitPosition ?? splitPosition
-                  let newPosition = startPos + value.translation.height / _geometry.size.height
-                  splitPosition = clamp(
-                    value: newPosition, min: MIN_SPLIT_POSITION,
-                    max: MAX_SPLIT_POSITION)
+                .updating($dragOffset) { value, state, transaction in
+                  state = value.translation.height
+                  transaction.animation = nil
                 }
-                .onEnded { _ in
-                  isDragging = false
-                  dragStartSplitPosition = nil
-                  // Find the closest position to snap
-                  let result: (minDiff: CGFloat, closestValue: CGFloat?) = SNAP_POSITIONS.reduce(
-                    (minDiff: .infinity, closestValue: nil)
-                  ) { acc, value in
-                    let diff = abs(value - splitPosition)
-                    if diff < acc.minDiff {
-                      return (minDiff: diff, closestValue: value)
-                    }
-                    return acc
-                  }
-                  // If we managed to find a closest position to snap, we snap
-                  guard let closestPosition = result.closestValue else { return }
-                  isSnapping = true
-                  withAnimation(.springFkingSatifying) {
-                    if splitPosition >= DISMISS_POSITION {
-                      splitPosition = 1.0
-                    } else {
-                      splitPosition = closestPosition
-                    }
-                  } completion: {
-                    let newHeight = _geometry.size.height * splitPosition
-                    self.onTopViewHeightChange?(newHeight)
-                    DispatchQueue.main.async {
-                      isSnapping = false
-                      if splitPosition == 1.0 {
-                        self.onBottomDismissed?()
-                      }
-                    }
-                  }
+                .onEnded { value in
+                  let movement = value.translation.height / _geometry.size.height
+                  let finalPos = clamp(
+                    value: splitPosition + movement,
+                    min: MIN_SPLIT_POSITION,
+                    max: MAX_SPLIT_POSITION
+                  )
+                  snapToPosition(finalPos, totalHeight: _geometry.size.height)
                 }
             )
         }
       }
       .coordinateSpace(name: "splitContainer")
       .transaction { transaction in
-        transaction.animation = isDragging ? nil : transaction.animation
+        transaction.animation = dragOffset != 0 ? nil : transaction.animation
       }
       .onAppear {
         // When appeared, update splitPosition:
@@ -246,7 +191,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         self.onTopViewHeightChange?(newHeight)
       }
       .onChange(of: hasBottomView) { _, newValue in
-        guard !isDragging else { return }
+        guard dragOffset == 0 else { return }
         withAnimation(.springFkingSatifying) {
           splitPosition = newValue ? 0.5 : 1.0
         } completion: {
@@ -256,7 +201,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         }
       }
       .onReceive(Publishers.keyboardInfo) { info in
-        guard !isDragging else { return }
+        guard dragOffset == 0 else { return }
         let keyboardHeight = info.height
         withAnimation(.springFkingSatifying) {
           // Keyboard dismissed
@@ -282,6 +227,43 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
           }
           let newHeight = _geometry.size.height * splitPosition
           self.onTopViewHeightChange?(newHeight)
+        }
+      }
+    }
+  }
+
+  /// Commits the dragged position and snaps to the nearest snap point with animation
+  private func snapToPosition(_ position: CGFloat, totalHeight: CGFloat) {
+    // Immediately commit the dragged position so there's no visual jump
+    // when @GestureState resets dragOffset to 0
+    splitPosition = position
+
+    // Find the closest snap position
+    let result: (minDiff: CGFloat, closestValue: CGFloat?) = SNAP_POSITIONS.reduce(
+      (minDiff: .infinity, closestValue: nil)
+    ) { acc, value in
+      let diff = abs(value - position)
+      if diff < acc.minDiff {
+        return (minDiff: diff, closestValue: value)
+      }
+      return acc
+    }
+
+    guard let closestPosition = result.closestValue else { return }
+    isSnapping = true
+    withAnimation(.springFkingSatifying) {
+      if position >= DISMISS_POSITION {
+        splitPosition = 1.0
+      } else {
+        splitPosition = closestPosition
+      }
+    } completion: {
+      let newHeight = totalHeight * splitPosition
+      self.onTopViewHeightChange?(newHeight)
+      DispatchQueue.main.async {
+        isSnapping = false
+        if splitPosition == 1.0 {
+          self.onBottomDismissed?()
         }
       }
     }
