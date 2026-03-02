@@ -427,6 +427,8 @@ struct InteractiveTutorialView: View {
             .readHeight($drawingCanvasSheetHeight)
             .presentationDetents([.height(drawingCanvasSheetHeight)])
             .presentationDragIndicator(.visible)
+            .presentationCornerRadius(UIDevice.screenCornerRadius)
+            .disableLiquidGlass()
         }
         // Reminder sheet - using real view with mock store
         .sheet(isPresented: $showReminderSheet) {

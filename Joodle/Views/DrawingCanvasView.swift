@@ -118,7 +118,7 @@ struct DrawingCanvasView: View {
             canUndo: !undoStack.isEmpty,
             canRedo: !redoStack.isEmpty,
             showClearConfirmation: $showClearConfirmation,
-            centerContent: AnyView(inspirationBulbButton)
+            centerContent: isMockMode ? nil : AnyView(inspirationBulbButton)
           ),
           canvasCornerRadius: canvasCornerRadius,
           onCommitStroke: commitCurrentStroke
@@ -139,8 +139,8 @@ struct DrawingCanvasView: View {
         }
         .fixedSize(horizontal: false, vertical: true)
         
-        // Inspiration prompt text — centered, below the canvas
-        if let prompt = currentPrompt {
+        // Inspiration prompt text — centered, below the canvas (hidden in tutorial mode)
+        if !isMockMode, let prompt = currentPrompt {
           InspirationPromptView(prompt: prompt)
             .id(promptID)
             .transition(.opacity.combined(with: .scale(scale: 0.95)))

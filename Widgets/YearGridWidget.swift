@@ -223,18 +223,18 @@ struct YearGridWidgetView: View {
         }
     } else {
       GeometryReader { geometry in
-        VStack(alignment: .leading, spacing: widgetFamily == .systemMedium ? 8 : 12) {
+        VStack(alignment: .leading, spacing: widgetFamily == .systemMedium ? 10 : 14) {
           // Header
           HStack {
             Text(String(entry.year))
-              .font(.appFont(size: 20))
+              .font(.appFont(size: 14))
               .foregroundColor(.primary)
 
             Spacer()
 
             Text(String(format: "%.1f%%", entry.percentage))
-              .font(.appFont(size: 20))
-              .foregroundColor(themeColor)
+              .font(.appFont(size: 14))
+              .foregroundColor(.primary)
           }
           .padding(.horizontal, horizontalPadding)
 
