@@ -17,6 +17,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   @State private var hasShownBottomView: Bool = false
   @State private var isKeyboardVisible: Bool = false
   @State private var isDraggable: Bool = true
+  /// Captures splitPosition at drag start to avoid feedback loop with cumulative translation
+  @State private var dragStartSplitPosition: CGFloat?
 
   let topView: Top
   let bottomView: Bottom
@@ -115,16 +117,21 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             .simultaneousGesture(
               (!isDraggable || !allowHandleDrag)
               ? nil
-              : DragGesture(minimumDistance: 0)
+              : DragGesture(minimumDistance: 0, coordinateSpace: .named("splitContainer"))
                 .onChanged { value in
                   isDragging = true
-                  let newPosition = (topHeight + value.translation.height) / _geometry.size.height
+                  if dragStartSplitPosition == nil {
+                    dragStartSplitPosition = splitPosition
+                  }
+                  let startPos = dragStartSplitPosition ?? splitPosition
+                  let newPosition = startPos + value.translation.height / _geometry.size.height
                   splitPosition = clamp(
                     value: newPosition, min: MIN_SPLIT_POSITION,
                     max: MAX_SPLIT_POSITION)
                 }
                 .onEnded { _ in
                   isDragging = false
+                  dragStartSplitPosition = nil
                   // Find the closest position to snap
                   let result: (minDiff: CGFloat, closestValue: CGFloat?) = SNAP_POSITIONS.reduce(
                     (minDiff: .infinity, closestValue: nil)
@@ -170,16 +177,21 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             .gesture(
               (!isDraggable || !allowHandleDrag)
               ? nil
-              : DragGesture(minimumDistance: 0)
+              : DragGesture(minimumDistance: 0, coordinateSpace: .named("splitContainer"))
                 .onChanged { value in
                   isDragging = true
-                  let newPosition = (topHeight + value.translation.height) / _geometry.size.height
+                  if dragStartSplitPosition == nil {
+                    dragStartSplitPosition = splitPosition
+                  }
+                  let startPos = dragStartSplitPosition ?? splitPosition
+                  let newPosition = startPos + value.translation.height / _geometry.size.height
                   splitPosition = clamp(
                     value: newPosition, min: MIN_SPLIT_POSITION,
                     max: MAX_SPLIT_POSITION)
                 }
                 .onEnded { _ in
                   isDragging = false
+                  dragStartSplitPosition = nil
                   // Find the closest position to snap
                   let result: (minDiff: CGFloat, closestValue: CGFloat?) = SNAP_POSITIONS.reduce(
                     (minDiff: .infinity, closestValue: nil)
@@ -213,6 +225,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             )
         }
       }
+      .coordinateSpace(name: "splitContainer")
       .transaction { transaction in
         transaction.animation = isDragging ? nil : transaction.animation
       }
@@ -233,6 +246,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         self.onTopViewHeightChange?(newHeight)
       }
       .onChange(of: hasBottomView) { _, newValue in
+        guard !isDragging else { return }
         withAnimation(.springFkingSatifying) {
           splitPosition = newValue ? 0.5 : 1.0
         } completion: {
@@ -242,6 +256,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         }
       }
       .onReceive(Publishers.keyboardInfo) { info in
+        guard !isDragging else { return }
         let keyboardHeight = info.height
         withAnimation(.springFkingSatifying) {
           // Keyboard dismissed

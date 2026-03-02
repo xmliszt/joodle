@@ -211,16 +211,18 @@ struct ContentView: View {
               )
             }, hasBottomView: dataProvider.selectedDateItem != nil,
             onBottomDismissed: {
-              dataProvider.clearSelection()
+              // Delay clearing selection so the scroll-to-center animation can play out
+              // before the re-render caused by selection change interrupts it
+              DispatchQueue.main.async {
+                dataProvider.clearSelection()
+              }
             },
             onTopViewHeightChange: { newHeight in
               yearGridViewSize.height = newHeight
               // Scroll after height change is complete, only do so if there is item selected.
               guard let selectedDateItem = dataProvider.selectedDateItem, let scrollProxy else { return }
-              DispatchQueue.main.async {
-                scrollToRelevantDate(
-                  itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
-              }
+              scrollToRelevantDate(
+                itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
             }
           )
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -597,8 +599,17 @@ struct ContentView: View {
   private func scrollToRelevantDate(
     itemId: String, scrollProxy: ScrollViewProxy, anchor: UnitPoint? = nil
   ) {
+    // When centering with bottom view visible, offset downward to account for the header overlay
+    // so the item lands at the true visual center of the unobscured area.
+    // Only apply when the top view is compressed (bottom view shown), not at fullscreen.
+    let effectiveAnchor: UnitPoint?
+    if anchor == .center, isBottomViewVisible, yearGridViewSize.height > 0 {
+      effectiveAnchor = UnitPoint(x: 0.5, y: 0.5 + (headerHeight - 40) / (2 * yearGridViewSize.height) )
+    } else {
+      effectiveAnchor = anchor
+    }
     withAnimation(.springFkingSatifying) {
-      scrollProxy.scrollTo(itemId, anchor: anchor)
+      scrollProxy.scrollTo(itemId, anchor: effectiveAnchor)
     }
   }
 
