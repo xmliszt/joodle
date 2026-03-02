@@ -21,6 +21,7 @@ enum JoodleAccessState {
 
 struct DrawingCanvasView: View {
   @Environment(\.modelContext) private var modelContext
+  @Environment(\.scenePhase) private var scenePhase
   @StateObject private var subscriptionManager = SubscriptionManager.shared
 
   let date: Date
@@ -48,6 +49,11 @@ struct DrawingCanvasView: View {
   // Undo/Redo state management
   @State private var undoStack: [([Path], [PathMetadata])] = []
   @State private var redoStack: [([Path], [PathMetadata])] = []
+
+  /// Task for async thumbnail generation on dismiss
+  @State private var thumbnailTask: Task<Void, Never>?
+
+
 
   // Inspiration prompt state
   @State private var currentPrompt: String? = nil
@@ -149,21 +155,63 @@ struct DrawingCanvasView: View {
     .padding(.top, 16)
     .padding(.bottom, 10)
     .onAppear {
+      // Only load drawing data when the canvas is already visible on appear.
+      // On Dynamic Island devices, DrawingCanvasView lives in the hierarchy
+      // whenever a date is selected (hidden via isShowing=false). Eagerly loading
+      // paths here would leave stale data in @State that survives entry deletion
+      // and gets re-saved on scenePhase→.background, resurrecting deleted entries.
+      // The onChange(of: isShowing) handler covers loading when canvas becomes visible.
+      guard isShowing else { return }
       if !isMockMode {
         checkAccessState()
       }
       loadExistingDrawing()
     }
     .onChange(of: isShowing) { oldValue, newValue in
-      if !isMockMode {
-        checkAccessState()
+      if newValue {
+        // Canvas becoming visible — load data and check access
+        if !isMockMode {
+          checkAccessState()
+        }
+        loadExistingDrawing()
+      } else {
+        // Canvas being dismissed — persist drawing before state is torn down.
+        // This covers DynamicIsland tap-outside and any isShowing-driven dismiss.
+        // Only save when there are actual paths; clearDrawing() already handles
+        // the empty case and calling saveDrawingToStore() on a deleted entry
+        // would accidentally re-insert it.
+        if isMockMode {
+          saveMockDrawing()
+        } else if !paths.isEmpty {
+          saveDrawingToStore()
+        }
+
+        // Clear in-memory drawing state after saving. Without this, stale paths
+        // linger while the canvas is hidden — if the entry is then deleted via
+        // EntryEditingView and the app backgrounds, the scenePhase handler would
+        // see non-empty paths and call saveDrawingToStore(), which re-creates
+        // the deleted entry via findOrCreate.
+        paths.removeAll()
+        pathMetadata.removeAll()
+        currentPath = Path()
+        isDrawing = false
+        currentPathIsDot = false
+        undoStack.removeAll()
+        redoStack.removeAll()
       }
-      loadExistingDrawing()
     }
     .onChange(of: subscriptionManager.hasPremiumAccess) { _, _ in
       // Re-check access when subscription changes (not in mock mode)
       if !isMockMode {
         checkAccessState()
+      }
+    }
+    .onChange(of: scenePhase) { _, newPhase in
+      // Safety net: persist drawing if the app backgrounds mid-session.
+      // Guard by isShowing so a hidden canvas (DI devices) doesn't accidentally
+      // re-save stale paths for an entry that was deleted in EntryEditingView.
+      if newPhase == .background, !isMockMode, !paths.isEmpty, isShowing {
+        saveDrawingToStore()
       }
     }
     .confirmationDialog("Clear Drawing", isPresented: $showClearConfirmation) {
@@ -342,10 +390,9 @@ struct DrawingCanvasView: View {
     // Clear redo stack when new action is performed
     redoStack.removeAll()
 
-    // Save immediately to store (skip in mock mode - we'll save on dismiss)
-    if !isMockMode {
-      saveDrawingToStore()
-    }
+    // Drawing data lives in the in-memory `paths` array.
+    // We only persist to SwiftData when the canvas is dismissed (saveDrawing)
+    // to avoid any I/O lag during active drawing.
 
     // Reset drawing state
     isDrawing = false
@@ -378,11 +425,6 @@ struct DrawingCanvasView: View {
     isDrawing = false
     currentPathIsDot = false
 
-    // Save to store (skip in mock mode)
-    if !isMockMode {
-      saveDrawingToStore()
-    }
-
     // Limit redo stack size
     if redoStack.count > 50 {
       redoStack.removeFirst()
@@ -405,10 +447,6 @@ struct DrawingCanvasView: View {
     isDrawing = false
     currentPathIsDot = false
 
-    // Save to store (skip in mock mode)
-    if !isMockMode {
-      saveDrawingToStore()
-    }
   }
 
   private func loadExistingDrawing() {
@@ -502,7 +540,10 @@ struct DrawingCanvasView: View {
   private func saveDrawing() {
     if isMockMode {
       saveMockDrawing()
-    } else {
+    } else if !paths.isEmpty {
+      // Only persist when there are strokes. clearDrawing() already handles
+      // the empty case with immediate deletion — calling saveDrawingToStore()
+      // here with empty paths would re-modify an already-deleted entry.
       saveDrawingToStore()
     }
     onDismiss()
@@ -546,6 +587,13 @@ struct DrawingCanvasView: View {
   }
 
   private func saveDrawingToStore() {
+    // Defense-in-depth: if the entry was deleted (e.g. via EntryEditingView)
+    // but this view still holds a stale reference, bail out to avoid
+    // re-inserting it through findOrCreate.
+    if let entry, entry.isDeleted {
+      return
+    }
+
     // If no paths and no existing entry, don't create an empty entry
     if paths.isEmpty && entry == nil {
       return
@@ -584,23 +632,25 @@ struct DrawingCanvasView: View {
       let data = try JSONEncoder().encode(pathsData)
       entryToSave.drawingData = data
 
-      // Generate thumbnails asynchronously
-      Task {
+      // Save drawing data synchronously so it persists immediately.
+      try? modelContext.save()
+
+      // Generate thumbnails asynchronously — runs right after dismiss,
+      // no artificial delay since this only fires once on canvas close.
+      thumbnailTask?.cancel()
+      thumbnailTask = Task {
         let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
+        guard !Task.isCancelled else { return }
 
         await MainActor.run {
           entryToSave.drawingThumbnail20 = thumbnails.0
           entryToSave.drawingThumbnail200 = thumbnails.1
-
-          // Save again with thumbnails
           try? modelContext.save()
         }
       }
     } catch {
       print("Failed to save drawing data: \(error)")
     }
-
-    try? modelContext.save()
 
     // Schedule a debounced widget update so rapid strokes don't overload WidgetCenter
     WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
@@ -624,6 +674,8 @@ struct DrawingCanvasView: View {
 
     // Also clear from store (skip in mock mode)
     if !isMockMode {
+      thumbnailTask?.cancel()
+
       if let existingEntry = entry {
         existingEntry.drawingData = nil
         existingEntry.drawingThumbnail20 = nil
