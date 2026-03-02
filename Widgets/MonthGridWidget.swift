@@ -166,6 +166,8 @@ struct MonthGridWidgetContentView: View {
   let startOfWeek: String
   let entries: [WidgetDayEntry]
 
+  @Environment(\.widgetRenderingMode) var widgetRenderingMode
+
   private var themeColor: Color {
     WidgetDataManager.shared.loadThemeColor()
   }
@@ -238,7 +240,7 @@ struct MonthGridWidgetContentView: View {
         }
         .padding(.horizontal, horizontalPadding)
 
-        VStack(spacing: 6) {
+        VStack(spacing: 10) {
           // Weekday labels
           HStack(spacing: cellSpacing) {
             ForEach(0..<7, id: \.self) { index in
@@ -264,7 +266,11 @@ struct MonthGridWidgetContentView: View {
 
                     ZStack {
                       RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(UIColor.secondarySystemBackground))
+                        .fill(
+                          widgetRenderingMode == .fullColor
+                            ? Color(UIColor.secondarySystemBackground)
+                            : Color.white.opacity(0.1)
+                        )
 
                       if let dayEntry = dayEntry, dayEntry.hasDrawing,
                          let drawingData = dayEntry.drawingData {
@@ -272,6 +278,7 @@ struct MonthGridWidgetContentView: View {
                           drawingData: drawingData,
                           themeColor: themeColor
                         )
+                        .widgetAccentable()
                       }
                     }
                     .frame(width: cellSize, height: cellSize)

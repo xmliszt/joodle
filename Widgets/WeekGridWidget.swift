@@ -190,6 +190,8 @@ struct WeekGridWidgetContentView: View {
   let startOfWeek: String
   let entries: [WidgetDayEntry]
 
+  @Environment(\.widgetRenderingMode) var widgetRenderingMode
+
   private var themeColor: Color {
     WidgetDataManager.shared.loadThemeColor()
   }
@@ -275,7 +277,11 @@ struct WeekGridWidgetContentView: View {
 
               ZStack {
                 RoundedRectangle(cornerRadius: 4)
-                  .fill(Color(UIColor.secondarySystemBackground))
+                  .fill(
+                    widgetRenderingMode == .fullColor
+                      ? Color(UIColor.secondarySystemBackground)
+                      : Color.white.opacity(0.1)
+                  )
 
                 if let dayEntry = dayEntry, dayEntry.hasDrawing,
                    let drawingData = dayEntry.drawingData {
@@ -283,6 +289,7 @@ struct WeekGridWidgetContentView: View {
                     drawingData: drawingData,
                     themeColor: themeColor
                   )
+                  .widgetAccentable()
                 }
               }
               .frame(width: cellSize, height: cellSize)
