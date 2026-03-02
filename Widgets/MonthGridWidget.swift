@@ -31,7 +31,8 @@ struct MonthGridWidgetProvider: TimelineProvider {
   func getTimeline(in context: Context, completion: @escaping (Timeline<MonthGridTimelineEntry>) -> Void) {
     let entry = buildEntry()
 
-    // Update at midnight or every hour as a safety net
+    // Refresh every 15 minutes so widgets stay reasonably current for all users,
+    // or at midnight to flip to the new day — whichever comes first.
     let calendar = Calendar.current
     let now = Date()
     let nextMidnight = calendar.date(
@@ -39,8 +40,8 @@ struct MonthGridWidgetProvider: TimelineProvider {
       value: 1,
       to: calendar.startOfDay(for: now)
     )!
-    let oneHourLater = now.addingTimeInterval(3600)
-    let nextUpdate = min(nextMidnight, oneHourLater)
+    let fifteenMinutesLater = now.addingTimeInterval(900)
+    let nextUpdate = min(nextMidnight, fifteenMinutesLater)
 
     let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
     completion(timeline)

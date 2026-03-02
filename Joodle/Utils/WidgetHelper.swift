@@ -19,10 +19,11 @@ import SwiftData
 /// Helper class for updating widget data from the main app
 ///
 /// This class is responsible for syncing data between the main app and the widget.
-/// It stores simplified entry data in shared UserDefaults and triggers widget reloads.
+/// It stores simplified entry data in shared UserDefaults and triggers targeted widget reloads.
 ///
 /// Usage: Call `updateWidgetData(with:)` whenever entries change in the main app.
-/// The widget will automatically update via `@Query` observers in ContentView.
+/// Use `scheduleWidgetDataUpdate(in:)` for debounced updates during rapid edits (e.g., drawing strokes).
+/// Pass `reload: false` when batching multiple data writes before a single reload.
 class WidgetHelper {
   static let shared = WidgetHelper()
 
@@ -32,12 +33,55 @@ class WidgetHelper {
   private let themeColorKey = "widgetThemeColor"
   private let startOfWeekKey = "widgetStartOfWeek"
 
+  // MARK: - Widget Kind Constants
+
+  /// All 8 widget kind strings — used for full reloads
+  private static let allWidgetKinds = [
+    "TodayDoodleWidget",
+    "WeekGridWidget",
+    "MonthGridWidget",
+    "RandomJoodleWidget",
+    "AnniversaryWidget",
+    "YearGridWidget",
+    "YearGridJoodleWidget",
+    "YearGridJoodleNoEmptyDotsWidget",
+  ]
+
+  /// Only widgets that depend on start-of-week preference
+  private static let startOfWeekWidgetKinds = [
+    "WeekGridWidget",
+    "MonthGridWidget",
+  ]
+
+  // MARK: - Debounce State
+
+  /// In-flight debounce task for `scheduleWidgetDataUpdate`.
+  /// Cancelled and replaced on every new call so only the last update fires.
+  private var debounceTask: Task<Void, Never>?
+
   private init() {}
+
+  // MARK: - Targeted Reload Helpers
+
+  /// Reload only the specified widget kinds via `WidgetCenter.reloadTimelines(ofKind:)`.
+  /// This conserves iOS refresh budget by skipping widgets whose data hasn't changed.
+  @MainActor func reloadWidgets(ofKinds kinds: [String]) {
+    for kind in kinds {
+      WidgetCenter.shared.reloadTimelines(ofKind: kind)
+    }
+  }
+
+  /// Convenience: reload all 8 widgets.
+  @MainActor func reloadAllWidgets() {
+    reloadWidgets(ofKinds: Self.allWidgetKinds)
+  }
 
   // MARK: - Subscription Status
 
   /// Update subscription status for widget extension
-  @MainActor func updateSubscriptionStatus() {
+  /// - Parameter reload: When `true` (default), immediately reloads all widget timelines.
+  ///   Pass `false` when batching multiple data writes before a single manual reload.
+  @MainActor func updateSubscriptionStatus(reload: Bool = true) {
     guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
       print("Failed to access shared UserDefaults for widget subscription")
       return
@@ -59,8 +103,10 @@ class WidgetHelper {
       sharedDefaults.set(data, forKey: subscriptionKey)
       sharedDefaults.synchronize()
 
-      // Reload widgets to reflect subscription change
-      WidgetCenter.shared.reloadAllTimelines()
+      if reload {
+        // Subscription affects all widgets (access control overlay)
+        reloadAllWidgets()
+      }
     } catch {
       print("Failed to encode subscription status: \(error)")
     }
@@ -83,7 +129,9 @@ class WidgetHelper {
   // MARK: - Theme Color
 
   /// Update theme color for widget extension
-  @MainActor func updateThemeColor() {
+  /// - Parameter reload: When `true` (default), immediately reloads all widget timelines.
+  ///   Pass `false` when batching multiple data writes before a single manual reload.
+  @MainActor func updateThemeColor(reload: Bool = true) {
     guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
       print("Failed to access shared UserDefaults for widget theme color")
       return
@@ -93,8 +141,10 @@ class WidgetHelper {
     sharedDefaults.set(colorName, forKey: themeColorKey)
     sharedDefaults.synchronize()
 
-    // Reload widgets to reflect theme color change
-    WidgetCenter.shared.reloadAllTimelines()
+    if reload {
+      // Theme color affects all widgets
+      reloadAllWidgets()
+    }
   }
 
   /// Load theme color for widget extension use
@@ -112,7 +162,9 @@ class WidgetHelper {
   // MARK: - Start of Week
 
   /// Update start-of-week preference for widget extension
-  @MainActor func updateStartOfWeek() {
+  /// - Parameter reload: When `true` (default), reloads only the WeekGrid and MonthGrid widgets.
+  ///   Pass `false` when batching multiple data writes before a single manual reload.
+  @MainActor func updateStartOfWeek(reload: Bool = true) {
     guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
       print("Failed to access shared UserDefaults for widget start of week")
       return
@@ -122,19 +174,26 @@ class WidgetHelper {
     sharedDefaults.set(startOfWeek, forKey: startOfWeekKey)
     sharedDefaults.synchronize()
 
-    // Reload widgets to reflect start-of-week change
-    WidgetCenter.shared.reloadAllTimelines()
+    if reload {
+      // Only WeekGrid and MonthGrid depend on start-of-week
+      reloadWidgets(ofKinds: Self.startOfWeekWidgetKinds)
+    }
   }
+
+  // MARK: - Widget Data (Entries)
 
   /// Update widget data with current entries from SwiftData and reload widget timelines
   ///
   /// This method:
-  /// 1. Converts DayEntry objects to WidgetEntryData (excluding drawing data for memory efficiency)
+  /// 1. Converts DayEntry objects to WidgetEntryData (excluding 200px thumbnails for memory efficiency)
   /// 2. Saves the data to shared UserDefaults accessible by the widget
-  /// 3. Triggers widget timeline reload to display updated data
+  /// 3. Optionally triggers widget timeline reload to display updated data
   ///
-  /// - Parameter entries: Array of DayEntry objects from SwiftData
-  @MainActor func updateWidgetData(with entries: [DayEntry]) {
+  /// - Parameters:
+  ///   - entries: Array of DayEntry objects from SwiftData
+  ///   - reload: When `true` (default), immediately reloads all widget timelines.
+  ///     Pass `false` when batching multiple data writes before a single manual reload.
+  @MainActor func updateWidgetData(with entries: [DayEntry], reload: Bool = true) {
     guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
       print("Failed to access shared UserDefaults for widget")
       return
@@ -188,11 +247,10 @@ class WidgetHelper {
       sharedDefaults.set(data, forKey: entriesKey)
       sharedDefaults.synchronize()
 
-      // Also update subscription status
-      updateSubscriptionStatus()
-
-      // Reload widget timelines
-      WidgetCenter.shared.reloadAllTimelines()
+      if reload {
+        // All widgets depend on entry data
+        reloadAllWidgets()
+      }
     } catch {
       print("Failed to encode widget entries: \(error)")
     }
@@ -200,16 +258,41 @@ class WidgetHelper {
 
   /// Update widget data by fetching entries from the provided ModelContext
   /// This avoids the need to pass all entries from the view
-  @MainActor func updateWidgetData(in modelContext: ModelContext) {
+  /// - Parameters:
+  ///   - modelContext: The SwiftData model context to fetch entries from
+  ///   - reload: When `true` (default), immediately reloads all widget timelines.
+  @MainActor func updateWidgetData(in modelContext: ModelContext, reload: Bool = true) {
     let descriptor = FetchDescriptor<DayEntry>(
       sortBy: [SortDescriptor(\.dateString)]
     )
 
     do {
       let entries = try modelContext.fetch(descriptor)
-      updateWidgetData(with: entries)
+      updateWidgetData(with: entries, reload: reload)
     } catch {
       print("Failed to fetch entries for widget update: \(error)")
+    }
+  }
+
+  // MARK: - Debounced Widget Update
+
+  /// Schedule a debounced widget data update.
+  ///
+  /// Use this during rapid edits (e.g., each drawing stroke triggers `modelContext.save()`).
+  /// The actual `updateWidgetData(in:)` call fires only after `debounceInterval` seconds
+  /// of inactivity, preventing excessive `WidgetCenter.reloadTimelines` calls.
+  ///
+  /// - Parameters:
+  ///   - modelContext: The SwiftData model context to fetch entries from
+  ///   - debounceInterval: Seconds to wait after the last call before firing (default 2s)
+  @MainActor func scheduleWidgetDataUpdate(in modelContext: ModelContext, debounceInterval: TimeInterval = 2.0) {
+    // Cancel any pending update
+    debounceTask?.cancel()
+
+    debounceTask = Task { @MainActor in
+      try? await Task.sleep(nanoseconds: UInt64(debounceInterval * 1_000_000_000))
+      guard !Task.isCancelled else { return }
+      updateWidgetData(in: modelContext)
     }
   }
 }

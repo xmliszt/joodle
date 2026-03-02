@@ -602,7 +602,8 @@ struct DrawingCanvasView: View {
 
     try? modelContext.save()
 
-
+    // Schedule a debounced widget update so rapid strokes don't overload WidgetCenter
+    WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
   }
 
 
@@ -637,6 +638,8 @@ struct DrawingCanvasView: View {
 
         // Refresh daily reminder - drawing was cleared, so we may need to reschedule notification
 
+        // Update widgets to reflect cleared drawing
+        WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
       }
     }
   }

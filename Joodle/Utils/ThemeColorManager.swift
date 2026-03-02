@@ -7,7 +7,6 @@
 
 import SwiftData
 import SwiftUI
-import WidgetKit
 
 /// Manages theme color changes and handles thumbnail regeneration
 @MainActor
@@ -117,14 +116,11 @@ final class ThemeColorManager {
             // Final save
             try? modelContext.save()
 
-            // Update widget data with new thumbnails
+            // Update widget theme color (save only, no reload yet)
+            WidgetHelper.shared.updateThemeColor(reload: false)
+
+            // Update widget data with new thumbnails — this triggers a single reload for all widgets
             updateWidgetData(entries: allEntries)
-
-            // Update widget theme color
-            WidgetHelper.shared.updateThemeColor()
-
-            // Reload all widgets to reflect the new theme color
-            WidgetCenter.shared.reloadAllTimelines()
 
         } catch {
             print("ThemeColorManager: Failed to regenerate thumbnails: \(error)")

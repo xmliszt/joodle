@@ -398,7 +398,8 @@ class SubscriptionManager: ObservableObject {
         let currentColor = UserPreferences.shared.accentColor
         if currentColor.isPremium {
             UserPreferences.shared.accentColor = ThemeColor.defaultColor
-            WidgetHelper.shared.updateThemeColor()
+            // Save theme data without reloading — the subscription status update below will reload all widgets
+            WidgetHelper.shared.updateThemeColor(reload: false)
         }
 
         // Reset watermark to enabled for free users (they can't disable it)
@@ -406,7 +407,7 @@ class SubscriptionManager: ObservableObject {
             UserPreferences.shared.shareCardWatermarkEnabled = true
         }
 
-        // Update widget subscription status
+        // Update widget subscription status — this reloads all widgets once
         WidgetHelper.shared.updateSubscriptionStatus()
     }
 
@@ -450,6 +451,7 @@ class SubscriptionManager: ObservableObject {
         if currentColor.isPremium {
             print("🎨 Non-subscriber using premium color '\(currentColor.displayName)' - resetting to default")
             UserPreferences.shared.accentColor = ThemeColor.defaultColor
+            // Reload all widgets to reflect the theme reset
             WidgetHelper.shared.updateThemeColor()
         }
     }

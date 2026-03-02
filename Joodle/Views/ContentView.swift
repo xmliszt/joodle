@@ -338,7 +338,8 @@ struct ContentView: View {
       StandalonePaywallView()
     }
     .onAppear {
-      // Sync widget data when app launches
+      // Sync widget data when app launches — batch subscription + entries into one reload pass
+      WidgetHelper.shared.updateSubscriptionStatus(reload: false)
       WidgetHelper.shared.updateWidgetData(in: modelContext)
 
       // Refresh subscription status FIRST, then check grace period paywall
@@ -667,6 +668,9 @@ struct ContentView: View {
     entryToUpdate.body = note
 
     try? modelContext.save()
+
+    // Sync note to widgets
+    WidgetHelper.shared.updateWidgetData(in: modelContext)
 
     dateForNotePrompt = nil
   }

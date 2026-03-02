@@ -827,13 +827,15 @@ func saveNote(text: String, for date: Date) {
       existingEntry.deleteAllForSameDate(in: modelContext)
       self.entry = nil
 
-
+      // Sync deletion to widgets
+      WidgetHelper.shared.updateWidgetData(in: modelContext)
       return
     }
 
     try? modelContext.save()
 
-
+    // Sync updated text to widgets
+    WidgetHelper.shared.updateWidgetData(in: modelContext)
     return
   }
 
@@ -845,7 +847,8 @@ func saveNote(text: String, for date: Date) {
   // Save the context to persist changes
   try? modelContext.save()
 
-
+  // Sync new text entry to widgets
+  WidgetHelper.shared.updateWidgetData(in: modelContext)
 }
 
 private func confirmAndDismiss() {
