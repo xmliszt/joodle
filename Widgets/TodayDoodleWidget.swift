@@ -171,32 +171,18 @@ struct TodayDoodleWidgetLockedView: View {
   }
 
   var body: some View {
-    if family == .accessoryCircular {
-      VStack(spacing: 2) {
-        Image(systemName: "crown.fill")
-          .font(.appFont(size: 16))
-          .foregroundStyle(themeColor)
-        VStack(alignment: .center) {
-          Text("Unlock")
-            .font(.appFont(size: 8))
-            .foregroundColor(.primary)
-          Text("Pro")
-            .font(.appFont(size: 8))
-            .foregroundColor(.primary)
-        }
-      }
-    } else {
-      VStack(spacing: family == .systemLarge ? 16 : (family == .systemMedium ? 12 : 8)) {
-        Image(systemName: "crown.fill")
-          .font(.appFont(size: family == .systemLarge ? 40 : (family == .systemMedium ? 28 : 24)))
-          .foregroundStyle(
-            LinearGradient(
-              colors: [themeColor.opacity(0.5), themeColor],
-              startPoint: .topLeading,
-              endPoint: .bottomTrailing
-            )
+    VStack(spacing: family == .systemLarge ? 16 : 8) {
+      Image(systemName: "crown.fill")
+        .font(.appFont(size: family == .systemLarge ? 40 : 24))
+        .foregroundStyle(
+          LinearGradient(
+            colors: [themeColor.opacity(0.5), themeColor],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
           )
+        )
 
+      if family != .accessoryCircular {
         VStack(spacing: 4) {
           Text("Joodle Pro")
             .font(family == .systemLarge ? .appHeadline() : .appCaption(weight: .bold))
@@ -208,9 +194,18 @@ struct TodayDoodleWidgetLockedView: View {
             .multilineTextAlignment(.center)
             .lineSpacing(4)
         }
+      } else {
+        VStack(alignment: .center) {
+          Text("Unlock")
+            .font(.appFont(size: 8))
+            .foregroundColor(.primary)
+          Text("Pro")
+            .font(.appFont(size: 8))
+            .foregroundColor(.primary)
+        }
       }
-      .padding()
     }
+    .padding()
   }
 }
 
