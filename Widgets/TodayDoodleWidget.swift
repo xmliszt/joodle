@@ -72,10 +72,15 @@ struct TodayDoodleProvider: TimelineProvider {
       return nil
     }
 
+    // Two-tier fallback: file-based drawing → inline UserDefaults (backward compat) → nil
+    let drawingData: Data? = entry.hasDrawing
+      ? (WidgetDataManager.shared.loadDrawingData(for: entry.dateString) ?? entry.drawingData)
+      : nil
+
     return TodayDoodleData(
       dateString: entry.dateString,
       text: entry.body,
-      drawingData: entry.drawingData
+      drawingData: drawingData
     )
   }
 }

@@ -77,13 +77,17 @@ struct WeekGridWidgetProvider: TimelineProvider {
     let daySet = Set(dayDateStrings)
     return WidgetDataManager.shared.loadAllEntries()
       .filter { daySet.contains($0.dateString) }
-      .map {
-        WidgetDayEntry(
-          dateString: $0.dateString,
-          hasText: $0.hasText,
-          hasDrawing: $0.hasDrawing,
-          thumbnail: $0.thumbnail,
-          drawingData: $0.drawingData
+      .map { entry in
+        // Two-tier fallback: file-based drawing → inline UserDefaults (backward compat) → nil
+        let drawingData: Data? = entry.hasDrawing
+          ? (WidgetDataManager.shared.loadDrawingData(for: entry.dateString) ?? entry.drawingData)
+          : nil
+        return WidgetDayEntry(
+          dateString: entry.dateString,
+          hasText: entry.hasText,
+          hasDrawing: entry.hasDrawing,
+          thumbnail: entry.thumbnail,
+          drawingData: drawingData
         )
       }
   }

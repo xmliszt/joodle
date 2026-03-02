@@ -161,9 +161,15 @@ struct RandomJoodleProvider: TimelineProvider {
 
     let selectedEntry = JoodleEntries[randomIndex]
 
+    // Two-tier fallback: file-based drawing → inline UserDefaults (backward compat)
+    guard let drawingData = WidgetDataManager.shared.loadDrawingData(for: selectedEntry.dateString)
+            ?? selectedEntry.drawingData else {
+      return nil
+    }
+
     return JoodleData(
       dateString: selectedEntry.dateString,
-      drawingData: selectedEntry.drawingData!
+      drawingData: drawingData
     )
   }
 

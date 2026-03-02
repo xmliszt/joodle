@@ -273,10 +273,14 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
        let targetDateString = selectedEntry.dateString {
       // Match by dateString (timezone-agnostic)
       if let matchingEntry = futureEntries.first(where: { $0.dateString == targetDateString }) {
+        // Two-tier fallback: file-based drawing → inline UserDefaults (backward compat) → nil
+        let drawingData = matchingEntry.hasDrawing
+          ? (WidgetDataManager.shared.loadDrawingData(for: matchingEntry.dateString) ?? matchingEntry.drawingData)
+          : nil
         return AnniversaryData(
           dateString: matchingEntry.dateString,
           text: matchingEntry.body,
-          drawingData: matchingEntry.drawingData
+          drawingData: drawingData
         )
       }
 
@@ -284,10 +288,13 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
       // Sort by dateString and pick the earliest one
       let sortedEntries = futureEntries.sorted { $0.dateString < $1.dateString }
       if let nextEntry = sortedEntries.first {
+        let drawingData = nextEntry.hasDrawing
+          ? (WidgetDataManager.shared.loadDrawingData(for: nextEntry.dateString) ?? nextEntry.drawingData)
+          : nil
         return AnniversaryData(
           dateString: nextEntry.dateString,
           text: nextEntry.body,
-          drawingData: nextEntry.drawingData
+          drawingData: drawingData
         )
       }
     }
@@ -297,10 +304,15 @@ struct AnniversaryProvider: AppIntentTimelineProvider {
       return nil
     }
 
+    // Two-tier fallback: file-based drawing → inline UserDefaults (backward compat) → nil
+    let drawingData = selectedEntry.hasDrawing
+      ? (WidgetDataManager.shared.loadDrawingData(for: selectedEntry.dateString) ?? selectedEntry.drawingData)
+      : nil
+
     return AnniversaryData(
       dateString: selectedEntry.dateString,
       text: selectedEntry.body,
-      drawingData: selectedEntry.drawingData
+      drawingData: drawingData
     )
   }
 }

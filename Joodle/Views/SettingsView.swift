@@ -2539,30 +2539,110 @@ struct LearnCoreFeaturesView: View {
 struct DebugDataSeederView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.modelContext) private var modelContext
-  @State private var selectedYear = 2024
+  @State private var selectedYear = Calendar.current.component(.year, from: Date())
   @State private var seedCount = 10
+  @State private var selectedDrawingSize: DebugDataSeeder.DrawingSize = .placeholder
   @State private var currentDebugCount = 0
   @State private var isSeeding = false
-  
+  @State private var seedingProgress = ""
+
+  // Stats
+  @State private var yearStats: (total: Int, withDrawings: Int, seeded: Int) = (0, 0, 0)
+  @State private var payloadStats: (userDefaultsBytes: Int, drawingFileBytes: Int, thumbnailBytes: Int, entryCount: Int) = (0, 0, 0, 0)
+
+  private var currentYear: Int {
+    Calendar.current.component(.year, from: Date())
+  }
+
   var body: some View {
     NavigationStack {
       Form {
-        Section("Current Status") {
+        // MARK: Widget Payload Memory Stats
+        Section {
+          VStack(alignment: .leading, spacing: 6) {
+            HStack {
+              Text("Total entries")
+              Spacer()
+              Text("\(payloadStats.entryCount)")
+                .foregroundStyle(.secondary)
+            }
+            HStack {
+              Text("UserDefaults payload")
+              Spacer()
+              Text(formatBytes(payloadStats.userDefaultsBytes))
+                .foregroundStyle(payloadStats.userDefaultsBytes > 4_000_000 ? .red : payloadStats.userDefaultsBytes > 1_000_000 ? .orange : .green)
+                .fontWeight(payloadStats.userDefaultsBytes > 1_000_000 ? .semibold : .regular)
+            }
+            HStack {
+              Text("  └─ Thumbnails")
+              Spacer()
+              Text(formatBytes(payloadStats.thumbnailBytes))
+                .foregroundStyle(.secondary)
+            }
+            .font(.appCaption())
+            HStack {
+              Text("Drawing files (on disk)")
+              Spacer()
+              Text(formatBytes(payloadStats.drawingFileBytes))
+                .foregroundStyle(.secondary)
+            }
+          }
+
+          if payloadStats.userDefaultsBytes > 4_000_000 {
+            Label("UserDefaults exceeds 4 MB — widgets will be throttled!", systemImage: "exclamationmark.triangle.fill")
+              .foregroundStyle(.red)
+              .font(.appCaption())
+          } else if payloadStats.userDefaultsBytes > 1_000_000 {
+            Label("UserDefaults exceeds 1 MB — widgets may update slowly", systemImage: "exclamationmark.triangle")
+              .foregroundStyle(.orange)
+              .font(.appCaption())
+          } else {
+            Label("UserDefaults payload within safe limits", systemImage: "checkmark.circle.fill")
+              .foregroundStyle(.green)
+              .font(.appCaption())
+          }
+
+          Button("Trigger Widget Update Now") {
+            WidgetHelper.shared.updateWidgetData(in: modelContext)
+          }
+          .disabled(isSeeding)
+        } header: {
+          Text("Widget Payload Memory")
+        } footer: {
+          Text("Drawing data is stored as individual files in the App Group container (no size limit). Only metadata and thumbnails go into UserDefaults.")
+        }
+
+        // MARK: Year Stats
+        Section("Year \(selectedYear) Status") {
           HStack {
-            Text("Seeded Entries (≤2024)")
+            Text("Total entries")
             Spacer()
-            Text("\(currentDebugCount)")
+            Text("\(yearStats.total)")
+              .foregroundStyle(.secondary)
+          }
+          HStack {
+            Text("With drawings")
+            Spacer()
+            Text("\(yearStats.withDrawings)")
+              .foregroundStyle(.secondary)
+          }
+          HStack {
+            Text("Seeded (debug/stress)")
+            Spacer()
+            Text("\(yearStats.seeded)")
               .foregroundStyle(.secondary)
           }
         }
-        
-        Section("Seed Data") {
+
+        // MARK: Seed Data
+        Section {
           Picker("Year", selection: $selectedYear) {
-            ForEach((2020...2024).reversed(), id: \.self) { year in
+            ForEach((2020...currentYear).reversed(), id: \.self) { year in
               Text(String(year)).tag(year)
             }
           }
-          
+          .onChange(of: selectedYear) { _, _ in refreshStats() }
+
           HStack {
             Text("Count")
             Spacer()
@@ -2570,23 +2650,65 @@ struct DebugDataSeederView: View {
               .keyboardType(.numberPad)
               .multilineTextAlignment(.trailing)
               .frame(width: 80)
-            
+
             Button("MAX") {
               seedCount = DebugDataSeeder.shared.daysInYear(selectedYear)
             }
             .buttonStyle(.bordered)
             .font(.appCaption())
           }
-          
-          Button("Seed \(seedCount) Entries for \(selectedYear)") {
+
+          Picker("Drawing Size", selection: $selectedDrawingSize) {
+            ForEach(DebugDataSeeder.DrawingSize.allCases) { size in
+              Text(size.rawValue).tag(size)
+            }
+          }
+
+          Button {
             seedData()
+          } label: {
+            HStack {
+              Text("Seed \(seedCount) Entries for \(selectedYear)")
+              if isSeeding {
+                Spacer()
+                ProgressView()
+              }
+            }
           }
           .disabled(isSeeding)
+        } header: {
+          Text("Stress Test Seeder")
+        } footer: {
+          let estimatedPerEntry: String = {
+            switch selectedDrawingSize {
+            case .placeholder: return "~1 KB"
+            case .small: return "~5 KB"
+            case .medium: return "~20 KB"
+            case .large: return "~80 KB"
+            case .huge: return "~200 KB"
+            }
+          }()
+          let estimatedTotal = seedCount * (selectedDrawingSize == .placeholder ? 1 : selectedDrawingSize == .small ? 5 : selectedDrawingSize == .medium ? 20 : selectedDrawingSize == .large ? 80 : 200)
+          Text("Each entry: \(estimatedPerEntry) drawing data. Total estimate: ~\(estimatedTotal >= 1000 ? "\(estimatedTotal / 1000) MB" : "\(estimatedTotal) KB") widget payload for \(seedCount) entries.")
         }
-        
+
+        if !seedingProgress.isEmpty {
+          Section("Progress") {
+            Text(seedingProgress)
+              .font(.appCaption())
+              .foregroundStyle(.secondary)
+          }
+        }
+
+        // MARK: Danger Zone
         Section("Danger Zone") {
-          Button("Clear All Seeded Data", role: .destructive) {
-            clearData()
+          Button("Clear Seeded Data for \(selectedYear)", role: .destructive) {
+            clearYearData()
+          }
+          .disabled(isSeeding)
+
+          Button("Clear All Seeded Data (≤2024)", role: .destructive) {
+            clearAllData()
           }
           .disabled(isSeeding)
         }
@@ -2599,30 +2721,63 @@ struct DebugDataSeederView: View {
         }
       }
       .onAppear {
-        refreshCount()
+        refreshStats()
       }
     }
   }
-  
-  private func refreshCount() {
-    currentDebugCount = DebugDataSeeder.shared.getDebugEntryCount(container: modelContext.container)
+
+  // MARK: - Helpers
+
+  private func formatBytes(_ bytes: Int) -> String {
+    if bytes >= 1_048_576 {
+      return String(format: "%.1f MB", Double(bytes) / 1_048_576.0)
+    } else if bytes >= 1_024 {
+      return String(format: "%.0f KB", Double(bytes) / 1_024.0)
+    }
+    return "\(bytes) B"
   }
-  
+
+  private func refreshStats() {
+    currentDebugCount = DebugDataSeeder.shared.getDebugEntryCount(container: modelContext.container)
+    yearStats = DebugDataSeeder.shared.getEntryStats(for: selectedYear, container: modelContext.container)
+    payloadStats = DebugDataSeeder.shared.estimateWidgetPayloadSize(container: modelContext.container)
+  }
+
   private func seedData() {
     isSeeding = true
+    seedingProgress = "Seeding \(seedCount) entries..."
     Task {
       await DebugDataSeeder.shared.seedEntries(
-        for: selectedYear, count: seedCount, container: modelContext.container)
-      refreshCount()
+        for: selectedYear, count: seedCount, drawingSize: selectedDrawingSize, container: modelContext.container)
+      seedingProgress = "Done! Syncing to widgets..."
+      // Also update widget data to see the memory impact
+      WidgetHelper.shared.updateWidgetData(in: modelContext)
+      refreshStats()
+      seedingProgress = ""
       isSeeding = false
     }
   }
-  
-  private func clearData() {
+
+  private func clearYearData() {
     isSeeding = true
+    seedingProgress = "Clearing seeded data for \(selectedYear)..."
+    Task {
+      await DebugDataSeeder.shared.clearSeededData(for: selectedYear, container: modelContext.container)
+      WidgetHelper.shared.updateWidgetData(in: modelContext)
+      refreshStats()
+      seedingProgress = ""
+      isSeeding = false
+    }
+  }
+
+  private func clearAllData() {
+    isSeeding = true
+    seedingProgress = "Clearing all seeded data..."
     Task {
       await DebugDataSeeder.shared.clearAllDebugData(container: modelContext.container)
-      refreshCount()
+      WidgetHelper.shared.updateWidgetData(in: modelContext)
+      refreshStats()
+      seedingProgress = ""
       isSeeding = false
     }
   }

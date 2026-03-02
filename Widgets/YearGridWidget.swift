@@ -85,13 +85,15 @@ struct YearGridProvider: TimelineProvider {
   private func loadEntries() -> [WidgetDayEntry] {
     let widgetEntries = WidgetDataManager.shared.loadEntries()
 
+    // YearGrid only uses thumbnails for dot rendering (via DoodleRendererView).
+    // Drawing data is NOT needed here — skip loading it to save memory.
     return widgetEntries.map { entry in
       WidgetDayEntry(
         dateString: entry.dateString,
         hasText: entry.hasText,
         hasDrawing: entry.hasDrawing,
         thumbnail: entry.thumbnail,
-        drawingData: entry.drawingData
+        drawingData: nil
       )
     }
   }

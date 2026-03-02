@@ -33,6 +33,54 @@ class WidgetHelper {
   private let themeColorKey = "widgetThemeColor"
   private let startOfWeekKey = "widgetStartOfWeek"
 
+  // MARK: - File-Based Drawing Storage
+
+  /// Directory URL for individual drawing data files in the App Group shared container.
+  /// Each entry's drawing data is stored as `drawings/{dateString}.dat` to keep
+  /// UserDefaults payload small (metadata + thumbnails only).
+  private var drawingsDirectoryURL: URL? {
+    guard let containerURL = FileManager.default.containerURL(
+      forSecurityApplicationGroupIdentifier: appGroupIdentifier
+    ) else { return nil }
+    return containerURL.appendingPathComponent("drawings", isDirectory: true)
+  }
+
+  /// Ensures the drawings directory exists, creating it if needed.
+  private func ensureDrawingsDirectory() -> URL? {
+    guard let dirURL = drawingsDirectoryURL else { return nil }
+    if !FileManager.default.fileExists(atPath: dirURL.path) {
+      try? FileManager.default.createDirectory(at: dirURL, withIntermediateDirectories: true)
+    }
+    return dirURL
+  }
+
+  /// Write drawing data to a file for a specific date entry.
+  private func writeDrawingFile(dateString: String, data: Data) {
+    guard let dirURL = ensureDrawingsDirectory() else { return }
+    let fileURL = dirURL.appendingPathComponent("\(dateString).dat")
+    try? data.write(to: fileURL, options: .atomic)
+  }
+
+  /// Remove the drawing file for a specific date entry.
+  private func removeDrawingFile(dateString: String) {
+    guard let dirURL = drawingsDirectoryURL else { return }
+    let fileURL = dirURL.appendingPathComponent("\(dateString).dat")
+    try? FileManager.default.removeItem(at: fileURL)
+  }
+
+  /// Remove orphan drawing files that are no longer present in the entries set.
+  private func cleanupOrphanDrawingFiles(validDateStrings: Set<String>) {
+    guard let dirURL = drawingsDirectoryURL else { return }
+    guard let files = try? FileManager.default.contentsOfDirectory(atPath: dirURL.path) else { return }
+    for filename in files where filename.hasSuffix(".dat") {
+      let dateString = String(filename.dropLast(4)) // remove ".dat"
+      if !validDateStrings.contains(dateString) {
+        let fileURL = dirURL.appendingPathComponent(filename)
+        try? FileManager.default.removeItem(at: fileURL)
+      }
+    }
+  }
+
   // MARK: - Widget Kind Constants
 
   /// All 8 widget kind strings — used for full reloads
@@ -199,18 +247,26 @@ class WidgetHelper {
       return
     }
 
+    // Track valid dateStrings to clean up orphan drawing files afterwards
+    var validDrawingDateStrings = Set<String>()
+
     // Convert DayEntry to widget-compatible dictionaries
-    // Include both drawingData (for larger widgets) and thumbnails (for year grid dots)
+    // Drawing data is stored as individual files in the App Group container (not in UserDefaults)
+    // to keep the payload well under the ~4 MB practical limit.
     // Use dateString which is timezone-agnostic (the SINGLE SOURCE OF TRUTH)
     let widgetEntries: [[String: Any]] = entries.map { entry in
+      let hasDrawing = entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true)
       var dict: [String: Any] = [
         "dateString": entry.dateString,
         "hasText": !entry.body.isEmpty,
-        "hasDrawing": entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true)
+        "hasDrawing": hasDrawing,
       ]
-      if let drawingData = entry.drawingData {
-        dict["drawingData"] = drawingData
+      // Write drawing data to file-based storage (not UserDefaults)
+      if hasDrawing, let drawingData = entry.drawingData {
+        writeDrawingFile(dateString: entry.dateString, data: drawingData)
+        validDrawingDateStrings.insert(entry.dateString)
       }
+      // Thumbnails stay in UserDefaults — they're only ~3 KB each
       if let thumbnail = entry.drawingThumbnail20 {
         dict["thumbnail"] = thumbnail
       }
@@ -220,12 +276,14 @@ class WidgetHelper {
       return dict
     }
 
-    // Convert to Codable format for storage
+    // Clean up orphan drawing files for entries that no longer exist
+    cleanupOrphanDrawingFiles(validDateStrings: validDrawingDateStrings)
+
+    // Convert to Codable format for storage (no drawingData — it's in files now)
     struct WidgetEntryStorage: Codable {
       let dateString: String
       let hasText: Bool
       let hasDrawing: Bool
-      let drawingData: Data?
       let thumbnail: Data?
       let body: String?
     }
@@ -235,15 +293,23 @@ class WidgetHelper {
         dateString: dict["dateString"] as? String ?? "",
         hasText: dict["hasText"] as? Bool ?? false,
         hasDrawing: dict["hasDrawing"] as? Bool ?? false,
-        drawingData: dict["drawingData"] as? Data,
         thumbnail: dict["thumbnail"] as? Data,
         body: dict["body"] as? String
       )
     }
 
-    // Encode and save to shared UserDefaults
+    // Encode and save to shared UserDefaults (metadata + thumbnails only)
     do {
       let data = try JSONEncoder().encode(storageEntries)
+
+      #if DEBUG
+      logWidgetDataMemoryStats(
+        totalPayload: data,
+        entries: entries,
+        storageEntries: storageEntries
+      )
+      #endif
+
       sharedDefaults.set(data, forKey: entriesKey)
       sharedDefaults.synchronize()
 
@@ -255,6 +321,96 @@ class WidgetHelper {
       print("Failed to encode widget entries: \(error)")
     }
   }
+
+  #if DEBUG
+  // MARK: - Memory Debug Logging
+
+  /// Logs detailed memory statistics for widget data payload.
+  /// Helps diagnose throttling caused by oversized UserDefaults writes.
+  private func logWidgetDataMemoryStats(
+    totalPayload: Data,
+    entries: [DayEntry],
+    storageEntries: [Any]
+  ) {
+    let userDefaultsMB = Double(totalPayload.count) / 1_048_576.0
+
+    let entriesWithDrawing = entries.filter { $0.drawingData != nil && !($0.drawingData?.isEmpty ?? true) }
+    let totalDrawingBytes = entries.compactMap(\.drawingData).reduce(0) { $0 + $1.count }
+    let totalThumbnailBytes = entries.compactMap(\.drawingThumbnail20).reduce(0) { $0 + $1.count }
+    let totalBodyBytes = entries.reduce(0) { $0 + $1.body.utf8.count }
+
+    let drawingMB = Double(totalDrawingBytes) / 1_048_576.0
+    let thumbnailKB = Double(totalThumbnailBytes) / 1_024.0
+
+    // Calculate drawing files size on disk
+    let drawingFilesBytes = calculateDrawingFilesSize()
+    let drawingFilesMB = Double(drawingFilesBytes) / 1_048_576.0
+
+    // Process memory usage
+    let appMemoryMB = Self.currentAppMemoryMB()
+
+    print("""
+    ╔══════════════════════════════════════════════════════
+    ║ 📊 WIDGET DATA MEMORY REPORT
+    ╠══════════════════════════════════════════════════════
+    ║ Total entries:            \(entries.count)
+    ║ Entries with drawings:    \(entriesWithDrawing.count)
+    ║ ──────────────────────────────────────────────────
+    ║ UserDefaults payload:     \(String(format: "%.2f", userDefaultsMB)) MB (\(totalPayload.count) bytes)
+    ║   ├─ Thumbnails (20px):   \(String(format: "%.1f", thumbnailKB)) KB (\(totalThumbnailBytes) bytes)
+    ║   └─ Body text:           \(totalBodyBytes) bytes
+    ║ ──────────────────────────────────────────────────
+    ║ Drawing files (on disk):  \(String(format: "%.2f", drawingFilesMB)) MB (\(drawingFilesBytes) bytes)
+    ║   ├─ Total drawing data:  \(String(format: "%.2f", drawingMB)) MB (\(totalDrawingBytes) bytes)
+    ║   └─ Avg drawing size:    \(entriesWithDrawing.isEmpty ? "N/A" : "\(totalDrawingBytes / entriesWithDrawing.count) bytes")
+    ║ ──────────────────────────────────────────────────
+    ║ Combined total:           \(String(format: "%.2f", userDefaultsMB + drawingFilesMB)) MB
+    ║ App memory footprint:     \(String(format: "%.1f", appMemoryMB)) MB
+    ║ ──────────────────────────────────────────────────
+    ║ ⚠️  UserDefaults practical limit: ~1 MB recommended
+    ║ ⚠️  Payloads > 4 MB may cause widget reload throttling
+    ║ ✅ Drawing data stored as files (no UserDefaults limit)
+    ╚══════════════════════════════════════════════════════
+    """)
+
+    // Warn if UserDefaults payload exceeds thresholds
+    if userDefaultsMB > 4.0 {
+      print("🚨 CRITICAL: UserDefaults payload \(String(format: "%.1f", userDefaultsMB)) MB exceeds 4 MB — iOS will likely throttle widget reloads!")
+    } else if userDefaultsMB > 1.0 {
+      print("⚠️  WARNING: UserDefaults payload \(String(format: "%.1f", userDefaultsMB)) MB exceeds 1 MB — may cause slow widget updates")
+    } else {
+      print("✅ UserDefaults payload \(String(format: "%.1f", userDefaultsMB)) MB is within safe limits")
+    }
+  }
+
+  /// Calculate total size of all drawing files in the shared container
+  private func calculateDrawingFilesSize() -> Int {
+    guard let dirURL = drawingsDirectoryURL,
+          let files = try? FileManager.default.contentsOfDirectory(atPath: dirURL.path) else {
+      return 0
+    }
+    return files.reduce(0) { total, filename in
+      let fileURL = dirURL.appendingPathComponent(filename)
+      let attrs = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
+      return total + (attrs?[.size] as? Int ?? 0)
+    }
+  }
+
+  /// Returns the current app memory footprint in MB
+  static func currentAppMemoryMB() -> Double {
+    var info = mach_task_basic_info()
+    var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
+    let result = withUnsafeMutablePointer(to: &info) {
+      $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+        task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+      }
+    }
+    if result == KERN_SUCCESS {
+      return Double(info.resident_size) / 1_048_576.0
+    }
+    return -1
+  }
+  #endif
 
   /// Update widget data by fetching entries from the provided ModelContext
   /// This avoids the need to pass all entries from the view

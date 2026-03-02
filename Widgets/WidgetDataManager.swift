@@ -129,6 +129,31 @@ struct WidgetDataManager {
 
   private init() {}
 
+  // MARK: - File-Based Drawing Storage (Read Side)
+
+  /// Directory URL for individual drawing data files in the App Group shared container.
+  /// The main app writes files here; widget extensions read them on demand.
+  private var drawingsDirectoryURL: URL? {
+    guard let containerURL = FileManager.default.containerURL(
+      forSecurityApplicationGroupIdentifier: appGroupIdentifier
+    ) else { return nil }
+    return containerURL.appendingPathComponent("drawings", isDirectory: true)
+  }
+
+  /// Load drawing data for a specific entry from the file-based storage.
+  ///
+  /// This is the primary source for drawing data. Falls back to `nil` if the file
+  /// doesn't exist (e.g., during transition from old inline-UserDefaults format,
+  /// or if the entry has no drawing).
+  ///
+  /// - Parameter dateString: The "yyyy-MM-dd" date string identifying the entry
+  /// - Returns: The raw drawing data, or `nil` if no file exists
+  func loadDrawingData(for dateString: String) -> Data? {
+    guard let dirURL = drawingsDirectoryURL else { return nil }
+    let fileURL = dirURL.appendingPathComponent("\(dateString).dat")
+    return try? Data(contentsOf: fileURL)
+  }
+
   // MARK: - Subscription Status
 
   /// Check if user has premium access for widget features
