@@ -139,7 +139,7 @@ struct RandomJoodleProvider: TimelineProvider {
 
     // Filter entries with drawings up to today, sort by date, take first 365
     let entriesWithDrawings = entries.filter { entry in
-      entry.hasDrawing && entry.drawingData != nil && entry.dateString <= todayString
+      entry.hasDrawing && entry.dateString <= todayString
     }
     let sortedEntries = entriesWithDrawings.sorted { $0.dateString < $1.dateString }
     let JoodleEntries = Array(sortedEntries.prefix(365))
