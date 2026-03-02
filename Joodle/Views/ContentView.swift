@@ -324,6 +324,9 @@ struct ContentView: View {
             // Navigate to Customization settings and scroll to note prompt setting
             navigateToNotePromptSetting = true
             navigateToSettings = true
+          },
+          drawingData: dateForNotePrompt.flatMap { date in
+            entries.first(where: { $0.matches(date: date) })?.drawingData
           }
         )
         .zIndex(100)

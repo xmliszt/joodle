@@ -12,6 +12,9 @@ struct NotePromptPopupView: View {
   let onSave: (String) -> Void
   let onNavigateToSettings: () -> Void
 
+  /// The raw drawing data of the doodle the user just drew, used to render a preview.
+  var drawingData: Data? = nil
+
   @State private var noteText: String = ""
   @State private var isAnimating: Bool = false
   @FocusState private var isTextFieldFocused: Bool
@@ -33,13 +36,22 @@ struct NotePromptPopupView: View {
       // Popup content
       VStack(spacing: 0) {
         // Header
-        VStack(spacing: 8) {
-          Image(systemName: "pencil.and.outline")
-            .font(.appFont(size: 32))
-            .foregroundStyle(.appAccent)
-
-          Text("Add a Note?")
-            .font(.appHeadline())
+        VStack(spacing: 16) {
+          DoodleRendererView(
+            size: 80,
+            hasEntry: true,
+            dotStyle: .present,
+            drawingData: drawingData,
+            strokeColor: .appAccent,
+            strokeMultiplier: 1.0,
+            renderScale: 1.0
+          )
+          .frame(width: 80, height: 80)
+          .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+              .fill(Color(UIColor.secondarySystemBackground))
+          )
+          .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
           Text("Write something about this moment")
             .font(.appSubheadline())
@@ -52,6 +64,7 @@ struct NotePromptPopupView: View {
         TextEditor(text: $noteText)
           .font(.appBody())
           .focused($isTextFieldFocused)
+          .scrollContentBackground(.hidden)
           .frame(minHeight: 120, maxHeight: 160)
           .padding(12)
           .background(Color(UIColor.secondarySystemBackground))
@@ -164,12 +177,9 @@ struct NotePromptPopupView: View {
         },
         onNavigateToSettings: {
           print("Navigate to settings")
-        }
+        },
+        drawingData: createMockDrawingData()
       )
-    }
-
-    Button("Show Popup") {
-      isPresented = true
     }
   }
 }
@@ -189,7 +199,8 @@ struct NotePromptPopupView: View {
         },
         onNavigateToSettings: {
           print("Navigate to settings")
-        }
+        },
+        drawingData: createMockDrawingData()
       )
     }
   }
