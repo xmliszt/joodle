@@ -167,15 +167,13 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
         },
         onEnded: { location in
           callbacks.onScrubbingEnded?(location)
+        },
+        onTap: { location in
+          callbacks.onTap?(location)
         }
       )
       .allowsHitTesting(allowsHitTesting)
     )
-    .onTapGesture { location in
-      // If scrubbing was active, ignore this (scrub handles selection on end)
-      if isScrubbing { return }
-      callbacks.onTap?(location)
-    }
     .simultaneousGesture(
       MagnificationGesture()
         .onChanged { value in

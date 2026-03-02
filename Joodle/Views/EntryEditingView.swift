@@ -242,31 +242,6 @@ struct EntryEditingView: View {
                     }
                   }
                 }
-                .onChange(of: date ?? nil) { oldValue, newValue in
-                  // Save old content first if any
-                  if !textContent.isEmpty, let oldDate = oldValue {
-                    if isMockMode {
-                      saveMockNote(text: textContent, for: oldDate)
-                    } else {
-                      saveNote(text: textContent, for: oldDate)
-                    }
-                  }
-
-                  // Unfocus
-                  withAnimation {
-                    isTextFieldFocused = false
-                  }
-
-                  // Update entry if got new date
-                  if let newDate = newValue {
-                    if isMockMode {
-                      // Load from mock store
-                      textContent = mockStore?.getEntry(for: newDate)?.body ?? ""
-                    } else {
-                      refreshEntryState(for: newDate, preserveUserInput: false)
-                    }
-                  }
-                }
                 .onChange(of: isTextFieldFocused) { _, newValue in
                   onFocusChange?(newValue)
 
@@ -415,12 +390,13 @@ struct EntryEditingView: View {
         startTimerIfNeeded()
       }
       .onChange(of: date ?? nil) { oldValue, newValue in
-        // Skip in mock mode
-        guard !isMockMode else { return }
-
         // Save old content first if any
         if !textContent.isEmpty, let oldDate = oldValue {
-          saveNote(text: textContent, for: oldDate)
+          if isMockMode {
+            saveMockNote(text: textContent, for: oldDate)
+          } else {
+            saveNote(text: textContent, for: oldDate)
+          }
         }
 
         // Unfocus
@@ -430,7 +406,12 @@ struct EntryEditingView: View {
 
         // Update entry if got new date
         if let newDate = newValue {
-          refreshEntryState(for: newDate, preserveUserInput: false)
+          if isMockMode {
+            // Load from mock store
+            textContent = mockStore?.getEntry(for: newDate)?.body ?? ""
+          } else {
+            refreshEntryState(for: newDate, preserveUserInput: false)
+          }
         }
       }
       .onChange(of: selectedEntrySignature) { _, _ in
@@ -819,23 +800,28 @@ func saveNote(text: String, for date: Date) {
 
   // If we have an existing entry, update it
   if let existingEntry = entry {
+    // Skip save if text hasn't changed - avoids unnecessary widget sync and main thread work
+    let hasDrawing = existingEntry.drawingData != nil && !existingEntry.drawingData!.isEmpty
+    if existingEntry.body == text {
+      return
+    }
+
     existingEntry.body = text
 
     // If entry is now empty (no text and no drawing), delete it entirely
-    let hasDrawing = existingEntry.drawingData != nil && !existingEntry.drawingData!.isEmpty
     if text.isEmpty && !hasDrawing {
       existingEntry.deleteAllForSameDate(in: modelContext)
       self.entry = nil
 
       // Sync deletion to widgets
-      WidgetHelper.shared.updateWidgetData(in: modelContext)
+      WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
       return
     }
 
     try? modelContext.save()
 
     // Sync updated text to widgets
-    WidgetHelper.shared.updateWidgetData(in: modelContext)
+    WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
     return
   }
 
@@ -848,7 +834,7 @@ func saveNote(text: String, for date: Date) {
   try? modelContext.save()
 
   // Sync new text entry to widgets
-  WidgetHelper.shared.updateWidgetData(in: modelContext)
+  WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
 }
 
 private func confirmAndDismiss() {

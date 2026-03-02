@@ -15,9 +15,11 @@ struct LongPressScrubRecognizer: UIViewRepresentable {
   var onBegan: ((CGPoint) -> Void)?
   var onChanged: ((CGPoint) -> Void)?
   var onEnded: ((CGPoint) -> Void)?
+  var onTap: ((CGPoint) -> Void)?
 
   func makeUIView(context: Context) -> TouchForwardingView {
     let view = TouchForwardingView()
+
     let lp = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handle(_:)))
     lp.minimumPressDuration = minimumPressDuration
     lp.allowableMovement = allowableMovement
@@ -27,16 +29,33 @@ struct LongPressScrubRecognizer: UIViewRepresentable {
     lp.delegate = context.coordinator
     view.addGestureRecognizer(lp)
     context.coordinator.longPress = lp
+
+    // Use a UITapGestureRecognizer so taps fire immediately without waiting
+    // for the long press gesture to fail (which is what causes SwiftUI's
+    // .onTapGesture to be delayed when a UILongPressGestureRecognizer is present).
+    let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
+    tap.cancelsTouchesInView = false
+    tap.delaysTouchesBegan = false
+    tap.delaysTouchesEnded = false
+    tap.delegate = context.coordinator
+    view.addGestureRecognizer(tap)
+    context.coordinator.tapRecognizer = tap
+
     return view
   }
 
-  func updateUIView(_ uiView: TouchForwardingView, context: Context) { }
+  func updateUIView(_ uiView: TouchForwardingView, context: Context) {
+    // Keep coordinator's parent fresh so closures (onTap, onBegan, etc.) always reflect
+    // the latest captures. Without this, closures would reference stale values forever.
+    context.coordinator.parent = self
+  }
 
   func makeCoordinator() -> Coordinator { Coordinator(self) }
 
   class Coordinator: NSObject, UIGestureRecognizerDelegate {
     var parent: LongPressScrubRecognizer
     weak var longPress: UILongPressGestureRecognizer?
+    weak var tapRecognizer: UITapGestureRecognizer?
 
     init(_ parent: LongPressScrubRecognizer) {
       self.parent = parent
@@ -60,9 +79,23 @@ struct LongPressScrubRecognizer: UIViewRepresentable {
       }
     }
 
+    @objc func handleTap(_ gesture: UITapGestureRecognizer) {
+      guard gesture.state == .ended, !parent.isScrubbing else { return }
+      guard let view = gesture.view else { return }
+      let location = gesture.location(in: view)
+      parent.onTap?(location)
+    }
+
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
                            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
       true
+    }
+
+    // Allow the tap recognizer to fire immediately without requiring
+    // the long press recognizer to fail first.
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                           shouldRequireFailureOf otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+      false
     }
   }
 

@@ -93,6 +93,9 @@ struct YearGridView: View {
     let leadingOffset = leadingEmptySlots
     let totalVirtualItems = leadingOffset + items.count
 
+    // Adjust highlighted index to account for leading offset (computed once)
+    let adjustedHighlightedIndex = highlightedIndex.map { $0 + leadingOffset }
+
     // Split into rows accounting for leading empty slots
     let rows: [(virtualStart: Int, count: Int)] = stride(from: 0, to: totalVirtualItems, by: viewMode.dotsPerRow).map { rowStart in
       (rowStart, min(viewMode.dotsPerRow, totalVirtualItems - rowStart))
@@ -111,85 +114,43 @@ struct YearGridView: View {
             // Empty slots get a unique ID that won't be targeted by scroll
             let scrollId = item?.id ?? "empty-\(virtualIndex)"
 
-            Group {
-              if let item = item {
-                // Actual item
-                let dotStyle = getDotStyle(for: item.date)
-                let entry = getEntryForDate(item.date, from: entriesByDateKey)
-                let hasEntry = entry != nil && entry!.body.isEmpty == false
-                let hasDrawing = entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true)
-                let isHighlighted = highlightedItemId == item.id
+            if let item = item {
+              // Pre-compute all cell state to pass to equatable cell view
+              let dotStyle = getDotStyle(for: item.date)
+              let entry = getEntryForDate(item.date, from: entriesByDateKey)
+              let hasEntry = entry != nil && entry!.body.isEmpty == false
+              let hasDrawing = entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true)
+              let isHighlighted = highlightedItemId == item.id
+              let isSelected = selectedItemId == item.id
+              let scale = calculateScale(
+                currentIndex: virtualIndex,
+                highlightedIndex: adjustedHighlightedIndex,
+                dotsPerRow: viewMode.dotsPerRow,
+                isEmpty: entry == nil
+              )
+              let hashValue = abs(item.id.hashValue)
+              let animationDelay = Double(hashValue % 500) / 1000.0
 
-                // Calculate current item index using virtual index for proper distance calculation
-                let currentIndex = virtualIndex
-
-                // Calculate scale based on distance from highlighted dot
-                // Adjust highlighted index to account for leading offset
-                let adjustedHighlightedIndex = highlightedIndex.map { $0 + leadingOffset }
-                let scale = calculateScale(
-                  currentIndex: currentIndex,
-                  highlightedIndex: adjustedHighlightedIndex,
-                  dotsPerRow: viewMode.dotsPerRow,
-                  isEmpty: entry == nil
-                )
-
-                // Calculate random animation delay for organic staggered effect
-                // Use item id hash to generate consistent random delay per item
-                let hashValue = abs(item.id.hashValue)
-                let animationDelay = Double(hashValue % 500) / 1000.0  // 0 to 0.5 seconds random delay
-
-                Group {
-                  if hasDrawing {
-                    // Show drawing instead of dot with specific frame sizes
-                    // Use thumbnail for performance optimization
-                    DrawingDisplayView(
-                      entry: entry,
-                      displaySize: viewMode.drawingSize,
-                      dotStyle: dotStyle,
-                      accent: false,
-                      highlighted: isHighlighted || selectedItemId == item.id,
-                      scale: scale,
-                      useThumbnail: true
-                    )
-                    .frame(width: viewMode.dotSize, height: viewMode.dotSize)
-                    // Jelly bounce animation from bottom for drawings
-                    .offset(y: hasAnimated ? 0 : 50)
-                    .scaleEffect(
-                      x: hasAnimated ? 1.0 : 0.1,
-                      y: hasAnimated ? 1.0 : 0.1,
-                      anchor: .bottom
-                    )
-                    .opacity(hasAnimated ? 1.0 : 0.0)
-                    .animation(
-                      .spring(
-                        response: 0.4,
-                        dampingFraction: 0.35,
-                        blendDuration: 0
-                      )
-                      .delay(animationDelay),
-                      value: hasAnimated
-                    )
-                  } else {
-                    // Show regular dot
-                    DotView(
-                      size: viewMode.dotSize,
-                      highlighted: isHighlighted || selectedItemId == item.id,
-                      withEntry: hasEntry,
-                      dotStyle: dotStyle,
-                      scale: scale
-                    )
-                    .frame(width: viewMode.dotSize, height: viewMode.dotSize)
-                  }
-                }
-              } else {
-                // Empty slot - render invisible spacer
-                Color.clear
-                  .frame(width: viewMode.dotSize, height: viewMode.dotSize)
-              }
+              YearGridDotCell(
+                viewMode: viewMode,
+                dotStyle: dotStyle,
+                hasEntry: hasEntry,
+                hasDrawing: hasDrawing,
+                entry: entry,
+                isHighlighted: isHighlighted,
+                isSelected: isSelected,
+                scale: scale,
+                hasAnimated: hasAnimated,
+                animationDelay: animationDelay
+              )
+              .equatable()
+              .id(scrollId)
+            } else {
+              // Empty slot - render invisible spacer
+              Color.clear
+                .frame(width: viewMode.dotSize, height: viewMode.dotSize)
+                .id(scrollId)
             }
-            // Use plain item ID for scroll targeting - ContentView's scrollTo uses item.id
-            // Animation re-triggering is handled separately via hasAnimated state
-            .id(scrollId)
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -353,6 +314,79 @@ struct YearGridView: View {
     return (1.0 + (MAX_SCALE - 1.0) * scaleFactor) * (
       isEmpty ? 1.5 : 1
     )
+  }
+}
+
+// MARK: - Equatable Cell View
+
+/// Individual grid dot cell that conforms to Equatable to prevent unnecessary re-renders.
+/// When only `selectedItemId` changes (e.g. a tap), only the 2 affected cells (old and new selection)
+/// have their body re-evaluated; the other ~363 cells are skipped by SwiftUI's diffing.
+private struct YearGridDotCell: View, Equatable {
+  let viewMode: ViewMode
+  let dotStyle: DotStyle
+  let hasEntry: Bool
+  let hasDrawing: Bool
+  let entry: DayEntry?
+  let isHighlighted: Bool
+  let isSelected: Bool
+  let scale: CGFloat
+  let hasAnimated: Bool
+  let animationDelay: Double
+
+  nonisolated static func == (lhs: Self, rhs: Self) -> Bool {
+    lhs.isHighlighted == rhs.isHighlighted &&
+    lhs.isSelected == rhs.isSelected &&
+    lhs.scale == rhs.scale &&
+    lhs.hasAnimated == rhs.hasAnimated &&
+    lhs.hasEntry == rhs.hasEntry &&
+    lhs.hasDrawing == rhs.hasDrawing &&
+    lhs.dotStyle == rhs.dotStyle &&
+    lhs.viewMode == rhs.viewMode
+  }
+
+  var body: some View {
+    if hasDrawing {
+      // Show drawing instead of dot with specific frame sizes
+      // Use thumbnail for performance optimization
+      DrawingDisplayView(
+        entry: entry,
+        displaySize: viewMode.drawingSize,
+        dotStyle: dotStyle,
+        accent: false,
+        highlighted: isHighlighted || isSelected,
+        scale: scale,
+        useThumbnail: true
+      )
+      .frame(width: viewMode.dotSize, height: viewMode.dotSize)
+      // Jelly bounce animation from bottom for drawings
+      .offset(y: hasAnimated ? 0 : 50)
+      .scaleEffect(
+        x: hasAnimated ? 1.0 : 0.1,
+        y: hasAnimated ? 1.0 : 0.1,
+        anchor: .bottom
+      )
+      .opacity(hasAnimated ? 1.0 : 0.0)
+      .animation(
+        .spring(
+          response: 0.4,
+          dampingFraction: 0.35,
+          blendDuration: 0
+        )
+        .delay(animationDelay),
+        value: hasAnimated
+      )
+    } else {
+      // Show regular dot
+      DotView(
+        size: viewMode.dotSize,
+        highlighted: isHighlighted || isSelected,
+        withEntry: hasEntry,
+        dotStyle: dotStyle,
+        scale: scale
+      )
+      .frame(width: viewMode.dotSize, height: viewMode.dotSize)
+    }
   }
 }
 

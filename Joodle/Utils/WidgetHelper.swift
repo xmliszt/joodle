@@ -302,14 +302,6 @@ class WidgetHelper {
     do {
       let data = try JSONEncoder().encode(storageEntries)
 
-      #if DEBUG
-      logWidgetDataMemoryStats(
-        totalPayload: data,
-        entries: entries,
-        storageEntries: storageEntries
-      )
-      #endif
-
       sharedDefaults.set(data, forKey: entriesKey)
       sharedDefaults.synchronize()
 
@@ -321,96 +313,6 @@ class WidgetHelper {
       print("Failed to encode widget entries: \(error)")
     }
   }
-
-  #if DEBUG
-  // MARK: - Memory Debug Logging
-
-  /// Logs detailed memory statistics for widget data payload.
-  /// Helps diagnose throttling caused by oversized UserDefaults writes.
-  private func logWidgetDataMemoryStats(
-    totalPayload: Data,
-    entries: [DayEntry],
-    storageEntries: [Any]
-  ) {
-    let userDefaultsMB = Double(totalPayload.count) / 1_048_576.0
-
-    let entriesWithDrawing = entries.filter { $0.drawingData != nil && !($0.drawingData?.isEmpty ?? true) }
-    let totalDrawingBytes = entries.compactMap(\.drawingData).reduce(0) { $0 + $1.count }
-    let totalThumbnailBytes = entries.compactMap(\.drawingThumbnail20).reduce(0) { $0 + $1.count }
-    let totalBodyBytes = entries.reduce(0) { $0 + $1.body.utf8.count }
-
-    let drawingMB = Double(totalDrawingBytes) / 1_048_576.0
-    let thumbnailKB = Double(totalThumbnailBytes) / 1_024.0
-
-    // Calculate drawing files size on disk
-    let drawingFilesBytes = calculateDrawingFilesSize()
-    let drawingFilesMB = Double(drawingFilesBytes) / 1_048_576.0
-
-    // Process memory usage
-    let appMemoryMB = Self.currentAppMemoryMB()
-
-    print("""
-    ╔══════════════════════════════════════════════════════
-    ║ 📊 WIDGET DATA MEMORY REPORT
-    ╠══════════════════════════════════════════════════════
-    ║ Total entries:            \(entries.count)
-    ║ Entries with drawings:    \(entriesWithDrawing.count)
-    ║ ──────────────────────────────────────────────────
-    ║ UserDefaults payload:     \(String(format: "%.2f", userDefaultsMB)) MB (\(totalPayload.count) bytes)
-    ║   ├─ Thumbnails (20px):   \(String(format: "%.1f", thumbnailKB)) KB (\(totalThumbnailBytes) bytes)
-    ║   └─ Body text:           \(totalBodyBytes) bytes
-    ║ ──────────────────────────────────────────────────
-    ║ Drawing files (on disk):  \(String(format: "%.2f", drawingFilesMB)) MB (\(drawingFilesBytes) bytes)
-    ║   ├─ Total drawing data:  \(String(format: "%.2f", drawingMB)) MB (\(totalDrawingBytes) bytes)
-    ║   └─ Avg drawing size:    \(entriesWithDrawing.isEmpty ? "N/A" : "\(totalDrawingBytes / entriesWithDrawing.count) bytes")
-    ║ ──────────────────────────────────────────────────
-    ║ Combined total:           \(String(format: "%.2f", userDefaultsMB + drawingFilesMB)) MB
-    ║ App memory footprint:     \(String(format: "%.1f", appMemoryMB)) MB
-    ║ ──────────────────────────────────────────────────
-    ║ ⚠️  UserDefaults practical limit: ~1 MB recommended
-    ║ ⚠️  Payloads > 4 MB may cause widget reload throttling
-    ║ ✅ Drawing data stored as files (no UserDefaults limit)
-    ╚══════════════════════════════════════════════════════
-    """)
-
-    // Warn if UserDefaults payload exceeds thresholds
-    if userDefaultsMB > 4.0 {
-      print("🚨 CRITICAL: UserDefaults payload \(String(format: "%.1f", userDefaultsMB)) MB exceeds 4 MB — iOS will likely throttle widget reloads!")
-    } else if userDefaultsMB > 1.0 {
-      print("⚠️  WARNING: UserDefaults payload \(String(format: "%.1f", userDefaultsMB)) MB exceeds 1 MB — may cause slow widget updates")
-    } else {
-      print("✅ UserDefaults payload \(String(format: "%.1f", userDefaultsMB)) MB is within safe limits")
-    }
-  }
-
-  /// Calculate total size of all drawing files in the shared container
-  private func calculateDrawingFilesSize() -> Int {
-    guard let dirURL = drawingsDirectoryURL,
-          let files = try? FileManager.default.contentsOfDirectory(atPath: dirURL.path) else {
-      return 0
-    }
-    return files.reduce(0) { total, filename in
-      let fileURL = dirURL.appendingPathComponent(filename)
-      let attrs = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
-      return total + (attrs?[.size] as? Int ?? 0)
-    }
-  }
-
-  /// Returns the current app memory footprint in MB
-  static func currentAppMemoryMB() -> Double {
-    var info = mach_task_basic_info()
-    var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
-    let result = withUnsafeMutablePointer(to: &info) {
-      $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-        task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
-      }
-    }
-    if result == KERN_SUCCESS {
-      return Double(info.resident_size) / 1_048_576.0
-    }
-    return -1
-  }
-  #endif
 
   /// Update widget data by fetching entries from the provided ModelContext
   /// This avoids the need to pass all entries from the view
