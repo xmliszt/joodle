@@ -53,7 +53,9 @@ struct DrawingCanvasView: View {
   /// Task for async thumbnail generation on dismiss
   @State private var thumbnailTask: Task<Void, Never>?
 
-
+  /// Tracks whether the drawing was already persisted during this dismiss cycle.
+  /// Prevents `.onDisappear` from double-saving after `onChange(of: isShowing)` or `saveDrawing()` already saved.
+  @State private var didSaveOnDismiss = false
 
   // Inspiration prompt state
   @State private var currentPrompt: String? = nil
@@ -154,6 +156,17 @@ struct DrawingCanvasView: View {
     .padding(8)
     .padding(.top, 16)
     .padding(.bottom, 10)
+    .onDisappear {
+      // Safety net for non-DI devices: when the sheet is swiped away, SwiftUI may
+      // tear down the view without propagating the isShowing binding change, so
+      // onChange(of: isShowing) never fires. Save here as a last resort.
+      guard !didSaveOnDismiss else { return }
+      if isMockMode {
+        saveMockDrawing()
+      } else {
+        saveDrawingToStore()
+      }
+    }
     .onAppear {
       // Only load drawing data when the canvas is already visible on appear.
       // On Dynamic Island devices, DrawingCanvasView lives in the hierarchy
@@ -162,6 +175,7 @@ struct DrawingCanvasView: View {
       // and gets re-saved on scenePhase→.background, resurrecting deleted entries.
       // The onChange(of: isShowing) handler covers loading when canvas becomes visible.
       guard isShowing else { return }
+      didSaveOnDismiss = false
       if !isMockMode {
         checkAccessState()
       }
@@ -170,6 +184,7 @@ struct DrawingCanvasView: View {
     .onChange(of: isShowing) { oldValue, newValue in
       if newValue {
         // Canvas becoming visible — load data and check access
+        didSaveOnDismiss = false
         if !isMockMode {
           checkAccessState()
         }
@@ -177,14 +192,12 @@ struct DrawingCanvasView: View {
       } else {
         // Canvas being dismissed — persist drawing before state is torn down.
         // This covers DynamicIsland tap-outside and any isShowing-driven dismiss.
-        // Only save when there are actual paths; clearDrawing() already handles
-        // the empty case and calling saveDrawingToStore() on a deleted entry
-        // would accidentally re-insert it.
         if isMockMode {
           saveMockDrawing()
-        } else if !paths.isEmpty {
+        } else {
           saveDrawingToStore()
         }
+        didSaveOnDismiss = true
 
         // Clear in-memory drawing state after saving. Without this, stale paths
         // linger while the canvas is hidden — if the entry is then deleted via
@@ -210,7 +223,7 @@ struct DrawingCanvasView: View {
       // Safety net: persist drawing if the app backgrounds mid-session.
       // Guard by isShowing so a hidden canvas (DI devices) doesn't accidentally
       // re-save stale paths for an entry that was deleted in EntryEditingView.
-      if newPhase == .background, !isMockMode, !paths.isEmpty, isShowing {
+      if newPhase == .background, !isMockMode, isShowing {
         saveDrawingToStore()
       }
     }
@@ -402,11 +415,6 @@ struct DrawingCanvasView: View {
   private func saveStateToUndoStack() {
     // Save current paths and metadata state to undo stack
     undoStack.append((paths, pathMetadata))
-
-    // Limit undo stack size to prevent memory issues
-    if undoStack.count > 50 {
-      undoStack.removeFirst()
-    }
   }
 
   private func undoLastStroke() {
@@ -424,11 +432,6 @@ struct DrawingCanvasView: View {
     currentPath = Path()
     isDrawing = false
     currentPathIsDot = false
-
-    // Limit redo stack size
-    if redoStack.count > 50 {
-      redoStack.removeFirst()
-    }
   }
 
   private func redoLastStroke() {
@@ -528,8 +531,12 @@ struct DrawingCanvasView: View {
       // Load metadata as well
       pathMetadata = decodedPaths.map { PathMetadata(isDot: $0.isDot) }
 
-      // Initialize undo/redo stacks for existing drawings
-      undoStack.removeAll()
+      // Pre-populate undo stack from stroke history so Undo is
+      // immediately available when opening an existing doodle.
+      // Each entry is a progressive prefix of the loaded strokes.
+      undoStack = (0..<paths.count).map { i in
+        (Array(paths.prefix(i)), Array(pathMetadata.prefix(i)))
+      }
       redoStack.removeAll()
 
     } catch {
@@ -540,12 +547,10 @@ struct DrawingCanvasView: View {
   private func saveDrawing() {
     if isMockMode {
       saveMockDrawing()
-    } else if !paths.isEmpty {
-      // Only persist when there are strokes. clearDrawing() already handles
-      // the empty case with immediate deletion — calling saveDrawingToStore()
-      // here with empty paths would re-modify an already-deleted entry.
+    } else {
       saveDrawingToStore()
     }
+    didSaveOnDismiss = true
     onDismiss()
   }
 
@@ -672,28 +677,9 @@ struct DrawingCanvasView: View {
     // Clear redo stack when new action is performed
     redoStack.removeAll()
 
-    // Also clear from store (skip in mock mode)
-    if !isMockMode {
-      thumbnailTask?.cancel()
-
-      if let existingEntry = entry {
-        existingEntry.drawingData = nil
-        existingEntry.drawingThumbnail20 = nil
-        existingEntry.drawingThumbnail200 = nil
-
-        // If entry is now empty (no text either), delete it entirely
-        if existingEntry.body.isEmpty {
-          existingEntry.deleteAllForSameDate(in: modelContext)
-        } else {
-          try? modelContext.save()
-        }
-
-        // Refresh daily reminder - drawing was cleared, so we may need to reschedule notification
-
-        // Update widgets to reflect cleared drawing
-        WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
-      }
-    }
+    // Don't persist the clear immediately — let the dismiss logic
+    // (onChange(of: isShowing) / onDisappear / saveDrawing) handle saving
+    // the empty-paths state to the store when the canvas is closed.
   }
 
 }

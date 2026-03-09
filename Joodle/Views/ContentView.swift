@@ -253,7 +253,11 @@ struct ContentView: View {
           // Only present the sheet when device has no dynamic island
           get: { showDrawingCanvas && !UIDevice.hasDynamicIsland },
           set: { showDrawingCanvas = $0 }
-        )
+        ),
+        onDismiss: {
+          // Covers swipe-to-dismiss — handleDrawingCanvasDismiss is idempotent
+          handleDrawingCanvasDismiss()
+        }
       ) {
         DrawingCanvasView(
           date: dataProvider.selectedDateItem!.date,
