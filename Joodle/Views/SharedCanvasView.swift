@@ -95,27 +95,31 @@ struct SharedCanvasView<TrailingHeader: View>: View {
       // Action Buttons Row
       if let config = buttonsConfig {
         HStack() {
-          // Clear button
-          if config.canClear {
-            Button(action: {
-              if let showConfirmation = config.showClearConfirmation {
-                showConfirmation.wrappedValue = true
-              } else {
-                config.onClear()
-              }
-            }) {
-              Image(systemName: "trash")
+          // Clear button — use opacity to reserve space and prevent layout shift
+          Button(action: {
+            if let showConfirmation = config.showClearConfirmation {
+              showConfirmation.wrappedValue = true
+            } else {
+              config.onClear()
             }
-            .circularGlassButton(tintColor: .red)
-            .disabled(!config.canClear)
-            .opacity(config.canClear ? 1.0 : 0.5)
-          } else {
-            Spacer()
+          }) {
+            Image(systemName: "trash")
           }
+          .circularGlassButton(tintColor: .red)
+          .opacity(config.canClear ? 1.0 : 0.0)
+          .disabled(!config.canClear)
+          .allowsHitTesting(config.canClear)
 
           Spacer()
 
-          // Undo/Redo buttons
+          // Trailing content (e.g. Save button)
+          if !(TrailingHeaderView() is EmptyView) {
+            TrailingHeaderView()
+          }
+
+        }
+        .overlay {
+          // Center content absolutely centered, ignoring left/right widths
           if config.canUndo || config.canRedo {
             HStack(spacing: 8) {
               // Undo button
@@ -139,22 +143,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               }
             }
             .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
-          } else {
-            Spacer()
-          }
-
-          // Trailing content (e.g. Save button)
-          if !(TrailingHeaderView() is EmptyView) {
-            Spacer()
-            TrailingHeaderView()
-          }
-
-        }
-        .overlay {
-          // Center content absolutely centered, ignoring left/right widths
-          if let config = buttonsConfig,
-             !(config.canUndo || config.canRedo),
-             let centerContent = config.centerContent {
+          } else if let centerContent = config.centerContent {
             centerContent
               .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
           }
