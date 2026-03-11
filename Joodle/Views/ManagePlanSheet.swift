@@ -43,19 +43,19 @@ struct ManagePlanSheet: View {
         .padding(20)
         .padding(.bottom, 20)
       }
-      .navigationTitle("Switch Plan")
+      .navigationTitle(String(localized: "Switch Plan"))
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
-          Button("Done") { dismiss() }
+          Button(String(localized: "Done")) { dismiss() }
             .font(.appBody())
         }
       }
       .manageSubscriptionsSheet(isPresented: $showNativeManagement)
-      .alert("Purchase Failed", isPresented: $showError) {
-        Button("OK", role: .cancel) {}
+      .alert(String(localized: "Purchase Failed"), isPresented: $showError) {
+        Button(String(localized: "OK"), role: .cancel) {}
       } message: {
-        Text(errorMessage ?? "An unexpected error occurred.")
+        Text(errorMessage ?? String(localized: "An unexpected error occurred."))
       }
     }
     .presentationDetents([.large])
@@ -66,15 +66,15 @@ struct ManagePlanSheet: View {
 
   private var headerSection: some View {
     VStack(spacing: 8) {
-      Text("Choose Your Plan")
+      Text(String(localized: "Choose Your Plan"))
         .font(.appFont(size: 22, weight: .bold))
 
       if let currentProduct = storeManager.currentProduct {
-        Text("Currently on \(currentProduct.displayName)")
+        Text(String(localized: "Currently on \(currentProduct.displayName)"))
           .font(.appCaption())
           .foregroundColor(.secondary)
       } else if !subscriptionManager.isSubscribed {
-        Text("Select a plan to get started")
+        Text(String(localized: "Select a plan to get started"))
           .font(.appCaption())
           .foregroundColor(.secondary)
       }
@@ -91,8 +91,8 @@ struct ManagePlanSheet: View {
         planOptionRow(
           product: lifetime,
           icon: "infinity",
-          subtitle: "One-time purchase, yours forever",
-          badge: "BEST VALUE",
+          subtitle: String(localized: "One-time purchase, yours forever"),
+          badge: String(localized: "BEST VALUE"),
           isCurrent: subscriptionManager.isLifetimeUser
         )
       }
@@ -114,7 +114,7 @@ struct ManagePlanSheet: View {
         planOptionRow(
           product: monthly,
           icon: "repeat",
-          subtitle: "Billed monthly",
+          subtitle: String(localized: "Billed monthly"),
           badge: nil,
           isCurrent: storeManager.currentProductID == monthly.id,
           isDisabled: subscriptionManager.isLifetimeUser
@@ -166,7 +166,7 @@ struct ManagePlanSheet: View {
 
           // Price or "Current" label
           if isCurrent {
-            Text("Current")
+            Text(String(localized: "Current"))
               .font(.appCaption(weight: .medium))
               .foregroundColor(.appAccent)
               .padding(.horizontal, 12)
@@ -228,7 +228,7 @@ struct ManagePlanSheet: View {
       HStack(spacing: 8) {
         Image(systemName: "arrow.up.right.square")
           .font(.appCaption())
-        Text("Manage or Cancel via App Store")
+        Text(String(localized: "Manage or Cancel via App Store"))
           .font(.appCaption())
       }
       .foregroundColor(.secondary)
@@ -247,9 +247,9 @@ struct ManagePlanSheet: View {
   private var disclaimerText: some View {
     Group {
       if subscriptionManager.isSubscribed && !subscriptionManager.isLifetimeUser {
-        Text("Switching between subscription plans is handled by the App Store. Tap a new plan to purchase it, or use \"Manage or Cancel via App Store\" to change or cancel your current subscription.")
+        Text(String(localized: "Switching between subscription plans is handled by the App Store. Tap a new plan to purchase it, or use \"Manage or Cancel via App Store\" to change or cancel your current subscription."))
       } else {
-        Text("You already own Joodle forever. There is no need to purchase subscription plans.")
+        Text(String(localized: "You already own Joodle forever. There is no need to purchase subscription plans."))
       }
     }
     .font(.appCaption2())
@@ -262,25 +262,25 @@ struct ManagePlanSheet: View {
 
   private func periodLabel(for product: Product) -> String? {
     if product.id.contains("lifetime") {
-      return "one-time"
+      return String(localized: "one-time")
     } else if product.id.contains("yearly") {
-      return "/ year"
+      return String(localized: "/ year")
     } else if product.id.contains("monthly") {
-      return "/ month"
+      return String(localized: "/ month")
     }
     return nil
   }
 
   private func yearlySavingsSubtitle() -> String {
     if let percentage = storeManager.savingsPercentage() {
-      return "Save \(percentage)% vs monthly"
+      return String(localized: "Save \(percentage)% vs monthly")
     }
-    return "Billed annually"
+    return String(localized: "Billed annually")
   }
 
   private func savingsBadgeText() -> String? {
     guard let percentage = storeManager.savingsPercentage() else { return nil }
-    return "SAVE \(percentage)%"
+    return String(localized: "SAVE \(percentage)%")
   }
 
   // MARK: - Purchase Logic
@@ -313,14 +313,14 @@ struct ManagePlanSheet: View {
             case .userCancelled:
               break // Don't show error for cancellation
             case .networkError:
-              errorMessage = "Network error. Please check your internet connection and try again."
+              errorMessage = String(localized: "Network error. Please check your internet connection and try again.")
               showError = true
             default:
-              errorMessage = "Purchase failed: \(error.localizedDescription)"
+              errorMessage = String(localized: "Purchase failed: \(error.localizedDescription)")
               showError = true
             }
           } else {
-            errorMessage = "Purchase failed: \(error.localizedDescription)"
+            errorMessage = String(localized: "Purchase failed: \(error.localizedDescription)")
             showError = true
           }
         }
@@ -331,7 +331,7 @@ struct ManagePlanSheet: View {
 
 #if DEBUG
 #Preview("Active Monthly Sub") {
-  Text("Preview")
+  Text(String(localized: "Preview"))
     .sheet(isPresented: .constant(true)) {
       ManagePlanSheet()
         .task {
@@ -347,7 +347,7 @@ struct ManagePlanSheet: View {
 }
 
 #Preview("Active Yearly Sub") {
-  Text("Preview")
+  Text(String(localized: "Preview"))
     .sheet(isPresented: .constant(true)) {
       ManagePlanSheet()
         .task {
@@ -363,7 +363,7 @@ struct ManagePlanSheet: View {
 }
 
 #Preview("Cancelled Sub") {
-  Text("Preview")
+  Text(String(localized: "Preview"))
     .sheet(isPresented: .constant(true)) {
       ManagePlanSheet()
         .task {

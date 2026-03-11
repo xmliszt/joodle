@@ -295,9 +295,9 @@ struct SubscriptionsView: View {
   /// Returns the appropriate label for the manage button based on subscription state
   private var manageButtonLabel: String {
     if subscriptionManager.willAutoRenew {
-      return "Manage Subscription"
+      return String(localized: "Manage Subscription")
     } else {
-      return "View All Plans"
+      return String(localized: "View All Plans")
     }
   }
 
