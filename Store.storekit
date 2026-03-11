@@ -20,9 +20,19 @@
       "internalID" : "6758905894",
       "localizations" : [
         {
+          "description" : "모든 기능을 영구적으로 해제",
+          "displayName" : "Joodle Pro 평생 라이선스",
+          "locale" : "ko"
+        },
+        {
           "description" : "Unlock all features forever",
           "displayName" : "Joodle Pro Lifetime",
           "locale" : "en_US"
+        },
+        {
+          "description" : "永久解锁全部功能",
+          "displayName" : "Joodle Pro 终身版",
+          "locale" : "zh_Hans"
         }
       ],
       "productID" : "dev.liyuxuan.joodle.pro.lifetime",
@@ -38,8 +48,8 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 792229084.97558403,
-    "_locale" : "en_US",
+    "_lastSynchronizedDate" : 794937670.45553601,
+    "_locale" : "zh_Hans",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "SGP",
     "_storeKitErrors" : [
@@ -107,6 +117,16 @@
               "description" : "Unlock all features for a month",
               "displayName" : "Joodle Pro Monthly",
               "locale" : "en_US"
+            },
+            {
+              "description" : "한 달 동안 모든 기능 잠금 해제",
+              "displayName" : "Joodle Pro 월간",
+              "locale" : "ko"
+            },
+            {
+              "description" : "一个月解锁全部功能",
+              "displayName" : "Joodle Pro 月度版",
+              "locale" : "zh_Hans"
             }
           ],
           "productID" : "dev.liyuxuan.joodle.pro.monthly",
@@ -125,11 +145,11 @@
           "codeOffers" : [
             {
               "eligibility" : [
-                "expired",
                 "new",
-                "existing"
+                "existing",
+                "expired"
               ],
-              "internalID" : "03F22C76",
+              "internalID" : "5DDF1109",
               "isStackable" : true,
               "numberOfPeriods" : 1,
               "paymentMode" : "free",
@@ -138,11 +158,11 @@
             },
             {
               "eligibility" : [
-                "new",
                 "expired",
+                "new",
                 "existing"
               ],
-              "internalID" : "E5534FC9",
+              "internalID" : "542116E1",
               "isStackable" : true,
               "numberOfPeriods" : 1,
               "paymentMode" : "free",
@@ -156,6 +176,16 @@
           "internalID" : "6757140365",
           "introductoryOffer" : null,
           "localizations" : [
+            {
+              "description" : "일년 동안 모든 기능 해제",
+              "displayName" : "Joodle Pro 연간",
+              "locale" : "ko"
+            },
+            {
+              "description" : "一年解锁全部功能",
+              "displayName" : "Joodle Pro 年度版",
+              "locale" : "zh_Hans"
+            },
             {
               "description" : "Unlock all features for a year",
               "displayName" : "Joodle Pro Yearly",
