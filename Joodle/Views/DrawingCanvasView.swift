@@ -358,7 +358,7 @@ struct DrawingCanvasView: View {
             let index = (try? modelContext.fetchCount(descriptor)) ?? 0
             accessState = .editingLocked(
               reason:
-                "Free account can only edit the first \(SubscriptionManager.freeJoodlesAllowed) Joodles. This Joodle is #\(index + 1)."
+                String(localized: "Free account can only edit the first \(SubscriptionManager.freeJoodlesAllowed) Joodles. This Joodle is #\(index + 1).")
             )
           }
         }

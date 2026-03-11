@@ -223,11 +223,11 @@ struct PricingCard: View {
   
   private var productTitle: String {
     if isLifetime {
-      return "Lifetime"
+      return String(localized: "Lifetime")
     } else if product.id.contains("yearly") {
-      return "Yearly"
+      return String(localized: "Yearly")
     } else {
-      return "Monthly"
+      return String(localized: "Monthly")
     }
   }
   
