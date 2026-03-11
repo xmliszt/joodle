@@ -38,7 +38,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“精简” 视图模式可纵览你的全年数据。该模式支持分享全年记录的额外分享功能。"
+            "value" : "“迷你” 视图模式可纵览你的全年数据。该模式支持分享全年记录的额外分享功能。"
           }
         }
       }
@@ -3532,7 +3532,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "精简"
+            "value" : "迷你"
           }
         }
       }
@@ -5302,7 +5302,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每周起始日影响“普通”视图模式的布局。"
+            "value" : "每周起始日影响“常规”视图模式的布局。"
           }
         }
       }
@@ -5768,7 +5768,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "点击切换到精简视图以查看全年"
+            "value" : "点击切换到迷你视图以查看全年"
           }
         }
       }
