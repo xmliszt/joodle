@@ -153,20 +153,20 @@ enum TutorialDefinitions {
 /// Represents a single tutorial with all its content
 struct TutorialData: Identifiable {
   let id: String
-  let title: String
+  let title: LocalizedStringResource
   let icon: String
-  let shortDescription: String
+  let shortDescription: LocalizedStringResource
   let screenshots: [ScreenshotItem]
-  let description: String?
+  let description: LocalizedStringResource?
   let isPremiumFeature: Bool
 
   init(
     id: String,
-    title: String,
+    title: LocalizedStringResource,
     icon: String,
-    shortDescription: String,
+    shortDescription: LocalizedStringResource,
     screenshots: [ScreenshotItem],
-    description: String? = nil,
+    description: LocalizedStringResource? = nil,
     isPremiumFeature: Bool = false
   ) {
     self.id = id

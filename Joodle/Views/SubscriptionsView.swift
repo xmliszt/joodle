@@ -17,11 +17,17 @@ struct SubscriptionsView: View {
   @State private var showRedeemCode = false
   @State private var showManagePlanSheet = false
 
-  private func daySuffix(for count: Int) -> String {
-    if LocaleProvider.currentLanguageCode.hasPrefix("zh") {
-      return ""
-    }
-    return count == 1 ? "" : "s"
+  private func localizedDayCount(_ count: Int) -> String {
+    let formatter = DateComponentsFormatter()
+    formatter.unitsStyle = .full
+    formatter.maximumUnitCount = 1
+    formatter.zeroFormattingBehavior = .dropAll
+    formatter.allowedUnits = [.day]
+
+    var components = DateComponents()
+    components.day = count
+
+    return formatter.string(from: components) ?? String(count)
   }
 
   /// The current product comes directly from StoreKitManager for accuracy
@@ -186,7 +192,7 @@ struct SubscriptionsView: View {
           .font(.appFont(size: 28, weight: .bold))
 
         let daysLeft = GracePeriodManager.shared.gracePeriodDaysRemaining
-        Text("You have free access to all Pro features for \(daysLeft) more day\(daySuffix(for: daysLeft)).")
+        Text(String(localized: "You have free access to all Pro features for \(localizedDayCount(daysLeft)) more."))
           .font(.appSubheadline())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.center)
@@ -196,7 +202,7 @@ struct SubscriptionsView: View {
           Image(systemName: "clock.fill")
             .font(.appCaption2())
             .foregroundStyle(.appAccent)
-          Text("Free access · \(daysLeft) day\(daySuffix(for: daysLeft)) left")
+          Text(String(localized: "Free access · \(localizedDayCount(daysLeft)) left"))
             .font(.appCaption())
         }
         .foregroundColor(.secondary)
@@ -416,17 +422,17 @@ struct SubscriptionsView: View {
   /// Returns the appropriate badge text for the current plan
   private var currentPlanBadge: String? {
     if subscriptionManager.isLifetimeUser {
-      return "LIFETIME"
+      return String(localized: "LIFETIME")
     } else if subscriptionManager.hasRedeemedOfferCode {
-      return "PROMO CODE"
+      return String(localized: "PROMO CODE")
     } else if subscriptionManager.isInTrialPeriod {
       // Show promo badge if there's a pending offer code (it replaces the trial)
       if subscriptionManager.hasPendingOfferCode {
-        return "PROMO APPLIED"
+        return String(localized: "PROMO APPLIED")
       }
-      return "FREE TRIAL"
+      return String(localized: "FREE TRIAL")
     } else if GracePeriodManager.shared.isInGracePeriod {
-      return "FREE ACCESS"
+      return String(localized: "FREE ACCESS")
     }
     return nil
   }

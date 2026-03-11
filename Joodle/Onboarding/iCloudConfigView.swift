@@ -75,7 +75,7 @@ struct iCloudConfigView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
-                        Text(viewModel.cloudSyncBlockedReason ?? "iCloud is not available")
+                        Text(viewModel.cloudSyncBlockedReason ?? LocalizedStringResource("iCloud is not available"))
                             .font(.appSubheadline())
                             .foregroundStyle(.secondary)
                             .lineLimit(1)

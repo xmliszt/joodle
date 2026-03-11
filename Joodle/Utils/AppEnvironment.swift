@@ -123,11 +123,11 @@ enum AppEnvironment {
     static var displayName: String {
         switch current {
         case .debug:
-            return "Debug"
+            return String(localized: "Debug")
         case .testFlight:
-            return "TestFlight"
+            return String(localized: "TestFlight")
         case .appStore:
-            return "App Store"
+            return String(localized: "App Store")
         }
     }
 
@@ -183,7 +183,7 @@ enum AppEnvironment {
     }
 
     /// The label text for the feedback button
-    static var feedbackButtonTitle: String {
+    static var feedbackButtonTitle: LocalizedStringResource {
         switch current {
         case .debug, .testFlight:
             return "Submit Testing Feedback"

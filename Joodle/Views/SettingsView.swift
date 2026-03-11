@@ -60,7 +60,7 @@ struct SettingsIconView: View {
 struct SettingsRowView: View {
   let icon: String
   let iconColor: Color
-  let title: String
+  let title: LocalizedStringResource
   var trailingText: String? = nil
   var trailingView: AnyView? = nil
   var isExternal: Bool = false
@@ -99,11 +99,17 @@ struct MembershipBannerView: View {
   let alarmCount: Int
   let onTap: () -> Void
 
-  private func daySuffix(for count: Int) -> String {
-    if LocaleProvider.currentLanguageCode.hasPrefix("zh") {
-      return ""
-    }
-    return count == 1 ? "" : "s"
+  private func localizedDayCount(_ count: Int) -> String {
+    let formatter = DateComponentsFormatter()
+    formatter.unitsStyle = .full
+    formatter.maximumUnitCount = 1
+    formatter.zeroFormattingBehavior = .dropAll
+    formatter.allowedUnits = [.day]
+
+    var components = DateComponents()
+    components.day = count
+
+    return formatter.string(from: components) ?? String(count)
   }
   
   var body: some View {
@@ -130,7 +136,7 @@ struct MembershipBannerView: View {
           
           if hasPremiumAccess {
             if isInGracePeriod {
-              Text("Free access · \(gracePeriodDaysRemaining) day\(daySuffix(for: gracePeriodDaysRemaining)) left")
+              Text(String(localized: "Free access · \(localizedDayCount(gracePeriodDaysRemaining)) left"))
                 .font(.appSubheadline())
                 .foregroundColor(.white.opacity(0.9))
             } else if let statusMessage = statusMessage {

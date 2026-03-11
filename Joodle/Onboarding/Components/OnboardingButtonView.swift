@@ -8,13 +8,15 @@
 import SwiftUI
 
 struct OnboardingButtonView: View {
-  let label: String
+  let label: LocalizedStringResource
   let onClick: () -> Void
   var disabled = false
   
   var body: some View {
     VStack(alignment: .center) {
-      Button(label) { onClick() }
+      Button { onClick() } label: {
+        Text(label)
+      }
       .buttonStyle(OnboardingButtonStyle())
       .disabled(disabled)
       .opacity(disabled ? 0 : 1)

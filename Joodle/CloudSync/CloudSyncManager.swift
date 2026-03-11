@@ -211,7 +211,7 @@ final class CloudSyncManager {
 
       // Update UI state - restart will be needed
       hasError = true
-      errorMessage = "iCloud was disabled in Settings. Please restart the app."
+      errorMessage = String(localized: "iCloud was disabled in Settings. Please restart the app.")
     }
   }
 
@@ -219,7 +219,7 @@ final class CloudSyncManager {
   private func handleSystemCloudEnabled() {
     // Don't automatically enable app sync - let user choose
     // Just clear any error messages
-    if errorMessage == "iCloud was disabled in Settings. Switched to local storage." {
+    if errorMessage == String(localized: "iCloud was disabled in Settings. Please restart the app.") {
       hasError = false
       errorMessage = nil
     }
@@ -241,23 +241,23 @@ final class CloudSyncManager {
         case .noAccount:
           self.isCloudAvailable = false
           self.hasError = true
-          self.errorMessage = "No iCloud account found. Please sign in to iCloud in Settings."
+          self.errorMessage = String(localized: "No iCloud account found. Please sign in to iCloud in Settings.")
         case .restricted:
           self.isCloudAvailable = false
           self.hasError = true
-          self.errorMessage = "iCloud is restricted on this device."
+          self.errorMessage = String(localized: "iCloud is restricted on this device.")
         case .couldNotDetermine:
           self.isCloudAvailable = false
           self.hasError = true
-          self.errorMessage = "Unable to determine iCloud status."
+          self.errorMessage = String(localized: "Unable to determine iCloud status.")
         case .temporarilyUnavailable:
           self.isCloudAvailable = false
           self.hasError = true
-          self.errorMessage = "iCloud is temporarily unavailable."
+          self.errorMessage = String(localized: "iCloud is temporarily unavailable.")
         @unknown default:
           self.isCloudAvailable = false
           self.hasError = true
-          self.errorMessage = "Unknown iCloud status."
+          self.errorMessage = String(localized: "Unknown iCloud status.")
         }
       }
     }
@@ -304,13 +304,13 @@ final class CloudSyncManager {
       isSyncing = true
       switch event.type {
       case .import:
-        syncProgress = isInitialSync ? "Restoring data from iCloud..." : "Downloading from iCloud..."
+        syncProgress = isInitialSync ? String(localized: "Restoring data from iCloud...") : String(localized: "Downloading from iCloud...")
       case .export:
-        syncProgress = "Uploading to iCloud..."
+        syncProgress = String(localized: "Uploading to iCloud...")
       case .setup:
-        syncProgress = "Setting up iCloud sync..."
+        syncProgress = String(localized: "Setting up iCloud sync...")
       @unknown default:
-        syncProgress = "Syncing..."
+        syncProgress = String(localized: "Syncing...")
       }
       // Reset timeout when we receive an in-progress event
       resetSyncTimeout()
@@ -324,12 +324,12 @@ final class CloudSyncManager {
       lastObservedImport = event.endDate
       isObservingSyncActivity = false
       isSyncing = false
-      syncProgress = "Import complete"
+      syncProgress = String(localized: "Import complete")
 
       // Handle initial sync completion
       if isInitialSync {
         initialSyncImportCompleted = true
-        syncProgress = "Data restored from iCloud"
+        syncProgress = String(localized: "Data restored from iCloud")
         isInitialSync = false
       }
 
@@ -338,13 +338,13 @@ final class CloudSyncManager {
       lastObservedExport = event.endDate
       isObservingSyncActivity = false
       isSyncing = false
-      syncProgress = "Export complete"
+      syncProgress = String(localized: "Export complete")
 
     case .setup:
       // Initial CloudKit setup
       isObservingSyncActivity = false
       isSyncing = false
-      syncProgress = "Setup complete"
+      syncProgress = String(localized: "Setup complete")
 
     @unknown default:
       break
@@ -356,19 +356,19 @@ final class CloudSyncManager {
     // Check system requirements (subscription is no longer needed)
     guard isSystemCloudEnabled else {
       hasError = true
-      errorMessage = "iCloud is disabled in Settings. Enable it in 'Settings → [Your Name] → iCloud → Saved to iCloud → Joodle'."
+      errorMessage = String(localized: "iCloud is disabled in Settings. Enable it in 'Settings → [Your Name] → iCloud → Saved to iCloud → Joodle'.")
       return false
     }
 
     guard isCloudAvailable else {
       hasError = true
-      errorMessage = "iCloud is not available. Please check your settings."
+      errorMessage = String(localized: "iCloud is not available. Please check your settings.")
       return false
     }
 
     guard networkMonitor.isConnected else {
       hasError = true
-      errorMessage = "No internet connection. iCloud sync requires an active internet connection."
+      errorMessage = String(localized: "No internet connection. iCloud sync requires an active internet connection.")
       return false
     }
 
@@ -393,7 +393,7 @@ final class CloudSyncManager {
     // Indicate we're expecting sync activity
     isObservingSyncActivity = true
     isSyncing = true
-    syncProgress = "Starting sync..."
+    syncProgress = String(localized: "Starting sync...")
     return true
   }
 
@@ -407,13 +407,13 @@ final class CloudSyncManager {
   /// Reason why sync cannot be enabled (for UI display)
   var syncBlockedReason: String? {
     if !isSystemCloudEnabled {
-      return "iCloud disabled in Settings"
+      return String(localized: "iCloud disabled in Settings")
     }
     if !isCloudAvailable {
-      return "No iCloud account"
+      return String(localized: "No iCloud account")
     }
     if !networkMonitor.isConnected {
-      return "No internet connection"
+      return String(localized: "No internet connection")
     }
     return nil
   }
@@ -496,32 +496,32 @@ final class CloudSyncManager {
 
   var statusMessage: String {
     if !isSystemCloudEnabled {
-      return "iCloud Documents disabled in Settings"
+      return String(localized: "iCloud Documents disabled in Settings")
     } else if !isCloudAvailable {
-      return "iCloud not available"
+      return String(localized: "iCloud not available")
     } else if !networkMonitor.isConnected {
-      return "No internet connection"
+      return String(localized: "No internet connection")
     } else if userPreferences.isCloudSyncEnabled {
-      return "Sync enabled"
+      return String(localized: "Sync enabled")
     } else {
-      return "Sync disabled"
+      return String(localized: "Sync disabled")
     }
   }
 
   /// Detailed sync status message for UI display
   var syncStatusMessage: String {
     if needsSystemSettingsChange {
-      return "iCloud is disabled in iOS Settings. Enable it in \"Settings → [Your Name] → iCloud → Saved to iCloud -> Joodle\" to sync."
+      return String(localized: "iCloud is disabled in iOS Settings. Enable it in \"Settings → [Your Name] → iCloud → Saved to iCloud -> Joodle\" to sync.")
     } else if systemCloudEnabled && !appCloudEnabled {
-      return "Sync is disabled in app. Enable it to sync with iCloud."
+      return String(localized: "Sync is disabled in app. Enable it to sync with iCloud.")
     } else if systemCloudEnabled && appCloudEnabled && isCloudAvailable && networkMonitor.isConnected {
-      return "Sync to iCloud is enabled"
+      return String(localized: "Sync to iCloud is enabled")
     } else if !isCloudAvailable {
-      return "No iCloud available. Sign in to iCloud in Settings."
+      return String(localized: "No iCloud available. Sign in to iCloud in Settings.")
     } else if !networkMonitor.isConnected {
-      return "No internet connection"
+      return String(localized: "No internet connection")
     } else {
-      return "Sync disabled"
+      return String(localized: "Sync disabled")
     }
   }
 
@@ -536,15 +536,16 @@ final class CloudSyncManager {
 
   var syncActivityDescription: String {
     if isSyncing {
-      return syncProgress.isEmpty ? "Syncing..." : syncProgress
+      return syncProgress.isEmpty ? String(localized: "Syncing...") : syncProgress
     } else if isObservingSyncActivity {
-      return "Sync may be in progress"
+      return String(localized: "Sync may be in progress")
     } else if let lastSync = lastObservedSync {
       let formatter = RelativeDateTimeFormatter()
       formatter.unitsStyle = .abbreviated
-      return "Last observed: \(formatter.localizedString(for: lastSync, relativeTo: Date()))"
+      let relativeTime = formatter.localizedString(for: lastSync, relativeTo: Date())
+      return String(localized: "Last observed: \(relativeTime)")
     } else {
-      return "No sync observed yet"
+      return String(localized: "No sync observed yet")
     }
   }
 

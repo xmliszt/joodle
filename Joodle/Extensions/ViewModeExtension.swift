@@ -29,7 +29,7 @@ extension ViewMode: CaseIterable {
     }
   }
 
-  var displayName: String {
+  var displayName: LocalizedStringResource {
     switch self {
     case .now: return "Normal"
     case .year: return "Minimized"

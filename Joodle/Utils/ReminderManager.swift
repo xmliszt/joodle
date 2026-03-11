@@ -318,7 +318,7 @@ class ReminderManager: ObservableObject {
         }
 
         let content = UNMutableNotificationContent()
-        content.title = "Joodle Reminder"
+        content.title = String(localized: "Joodle Reminder")
         content.body = formatNotificationBody(for: reminder)
         content.sound = .default
 
@@ -372,15 +372,17 @@ class ReminderManager: ObservableObject {
 
         // Fallback to default text with formatted date
         guard let date = DayEntry.stringToLocalDate(reminder.dateString) else {
-            return "Time to check your Joodle!"
+            return String(localized: "Time to check your Joodle!")
         }
 
         let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        formatter.calendar = .autoupdatingCurrent
         formatter.dateStyle = .long
         formatter.timeStyle = .none
         let formattedDate = formatter.string(from: date)
 
-        return "Time to check your Joodle for \(formattedDate)"
+        return String(localized: "Time to check your Joodle for \(formattedDate)")
     }
 
     func requestNotificationPermission() {
@@ -471,8 +473,8 @@ class ReminderManager: ObservableObject {
         cancelDailyReminder()
 
         let content = UNMutableNotificationContent()
-        content.title = "Time to Joodle 🌸"
-        content.body = "Capture today's moment in Joodle."
+        content.title = String(localized: "Time to Joodle 🌸")
+        content.body = String(localized: "Capture today's moment in Joodle.")
         content.sound = .default
 
         // Use userInfo to indicate this is a daily reminder that should navigate to today

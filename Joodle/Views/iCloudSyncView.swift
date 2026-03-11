@@ -450,8 +450,8 @@ struct TroubleshootingView: View {
 // MARK: - Helper View
 struct TroubleshootingStep: View {
   let number: String
-  let title: String
-  let description: String
+  let title: LocalizedStringResource
+  let description: LocalizedStringResource
 
   var body: some View {
     HStack(alignment: .top, spacing: 12) {

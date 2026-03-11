@@ -23,9 +23,9 @@ import SwiftUI
 /// }
 /// ```
 struct TutorialView: View {
-    let title: String
+    let title: LocalizedStringResource
     let screenshots: [ScreenshotItem]
-    var description: String? = nil
+    var description: LocalizedStringResource? = nil
 
     var body: some View {
         VStack(spacing: 16) {
@@ -45,9 +45,9 @@ struct TutorialView: View {
 
             Spacer()
         }
-        .navigationTitle(title)
+        .navigationTitle(Text(title))
         .navigationBarTitleDisplayMode(.inline)
-        .postHogScreenView("Tutorial - \(title)")
+        .postHogScreenView("Tutorial - \(String(localized: title))")
     }
 }
 

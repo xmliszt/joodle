@@ -8,60 +8,45 @@
 import Foundation
 
 struct CountdownHelper {
-  private static var resolvedLanguageCode: String {
-    if let resolved = Bundle.main.preferredLocalizations.first, !resolved.isEmpty {
-      return resolved
-    }
-
-    if let fallback = Locale.current.language.languageCode?.identifier, !fallback.isEmpty {
-      return fallback
-    }
-
-    return "en"
+  private static var locale: Locale {
+    Locale.autoupdatingCurrent
   }
 
-  private static var isChineseLocale: Bool {
-    resolvedLanguageCode.hasPrefix("zh")
+  private static var calendar: Calendar {
+    var value = Calendar.autoupdatingCurrent
+    value.locale = locale
+    return value
   }
 
-  private static func yearPart(_ years: Int) -> String {
-    if isChineseLocale {
-      return "\(years)年"
-    }
-    return years == 1 ? "1 year" : "\(years) years"
-  }
+  private static func localizedDurationString(years: Int, months: Int, days: Int, includeYears: Bool) -> String? {
+    let formatter = DateComponentsFormatter()
+    formatter.calendar = calendar
+    formatter.unitsStyle = .full
+    formatter.zeroFormattingBehavior = .dropAll
+    formatter.maximumUnitCount = includeYears ? 3 : 2
+    formatter.allowedUnits = includeYears ? [.year, .month, .day] : [.month, .day]
 
-  private static func monthPart(_ months: Int) -> String {
-    if isChineseLocale {
-      return "\(months)个月"
+    var components = DateComponents()
+    if includeYears {
+      components.year = years
     }
-    return months == 1 ? "1 month" : "\(months) months"
-  }
+    components.month = months
+    components.day = days
 
-  private static func dayPart(_ days: Int) -> String {
-    if isChineseLocale {
-      return "\(days)天"
-    }
-    return days == 1 ? "1 day" : "\(days) days"
-  }
-
-  private static func inPrefix(_ text: String) -> String {
-    if isChineseLocale {
-      return "还有\(text)"
-    }
-    return "in " + text
+    return formatter.string(from: components)
   }
 
   /// Generate countdown text from now to target date
   /// Returns the formatted countdown string (e.g., "Tomorrow", "in 2 days", etc.)
   /// For entries 1 calendar day away, shows "Tomorrow" since Joodle tracks days, not timestamps
   static func countdownText(from now: Date, to targetDate: Date) -> String {
-    let calendar = Calendar.current
-
     // Calculate calendar day difference (ignoring time of day)
     let startOfToday = calendar.startOfDay(for: now)
     let startOfTarget = calendar.startOfDay(for: targetDate)
     let calendarDayDiff = calendar.dateComponents([.day], from: startOfToday, to: startOfTarget).day ?? 0
+
+    // Only future dates have countdown text
+    guard calendarDayDiff > 0 else { return "" }
 
     // Use time-based components for months and years display
     let components = calendar.dateComponents(
@@ -77,47 +62,35 @@ struct CountdownHelper {
 
     // More than a year: show year + month + day
     if years > 0 {
-      var parts: [String] = []
-
-      parts.append(yearPart(years))
-
-      if months > 0 {
-        parts.append(monthPart(months))
+      if let duration = localizedDurationString(years: years, months: months, days: days, includeYears: true) {
+        return String(localized: "in \(duration)")
       }
-
-      if days > 0 {
-        parts.append(dayPart(days))
-      }
-
-      let separator = isChineseLocale ? "" : ", "
-      return inPrefix(parts.joined(separator: separator))
+      return ""
     }
 
     // More than a month but less than a year: show month + day
     if months > 0 {
-      var parts: [String] = []
-
-      parts.append(monthPart(months))
-
-      if days > 0 {
-        parts.append(dayPart(days))
+      if let duration = localizedDurationString(years: years, months: months, days: days, includeYears: false) {
+        return String(localized: "in \(duration)")
       }
-
-      let separator = isChineseLocale ? "" : ", "
-      return inPrefix(parts.joined(separator: separator))
+      return ""
     }
 
     // Less than a month: use calendar day difference for accuracy
     // This ensures D+1 shows "Tomorrow" and D+2 shows "in 2 days"
     // regardless of the current time of day
     if calendarDayDiff > 1 {
-      return inPrefix(dayPart(calendarDayDiff))
+      let relativeFormatter = RelativeDateTimeFormatter()
+      relativeFormatter.locale = locale
+      relativeFormatter.calendar = calendar
+      relativeFormatter.unitsStyle = .full
+      return relativeFormatter.localizedString(for: startOfTarget, relativeTo: startOfToday)
     }
 
     // 1 calendar day away: show "Tomorrow"
     // This is because Joodle tracks entries by day, not by exact timestamp
     if calendarDayDiff == 1 {
-      return isChineseLocale ? "明天" : "Tomorrow"
+      return String(localized: "Tomorrow")
     }
 
     return ""
@@ -126,6 +99,8 @@ struct CountdownHelper {
   /// Format date as "MMM d, yyyy" (e.g., "Jan 15, 2025")
   static func dateText(for date: Date) -> String {
     let formatter = DateFormatter()
+    formatter.calendar = calendar
+    formatter.locale = locale
     formatter.setLocalizedDateFormatFromTemplate("yMMMd")
     return formatter.string(from: date)
   }

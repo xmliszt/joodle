@@ -599,33 +599,32 @@ struct PaywallContentView: View {
 
   /// Formats a subscription period into a user-friendly string (e.g., "7-Day", "1-Month", "3-Month")
   private func formatTrialPeriod(_ period: Product.SubscriptionPeriod) -> String {
-    if LocaleProvider.currentLanguageCode.hasPrefix("zh") {
-      switch period.unit {
-      case .day:
-        return "\(period.value)天"
-      case .week:
-        return "\(period.value * 7)天"
-      case .month:
-        return "\(period.value)个月"
-      case .year:
-        return "\(period.value)年"
-      @unknown default:
-        return "免费"
-      }
-    }
+    let formatter = DateComponentsFormatter()
+    formatter.unitsStyle = .full
+    formatter.maximumUnitCount = 1
+    formatter.zeroFormattingBehavior = .dropAll
+    formatter.calendar = .autoupdatingCurrent
 
+    var components = DateComponents()
     switch period.unit {
     case .day:
-      return period.value == 1 ? "1-Day" : "\(period.value)-Day"
+      formatter.allowedUnits = [.day]
+      components.day = period.value
     case .week:
-      return period.value == 1 ? "7-Day" : "\(period.value * 7)-Day"
+      // Normalize weeks to days to avoid locale-specific week abbreviation output.
+      formatter.allowedUnits = [.day]
+      components.day = period.value * 7
     case .month:
-      return period.value == 1 ? "1-Month" : "\(period.value)-Month"
+      formatter.allowedUnits = [.month]
+      components.month = period.value
     case .year:
-      return period.value == 1 ? "1-Year" : "\(period.value)-Year"
+      formatter.allowedUnits = [.year]
+      components.year = period.value
     @unknown default:
-      return nil ?? "Free"
+      return String(localized: "Free")
     }
+
+    return formatter.string(from: components) ?? String(localized: "Free")
   }
 
   private func handleSlideComplete() {

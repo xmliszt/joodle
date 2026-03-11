@@ -8,10 +8,10 @@ import SwiftUI
 /// A consistent layout wrapper for all feature introduction steps.
 /// Layout: Back button (top-left) → Title → Screenshot Carousel → Description → CTA Button
 struct FeatureIntroStepView: View {
-    let title: String
-    let description: String
+    let title: LocalizedStringResource
+    let description: LocalizedStringResource
     let screenshots: [ScreenshotItem]
-    let buttonLabel: String
+    let buttonLabel: LocalizedStringResource
     let onContinue: () -> Void
     var onBack: (() -> Void)? = nil
     var autoScrollInterval: TimeInterval = 3.0

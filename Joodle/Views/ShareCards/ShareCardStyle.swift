@@ -36,7 +36,34 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     }
   }
 
-  var description: String {
+  var displayName: LocalizedStringResource {
+    switch self {
+    case .minimal:
+      return "Minimal"
+    case .excerpt:
+      return "Excerpt"
+    case .detailed:
+      return "Detailed"
+    case .anniversary:
+      return "Anniversary"
+    case .weekGrid:
+      return "Week Grid"
+    case .monthGrid:
+      return "Month Grid"
+    case .yearGridDots:
+      return "Year Grid"
+    case .yearGridJoodles:
+      return "Year Grid with Joodles"
+    case .yearGridJoodlesOnly:
+      return "Year Grid with Joodles Only"
+    case .animatedMinimalVideo:
+      return "Minimal Video"
+    case .animatedExcerptVideo:
+      return "Excerpt Video"
+    }
+  }
+
+  var description: LocalizedStringResource {
     switch self {
     case .minimal:
       return "Doodle only"

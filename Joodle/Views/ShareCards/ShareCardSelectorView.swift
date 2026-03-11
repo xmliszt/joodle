@@ -104,16 +104,16 @@ struct ShareCardSelectorView: View {
 
   private var navigationTitle: String {
     if selectedStyle.isWeekStyle {
-      return "Share Your Week"
+      return String(localized: "Share Your Week")
     }
     if selectedStyle.isMonthStyle {
-      return "Share Your Month"
+      return String(localized: "Share Your Month")
     }
     switch mode {
     case .entry:
-      return "Share Your Day"
+      return String(localized: "Share Your Day")
     case .yearGrid(let year):
-      return "Share Year \(year)"
+      return String(localized: "Share Year \(year)")
     }
   }
 
@@ -171,7 +171,7 @@ struct ShareCardSelectorView: View {
             // Style info
             VStack(spacing: 8) {
               HStack(spacing: 8) {
-                Text(selectedStyle.rawValue)
+                Text(selectedStyle.displayName)
                   .font(.appFont(size: 16, weight: .bold))
                   .foregroundColor(.textColor)
               }

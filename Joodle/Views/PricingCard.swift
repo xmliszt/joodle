@@ -254,33 +254,32 @@ struct PricingCard: View {
 
   /// Formats a subscription period into a user-friendly string
   private func formatTrialPeriod(_ period: Product.SubscriptionPeriod) -> String {
-    if LocaleProvider.currentLanguageCode.hasPrefix("zh") {
-      switch period.unit {
-      case .day:
-        return "\(period.value)天"
-      case .week:
-        return "\(period.value * 7)天"
-      case .month:
-        return "\(period.value)个月"
-      case .year:
-        return "\(period.value)年"
-      @unknown default:
-        return "免费"
-      }
-    }
+    let formatter = DateComponentsFormatter()
+    formatter.unitsStyle = .full
+    formatter.maximumUnitCount = 1
+    formatter.zeroFormattingBehavior = .dropAll
+    formatter.calendar = .autoupdatingCurrent
 
+    var components = DateComponents()
     switch period.unit {
     case .day:
-      return period.value == 1 ? "1-day" : "\(period.value)-day"
+      formatter.allowedUnits = [.day]
+      components.day = period.value
     case .week:
-      return period.value == 1 ? "7-day" : "\(period.value * 7)-day"
+      // Normalize weeks to days to avoid locale-specific week abbreviation output.
+      formatter.allowedUnits = [.day]
+      components.day = period.value * 7
     case .month:
-      return period.value == 1 ? "1-month" : "\(period.value)-month"
+      formatter.allowedUnits = [.month]
+      components.month = period.value
     case .year:
-      return period.value == 1 ? "1-year" : "\(period.value)-year"
+      formatter.allowedUnits = [.year]
+      components.year = period.value
     @unknown default:
-      return "free"
+      return String(localized: "Free")
     }
+
+    return formatter.string(from: components) ?? String(localized: "Free")
   }
 }
 

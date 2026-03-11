@@ -118,7 +118,7 @@ enum ArrowDirection {
 // MARK: - Tooltip Bubble
 
 struct TooltipBubble: View {
-    let message: String
+    let message: LocalizedStringResource
     let arrowDirection: ArrowDirection
     let maxWidth: CGFloat
 

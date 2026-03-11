@@ -61,15 +61,15 @@ enum ChangelogServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Invalid API URL"
+            return String(localized: "Invalid API URL")
         case .networkError(let error):
-            return "Network error: \(error.localizedDescription)"
+            return String(localized: "Network error: \(error.localizedDescription)")
         case .decodingError(let error):
-            return "Failed to parse response: \(error.localizedDescription)"
+            return String(localized: "Failed to parse response: \(error.localizedDescription)")
         case .notFound:
-            return "Changelog not found"
+            return String(localized: "Changelog not found")
         case .serverError(let code):
-            return "Server error: \(code)"
+            return String(localized: "Server error: \(code)")
         }
     }
 }

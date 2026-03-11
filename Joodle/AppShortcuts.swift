@@ -127,7 +127,7 @@ struct JoodleShortcuts: AppShortcutsProvider {
         "\(.applicationName) today",
         "Today in \(.applicationName)"
       ],
-      shortTitle: "Joodle Today",
+      shortTitle: LocalizedStringResource("Joodle Today"),
       systemImageName: "pencil.tip.crop.circle"
     )
 
@@ -142,7 +142,7 @@ struct JoodleShortcuts: AppShortcutsProvider {
         "Next \(.applicationName) event",
         "Next anniversary in \(.applicationName)"
       ],
-      shortTitle: "Next Anniversary",
+      shortTitle: LocalizedStringResource("Next Anniversary"),
       systemImageName: "calendar.badge.clock"
     )
 
@@ -152,7 +152,7 @@ struct JoodleShortcuts: AppShortcutsProvider {
         "Open \(.applicationName)",
         "Show \(.applicationName)"
       ],
-      shortTitle: "Open Joodle",
+      shortTitle: LocalizedStringResource("Open Joodle"),
       systemImageName: "scribble.variable"
     )
   }

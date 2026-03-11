@@ -450,7 +450,11 @@ struct MockUIElementsView: View {
 
         Section("Step Types") {
             ForEach(TutorialStepType.allCases) { type in
-                Label(type.title, systemImage: type.icon)
+                Label {
+                    Text(type.title)
+                } icon: {
+                    Image(systemName: type.icon)
+                }
             }
         }
     }

@@ -37,7 +37,7 @@ struct RemoteAlert: Codable, Identifiable, Equatable {
 
         var id: String { rawValue }
 
-        var displayName: String {
+        var displayName: LocalizedStringResource {
             switch self {
             case .promo: return "Promotions"
             case .community: return "Community"
@@ -45,7 +45,7 @@ struct RemoteAlert: Codable, Identifiable, Equatable {
             }
         }
 
-        var description: String {
+        var description: LocalizedStringResource {
             switch self {
             case .promo: return "Special offers and promotions"
             case .community: return "Discord, events, and community updates"

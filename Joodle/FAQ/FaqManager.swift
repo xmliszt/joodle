@@ -64,7 +64,7 @@ final class FaqManager: ObservableObject {
             } else {
                 // No cached data available
                 sections = []
-                errorMessage = "Unable to load FAQs. Please check your connection and try again."
+                errorMessage = String(localized: "Unable to load FAQs. Please check your connection and try again.")
                 print("📖 [FaqManager] No FAQs available (no cache)")
             }
 

@@ -166,10 +166,12 @@ struct EntryEditingView: View {
 
   private var weekdayLabel: String {
     guard let date else { return "" }
-    if isToday { return "Today" }
+    if isToday { return String(localized: "Today") }
     // Format to weekday (e.g. Monday, Tuesday)
     let formatter = DateFormatter()
-    formatter.dateFormat = "EEEE"
+    formatter.locale = .autoupdatingCurrent
+    formatter.calendar = .autoupdatingCurrent
+    formatter.setLocalizedDateFormatFromTemplate("EEEE")
     return formatter.string(from: date)
   }
 

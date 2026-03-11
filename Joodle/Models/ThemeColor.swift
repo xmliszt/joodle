@@ -25,7 +25,28 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
 
     /// The display name shown to users
     var displayName: String {
-        rawValue
+        switch self {
+        case .orange:
+            return String(localized: "Orange")
+        case .blue:
+            return String(localized: "Blue")
+        case .brown:
+            return String(localized: "Brown")
+        case .green:
+            return String(localized: "Green")
+        case .pink:
+            return String(localized: "Pink")
+        case .purple:
+            return String(localized: "Purple")
+        case .red:
+            return String(localized: "Red")
+        case .teal:
+            return String(localized: "Teal")
+        case .yellow:
+            return String(localized: "Yellow")
+        case .neutral:
+            return String(localized: "Neutral")
+        }
     }
 
     /// The Color from the asset catalog

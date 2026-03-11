@@ -129,7 +129,7 @@ class StoreKitManager: NSObject, ObservableObject {
 
                 Expected IDs: \(productIDs.joined(separator: ", "))
                 """
-                errorMessage = "Unable to load subscription plans. Please try again later."
+                errorMessage = String(localized: "Unable to load subscription plans. Please try again later.")
                 print("⚠️ StoreKit: \(troubleshootingMessage)")
             }
         } catch let error as StoreKitError {
@@ -138,7 +138,7 @@ class StoreKitManager: NSObject, ObservableObject {
             print("❌ StoreKit Error (StoreKitError): \(error)")
             print("❌ Detailed: \(detailedError)")
         } catch {
-            errorMessage = "Failed to load products: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to load products: \(error.localizedDescription)")
             print("❌ StoreKit Error: \(error)")
             print("❌ Error type: \(type(of: error))")
             print("❌ Full error description: \(String(describing: error))")
@@ -168,21 +168,21 @@ class StoreKitManager: NSObject, ObservableObject {
     private func handleStoreKitError(_ error: StoreKitError) -> String {
         switch error {
         case .unknown:
-            return "Unknown StoreKit error. Check App Store Connect configuration."
+            return String(localized: "Unknown StoreKit error. Check App Store Connect configuration.")
         case .userCancelled:
-            return "Request was cancelled."
+            return String(localized: "Request was cancelled.")
         case .networkError(let underlyingError):
-            return "Network error: \(underlyingError.localizedDescription). Check internet connection."
+            return String(localized: "Network error: \(underlyingError.localizedDescription). Check internet connection.")
         case .systemError(let underlyingError):
-            return "System error: \(underlyingError.localizedDescription)"
+            return String(localized: "System error: \(underlyingError.localizedDescription)")
         case .notAvailableInStorefront:
-            return "Products not available in your region. Check App Store Connect territories."
+            return String(localized: "Products not available in your region. Check App Store Connect territories.")
         case .notEntitled:
-            return "Not entitled to access these products."
+            return String(localized: "Not entitled to access these products.")
         case .unsupported:
-            return "This device is not capable of making payments."
+            return String(localized: "This device is not capable of making payments.")
         @unknown default:
-            return "Unexpected StoreKit error: \(error.localizedDescription)"
+            return String(localized: "Unexpected StoreKit error: \(error.localizedDescription)")
         }
     }
 
@@ -261,7 +261,7 @@ class StoreKitManager: NSObject, ObservableObject {
                 AnalyticsManager.shared.trackSubscriptionRestored(productId: productId)
             }
         } catch {
-            errorMessage = "Failed to restore purchase: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to restore purchase: \(error.localizedDescription)")
             debugPrint("Failed to restore purchase: \(error)")
             AnalyticsManager.shared.trackRestorePurchasesAttempted(success: false)
         }

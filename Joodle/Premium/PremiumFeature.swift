@@ -22,7 +22,7 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
 
     // MARK: - Feature Metadata
 
-    var name: String {
+    var name: LocalizedStringResource {
         switch self {
         case .unlimitedJoodles:
             return "Unlimited Joodles"
@@ -33,7 +33,7 @@ enum PremiumFeature: String, CaseIterable, Identifiable {
         }
     }
 
-    var description: String {
+    var description: LocalizedStringResource {
         switch self {
         case .unlimitedJoodles:
             return "Draw as much as you want, no limits"

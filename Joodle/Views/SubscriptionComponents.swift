@@ -11,7 +11,7 @@ import SwiftUI
 
 struct FeatureRow: View {
   let icon: String
-  let title: String
+  let title: LocalizedStringResource
   
   var body: some View {
     HStack(alignment: .center, spacing: 8) {

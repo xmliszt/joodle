@@ -151,8 +151,14 @@ private struct ColorCircleButton: View {
         }
         .buttonStyle(.plain)
         .circularGlassButton(tintColor: isNeutralColor ? .gray : colorInfo.color)
-        .accessibilityLabel("\(colorInfo.displayName) color\(isSelected ? ", selected" : "")\(colorInfo.isLocked ? ", locked" : "")")
-        .accessibilityHint(colorInfo.isLocked ? "Requires premium subscription" : "Tap to select this color")
+        .accessibilityLabel(
+            String(localized: "\(colorInfo.displayName) color\(isSelected ? ", selected" : "")\(colorInfo.isLocked ? ", locked" : "")")
+        )
+        .accessibilityHint(
+            colorInfo.isLocked
+                ? String(localized: "Requires premium subscription")
+                : String(localized: "Tap to select this color")
+        )
     }
 }
 

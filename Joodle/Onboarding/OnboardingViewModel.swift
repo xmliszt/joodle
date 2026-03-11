@@ -291,7 +291,7 @@ class OnboardingViewModel: ObservableObject {
     }
 
     /// Reason why iCloud sync cannot be enabled
-    var cloudSyncBlockedReason: String? {
+    var cloudSyncBlockedReason: LocalizedStringResource? {
         let syncManager = CloudSyncManager.shared
         if !syncManager.systemCloudEnabled {
             return "iCloud is disabled in Settings"

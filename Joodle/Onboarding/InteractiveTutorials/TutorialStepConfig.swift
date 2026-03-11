@@ -20,7 +20,7 @@ enum TutorialStepType: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
         case .scrubbing: return "Browse Your Joodles"
         case .quickSwitchToday: return "Quick Travel to Today"
@@ -118,12 +118,12 @@ enum TutorialPrerequisite {
 
 /// Configuration for a tutorial tooltip
 struct TutorialTooltip {
-    let message: String
+    let message: LocalizedStringResource
     let position: TooltipPosition
     let maxWidth: CGFloat
 
     init(
-        message: String,
+        message: LocalizedStringResource,
         position: TooltipPosition = .auto,
         maxWidth: CGFloat = 280
     ) {

@@ -469,35 +469,44 @@ class SubscriptionManager: ObservableObject {
         if !willAutoRenew {
             if let expirationDate = subscriptionExpirationDate {
                 let formatter = DateFormatter()
+                formatter.locale = .autoupdatingCurrent
+                formatter.calendar = .autoupdatingCurrent
                 formatter.dateStyle = .medium
-                return "Expires \(formatter.string(from: expirationDate))"
+                let formattedDate = formatter.string(from: expirationDate)
+                return String(localized: "Expires \(formattedDate)")
             }
-            return "Subscription ending"
+            return String(localized: "Subscription ending")
         }
 
         if hasRedeemedOfferCode {
             if let expirationDate = subscriptionExpirationDate {
                 let formatter = DateFormatter()
+                formatter.locale = .autoupdatingCurrent
+                formatter.calendar = .autoupdatingCurrent
                 formatter.dateStyle = .medium
-                return "Promo ends \(formatter.string(from: expirationDate))"
+                let formattedDate = formatter.string(from: expirationDate)
+                return String(localized: "Promo ends \(formattedDate)")
             }
-            return "Promo code active"
+            return String(localized: "Promo code active")
         }
 
         if isInTrialPeriod {
             if let expirationDate = subscriptionExpirationDate {
                 let formatter = DateFormatter()
+                formatter.locale = .autoupdatingCurrent
+                formatter.calendar = .autoupdatingCurrent
                 formatter.dateStyle = .medium
+                let formattedDate = formatter.string(from: expirationDate)
                 // Check if there's a pending offer code - promo activates after trial ends
                 if hasPendingOfferCode {
-                    return "Trial ends \(formatter.string(from: expirationDate)) • Promo next"
+                    return String(localized: "Trial ends \(formattedDate) • Promo next")
                 }
-                return "Trial ends \(formatter.string(from: expirationDate))"
+                return String(localized: "Trial ends \(formattedDate)")
             }
             if hasPendingOfferCode {
-                return "Free trial • Promo code applied"
+                return String(localized: "Free trial • Promo code applied")
             }
-            return "Free trial active"
+            return String(localized: "Free trial active")
         }
 
         return nil
@@ -511,6 +520,8 @@ class SubscriptionManager: ObservableObject {
     func formatExpirationDate(_ date: Date?) -> String? {
         guard let date = date else { return nil }
         let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        formatter.calendar = .autoupdatingCurrent
         formatter.dateStyle = .long
         formatter.timeStyle = .none
         return formatter.string(from: date)
