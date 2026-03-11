@@ -4198,7 +4198,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "向外捏合缩放以返回常规视图"
+            "value" : "双指向外放大以返回常规视图"
           }
         }
       }
