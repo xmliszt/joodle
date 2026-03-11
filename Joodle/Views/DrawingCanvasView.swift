@@ -57,6 +57,11 @@ struct DrawingCanvasView: View {
   /// Prevents `.onDisappear` from double-saving after `onChange(of: isShowing)` or `saveDrawing()` already saved.
   @State private var didSaveOnDismiss = false
 
+  /// Whether `loadExistingDrawing()` has run for the current session.
+  /// Guards save operations so a hidden canvas that was never loaded
+  /// (e.g. DI device entry-switch) cannot overwrite another entry's doodle data.
+  @State private var drawingStateLoaded = false
+
   // Inspiration prompt state
   @State private var currentPrompt: String? = nil
   @State private var promptID = UUID()
@@ -211,6 +216,7 @@ struct DrawingCanvasView: View {
         currentPathIsDot = false
         undoStack.removeAll()
         redoStack.removeAll()
+        drawingStateLoaded = false
       }
     }
     .onChange(of: subscriptionManager.hasPremiumAccess) { _, _ in
@@ -453,6 +459,11 @@ struct DrawingCanvasView: View {
   }
 
   private func loadExistingDrawing() {
+    // Mark that we've loaded (or attempted to load) drawing state for this
+    // session. This makes the canvas authoritative — save operations are
+    // allowed only after this flag is set.
+    drawingStateLoaded = true
+
     // Reset inspiration prompt for new session
     currentPrompt = nil
     isIlluminated = false
@@ -555,6 +566,7 @@ struct DrawingCanvasView: View {
   }
 
   private func saveMockDrawing() {
+    guard drawingStateLoaded else { return }
     guard let mockStore = mockStore else { return }
 
     // Convert paths to data
@@ -592,6 +604,11 @@ struct DrawingCanvasView: View {
   }
 
   private func saveDrawingToStore() {
+    // If the canvas was never loaded (e.g. hidden DI canvas torn down on
+    // entry switch), skip saving to avoid overwriting another entry's doodle
+    // with empty paths.
+    guard drawingStateLoaded else { return }
+
     // Defense-in-depth: if the entry was deleted (e.g. via EntryEditingView)
     // but this view still holds a stale reference, bail out to avoid
     // re-inserting it through findOrCreate.
