@@ -254,6 +254,21 @@ struct PricingCard: View {
 
   /// Formats a subscription period into a user-friendly string
   private func formatTrialPeriod(_ period: Product.SubscriptionPeriod) -> String {
+    if LocaleProvider.currentLanguageCode.hasPrefix("zh") {
+      switch period.unit {
+      case .day:
+        return "\(period.value)天"
+      case .week:
+        return "\(period.value * 7)天"
+      case .month:
+        return "\(period.value)个月"
+      case .year:
+        return "\(period.value)年"
+      @unknown default:
+        return "免费"
+      }
+    }
+
     switch period.unit {
     case .day:
       return period.value == 1 ? "1-day" : "\(period.value)-day"

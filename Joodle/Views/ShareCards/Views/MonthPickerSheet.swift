@@ -17,7 +17,7 @@ struct MonthPickerSheet: View {
   /// Month labels for the picker, e.g. "January 2026", "February 2026", ...
   private var monthOptions: [(index: Int, label: String)] {
     let formatter = DateFormatter()
-    formatter.dateFormat = "MMMM yyyy"
+    formatter.setLocalizedDateFormatFromTemplate("yMMMM")
     return (1...12).compactMap { month in
       let components = DateComponents(year: year, month: month, day: 1)
       guard let date = Calendar.current.date(from: components) else { return nil }

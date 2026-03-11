@@ -21,8 +21,8 @@ private struct RemotePromptsResponse: Codable {
 actor RemotePromptsService {
   static let shared = RemotePromptsService()
 
-  private let endpoint = URL(string: "https://liyuxuan.dev/api/prompts/joodle")!
-  private var cachedPrompts: [String]?
+  private let baseEndpoint = "https://liyuxuan.dev/api/prompts/joodle"
+  private var cachedPromptsByLocale: [String: [String]] = [:]
 
   private init() {}
 
@@ -30,9 +30,14 @@ actor RemotePromptsService {
   /// Returns the cached result if available; otherwise performs a network request.
   /// Throws on network or decoding failure — callers should handle errors silently.
   func fetchPrompts() async throws -> [String] {
-    if let cached = cachedPrompts {
+    let locale = LocaleProvider.currentLanguageCode
+    if let cached = cachedPromptsByLocale[locale] {
       print("🎨 [Prompts] Returning \(cached.count) prompts from in-memory cache")
       return cached
+    }
+
+    guard let endpoint = localizedEndpoint(locale: locale) else {
+      throw URLError(.badURL)
     }
 
     print("🎨 [Prompts] Fetching prompts from remote: \(endpoint.absoluteString)")
@@ -43,8 +48,19 @@ actor RemotePromptsService {
     }
 
     let decoded = try JSONDecoder().decode(RemotePromptsResponse.self, from: data)
-    cachedPrompts = decoded.prompts
+    cachedPromptsByLocale[locale] = decoded.prompts
     print("🎨 [Prompts] Successfully fetched \(decoded.prompts.count) prompts from remote")
     return decoded.prompts
+  }
+
+  private func localizedEndpoint(locale: String) -> URL? {
+    guard var components = URLComponents(string: baseEndpoint) else {
+      return nil
+    }
+
+    components.queryItems = [
+      URLQueryItem(name: "locale", value: locale)
+    ]
+    return components.url
   }
 }

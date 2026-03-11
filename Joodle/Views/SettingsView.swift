@@ -98,6 +98,13 @@ struct MembershipBannerView: View {
   let joodleCount: Int
   let alarmCount: Int
   let onTap: () -> Void
+
+  private func daySuffix(for count: Int) -> String {
+    if LocaleProvider.currentLanguageCode.hasPrefix("zh") {
+      return ""
+    }
+    return count == 1 ? "" : "s"
+  }
   
   var body: some View {
     Button(action: onTap) {
@@ -123,7 +130,7 @@ struct MembershipBannerView: View {
           
           if hasPremiumAccess {
             if isInGracePeriod {
-              Text("Free access · \(gracePeriodDaysRemaining) day\(gracePeriodDaysRemaining == 1 ? "" : "s") left")
+              Text("Free access · \(gracePeriodDaysRemaining) day\(daySuffix(for: gracePeriodDaysRemaining)) left")
                 .font(.appSubheadline())
                 .foregroundColor(.white.opacity(0.9))
             } else if let statusMessage = statusMessage {

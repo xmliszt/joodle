@@ -26,7 +26,11 @@ final class RemoteAlertService: ObservableObject {
 
     /// API endpoint for fetching alerts
     private var endpoint: URL {
-      return URL(string: "https://liyuxuan.dev/api/alerts/joodle")!
+            var components = URLComponents(string: "https://liyuxuan.dev/api/alerts/joodle")!
+            components.queryItems = [
+                URLQueryItem(name: "locale", value: LocaleProvider.currentLanguageCode)
+            ]
+            return components.url!
     }
 
     /// UserDefaults key for storing the last dismissed alert ID

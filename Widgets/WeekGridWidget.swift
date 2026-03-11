@@ -215,11 +215,11 @@ struct WeekGridWidgetContentView: View {
     let endMonth = calendar.component(.month, from: lastDate)
 
     let monthDayFormatter = DateFormatter()
-    monthDayFormatter.dateFormat = "MMM d"
+    monthDayFormatter.setLocalizedDateFormatFromTemplate("MMMd")
 
     if startMonth == endMonth {
       let dayFormatter = DateFormatter()
-      dayFormatter.dateFormat = "d"
+      dayFormatter.setLocalizedDateFormatFromTemplate("d")
       return "\(monthDayFormatter.string(from: firstDate)) – \(dayFormatter.string(from: lastDate))"
     } else {
       return "\(monthDayFormatter.string(from: firstDate)) – \(monthDayFormatter.string(from: lastDate))"

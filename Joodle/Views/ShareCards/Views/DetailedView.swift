@@ -9,7 +9,7 @@ struct DetailedView: View {
 
   private var dateString: String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "EEE, dd MMM yyyy"
+    formatter.setLocalizedDateFormatFromTemplate("EEE d MMM y")
     return formatter.string(from: date)
   }
 

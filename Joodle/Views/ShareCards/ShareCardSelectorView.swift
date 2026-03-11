@@ -128,7 +128,7 @@ struct ShareCardSelectorView: View {
   /// Formatted week date range string for navigation display
   private var weekDateRangeString: String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "MMM d"
+    formatter.setLocalizedDateFormatFromTemplate("MMMd")
     let endDate = Calendar.current.date(byAdding: .day, value: 6, to: selectedWeekStart) ?? selectedWeekStart
     return "\(formatter.string(from: selectedWeekStart)) - \(formatter.string(from: endDate))"
   }
@@ -136,7 +136,7 @@ struct ShareCardSelectorView: View {
   /// Formatted month string for navigation display
   private var monthDisplayString: String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "MMMM yyyy"
+    formatter.setLocalizedDateFormatFromTemplate("yMMMM")
     let components = DateComponents(year: currentModeYear, month: selectedMonth, day: 1)
     guard let date = Calendar.current.date(from: components) else { return "" }
     return formatter.string(from: date)

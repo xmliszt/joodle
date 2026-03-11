@@ -14,6 +14,7 @@
 		FA8A958E2EE5CCF300FF871C /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA8A958D2EE5CCF300FF871C /* StoreKit.framework */; };
 		FAB12DE32ED57E2F00F6006A /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D4512EB7AECA007D82EE /* SwiftUI.framework */; };
 		FABBB5B92F1BB53300B0C947 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = FABBB5B82F1BB53300B0C947 /* PostHog */; };
+		FAC5DDDE2F6110B300751BF5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FAC5DDDD2F6110B300751BF5 /* Localizable.xcstrings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +63,7 @@
 		FA85D4732EB7AFC5007D82EE /* WidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WidgetsExtension.entitlements; sourceTree = "<group>"; };
 		FA88AA2D2EE41776009AEFEB /* Joodle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Joodle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA8A958D2EE5CCF300FF871C /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		FAC5DDDD2F6110B300751BF5 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		FADC35942E48C2E2007AE111 /* JoodleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JoodleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FADC359E2E48C2E2007AE111 /* JoodleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JoodleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -186,6 +188,7 @@
 		FADC357A2E48C2E1007AE111 = {
 			isa = PBXGroup;
 			children = (
+				FAC5DDDD2F6110B300751BF5 /* Localizable.xcstrings */,
 				FA80CBF12EE9D05200E3BD1E /* Store.storekit */,
 				FAE73C552EC0D32800AFCED7 /* Shared */,
 				FA85D4732EB7AFC5007D82EE /* WidgetsExtension.entitlements */,
@@ -344,6 +347,7 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
 			);
 			mainGroup = FADC357A2E48C2E1007AE111;
 			minimizedProjectReferenceProxies = 1;
@@ -376,6 +380,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FAC5DDDE2F6110B300751BF5 /* Localizable.xcstrings in Resources */,
 				FA80CBF22EE9D05200E3BD1E /* Store.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -660,6 +665,7 @@
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -719,6 +725,7 @@
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;

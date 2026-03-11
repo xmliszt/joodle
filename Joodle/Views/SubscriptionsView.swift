@@ -17,6 +17,13 @@ struct SubscriptionsView: View {
   @State private var showRedeemCode = false
   @State private var showManagePlanSheet = false
 
+  private func daySuffix(for count: Int) -> String {
+    if LocaleProvider.currentLanguageCode.hasPrefix("zh") {
+      return ""
+    }
+    return count == 1 ? "" : "s"
+  }
+
   /// The current product comes directly from StoreKitManager for accuracy
   private var currentProduct: Product? {
     storeManager.currentProduct
@@ -179,7 +186,7 @@ struct SubscriptionsView: View {
           .font(.appFont(size: 28, weight: .bold))
 
         let daysLeft = GracePeriodManager.shared.gracePeriodDaysRemaining
-        Text("You have free access to all Pro features for \(daysLeft) more day\(daysLeft == 1 ? "" : "s").")
+        Text("You have free access to all Pro features for \(daysLeft) more day\(daySuffix(for: daysLeft)).")
           .font(.appSubheadline())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.center)
@@ -189,7 +196,7 @@ struct SubscriptionsView: View {
           Image(systemName: "clock.fill")
             .font(.appCaption2())
             .foregroundStyle(.appAccent)
-          Text("Free access · \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
+          Text("Free access · \(daysLeft) day\(daySuffix(for: daysLeft)) left")
             .font(.appCaption())
         }
         .foregroundColor(.secondary)
@@ -485,7 +492,8 @@ struct SubscriptionsView: View {
 
   private func formatExpirationDateFull(_ date: Date) -> String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "EEEE, MMMM d, yyyy 'at' h:mm:ss a"
+    formatter.dateStyle = .full
+    formatter.timeStyle = .medium
     formatter.timeZone = TimeZone.current
     let timeZoneAbbreviation = formatter.timeZone.abbreviation() ?? TimeZone.current.identifier
     return "\(formatter.string(from: date)) (\(timeZoneAbbreviation))"

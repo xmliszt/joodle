@@ -47,7 +47,7 @@ struct WeekGridView: View {
   /// Format the date range string, e.g. "Feb 9 - Feb 15"
   private var dateRangeString: String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "MMM d"
+    formatter.setLocalizedDateFormatFromTemplate("MMMd")
     guard let lastDate = weekDates.last else { return "" }
     return "\(formatter.string(from: weekStartDate)) - \(formatter.string(from: lastDate))"
   }

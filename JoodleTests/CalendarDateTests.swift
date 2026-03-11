@@ -176,6 +176,25 @@ struct CalendarDateTests {
     #expect(components.day == 25)
   }
 
+  @Test func testLocalizedDisplayStringUsesLocaleSpecificOrdering() {
+    let calendarDate = CalendarDate(year: 2026, month: 3, day: 11)
+    let zhHansLocale = Locale(identifier: "zh_Hans")
+
+    let fullDate = CalendarDate.localizedDisplayString(
+      from: calendarDate.displayDate,
+      template: "yMMMMd",
+      locale: zhHansLocale
+    )
+    let monthDayDate = CalendarDate.localizedDisplayString(
+      from: calendarDate.displayDate,
+      template: "MMMMd",
+      locale: zhHansLocale
+    )
+
+    #expect(fullDate == "2026年3月11日")
+    #expect(monthDayDate == "3月11日")
+  }
+
   // MARK: - Hashable Tests
 
   @Test func testHashable() {

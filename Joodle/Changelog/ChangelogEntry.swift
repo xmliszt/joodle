@@ -43,7 +43,7 @@ struct ChangelogEntry: Identifiable, Hashable {
     /// Formatted header line: "DECEMBER 25, 2025 · VERSION 1.0.55"
     var displayHeader: String {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMMM d, yyyy"
+        dateFormatter.setLocalizedDateFormatFromTemplate("yMMMMd")
         let dateString = dateFormatter.string(from: date).uppercased()
         return "\(dateString) · VERSION \(displayVersion)"
     }

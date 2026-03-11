@@ -70,7 +70,7 @@ struct WeekPickerSheet: View {
   /// Format a week range label, e.g. "Feb 9 - Feb 15"
   private func weekRangeLabel(for weekStart: Date) -> String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "MMM d"
+    formatter.setLocalizedDateFormatFromTemplate("MMMd")
     let calendar = Calendar.current
     let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
     return "\(formatter.string(from: weekStart)) - \(formatter.string(from: weekEnd))"

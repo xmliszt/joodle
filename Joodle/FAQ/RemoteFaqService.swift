@@ -64,14 +64,14 @@ actor RemoteFaqService {
     // MARK: - Configuration
 
     /// Base URL for the FAQ API
-  private var baseURL: String {
-      return "https://liyuxuan.dev/api/faqs/joodle"
-  }
+    private let baseURL = "https://liyuxuan.dev/api/faqs/joodle"
+    private var currentLocale: String { LocaleProvider.currentLanguageCode }
 
     // MARK: - Caching
 
     private var sectionsCache: [FaqSectionResponse]?
     private var cacheTimestamp: Date?
+    private var cacheLocale: String?
 
     /// Cache duration in seconds (10 minutes for FAQs)
     private let cacheDuration: TimeInterval = 600
@@ -92,6 +92,7 @@ actor RemoteFaqService {
         if !forceRefresh,
            let cached = sectionsCache,
            let timestamp = cacheTimestamp,
+              cacheLocale == currentLocale,
            Date().timeIntervalSince(timestamp) < cacheDuration {
             print("📖 [FAQ] Returning cached FAQs (\(cached.count) sections)")
             return cached
@@ -101,15 +102,16 @@ actor RemoteFaqService {
         if !forceRefresh, let diskCached = await loadFromDisk() {
             sectionsCache = diskCached
             cacheTimestamp = Date()
+            cacheLocale = currentLocale
             print("📖 [FAQ] Loaded FAQs from disk cache (\(diskCached.count) sections)")
             return diskCached
         }
 
-        guard let url = URL(string: baseURL) else {
+        guard let url = localizedURL else {
             throw FaqServiceError.invalidURL
         }
 
-        print("📖 [FAQ] Fetching FAQs from remote: \(baseURL)")
+        print("📖 [FAQ] Fetching FAQs from remote: \(url.absoluteString)")
 
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
@@ -142,6 +144,7 @@ actor RemoteFaqService {
             // Update cache
             sectionsCache = sorted
             cacheTimestamp = Date()
+            cacheLocale = currentLocale
 
             // Persist to disk for offline access
             await persistToDisk(sorted)
@@ -171,6 +174,7 @@ actor RemoteFaqService {
     func clearCaches() {
         sectionsCache = nil
         cacheTimestamp = nil
+        cacheLocale = nil
         clearDiskCache()
         print("📖 [FAQ] Caches cleared")
     }
@@ -183,7 +187,18 @@ actor RemoteFaqService {
     }
 
     private var cacheFileURL: URL? {
-        cacheDirectory?.appendingPathComponent("faqs.json")
+        cacheDirectory?.appendingPathComponent("faqs_\(currentLocale).json")
+    }
+
+    private var localizedURL: URL? {
+        guard var components = URLComponents(string: baseURL) else {
+            return nil
+        }
+
+        components.queryItems = [
+            URLQueryItem(name: "locale", value: currentLocale)
+        ]
+        return components.url
     }
 
     private func ensureCacheDirectoryExists() {

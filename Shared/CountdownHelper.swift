@@ -8,6 +8,50 @@
 import Foundation
 
 struct CountdownHelper {
+  private static var resolvedLanguageCode: String {
+    if let resolved = Bundle.main.preferredLocalizations.first, !resolved.isEmpty {
+      return resolved
+    }
+
+    if let fallback = Locale.current.language.languageCode?.identifier, !fallback.isEmpty {
+      return fallback
+    }
+
+    return "en"
+  }
+
+  private static var isChineseLocale: Bool {
+    resolvedLanguageCode.hasPrefix("zh")
+  }
+
+  private static func yearPart(_ years: Int) -> String {
+    if isChineseLocale {
+      return "\(years)年"
+    }
+    return years == 1 ? "1 year" : "\(years) years"
+  }
+
+  private static func monthPart(_ months: Int) -> String {
+    if isChineseLocale {
+      return "\(months)个月"
+    }
+    return months == 1 ? "1 month" : "\(months) months"
+  }
+
+  private static func dayPart(_ days: Int) -> String {
+    if isChineseLocale {
+      return "\(days)天"
+    }
+    return days == 1 ? "1 day" : "\(days) days"
+  }
+
+  private static func inPrefix(_ text: String) -> String {
+    if isChineseLocale {
+      return "还有\(text)"
+    }
+    return "in " + text
+  }
+
   /// Generate countdown text from now to target date
   /// Returns the formatted countdown string (e.g., "Tomorrow", "in 2 days", etc.)
   /// For entries 1 calendar day away, shows "Tomorrow" since Joodle tracks days, not timestamps
@@ -35,63 +79,45 @@ struct CountdownHelper {
     if years > 0 {
       var parts: [String] = []
 
-      if years == 1 {
-        parts.append("1 year")
-      } else {
-        parts.append("\(years) years")
-      }
+      parts.append(yearPart(years))
 
       if months > 0 {
-        if months == 1 {
-          parts.append("1 month")
-        } else {
-          parts.append("\(months) months")
-        }
+        parts.append(monthPart(months))
       }
 
       if days > 0 {
-        if days == 1 {
-          parts.append("1 day")
-        } else {
-          parts.append("\(days) days")
-        }
+        parts.append(dayPart(days))
       }
 
-      return "in " + parts.joined(separator: ", ")
+      let separator = isChineseLocale ? "" : ", "
+      return inPrefix(parts.joined(separator: separator))
     }
 
     // More than a month but less than a year: show month + day
     if months > 0 {
       var parts: [String] = []
 
-      if months == 1 {
-        parts.append("1 month")
-      } else {
-        parts.append("\(months) months")
-      }
+      parts.append(monthPart(months))
 
       if days > 0 {
-        if days == 1 {
-          parts.append("1 day")
-        } else {
-          parts.append("\(days) days")
-        }
+        parts.append(dayPart(days))
       }
 
-      return "in " + parts.joined(separator: ", ")
+      let separator = isChineseLocale ? "" : ", "
+      return inPrefix(parts.joined(separator: separator))
     }
 
     // Less than a month: use calendar day difference for accuracy
     // This ensures D+1 shows "Tomorrow" and D+2 shows "in 2 days"
     // regardless of the current time of day
     if calendarDayDiff > 1 {
-      return "in \(calendarDayDiff) days"
+      return inPrefix(dayPart(calendarDayDiff))
     }
 
     // 1 calendar day away: show "Tomorrow"
     // This is because Joodle tracks entries by day, not by exact timestamp
     if calendarDayDiff == 1 {
-      return "Tomorrow"
+      return isChineseLocale ? "明天" : "Tomorrow"
     }
 
     return ""
@@ -100,7 +126,7 @@ struct CountdownHelper {
   /// Format date as "MMM d, yyyy" (e.g., "Jan 15, 2025")
   static func dateText(for date: Date) -> String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "MMM d, yyyy"
+    formatter.setLocalizedDateFormatFromTemplate("yMMMd")
     return formatter.string(from: date)
   }
 

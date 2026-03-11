@@ -138,19 +138,24 @@ struct CalendarDate: Hashable, Comparable, Codable, Sendable {
     return formatter.string(from: displayDate)
   }
 
-  /// Format as "d MMMM yyyy" (e.g., "25 December 2025")
-  ///
-  /// This matches the existing display format used throughout Joodle.
-  var displayString: String {
+  static func localizedDisplayString(
+    from date: Date,
+    template: String,
+    locale: Locale = .autoupdatingCurrent
+  ) -> String {
     let formatter = DateFormatter()
-    formatter.dateFormat = "d MMMM yyyy"
-    return formatter.string(from: displayDate)
+    formatter.locale = locale
+    formatter.setLocalizedDateFormatFromTemplate(template)
+    return formatter.string(from: date)
+  }
+
+  /// Format as a locale-aware full date string.
+  var displayString: String {
+    Self.localizedDisplayString(from: displayDate, template: "yMMMMd")
   }
   
   var displayStringWithoutYear: String {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "d MMMM"
-    return formatter.string(from: displayDate)
+    Self.localizedDisplayString(from: displayDate, template: "MMMMd")
   }
 
   /// Get the weekday name for this date (e.g., "Monday")

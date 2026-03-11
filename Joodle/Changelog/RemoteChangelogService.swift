@@ -85,11 +85,13 @@ actor RemoteChangelogService {
     /// Base URL for the changelog API
     /// Update this to your Vercel API endpoint
     private let baseURL = "https://liyuxuan.dev/api/changelogs/joodle"
+    private var currentLocale: String { LocaleProvider.currentLanguageCode }
 
     // MARK: - Caching
 
     private var indexCache: [ChangelogIndexEntry]?
     private var indexCacheTimestamp: Date?
+    private var indexCacheLocale: String?
     private var markdownCache: [String: String] = [:] // version -> markdown
 
     /// Cache duration in seconds (5 minutes)
@@ -105,11 +107,12 @@ actor RemoteChangelogService {
         if !forceRefresh,
            let cached = indexCache,
            let timestamp = indexCacheTimestamp,
+           indexCacheLocale == currentLocale,
            Date().timeIntervalSince(timestamp) < cacheDuration {
             return cached
         }
 
-        guard let url = URL(string: baseURL) else {
+        guard let url = localizedURL() else {
             throw ChangelogServiceError.invalidURL
         }
 
@@ -135,6 +138,7 @@ actor RemoteChangelogService {
             // Update cache
             indexCache = sorted
             indexCacheTimestamp = Date()
+            indexCacheLocale = currentLocale
 
             // Persist to disk for offline access
             await persistIndexToDisk(sorted)
@@ -152,17 +156,18 @@ actor RemoteChangelogService {
     /// Fetch the full markdown content for a specific version
     func fetchChangelogDetail(version: String, forceRefresh: Bool = false) async throws -> String {
         // Return cached markdown if available and not forcing refresh
-        if !forceRefresh, let cached = markdownCache[version] {
+        let cacheKey = markdownCacheKey(version: version)
+        if !forceRefresh, let cached = markdownCache[cacheKey] {
             return cached
         }
 
         // Try to load from disk cache first
         if !forceRefresh, let diskCached = await loadMarkdownFromDisk(version: version) {
-            markdownCache[version] = diskCached
+            markdownCache[cacheKey] = diskCached
             return diskCached
         }
 
-        guard let url = URL(string: "\(baseURL)/\(version)") else {
+        guard let url = localizedURL(pathComponent: version) else {
             throw ChangelogServiceError.invalidURL
         }
 
@@ -185,7 +190,7 @@ actor RemoteChangelogService {
             let detailResponse = try decoder.decode(ChangelogDetailResponse.self, from: data)
 
             // Update cache
-            markdownCache[version] = detailResponse.markdown
+            markdownCache[cacheKey] = detailResponse.markdown
 
             // Persist to disk
             await persistMarkdownToDisk(version: version, markdown: detailResponse.markdown)
@@ -222,6 +227,7 @@ actor RemoteChangelogService {
     func clearCaches() {
         indexCache = nil
         indexCacheTimestamp = nil
+        indexCacheLocale = nil
         markdownCache.removeAll()
 
         // Also clear disk cache
@@ -269,7 +275,7 @@ actor RemoteChangelogService {
         ensureCacheDirectoryExists()
         guard let cacheDir = cacheDirectory else { return }
 
-        let fileURL = cacheDir.appendingPathComponent("index.json")
+        let fileURL = cacheDir.appendingPathComponent("index_\(currentLocale).json")
 
         do {
             let data = try JSONEncoder().encode(entries)
@@ -282,7 +288,7 @@ actor RemoteChangelogService {
     private func loadIndexFromDisk() async -> [ChangelogIndexEntry]? {
         guard let cacheDir = cacheDirectory else { return nil }
 
-        let fileURL = cacheDir.appendingPathComponent("index.json")
+        let fileURL = cacheDir.appendingPathComponent("index_\(currentLocale).json")
 
         do {
             let data = try Data(contentsOf: fileURL)
@@ -296,7 +302,7 @@ actor RemoteChangelogService {
         ensureCacheDirectoryExists()
         guard let cacheDir = cacheDirectory else { return }
 
-        let fileURL = cacheDir.appendingPathComponent("\(version).md")
+        let fileURL = cacheDir.appendingPathComponent("\(version)_\(currentLocale).md")
 
         do {
             try markdown.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -308,9 +314,28 @@ actor RemoteChangelogService {
     private func loadMarkdownFromDisk(version: String) async -> String? {
         guard let cacheDir = cacheDirectory else { return nil }
 
-        let fileURL = cacheDir.appendingPathComponent("\(version).md")
+        let fileURL = cacheDir.appendingPathComponent("\(version)_\(currentLocale).md")
 
         return try? String(contentsOf: fileURL, encoding: .utf8)
+    }
+
+    private func localizedURL(pathComponent: String? = nil) -> URL? {
+        guard var components = URLComponents(string: baseURL) else {
+            return nil
+        }
+
+        if let pathComponent, !pathComponent.isEmpty {
+            components.path += "/\(pathComponent)"
+        }
+
+        components.queryItems = [
+            URLQueryItem(name: "locale", value: currentLocale)
+        ]
+        return components.url
+    }
+
+    private func markdownCacheKey(version: String) -> String {
+        "\(version)::\(currentLocale)"
     }
 
 }
