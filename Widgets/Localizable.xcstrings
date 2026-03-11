@@ -80,7 +80,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "没有找到未来纪念日"
+            "value" : "你还没有创建纪念日"
           }
         }
       }
@@ -160,7 +160,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "来自你的随机涂鸦。每天更新。"
+            "value" : "随机涂鸦。每天更新。"
           }
         }
       }
@@ -184,7 +184,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "显示今天的涂鸦记录。"
+            "value" : "今天的涂鸦。"
           }
         }
       }
@@ -268,7 +268,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一览本月的涂鸦。"
+            "value" : "本月的涂鸦。"
           }
         }
       }
@@ -280,7 +280,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "纵览一周的涂鸦。"
+            "value" : "本周的涂鸦。"
           }
         }
       }
@@ -292,7 +292,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "纵览一年的涂鸦。"
+            "value" : "你的本年进度。"
           }
         }
       }
@@ -304,7 +304,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "查看你一年的涂鸦。"
+            "value" : "你的本年进度（带涂鸦）。"
           }
         }
       }
@@ -316,7 +316,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "查看你一年的涂鸦（留白）。"
+            "value" : "你的本年进度（仅显示涂鸦）。"
           }
         }
       }
@@ -340,7 +340,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一年总览（只显示涂鸦）"
+            "value" : "一年总览（仅显示涂鸦）"
           }
         }
       }

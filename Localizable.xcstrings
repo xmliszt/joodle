@@ -6424,7 +6424,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "年网格"
+            "value" : "一年总览"
           }
         }
       }
@@ -6436,7 +6436,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "带涂鸦的年网格"
+            "value" : "一年总览（带涂鸦）"
           }
         }
       }
@@ -6448,7 +6448,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "仅显示涂鸦的年网格"
+            "value" : "一年总览（仅显示涂鸦）"
           }
         }
       }
@@ -6460,7 +6460,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "带涂鸦的年度进度"
+            "value" : "一年总览（带涂鸦）"
           }
         }
       }
@@ -6472,7 +6472,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "仅显示涂鸦的年度进度"
+            "value" : "一年总览（仅显示涂鸦）"
           }
         }
       }
@@ -6484,7 +6484,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "带圆点的年度进度"
+            "value" : "一年总览"
           }
         }
       }
