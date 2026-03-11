@@ -56,7 +56,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "in %@"
+            "value" : "%@后"
           }
         }
       }

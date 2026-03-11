@@ -69,7 +69,7 @@ enum ChangelogServiceError: LocalizedError {
         case .notFound:
             return String(localized: "Changelog not found")
         case .serverError(let code):
-            return String(localized: "Server error: \(code)")
+            return String(localized: "Server error: \(code, format: .number.grouping(.never))")
         }
     }
 }

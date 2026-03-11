@@ -113,7 +113,7 @@ struct ShareCardSelectorView: View {
     case .entry:
       return String(localized: "Share Your Day")
     case .yearGrid(let year):
-      return String(localized: "Share Year \(year)")
+      return String(localized: "Share Year \(year, format: .number.grouping(.never))")
     }
   }
 
@@ -225,7 +225,7 @@ struct ShareCardSelectorView: View {
               } label: {
                 HStack(spacing: 12) {
                   if isSharing || isExportingAnimated {
-                    Text("\(Int(exportProgress * 100))%")
+                    Text("\(Int(exportProgress * 100), format: .number.grouping(.never))%")
                       .font(.appFont(size: 18, weight: .semibold))
                       .contentTransition(.numericText())
                       .animation(.springFkingSatifying, value: exportProgress)
@@ -267,7 +267,7 @@ struct ShareCardSelectorView: View {
             } label: {
               HStack(spacing: 12) {
                 if isSharing || isExportingAnimated {
-                  Text("\(Int(exportProgress * 100))%")
+                  Text("\(Int(exportProgress * 100), format: .number.grouping(.never))%")
                     .font(.appFont(size: 18, weight: .semibold))
                     .contentTransition(.numericText())
                 } else {
@@ -349,7 +349,7 @@ struct ShareCardSelectorView: View {
     return selectedStyle.icon
   }
 
-  private var shareButtonText: String {
+  private var shareButtonText: LocalizedStringResource {
     if selectedStyle.isAnimatedStyle {
       return "Share"
     }

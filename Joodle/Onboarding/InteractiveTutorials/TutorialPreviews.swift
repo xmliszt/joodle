@@ -350,9 +350,9 @@ struct MockUIElementsView: View {
                     .font(.appHeadline())
 
                 Group {
-                    Text("Year: \(store.selectedYear)")
+                    Text("Year: \(store.selectedYear, format: .number.grouping(.never))")
                     Text("View Mode: \(store.viewMode == .now ? "Normal" : "Year")")
-                    Text("Entries: \(store.entries.count)")
+                    Text("Entries: \(store.entries.count, format: .number.grouping(.never))")
                     Text("Selected: \(store.selectedDateItem?.date.formatted() ?? "None")")
                 }
                 .font(.appCaption())
@@ -408,11 +408,11 @@ struct MockUIElementsView: View {
 
 #Preview("Tutorial Steps List") {
     List {
-        Section("Onboarding Steps (\(TutorialSteps.onboarding.count))") {
+        Section("Onboarding Steps (\(TutorialSteps.onboarding.count, format: .number.grouping(.never)))") {
             ForEach(Array(TutorialSteps.onboarding.enumerated()), id: \.offset) { index, step in
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
-                        Text("\(index + 1).")
+                        Text("\(index + 1, format: .number.grouping(.never)).")
                             .font(.appCaption(weight: .bold))
                             .foregroundColor(.secondary)
                         Text(step.type.title)

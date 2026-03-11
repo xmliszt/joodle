@@ -70,7 +70,7 @@ struct ThemeColorLoadingOverlay: View {
                             .tint(.secondary)
 
                         // Count
-                        Text("\(themeColorManager.entriesProcessed) / \(themeColorManager.totalEntriesToProcess)")
+                        Text("\(themeColorManager.entriesProcessed, format: .number.grouping(.never)) / \(themeColorManager.totalEntriesToProcess, format: .number.grouping(.never))")
                             .font(.appCaption())
                             .foregroundStyle(.secondary)
                             .monospacedDigit()

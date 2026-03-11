@@ -26,7 +26,7 @@ struct PricingCard: View {
   let isEligibleForIntroOffer: Bool
   let layout: PricingCardLayout
   let onSelect: () -> Void
-
+  
   init(
     product: Product,
     isSelected: Bool,
@@ -42,7 +42,7 @@ struct PricingCard: View {
     self.layout = layout
     self.onSelect = onSelect
   }
-
+  
   var body: some View {
     Button(action: onSelect) {
       ZStack(alignment: .topTrailing) {
@@ -62,10 +62,10 @@ struct PricingCard: View {
                 .strokeBorder(isSelected ? .appAccent : Color.clear, lineWidth: 2)
             )
         )
-
+        
         // Badge - overlaid on top
         if let badge = badge {
-          Text(badge)
+          Text(LocalizedStringKey(badge))
             .font(.appCaption2(weight: .bold))
             .foregroundColor(.appAccentContrast)
             .padding(.horizontal, 12)
@@ -80,9 +80,9 @@ struct PricingCard: View {
     }
     .buttonStyle(PlainButtonStyle())
   }
-
+  
   // MARK: - Full Layout (SubscriptionsView)
-
+  
   private var fullLayoutContent: some View {
     VStack(spacing: 0) {
       HStack {
@@ -91,13 +91,13 @@ struct PricingCard: View {
             Text(productTitle)
               .font(.appTitle3(weight: .bold))
               .foregroundColor(.primary)
-
+            
             Spacer()
-
+            
             // Selection indicator
             selectionIndicator
           }
-
+          
           // Primary pricing
           HStack(alignment: .firstTextBaseline, spacing: 4) {
             Text(product.displayPrice)
@@ -108,7 +108,7 @@ struct PricingCard: View {
                 .font(.appSubheadline())
                 .foregroundColor(.secondary)
             } else {
-              Text("per \(product.id.contains("yearly") ? "year" : "month")")
+              Text("per \(product.id.contains("yearly") ? String(localized: "year") : String(localized: "month"))")
                 .font(.appSubheadline())
                 .foregroundColor(.secondary)
             }
@@ -119,28 +119,28 @@ struct PricingCard: View {
       .padding(20)
     }
   }
-
+  
   // MARK: - Compact Layout (PaywallContentView pyramid)
-
+  
   private var compactLayoutContent: some View {
     VStack(spacing: 8) {
       // Title
       Text(productTitle)
         .font(.appHeadline(weight: .bold))
         .foregroundColor(.primary)
-
+      
       // Price
       VStack(spacing: 2) {
         Text(product.displayPrice)
           .font(.appTitle3(weight: .bold))
           .foregroundColor(.primary)
-
+        
         if isLifetime {
           Text("one-time")
             .font(.appCaption())
             .foregroundColor(.secondary)
         } else {
-          Text("per \(product.id.contains("yearly") ? "year" : "month")")
+          Text("per \(product.id.contains("yearly") ? String(localized: "year") : String(localized: "month"))")
             .font(.appCaption())
             .foregroundColor(.secondary)
         }
@@ -150,15 +150,15 @@ struct PricingCard: View {
     .padding(.vertical, 16)
     .padding(.horizontal, 12)
   }
-
+  
   // MARK: - Shared Components
-
+  
   private var selectionIndicator: some View {
     ZStack {
       Circle()
         .strokeBorder(isSelected ? .appAccent : .secondary.opacity(0.3), lineWidth: 2)
         .frame(width: 24, height: 24)
-
+      
       if isSelected {
         Circle()
           .fill(.appAccent)
@@ -166,7 +166,7 @@ struct PricingCard: View {
       }
     }
   }
-
+  
   /// Deprecated
   private var fullSecondaryInfo: some View {
     HStack(spacing: 4) {
@@ -193,7 +193,7 @@ struct PricingCard: View {
       }
     }
   }
-
+  
   /// Deprecated
   private var compactSecondaryInfo: some View {
     Group {
@@ -216,11 +216,11 @@ struct PricingCard: View {
       }
     }
   }
-
+  
   private var isLifetime: Bool {
     product.id.contains("lifetime")
   }
-
+  
   private var productTitle: String {
     if isLifetime {
       return "Lifetime"
@@ -230,12 +230,12 @@ struct PricingCard: View {
       return "Monthly"
     }
   }
-
+  
   private func yearlyMonthlyPrice() -> String {
     let monthlyEquivalent = product.price / 12
     return monthlyEquivalent.formatted(product.priceFormatStyle)
   }
-
+  
   /// Returns the formatted trial period text for this product (e.g., "7-day", "1-month", "3-month")
   /// Returns nil if user is not eligible for introductory offer (e.g., already used free trial)
   private var trialPeriodText: String? {
@@ -243,15 +243,15 @@ struct PricingCard: View {
     guard isEligibleForIntroOffer else {
       return nil
     }
-
+    
     guard let subscription = product.subscription,
           let introOffer = subscription.introductoryOffer else {
       return nil
     }
-
+    
     return formatTrialPeriod(introOffer.period)
   }
-
+  
   /// Formats a subscription period into a user-friendly string
   private func formatTrialPeriod(_ period: Product.SubscriptionPeriod) -> String {
     let formatter = DateComponentsFormatter()
@@ -259,7 +259,7 @@ struct PricingCard: View {
     formatter.maximumUnitCount = 1
     formatter.zeroFormattingBehavior = .dropAll
     formatter.calendar = .autoupdatingCurrent
-
+    
     var components = DateComponents()
     switch period.unit {
     case .day:
@@ -278,7 +278,7 @@ struct PricingCard: View {
     @unknown default:
       return String(localized: "Free")
     }
-
+    
     return formatter.string(from: components) ?? String(localized: "Free")
   }
 }
@@ -287,7 +287,7 @@ struct PricingCard: View {
 @MainActor
 private struct PricingCardPreviewContainer: View {
   @StateObject private var storeKitManager = StoreKitManager.shared
-
+  
   var body: some View {
     ScrollView {
       VStack(spacing: 16) {
@@ -305,7 +305,7 @@ private struct PricingCardPreviewContainer: View {
               onSelect: {}
             )
           }
-
+          
           if let yearly = product(for: "dev.liyuxuan.joodle.pro.yearly") {
             PricingCard(
               product: yearly,
@@ -316,7 +316,7 @@ private struct PricingCardPreviewContainer: View {
               onSelect: {}
             )
           }
-
+          
           if let lifetime = product(for: "dev.liyuxuan.joodle.pro.lifetime") {
             PricingCard(
               product: lifetime,
@@ -327,7 +327,7 @@ private struct PricingCardPreviewContainer: View {
               onSelect: {}
             )
           }
-
+          
           HStack(spacing: 12) {
             if let monthly = product(for: "dev.liyuxuan.joodle.pro.monthly") {
               PricingCard(
@@ -339,7 +339,7 @@ private struct PricingCardPreviewContainer: View {
                 onSelect: {}
               )
             }
-
+            
             if let yearly = product(for: "dev.liyuxuan.joodle.pro.yearly") {
               PricingCard(
                 product: yearly,
@@ -364,7 +364,7 @@ private struct PricingCardPreviewContainer: View {
       await SubscriptionManager.shared.loadProductsForPreview()
     }
   }
-
+  
   private func product(for id: String) -> Product? {
     storeKitManager.products.first { $0.id == id }
   }

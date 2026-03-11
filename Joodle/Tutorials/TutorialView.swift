@@ -264,7 +264,7 @@ struct DotPositionTweakerView: View {
                     tappedPositions.removeAll()
                     lastTapCoordinate = "Tap on screenshot"
                 } label: {
-                    Text("\(index + 1)")
+                    Text("\(index + 1, format: .number.grouping(.never))")
                         .font(.appCaption(weight: .bold))
                         .frame(width: 32, height: 32)
                         .background(index == currentIndex ? Color.appAccent : Color.secondary.opacity(0.2))
@@ -288,7 +288,7 @@ struct DotPositionTweakerView: View {
                     tappedPositions.removeAll()
                     lastTapCoordinate = "Tap on screenshot"
                 } label: {
-                    Text("\(index + 1)")
+                    Text("\(index + 1, format: .number.grouping(.never))")
                         .font(.appCaption2(weight: .bold))
                         .frame(width: 28, height: 28)
                         .background(index == currentIndex ? Color.appAccent : Color.secondary.opacity(0.2))

@@ -202,7 +202,7 @@ extension View {
                             .font(.appCaption(weight: .bold))
                         ForEach(Array(frames.keys.sorted()), id: \.self) { key in
                             if let frame = frames[key] {
-                                Text("\(key): (\(Int(frame.minX)), \(Int(frame.minY))) \(Int(frame.width))x\(Int(frame.height))")
+                                Text("\(key): (\(Int(frame.minX), format: .number.grouping(.never)), \(Int(frame.minY), format: .number.grouping(.never))) \(Int(frame.width), format: .number.grouping(.never))x\(Int(frame.height), format: .number.grouping(.never))")
                                     .font(.caption.monospaced())
                             }
                         }

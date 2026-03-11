@@ -153,7 +153,7 @@ struct MembershipBannerView: View {
               HStack(spacing: 4) {
                 Image(systemName: "doc.text")
                   .font(.appCaption())
-                Text("\(joodleCount)/\(SubscriptionManager.freeJoodlesAllowed)")
+                Text("\(joodleCount, format: .number.grouping(.never))/\(SubscriptionManager.freeJoodlesAllowed, format: .number.grouping(.never))")
                   .font(.appCaption())
               }
               .foregroundColor(joodleCount >= SubscriptionManager.freeJoodlesAllowed ? .red : .black.opacity(0.8))
@@ -161,7 +161,7 @@ struct MembershipBannerView: View {
               HStack(spacing: 4) {
                 Image(systemName: "bell")
                   .font(.appCaption())
-                Text("\(alarmCount)/5")
+                Text("\(alarmCount, format: .number.grouping(.never))/5")
                   .font(.appCaption())
               }
               .foregroundColor(alarmCount >= 5 ? .red : .black.opacity(0.8))
@@ -577,7 +577,7 @@ struct SettingsView: View {
             .foregroundColor(.primary)
           Spacer()
           if !reminderManager.reminders.isEmpty {
-            Text("\(reminderManager.reminders.count)")
+            Text(reminderManager.reminders.count, format: .number.grouping(.never))
               .font(.appSubheadline())
               .foregroundColor(.secondary)
           }
@@ -1091,7 +1091,7 @@ struct SettingsView: View {
             Text("Subscribed ✓")
               .foregroundColor(.green)
           } else if GracePeriodManager.shared.isInGracePeriod {
-            Text("Grace Period (\(GracePeriodManager.shared.gracePeriodDaysRemaining)d)")
+            Text("Grace Period (\(GracePeriodManager.shared.gracePeriodDaysRemaining, format: .number.grouping(.never))d)")
               .foregroundColor(.orange)
           } else {
             Text("Free")
@@ -1699,7 +1699,7 @@ struct AnniversaryAlarmsSettingsView: View {
           Button(role: .destructive) {
             deleteSelectedReminders()
           } label: {
-            Text("Delete Selected (\(selectedReminders.count))")
+            Text("Delete Selected (\(selectedReminders.count, format: .number.grouping(.never)))")
               .foregroundStyle(.red)
           }
         }
@@ -2086,19 +2086,19 @@ struct AppStatsView: View {
           HStack {
             Text("Total Entries")
             Spacer()
-            Text("\(totalEntries)")
+            Text(totalEntries, format: .number.grouping(.never))
               .foregroundColor(.secondary)
           }
           HStack {
             Text("Unique Dates")
             Spacer()
-            Text("\(uniqueDateCount)")
+            Text(uniqueDateCount, format: .number.grouping(.never))
               .foregroundColor(.secondary)
           }
           HStack {
             Text("Duplicate Entries")
             Spacer()
-            Text("\(duplicateCount)")
+            Text(duplicateCount, format: .number.grouping(.never))
               .foregroundColor(duplicateCount > 0 ? .orange : .secondary)
           }
         }
@@ -2107,25 +2107,25 @@ struct AppStatsView: View {
           HStack {
             Text("With Drawing")
             Spacer()
-            Text("\(entriesWithDrawing)")
+            Text(entriesWithDrawing, format: .number.grouping(.never))
               .foregroundColor(.secondary)
           }
           HStack {
             Text("With Text Only")
             Spacer()
-            Text("\(entriesWithText)")
+            Text(entriesWithText, format: .number.grouping(.never))
               .foregroundColor(.secondary)
           }
           HStack {
             Text("Empty Entries")
             Spacer()
-            Text("\(entriesEmpty)")
+            Text(entriesEmpty, format: .number.grouping(.never))
               .foregroundColor(entriesEmpty > 0 ? .orange : .secondary)
           }
           HStack {
             Text("Missing Date String")
             Spacer()
-            Text("\(entriesWithEmptyDateString)")
+            Text(entriesWithEmptyDateString, format: .number.grouping(.never))
               .foregroundColor(entriesWithEmptyDateString > 0 ? .red : .secondary)
           }
         }
@@ -2134,9 +2134,9 @@ struct AppStatsView: View {
           Section("Entries by Year") {
             ForEach(entriesByYear.keys.sorted().reversed(), id: \.self) { year in
               HStack {
-                Text("\(year)")
+                Text(year, format: .number.grouping(.never))
                 Spacer()
-                Text("\(entriesByYear[year] ?? 0)")
+                Text(entriesByYear[year] ?? 0, format: .number.grouping(.never))
                   .foregroundColor(.secondary)
               }
             }
@@ -2150,7 +2150,7 @@ struct AppStatsView: View {
                 Text(dateString)
                   .font(.appCaption())
                 Spacer()
-                Text("\(duplicateDetails[dateString] ?? 0) entries")
+                Text("\(duplicateDetails[dateString] ?? 0, format: .number.grouping(.never)) entries")
                   .font(.appCaption())
                   .foregroundColor(.orange)
               }
@@ -2576,7 +2576,7 @@ struct DebugDataSeederView: View {
             HStack {
               Text("Total entries")
               Spacer()
-              Text("\(payloadStats.entryCount)")
+              Text(payloadStats.entryCount, format: .number.grouping(.never))
                 .foregroundStyle(.secondary)
             }
             HStack {
@@ -2626,23 +2626,23 @@ struct DebugDataSeederView: View {
         }
 
         // MARK: Year Stats
-        Section("Year \(selectedYear) Status") {
+        Section("Year \(selectedYear, format: .number.grouping(.never)) Status") {
           HStack {
             Text("Total entries")
             Spacer()
-            Text("\(yearStats.total)")
+            Text(yearStats.total, format: .number.grouping(.never))
               .foregroundStyle(.secondary)
           }
           HStack {
             Text("With drawings")
             Spacer()
-            Text("\(yearStats.withDrawings)")
+            Text(yearStats.withDrawings, format: .number.grouping(.never))
               .foregroundStyle(.secondary)
           }
           HStack {
             Text("Seeded (debug/stress)")
             Spacer()
-            Text("\(yearStats.seeded)")
+            Text(yearStats.seeded, format: .number.grouping(.never))
               .foregroundStyle(.secondary)
           }
         }
@@ -2659,7 +2659,7 @@ struct DebugDataSeederView: View {
           HStack {
             Text("Count")
             Spacer()
-            TextField("Count", value: $seedCount, format: .number)
+            TextField("Count", value: $seedCount, format: .number.grouping(.never))
               .keyboardType(.numberPad)
               .multilineTextAlignment(.trailing)
               .frame(width: 80)
@@ -2681,7 +2681,7 @@ struct DebugDataSeederView: View {
             seedData()
           } label: {
             HStack {
-              Text("Seed \(seedCount) Entries for \(selectedYear)")
+              Text("Seed \(seedCount, format: .number.grouping(.never)) Entries for \(selectedYear, format: .number.grouping(.never))")
               if isSeeding {
                 Spacer()
                 ProgressView()
@@ -2715,7 +2715,7 @@ struct DebugDataSeederView: View {
 
         // MARK: Danger Zone
         Section("Danger Zone") {
-          Button("Clear Seeded Data for \(selectedYear)", role: .destructive) {
+          Button("Clear Seeded Data for \(selectedYear, format: .number.grouping(.never))", role: .destructive) {
             clearYearData()
           }
           .disabled(isSeeding)

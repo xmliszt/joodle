@@ -322,14 +322,14 @@ struct PaywallContentView: View {
         legalLinksSection
       }
     }
-    .alert("Purchase Failed", isPresented: $showError) {
-      Button("Contact Support") {
+    .alert(String(localized: "Purchase Failed"), isPresented: $showError) {
+      Button(String(localized: "Contact Support")) {
         openSupportEmail()
       }
-      Button("OK", role: .cancel) {}
+      Button(String(localized: "OK"), role: .cancel) {}
     } message: {
       if let error = errorMessage {
-        Text("\(error)\n\nIf this issue persists, please contact the developer.")
+        Text(String(localized: "\(error)\n\nIf this issue persists, please contact the developer."))
       }
     }
     .onAppear {
@@ -456,7 +456,7 @@ struct PaywallContentView: View {
           .font(.appCaption())
           .foregroundColor(.secondary)
       } else {
-        Text("Auto renews \(isYearly ? "yearly" : "monthly") until canceled.")
+        Text("Auto renews \(isYearly ? String(localized: "yearly") : String(localized: "monthly")) until canceled.")
           .font(.appCaption())
           .foregroundColor(.secondary)
       }
@@ -495,7 +495,7 @@ struct PaywallContentView: View {
         PricingCard(
           product: lifetime,
           isSelected: selectedProductID == lifetime.id,
-          badge: "BEST VALUE",
+          badge: String(localized: "BEST VALUE"),
           isEligibleForIntroOffer: false,
           layout: .compact,
           onSelect: {
@@ -565,13 +565,13 @@ struct PaywallContentView: View {
   private func spotifyDisclaimerText(for product: Product) -> String {
     // Lifetime purchase - no subscription
     if product.id.contains("lifetime") {
-      return "One-time payment of \(product.displayPrice). No subscription, no recurring charges. Unlock all features forever."
+      return String(localized: "One-time payment of \(product.displayPrice). No subscription, no recurring charges. Unlock all features forever.")
     }
     
-    let periodText = product.id.contains("yearly") ? "year" : "month"
+    let periodText = product.id.contains("yearly") ? String(localized: "year") : String(localized: "month")
     
     // No trial available
-    return "\(product.displayPrice) per \(periodText). Cancel anytime."
+    return String(localized: "\(product.displayPrice) per \(periodText). Cancel anytime.")
   }
 
   @ViewBuilder
@@ -581,7 +581,7 @@ struct PaywallContentView: View {
       allowModeToggle: false,
       isLoading: isPurchasing || storeManager.hasActiveSubscription,
       trialPeriodText: selectedTrialPeriodText,
-      fallbackButtonText: selectedProductIsLifetime ? "Buy Joodle Pro" : "Subscribe to Joodle Pro",
+      fallbackButtonText: selectedProductIsLifetime ? String(localized: "Buy Joodle Pro") : String(localized: "Subscribe to Joodle Pro"),
       onSlideComplete: handleSlideComplete
     )
   }
@@ -732,7 +732,7 @@ struct PaywallContentView: View {
         } else {
           // Transaction is nil - purchase was not completed (e.g., pending approval)
           await MainActor.run {
-            errorMessage = "Purchase could not be completed. It may be pending approval or was cancelled. Please check your subscription status from \"Settings > [Your Name] > Subscriptions\""
+            errorMessage = String(localized: "Purchase could not be completed. It may be pending approval or was cancelled. Please check your subscription status from \"Settings > [Your Name] > Subscriptions\"")
             showError = true
           }
         }
@@ -744,23 +744,23 @@ struct PaywallContentView: View {
             // Don't show error for user cancellation
             break
           case .networkError:
-            errorMessage = "Network error. Please check your internet connection and try again."
+            errorMessage = String(localized: "Network error. Please check your internet connection and try again.")
             showError = true
           case .systemError:
-            errorMessage = "A system error occurred. Please try again later."
+            errorMessage = String(localized: "A system error occurred. Please try again later.")
             showError = true
           case .notAvailableInStorefront:
-            errorMessage = "This product is not available in your region."
+            errorMessage = String(localized: "This product is not available in your region.")
             showError = true
           case .notEntitled:
-            errorMessage = "You are not entitled to this product."
+            errorMessage = String(localized: "You are not entitled to this product.")
             showError = true
           default:
-            errorMessage = "An unexpected error occurred: \(error.localizedDescription)"
+            errorMessage = String(localized: "An unexpected error occurred: \(error.localizedDescription)")
             showError = true
           }
         } else {
-          errorMessage = "Purchase failed: \(error.localizedDescription)"
+          errorMessage = String(localized: "Purchase failed: \(error.localizedDescription)")
           showError = true
         }
       }
@@ -808,9 +808,9 @@ struct PaywallContentView: View {
 
   private func savingsBadgeText() -> String? {
     if let percentage = storeManager.savingsPercentage() {
-      return "SAVE \(percentage)%"
+      return String(localized: "SAVE \(percentage)%")
     }
-    return "BEST VALUE"
+    return String(localized: "BEST VALUE")
   }
 }
 

@@ -416,7 +416,7 @@ struct RemainingJoodlesIndicator: View {
                     .font(.appCaption())
 
                 if remaining > 0 {
-                    Text("\(remaining) Joodles left")
+                    Text("\(remaining, format: .number.grouping(.never)) Joodles left")
                         .font(.appCaption())
                 } else {
                     Text("Limit reached")

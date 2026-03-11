@@ -32,7 +32,7 @@ struct RemoteAlert: Codable, Identifiable, Equatable {
     /// The type of announcement, used to filter based on user preferences
     enum AnnouncementType: String, Codable, CaseIterable, Identifiable {
         case promo       // Promotional content, sales, etc.
-        case community   // Discord, social media, community events
+        case community   // Whatsapp, social media, community events
         case tips        // App tips, feature highlights, tutorials
 
         var id: String { rawValue }
@@ -48,7 +48,7 @@ struct RemoteAlert: Codable, Identifiable, Equatable {
         var description: LocalizedStringResource {
             switch self {
             case .promo: return "Special offers and promotions"
-            case .community: return "Discord, events, and community updates"
+            case .community: return "Whatsapp, events, and community updates"
             case .tips: return "App tips and tutorials"
             }
         }

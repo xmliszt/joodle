@@ -48,7 +48,7 @@ enum FaqServiceError: LocalizedError {
         case .decodingError(let error):
             return String(localized: "Failed to parse response: \(error.localizedDescription)")
         case .serverError(let code):
-            return String(localized: "Server error: \(code)")
+            return String(localized: "Server error: \(code, format: .number.grouping(.never))")
         case .noData:
             return String(localized: "No FAQ data available")
         }

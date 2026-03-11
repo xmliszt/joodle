@@ -105,7 +105,7 @@ struct TutorialDebugOverlay: View {
                 Text("Step")
                     .font(.appCaption(weight: .bold))
                 Spacer()
-                Text("\(coordinator.currentStepIndex + 1) / \(coordinator.steps.count)")
+                Text("\(coordinator.currentStepIndex + 1, format: .number.grouping(.never)) / \(coordinator.steps.count, format: .number.grouping(.never))")
                     .font(.caption.monospaced())
             }
 
@@ -178,7 +178,7 @@ struct TutorialDebugOverlay: View {
                 HStack {
                     Text("Origin")
                     Spacer()
-                    Text("(\(Int(frame.minX)), \(Int(frame.minY)))")
+                    Text("(\(Int(frame.minX), format: .number.grouping(.never)), \(Int(frame.minY), format: .number.grouping(.never)))")
                         .font(.caption.monospaced())
                 }
                 .font(.appCaption())
@@ -186,7 +186,7 @@ struct TutorialDebugOverlay: View {
                 HStack {
                     Text("Size")
                     Spacer()
-                    Text("\(Int(frame.width)) × \(Int(frame.height))")
+                    Text("\(Int(frame.width), format: .number.grouping(.never)) × \(Int(frame.height), format: .number.grouping(.never))")
                         .font(.caption.monospaced())
                 }
                 .font(.appCaption())
@@ -200,7 +200,7 @@ struct TutorialDebugOverlay: View {
             HStack {
                 Text("Registered")
                 Spacer()
-                Text("\(coordinator.highlightFrames.count) frames")
+                Text("\(coordinator.highlightFrames.count, format: .number.grouping(.never)) frames")
                     .font(.caption.monospaced())
             }
             .font(.appCaption())
