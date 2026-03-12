@@ -36,7 +36,7 @@ struct DetailedView: View {
         (colorScheme == .dark ? Color.black : Color.white)
           .ignoresSafeArea()
 
-        VStack(spacing: 24 * scale) {
+        VStack(spacing: 0) {
           // Text content that wraps around the image
           ExclusionTextView(
             text: entry?.body ?? "",
@@ -46,8 +46,8 @@ struct DetailedView: View {
             exclusionRect: hasDrawing ? CGRect(
               x: 0,
               y: 0,
-              width: totalImageSize + 64 * scale,
-              height: totalImageSize + 16 * scale
+              width: totalImageSize,
+              height: totalImageSize - 16 * scale
             ) : .zero
           )
           .frame(width: contentWidth, height: contentHeight, alignment: .topLeading)
