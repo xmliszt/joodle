@@ -789,6 +789,33 @@ struct SettingsView: View {
     
     return URL(string: "mailto:\(email)?subject=\(subjectEncoded)&body=\(bodyEncoded)")
   }
+
+  private var translationFeedbackMailURL: URL? {
+    guard selectedLanguage != .en else {
+      return nil
+    }
+
+    let email = "joodle@liyuxuan.dev"
+    let subject = "Translation Feedback for Joodle"
+    let iOSVersion = UIDevice.current.systemVersion
+    let body = """
+Please describe the translation issue you found.
+
+Language: \(selectedLanguage.displayName) (\(selectedLanguage.code))
+Screen or feature:
+Current translation:
+Suggested correction:
+Additional context:
+
+Joodle \(AppEnvironment.fullVersionDisplayString) - iOS \(iOSVersion)
+ID: \(deviceIdentifier)
+"""
+
+    let subjectEncoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+    let bodyEncoded = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+
+    return URL(string: "mailto:\(email)?subject=\(subjectEncoded)&body=\(bodyEncoded)")
+  }
   
   @ViewBuilder
   private var needHelpSection: some View {
@@ -939,6 +966,21 @@ struct SettingsView: View {
           AnalyticsManager.shared.trackExternalLinkOpened(url: "joodle-feedback", type: "feedback")
         })
       }
+
+      if let mailURL = translationFeedbackMailURL {
+        Link(destination: mailURL) {
+          SettingsRowView(
+            icon: "character.bubble.fill",
+            iconColor: .pink,
+            title: "Spot A Translation Error?",
+            isExternal: true
+          )
+        }
+        .simultaneousGesture(TapGesture().onEnded {
+          AnalyticsManager.shared.trackExternalLinkOpened(url: "translation_feedback", type: "feedback")
+        })
+      }
+
       
       Button {
         AnalyticsManager.shared.trackExternalLinkOpened(url: "share_sheet", type: "recommend")
