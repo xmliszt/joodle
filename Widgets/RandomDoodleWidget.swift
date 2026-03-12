@@ -439,6 +439,7 @@ struct RandomJoodleWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: RandomJoodleProvider()) { entry in
       RandomJoodleWidgetView(entry: entry)
+        .environment(\.locale, WidgetDataManager.shared.loadAppLocale() ?? .current)
     }
     .configurationDisplayName("Random Joodle")
     .description("Random Joodle from your collection. Refreshed daily.")

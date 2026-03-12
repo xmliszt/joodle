@@ -193,6 +193,7 @@ final class UserPreferences {
       } else {
         UserDefaults.standard.set([appLanguage], forKey: "AppleLanguages")
       }
+      NotificationCenter.default.post(name: .didChangeAppLanguage, object: nil)
     }
   }
 

@@ -196,10 +196,17 @@ struct WeekGridWidgetContentView: View {
     WidgetDataManager.shared.loadThemeColor()
   }
 
+  private var appLocale: Locale {
+    WidgetDataManager.shared.loadAppLocale() ?? .current
+  }
+
   private var weekdayLabels: [String] {
-    startOfWeek.lowercased() == "monday"
-      ? ["M", "T", "W", "T", "F", "S", "S"]
-      : ["S", "M", "T", "W", "T", "F", "S"]
+    var calendar = Calendar.current
+    calendar.locale = appLocale
+    let symbols = calendar.veryShortWeekdaySymbols
+    return startOfWeek.lowercased() == "monday"
+      ? Array(symbols[1...]) + [symbols[0]]
+      : symbols
   }
 
   /// Format the date range string, e.g. "Feb 16 – 22" or "Feb 28 – Mar 6"
@@ -215,10 +222,12 @@ struct WeekGridWidgetContentView: View {
     let endMonth = calendar.component(.month, from: lastDate)
 
     let monthDayFormatter = DateFormatter()
+    monthDayFormatter.locale = appLocale
     monthDayFormatter.setLocalizedDateFormatFromTemplate("MMMd")
 
     if startMonth == endMonth {
       let dayFormatter = DateFormatter()
+      dayFormatter.locale = appLocale
       dayFormatter.setLocalizedDateFormatFromTemplate("d")
       return "\(monthDayFormatter.string(from: firstDate)) – \(dayFormatter.string(from: lastDate))"
     } else {
@@ -323,6 +332,7 @@ struct WeekGridWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: WeekGridWidgetProvider()) { entry in
       WeekGridWidgetView(entry: entry)
+        .environment(\.locale, WidgetDataManager.shared.loadAppLocale() ?? .current)
     }
     .configurationDisplayName("This Week")
     .description("View this week's Joodles at a glance.")

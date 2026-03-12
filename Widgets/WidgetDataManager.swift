@@ -126,6 +126,7 @@ struct WidgetDataManager {
   private let subscriptionKey = "widgetSubscriptionStatus"
   private let themeColorKey = "widgetThemeColor"
   private let startOfWeekKey = "widgetStartOfWeek"
+  private let appLanguageKey = "widgetAppLanguage"
 
   private init() {}
 
@@ -230,6 +231,19 @@ struct WidgetDataManager {
       return "sunday"
     }
     return sharedDefaults.string(forKey: startOfWeekKey) ?? "sunday"
+  }
+
+  // MARK: - App Language
+
+  /// Load the user's app language override for widget display
+  /// - Returns: A Locale matching the user's in-app language choice, or `nil` for system default
+  func loadAppLocale() -> Locale? {
+    guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
+      return nil
+    }
+    let code = sharedDefaults.string(forKey: appLanguageKey) ?? ""
+    guard !code.isEmpty else { return nil }
+    return Locale(identifier: code)
   }
 
   /// Save entries to shared container for widget access

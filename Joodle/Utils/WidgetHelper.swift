@@ -32,6 +32,7 @@ class WidgetHelper {
   private let subscriptionKey = "widgetSubscriptionStatus"
   private let themeColorKey = "widgetThemeColor"
   private let startOfWeekKey = "widgetStartOfWeek"
+  private let appLanguageKey = "widgetAppLanguage"
 
   // MARK: - File-Based Drawing Storage
 
@@ -225,6 +226,27 @@ class WidgetHelper {
     if reload {
       // Only WeekGrid and MonthGrid depend on start-of-week
       reloadWidgets(ofKinds: Self.startOfWeekWidgetKinds)
+    }
+  }
+
+  // MARK: - App Language
+
+  /// Update app language preference for widget extension
+  /// - Parameter reload: When `true` (default), immediately reloads all widget timelines.
+  ///   Pass `false` when batching multiple data writes before a single manual reload.
+  @MainActor func updateAppLanguage(reload: Bool = true) {
+    guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
+      print("Failed to access shared UserDefaults for widget app language")
+      return
+    }
+
+    let language = UserPreferences.shared.appLanguage
+    sharedDefaults.set(language, forKey: appLanguageKey)
+    sharedDefaults.synchronize()
+
+    if reload {
+      // Language affects all widgets (date formatting, localized strings)
+      reloadAllWidgets()
     }
   }
 

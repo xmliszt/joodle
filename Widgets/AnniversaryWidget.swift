@@ -682,6 +682,7 @@ struct AnniversaryWidget: Widget {
       kind: kind, intent: AnniversaryConfigurationIntent.self, provider: AnniversaryProvider()
     ) { entry in
       AnniversaryWidgetView(entry: entry)
+        .environment(\.locale, WidgetDataManager.shared.loadAppLocale() ?? .current)
     }
     .configurationDisplayName("Anniversary")
     .description("Anniversary Joodle with countdown.")

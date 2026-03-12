@@ -360,6 +360,7 @@ struct YearGridWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
       YearGridWidgetView(entry: entry, showJoodles: false, showEmptyDots: true)
+        .environment(\.locale, WidgetDataManager.shared.loadAppLocale() ?? .current)
         .containerBackground(for: .widget) {
           Color(UIColor.systemBackground)
         }
@@ -376,6 +377,7 @@ struct YearGridJoodleWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
       YearGridWidgetView(entry: entry, showJoodles: true, showEmptyDots: true)
+        .environment(\.locale, WidgetDataManager.shared.loadAppLocale() ?? .current)
         .containerBackground(for: .widget) {
           Color(UIColor.systemBackground)
         }
@@ -392,6 +394,7 @@ struct YearGridJoodleNoEmptyDotsWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: YearGridProvider()) { entry in
       YearGridWidgetView(entry: entry, showJoodles: true, showEmptyDots: false)
+        .environment(\.locale, WidgetDataManager.shared.loadAppLocale() ?? .current)
         .containerBackground(for: .widget) {
           Color(UIColor.systemBackground)
         }

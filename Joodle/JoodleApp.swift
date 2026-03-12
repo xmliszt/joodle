@@ -242,6 +242,9 @@ struct JoodleApp: App {
     // Sync start-of-week preference to widgets on startup
     Self.syncStartOfWeekToWidgets()
 
+    // Sync app language preference to widgets on startup
+    Self.syncAppLanguageToWidgets()
+
     // Restore daily reminder if it was enabled
     ReminderManager.shared.restoreDailyReminderIfNeeded()
 
@@ -265,6 +268,13 @@ struct JoodleApp: App {
   private static func syncStartOfWeekToWidgets() {
     Task { @MainActor in
       WidgetHelper.shared.updateStartOfWeek()
+    }
+  }
+
+  /// Syncs the current app language preference to widgets via App Group
+  private static func syncAppLanguageToWidgets() {
+    Task { @MainActor in
+      WidgetHelper.shared.updateAppLanguage()
     }
   }
 
@@ -584,6 +594,18 @@ struct JoodleApp: App {
       queue: .main
     ) { [self] _ in
       accentColor = UserPreferences.shared.accentColor
+    }
+
+    NotificationCenter.default.addObserver(
+      forName: .didChangeAppLanguage,
+      object: nil,
+      queue: .main
+    ) { [self] _ in
+      let code = UserPreferences.shared.appLanguage
+      appLocale = code.isEmpty ? .current : Locale(identifier: code)
+      Task { @MainActor in
+        WidgetHelper.shared.updateAppLanguage()
+      }
     }
   }
 

@@ -172,14 +172,22 @@ struct MonthGridWidgetContentView: View {
     WidgetDataManager.shared.loadThemeColor()
   }
 
+  private var appLocale: Locale {
+    WidgetDataManager.shared.loadAppLocale() ?? .current
+  }
+
   private var weekdayLabels: [String] {
-    startOfWeek.lowercased() == "monday"
-      ? ["M", "T", "W", "T", "F", "S", "S"]
-      : ["S", "M", "T", "W", "T", "F", "S"]
+    var calendar = Calendar.current
+    calendar.locale = appLocale
+    let symbols = calendar.veryShortWeekdaySymbols
+    return startOfWeek.lowercased() == "monday"
+      ? Array(symbols[1...]) + [symbols[0]]
+      : symbols
   }
 
   private var monthName: String {
     let formatter = DateFormatter()
+    formatter.locale = appLocale
     formatter.dateFormat = "MMMM"
     let components = DateComponents(year: year, month: month, day: 1)
     guard let date = Calendar.current.date(from: components) else { return "" }
@@ -309,6 +317,7 @@ struct MonthGridWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: MonthGridWidgetProvider()) { entry in
       MonthGridWidgetView(entry: entry)
+        .environment(\.locale, WidgetDataManager.shared.loadAppLocale() ?? .current)
     }
     .configurationDisplayName("This Month")
     .description("View this month's Joodles at a glance.")

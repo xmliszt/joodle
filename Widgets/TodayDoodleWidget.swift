@@ -324,6 +324,7 @@ struct MediumTodayDoodleView: View {
 
   private func formatDate(_ date: Date) -> String {
     let formatter = DateFormatter()
+    formatter.locale = WidgetDataManager.shared.loadAppLocale() ?? .current
     formatter.dateStyle = .medium
     formatter.timeStyle = .none
     return formatter.string(from: date)
@@ -494,6 +495,7 @@ struct TodayDoodleWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: kind, provider: TodayDoodleProvider()) { entry in
       TodayDoodleWidgetView(entry: entry)
+        .environment(\.locale, WidgetDataManager.shared.loadAppLocale() ?? .current)
     }
     .configurationDisplayName("Today's Joodle")
     .description("Shows today's Joodle entry.")

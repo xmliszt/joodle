@@ -13,4 +13,5 @@ extension Notification.Name {
   static let didChangeAccentColor = Notification.Name("didChangeAccentColor")
   static let navigateToDateFromShortcut = Notification.Name("navigateToDateFromShortcut")
   static let dismissToRootAndNavigate = Notification.Name("dismissToRootAndNavigate")
+  static let didChangeAppLanguage = Notification.Name("didChangeAppLanguage")
 }
