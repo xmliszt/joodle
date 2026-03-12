@@ -195,13 +195,7 @@ struct JoodleApp: App {
   @State private var hasSetupObservers = false
   @State private var showPendingRestartAlert = false
   @State private var changelogEntry: ChangelogEntry?
-  @State private var appLocale: Locale = {
-    let code = UserPreferences.shared.appLanguage
-    if !code.isEmpty {
-      return Locale(identifier: code)
-    }
-    return .current
-  }()
+  @State private var appLocale: Locale
 
   /// Remote alert service for displaying server-pushed announcements
   @StateObject private var remoteAlertService = RemoteAlertService.shared
@@ -212,6 +206,11 @@ struct JoodleApp: App {
   init() {
     // Initialize app environment detection (TestFlight vs App Store)
     AppEnvironment.initialize()
+
+    // Resolve appLocale from UserPreferences (system language sync already
+    // happened inside UserPreferences.init() when .shared was first accessed).
+    let code = UserPreferences.shared.appLanguage
+    _appLocale = State(initialValue: code.isEmpty ? .current : Locale(identifier: code))
 
     // Run migrations using the singleton container
     let container = ModelContainerManager.shared.container

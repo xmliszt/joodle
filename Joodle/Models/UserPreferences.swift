@@ -185,7 +185,9 @@ final class UserPreferences {
   var appLanguage: String = Pref.appLanguage.defaultValue {
     didSet {
       _appLanguageWatcher = appLanguage
-      // Set AppleLanguages override so Bundle.main resolves correctly on next launch
+      // Only sync AppleLanguages when the user actively changes the language,
+      // not during init (which would overwrite a change made via iOS Settings).
+      guard !_isInitializing else { return }
       if appLanguage.isEmpty {
         UserDefaults.standard.removeObject(forKey: "AppleLanguages")
       } else {
@@ -193,6 +195,9 @@ final class UserPreferences {
       }
     }
   }
+
+  /// Suppresses AppleLanguages side-effects during init.
+  private var _isInitializing = true
 
   /// Convenience computed property to get/set daily reminder time as Date
   var dailyReminderTime: Date {
@@ -325,6 +330,11 @@ final class UserPreferences {
 
   // MARK: - Step 5: Add your property to load during initialization
   init() {
+    // Detect if the user changed the app language via iOS Settings.
+    // Must run BEFORE appLanguage is loaded, because the didSet on
+    // appLanguage writes AppleLanguages and would overwrite the system change.
+    Self.syncSystemLanguageOverrideIfNeeded()
+
     // Load initial values from UserDefaults
     defaultViewMode = _defaultViewModeWatcher
     preferredColorScheme = _preferredColorSchemeWatcher
@@ -342,6 +352,30 @@ final class UserPreferences {
     promptForNotesAfterDoodling = _promptForNotesAfterDoodlingWatcher
     shareCardWatermarkEnabled = _shareCardWatermarkEnabledWatcher
     appLanguage = _appLanguageWatcher
+
+    // Allow subsequent appLanguage changes to sync AppleLanguages normally.
+    _isInitializing = false
+  }
+
+  /// Reads raw UserDefaults to detect if the user changed the app language
+  /// via iOS Settings. If so, clears our in-app override so the system
+  /// preference takes effect. This must be called before appLanguage is
+  /// loaded, because loading it triggers didSet which writes AppleLanguages.
+  private static func syncSystemLanguageOverrideIfNeeded() {
+    let defaults = UserDefaults.standard
+    let storedOverride = defaults.string(forKey: Pref.appLanguage.key) ?? ""
+    guard !storedOverride.isEmpty else { return }
+
+    // AppleLanguages reflects the iOS-resolved language preference.
+    // If the user changed the per-app language in iOS Settings, iOS
+    // updated this key. Compare with our stored override to detect that.
+    guard let systemResolved = defaults.stringArray(forKey: "AppleLanguages")?.first else { return }
+
+    if systemResolved != storedOverride {
+      // System language was changed externally — clear our in-app override
+      // directly in UserDefaults (not through the property, to avoid side effects).
+      defaults.removeObject(forKey: Pref.appLanguage.key)
+    }
   }
 
   // MARK: - Reset Method (automatically uses all registered keys!)
