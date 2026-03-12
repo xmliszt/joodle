@@ -798,14 +798,20 @@ struct SettingsView: View {
     let email = "joodle@liyuxuan.dev"
     let subject = "Translation Feedback for Joodle"
     let iOSVersion = UIDevice.current.systemVersion
+    let promptLine = String(localized: "Please describe the translation issue you found.", comment: "Prompt in translation feedback email body asking users to describe the issue.")
+    let languageLine = String(localized: "Language", comment: "Label in translation feedback email body indicating the language where issue was found.")
+    let screenOrFeatureLine = String(localized: "Screen or feature", comment: "Label in translation feedback email body asking where the issue appears.")
+    let currentTranslationLine = String(localized: "Current translation", comment: "Label in translation feedback email body asking what text is currently shown.")
+    let suggestedCorrectionLine = String(localized: "Suggested correction", comment: "Label in translation feedback email body asking for suggested corrected text.")
+    let additionalContextLine = String(localized: "Additional context", comment: "Label in translation feedback email body asking for any extra details.")
     let body = """
-Please describe the translation issue you found.
+\(promptLine)
 
-Language: \(selectedLanguage.displayName) (\(selectedLanguage.code))
-Screen or feature:
-Current translation:
-Suggested correction:
-Additional context:
+\(languageLine): \(selectedLanguage.displayName) (\(selectedLanguage.code))
+\(screenOrFeatureLine):
+\(currentTranslationLine):
+\(suggestedCorrectionLine):
+\(additionalContextLine):
 
 Joodle \(AppEnvironment.fullVersionDisplayString) - iOS \(iOSVersion)
 ID: \(deviceIdentifier)
