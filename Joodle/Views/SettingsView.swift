@@ -238,6 +238,15 @@ struct SettingsView: View {
   @State private var showCustomization = false
   @State private var scrollToNotePromptSetting = false
   
+  // Language change state
+  @State private var showLanguageRestartAlert = false
+  @State private var selectedLanguage: AppLanguage = {
+    if let lang = AppLanguage.from(code: UserPreferences.shared.appLanguage) {
+      return lang
+    }
+    return AppLanguage.from(code: LocaleProvider.currentLanguageCode) ?? .en
+  }()
+  
   // MARK: - Computed Bindings
   private var viewModeBinding: Binding<ViewMode> {
     Binding(
@@ -397,6 +406,15 @@ struct SettingsView: View {
       Button("OK", role: .cancel) { }
     } message: {
       Text(importMessage)
+    }
+    .alert("Language Changed", isPresented: $showLanguageRestartAlert) {
+      Button("OK") {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+          exit(0)
+        }
+      }
+    } message: {
+      Text("Please restart Joodle for the change to take full effect.")
     }
     .offerCodeRedemption(isPresented: $showRedeemCode) { _ in
       Task {
@@ -623,6 +641,32 @@ struct SettingsView: View {
           Text("Backup & Restore")
             .foregroundColor(.primary)
           Spacer()
+        }
+      }
+
+      // Language
+      HStack {
+        SettingsIconView(systemName: "globe", backgroundColor: .indigo)
+        Picker(selection: $selectedLanguage) {
+          ForEach(AppLanguage.allCases) { language in
+            Text(language.displayName).tag(language)
+          }
+        } label: {
+          Text("Language")
+            .foregroundColor(.primary)
+        }
+        .onChange(of: selectedLanguage) { oldValue, newValue in
+          guard oldValue != newValue else { return }
+          let previousCode = userPreferences.appLanguage.isEmpty
+            ? LocaleProvider.currentLanguageCode
+            : userPreferences.appLanguage
+          userPreferences.appLanguage = newValue.code
+          AnalyticsManager.shared.trackSettingChanged(
+            name: "app_language",
+            value: newValue.code,
+            previousValue: previousCode
+          )
+          showLanguageRestartAlert = true
         }
       }
       

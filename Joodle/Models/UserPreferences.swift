@@ -37,6 +37,9 @@ enum Pref {
   // Share card watermark preference
   static let shareCardWatermarkEnabled = Key(key: "share_card_watermark_enabled", default: true)
 
+  // App language override (empty string = system default)
+  static let appLanguage = Key(key: "app_language", default: "")
+
   // Add new preferences here - just specify the default!
   // static let newSetting = Key(default: "defaultValue")
 
@@ -68,6 +71,7 @@ enum Pref {
     announcementTipsEnabled.key,
     promptForNotesAfterDoodling.key,
     shareCardWatermarkEnabled.key,
+    appLanguage.key,
   ]
 }
 
@@ -174,6 +178,19 @@ final class UserPreferences {
   var shareCardWatermarkEnabled: Bool = Pref.shareCardWatermarkEnabled.defaultValue {
     didSet {
       _shareCardWatermarkEnabledWatcher = shareCardWatermarkEnabled
+    }
+  }
+
+  // App language override
+  var appLanguage: String = Pref.appLanguage.defaultValue {
+    didSet {
+      _appLanguageWatcher = appLanguage
+      // Set AppleLanguages override so Bundle.main resolves correctly on next launch
+      if appLanguage.isEmpty {
+        UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+      } else {
+        UserDefaults.standard.set([appLanguage], forKey: "AppleLanguages")
+      }
     }
   }
 
@@ -297,6 +314,15 @@ final class UserPreferences {
     set { set(Pref.shareCardWatermarkEnabled, newValue) }
   }
 
+  private var _appLanguageWatcher: String {
+    get {
+      defaults.string(forKey: Pref.appLanguage.key) ?? Pref.appLanguage.defaultValue
+    }
+    set {
+      defaults.set(newValue, forKey: Pref.appLanguage.key)
+    }
+  }
+
   // MARK: - Step 5: Add your property to load during initialization
   init() {
     // Load initial values from UserDefaults
@@ -315,6 +341,7 @@ final class UserPreferences {
     announcementTipsEnabled = _announcementTipsEnabledWatcher
     promptForNotesAfterDoodling = _promptForNotesAfterDoodlingWatcher
     shareCardWatermarkEnabled = _shareCardWatermarkEnabledWatcher
+    appLanguage = _appLanguageWatcher
   }
 
   // MARK: - Reset Method (automatically uses all registered keys!)
@@ -339,8 +366,42 @@ final class UserPreferences {
     announcementTipsEnabled = Pref.announcementTipsEnabled.defaultValue
     promptForNotesAfterDoodling = Pref.promptForNotesAfterDoodling.defaultValue
     shareCardWatermarkEnabled = Pref.shareCardWatermarkEnabled.defaultValue
+    appLanguage = Pref.appLanguage.defaultValue
+    // Clear AppleLanguages override on reset
+    UserDefaults.standard.removeObject(forKey: "AppleLanguages")
   }
 
+}
+
+// MARK: - App Language
+
+enum AppLanguage: String, CaseIterable, Identifiable {
+  case en
+  case zhHans
+  case ko
+
+  var id: String { code }
+
+  var code: String {
+    switch self {
+    case .en: return "en"
+    case .zhHans: return "zh-Hans"
+    case .ko: return "ko"
+    }
+  }
+
+  /// Native display name for each language
+  var displayName: String {
+    switch self {
+    case .en: return "English"
+    case .zhHans: return "简体中文"
+    case .ko: return "한국어"
+    }
+  }
+
+  static func from(code: String) -> AppLanguage? {
+    allCases.first { $0.code == code }
+  }
 }
 
 // MARK: - Environment Extension
