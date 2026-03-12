@@ -299,6 +299,60 @@ struct SettingsView: View {
       }
     )
   }
+
+  private var languageRestartAlertTitle: String {
+    localizedString("Language Changed", for: selectedLanguage.code)
+  }
+
+  private var languageRestartAlertMessage: String {
+    localizedString("Please restart Joodle for the change to take full effect.", for: selectedLanguage.code)
+  }
+
+  private var languageRestartAlertConfirmLabel: String {
+    localizedString("OK", for: selectedLanguage.code)
+  }
+
+  private func localizedString(_ key: String, for languageCode: String) -> String {
+    let resolvedLocalizations = Bundle.preferredLocalizations(
+      from: Bundle.main.localizations,
+      forPreferences: [languageCode]
+    )
+
+    for localization in resolvedLocalizations {
+      if let resolved = localizedStringInBundle(key, lproj: localization) {
+        return resolved
+      }
+    }
+
+    if let exact = localizedStringInBundle(key, lproj: languageCode) {
+      return exact
+    }
+
+    // Fallback from codes like "zh-Hans" to base language "zh" if needed.
+    if let baseLanguageCode = languageCode.split(separator: "-").first {
+      let base = String(baseLanguageCode)
+      if base != languageCode, let fallback = localizedStringInBundle(key, lproj: base) {
+        return fallback
+      }
+    }
+
+    // English is the development language; prefer key text over current-bundle lookup.
+    if languageCode == "en" || languageCode.hasPrefix("en-") {
+      return key
+    }
+
+    return Bundle.main.localizedString(forKey: key, value: key, table: nil)
+  }
+
+  private func localizedStringInBundle(_ key: String, lproj: String) -> String? {
+    guard let lprojPath = Bundle.main.path(forResource: lproj, ofType: "lproj"),
+          let localizedBundle = Bundle(path: lprojPath) else {
+      return nil
+    }
+
+    let localized = localizedBundle.localizedString(forKey: key, value: key, table: nil)
+    return localized == key ? nil : localized
+  }
   
   var body: some View {
     Form {
@@ -407,14 +461,14 @@ struct SettingsView: View {
     } message: {
       Text(importMessage)
     }
-    .alert("Language Changed", isPresented: $showLanguageRestartAlert) {
-      Button("OK") {
+    .alert(languageRestartAlertTitle, isPresented: $showLanguageRestartAlert) {
+      Button(languageRestartAlertConfirmLabel) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
           exit(0)
         }
       }
     } message: {
-      Text("Please restart Joodle for the change to take full effect.")
+      Text(languageRestartAlertMessage)
     }
     .offerCodeRedemption(isPresented: $showRedeemCode) { _ in
       Task {
