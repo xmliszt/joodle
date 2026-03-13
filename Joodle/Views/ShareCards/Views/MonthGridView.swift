@@ -33,9 +33,11 @@ struct MonthGridView: View {
 
   /// Weekday labels based on `startOfWeek` preference
   private var weekdayLabels: [String] {
-    startOfWeek.lowercased() == "monday"
-      ? ["M", "T", "W", "T", "F", "S", "S"]
-      : ["S", "M", "T", "W", "T", "F", "S"]
+    let calendar = Calendar.current
+    let symbols = calendar.veryShortWeekdaySymbols
+    return startOfWeek.lowercased() == "monday"
+      ? Array(symbols[1...]) + [symbols[0]]
+      : symbols
   }
 
   /// Month name string
