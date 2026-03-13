@@ -219,11 +219,15 @@ class GracePeriodManager: ObservableObject {
         updateState()
     }
 
-    // MARK: - Debug Methods
+    // MARK: - Testing Methods (Non-Production)
 
-    #if DEBUG
-    /// Reset grace period for testing (clears both stores)
+    /// Reset grace period for testing (clears both stores).
+    /// Available in all builds so TestFlight/sandbox can run reviewer flows.
     func resetGracePeriod() {
+        guard AppEnvironment.isActuallyNonProduction else {
+            return
+        }
+
         UserDefaults.standard.removeObject(forKey: Self.startDateKey)
         UserDefaults.standard.removeObject(forKey: Self.paywallShownKey)
         cloudStore.removeObject(forKey: Self.startDateKey)
@@ -234,11 +238,15 @@ class GracePeriodManager: ObservableObject {
         print("🔄 Grace period reset")
     }
 
-    /// Set a custom start date for testing
+    /// Set a custom start date for testing.
+    /// Available in all builds so TestFlight/sandbox can run reviewer flows.
     func setGracePeriodStart(_ date: Date) {
+        guard AppEnvironment.isActuallyNonProduction else {
+            return
+        }
+
         setStartDate(date)
         hasAttemptedStart = true
         updateState()
     }
-    #endif
 }
