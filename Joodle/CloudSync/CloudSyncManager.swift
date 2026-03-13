@@ -13,6 +13,7 @@ import Network
 import Observation
 import SwiftData
 import SwiftUI
+import UIKit
 
 // MARK: - iCloud Sync State Persistence
 /// Helper to persist sync state to iCloud KVS so it survives app deletion/reinstall
@@ -128,6 +129,8 @@ final class CloudSyncManager {
   private let preferencesSyncManager = PreferencesSyncManager.shared
   private var syncEventObserver: NSObjectProtocol?
   private var ubiquityIdentityObserver: NSObjectProtocol?
+  private var inFlightCloudKitEvents = Set<UUID>()
+  private var cloudSyncBackgroundTask: UIBackgroundTaskIdentifier = .invalid
 
   // Track the ubiquity identity token to detect iCloud Documents & Data changes
   private var currentUbiquityToken: (any NSCoding & NSCopying & NSObjectProtocol)?
@@ -300,6 +303,10 @@ final class CloudSyncManager {
 
     // Track in-progress events
     if event.endDate == nil {
+      // Keep the app alive briefly while CloudKit/SQLite work is in-flight.
+      inFlightCloudKitEvents.insert(event.identifier)
+      beginCloudSyncBackgroundTaskIfNeeded()
+
       // Event is in progress
       isSyncing = true
       switch event.type {
@@ -315,6 +322,12 @@ final class CloudSyncManager {
       // Reset timeout when we receive an in-progress event
       resetSyncTimeout()
       return
+    }
+
+    // Event completed - clear it from in-flight set and end the grace task if done.
+    inFlightCloudKitEvents.remove(event.identifier)
+    if inFlightCloudKitEvents.isEmpty {
+      endCloudSyncBackgroundTaskIfNeeded()
     }
 
     // Update our observed sync times based on event type
@@ -426,6 +439,8 @@ final class CloudSyncManager {
     preferencesSyncManager.clearSyncEnabledFromCloud()
 
     // Reset sync status
+    inFlightCloudKitEvents.removeAll()
+    endCloudSyncBackgroundTaskIfNeeded()
     isSyncing = false
     syncProgress = ""
     isInitialSync = false
@@ -448,6 +463,8 @@ final class CloudSyncManager {
       // If we're still marked as syncing after timeout, clear it
       // This handles cases where we miss the completion event
       if !Task.isCancelled && isSyncing {
+        inFlightCloudKitEvents.removeAll()
+        endCloudSyncBackgroundTaskIfNeeded()
         isSyncing = false
         isInitialSync = false
         syncProgress = ""
@@ -459,9 +476,37 @@ final class CloudSyncManager {
   /// Clear the sync status immediately (e.g., when user navigates away)
   func clearSyncStatus() {
     syncTimeoutTask?.cancel()
+    inFlightCloudKitEvents.removeAll()
+    endCloudSyncBackgroundTaskIfNeeded()
     isSyncing = false
     syncProgress = ""
     // Don't clear isInitialSync here - it should persist until actual sync completes
+  }
+
+  private func beginCloudSyncBackgroundTaskIfNeeded() {
+    guard cloudSyncBackgroundTask == .invalid else { return }
+
+    cloudSyncBackgroundTask = UIApplication.shared.beginBackgroundTask(withName: "CloudKitSync") { [weak self] in
+      Task { @MainActor in
+        self?.handleCloudSyncBackgroundTaskExpired()
+      }
+    }
+  }
+
+  private func endCloudSyncBackgroundTaskIfNeeded() {
+    guard cloudSyncBackgroundTask != .invalid else { return }
+
+    UIApplication.shared.endBackgroundTask(cloudSyncBackgroundTask)
+    cloudSyncBackgroundTask = .invalid
+  }
+
+  private func handleCloudSyncBackgroundTaskExpired() {
+    inFlightCloudKitEvents.removeAll()
+    endCloudSyncBackgroundTaskIfNeeded()
+    isSyncing = false
+    isInitialSync = false
+    syncProgress = ""
+    print("CloudSyncManager: Background task expired during sync")
   }
 
   // MARK: - Reset
@@ -563,6 +608,9 @@ final class CloudSyncManager {
   // MARK: - Cleanup
 
   func cleanup() {
+    inFlightCloudKitEvents.removeAll()
+    endCloudSyncBackgroundTaskIfNeeded()
+
     if let observer = syncEventObserver {
       NotificationCenter.default.removeObserver(observer)
       syncEventObserver = nil

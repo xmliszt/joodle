@@ -368,8 +368,13 @@ struct ContentView: View {
       // Only sync widget data when app goes to background to ensure data is saved
       switch newPhase {
       case .background:
-        // App went to background - sync data one final time
-        WidgetHelper.shared.updateWidgetData(in: modelContext)
+        // Avoid extra fetch/write contention if CloudKit is actively syncing while backgrounding.
+        if cloudSyncManager.isSyncing {
+          print("ContentView: Skipping background widget sync during active iCloud sync")
+        } else {
+          // App went to background - sync data one final time
+          WidgetHelper.shared.updateWidgetData(in: modelContext)
+        }
       default:
         break
       }

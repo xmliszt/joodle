@@ -215,26 +215,8 @@ struct JoodleApp: App {
     // Run migrations using the singleton container
     let container = ModelContainerManager.shared.container
 
-    // Run dateString migration synchronously for existing entries
-    Self.runDateStringMigration(container: container)
-
-    // Validate all dateStrings are properly formatted
-    Self.runDateStringValidation(container: container)
-
-    // Run duplicate entry cleanup migration
-    Self.runDuplicateEntryCleanup(container: container)
-
-    // Run empty entry cleanup (entries with no text and no drawing)
-    Self.runEmptyEntryCleanup(container: container)
-
-    // Run legacy thumbnail cleanup migration
-    Self.runLegacyThumbnailCleanup(container: container)
-
-    // Migrate existing drawings from 300px → 342px canvas (centers old doodles)
-    CanvasSizeMigration.runIfNeeded(container: container)
-
-    // Regenerate thumbnails with dual sizes (runs async in background)
-    Self.runDualThumbnailRegeneration(container: container)
+    // Run startup data maintenance sequentially to avoid overlapping database writes.
+    Self.runStartupDataMaintenance(container: container)
 
     // Sync theme color to widgets on startup
     Self.syncThemeColorToWidgets()
@@ -278,17 +260,34 @@ struct JoodleApp: App {
     }
   }
 
+  /// Runs startup data maintenance sequentially on a utility-priority background task.
+  /// Keeping writes in one pipeline reduces lock contention with CloudKit mirroring.
+  private static func runStartupDataMaintenance(container: ModelContainer) {
+    Task.detached(priority: .utility) {
+      await Self.performStartupDataMaintenance(container: container)
+    }
+  }
+
+  /// One pipeline for startup data maintenance.
+  /// Order matters: normalize date keys first, then content cleanups, then thumbnail work.
+  private static func performStartupDataMaintenance(container: ModelContainer) async {
+    runDateStringNormalization(container: container)
+    runDuplicateEntryCleanup(container: container)
+    runEmptyEntryCleanup(container: container)
+    runLegacyThumbnailCleanup(container: container)
+    await CanvasSizeMigration.runIfNeeded(container: container)
+    await runDualThumbnailRegeneration(container: container)
+  }
+
   /// Cleans up duplicate entries (same dateString) by merging content and deleting duplicates
   /// This runs on EVERY app launch to ensure no duplicates exist (handles iCloud sync conflicts)
   private static func runDuplicateEntryCleanup(container: ModelContainer) {
-    Task.detached {
-      let context = ModelContext(container)
-      // Use forceCleanupDuplicates to always run regardless of previous cleanup flag
-      // This ensures duplicates created by iCloud sync conflicts are cleaned up
-      let result = DuplicateEntryCleanup.shared.forceCleanupDuplicates(modelContext: context, markAsCompleted: false)
-      if result.merged > 0 || result.deleted > 0 {
-        print("DuplicateEntryCleanup: Completed - merged \(result.merged), deleted \(result.deleted)")
-      }
+    let context = ModelContext(container)
+    // Use forceCleanupDuplicates to always run regardless of previous cleanup flag
+    // This ensures duplicates created by iCloud sync conflicts are cleaned up
+    let result = DuplicateEntryCleanup.shared.forceCleanupDuplicates(modelContext: context, markAsCompleted: false)
+    if result.merged > 0 || result.deleted > 0 {
+      print("DuplicateEntryCleanup: Completed - merged \(result.merged), deleted \(result.deleted)")
     }
   }
 
@@ -296,130 +295,95 @@ struct JoodleApp: App {
   /// These serve no purpose and waste storage space
   /// This runs on EVERY app launch to clean up any accidentally created empty entries
   private static func runEmptyEntryCleanup(container: ModelContainer) {
-    Task.detached {
-      let context = ModelContext(container)
-      let descriptor = FetchDescriptor<DayEntry>()
+    let context = ModelContext(container)
+    let descriptor = FetchDescriptor<DayEntry>()
 
-      do {
-        let allEntries = try context.fetch(descriptor)
-        var deletedCount = 0
+    do {
+      let allEntries = try context.fetch(descriptor)
+      var deletedCount = 0
 
-        for entry in allEntries {
-          let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
-          let hasText = !entry.body.isEmpty
+      for entry in allEntries {
+        let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
+        let hasText = !entry.body.isEmpty
 
-          if !hasDrawing && !hasText {
-            context.delete(entry)
-            deletedCount += 1
-          }
+        if !hasDrawing && !hasText {
+          context.delete(entry)
+          deletedCount += 1
         }
-
-        if deletedCount > 0 {
-          try context.save()
-          print("EmptyEntryCleanup: Deleted \(deletedCount) empty entries")
-        }
-      } catch {
-        print("EmptyEntryCleanup: Failed - \(error)")
       }
+
+      if deletedCount > 0 {
+        try context.save()
+        print("EmptyEntryCleanup: Deleted \(deletedCount) empty entries")
+      }
+    } catch {
+      print("EmptyEntryCleanup: Failed - \(error)")
     }
   }
 
-  /// Runs the dateString migration synchronously to populate dateString for existing entries
-  private static func runDateStringMigration(container: ModelContainer) {
-    Task.detached {
-      let context = ModelContext(container)
-      let descriptor = FetchDescriptor<DayEntry>()
+  /// Normalizes dateString for all entries in one pass.
+  /// Handles both empty and malformed values to avoid redundant startup scans.
+  private static func runDateStringNormalization(container: ModelContainer) {
+    let context = ModelContext(container)
+    let descriptor = FetchDescriptor<DayEntry>()
 
-      do {
-        let allEntries = try context.fetch(descriptor)
-        var migratedCount = 0
+    do {
+      let allEntries = try context.fetch(descriptor)
+      var normalizedCount = 0
 
-        for entry in allEntries {
-          if entry.dateString.isEmpty {
-            entry.dateString = DayEntry.dateToString(entry.createdAt)
-            migratedCount += 1
-          }
+      for entry in allEntries {
+        if entry.dateString.isEmpty || CalendarDate(dateString: entry.dateString) == nil {
+          entry.dateString = CalendarDate.from(entry.createdAt).dateString
+          normalizedCount += 1
         }
-
-        if migratedCount > 0 {
-          try context.save()
-          print("DateStringMigration: Migrated \(migratedCount) entries on startup")
-        }
-      } catch {
-        print("DateStringMigration: Failed during startup: \(error)")
       }
-    }
-  }
 
-  /// Validates all dateStrings are properly formatted and fixes any malformed ones
-  /// This ensures timezone-agnostic date handling works correctly
-  private static func runDateStringValidation(container: ModelContainer) {
-    Task.detached {
-      let context = ModelContext(container)
-      let descriptor = FetchDescriptor<DayEntry>()
-
-      do {
-        let allEntries = try context.fetch(descriptor)
-        var fixedCount = 0
-
-        for entry in allEntries {
-          // Validate dateString format using CalendarDate
-          if CalendarDate(dateString: entry.dateString) == nil {
-            // Invalid dateString - regenerate from createdAt using CalendarDate
-            entry.dateString = CalendarDate.from(entry.createdAt).dateString
-            fixedCount += 1
-          }
-        }
-
-        if fixedCount > 0 {
-          try context.save()
-          print("DateStringValidation: Fixed \(fixedCount) invalid dateStrings")
-        }
-      } catch {
-        print("DateStringValidation: Failed - \(error)")
+      if normalizedCount > 0 {
+        try context.save()
+        print("DateStringNormalization: Normalized \(normalizedCount) entries")
       }
+    } catch {
+      print("DateStringNormalization: Failed - \(error)")
     }
   }
 
   /// Cleans up legacy 1080px thumbnail data to reclaim storage
   private static func runLegacyThumbnailCleanup(container: ModelContainer) {
-    Task.detached {
-      let context = ModelContext(container)
-      let cleanupKey = "hasCleanedLegacy1080Thumbnails_v1"
+    let context = ModelContext(container)
+    let cleanupKey = "hasCleanedLegacy1080Thumbnails_v1"
 
-      // Only run once
-      guard !UserDefaults.standard.bool(forKey: cleanupKey) else {
-        return
+    // Only run once
+    guard !UserDefaults.standard.bool(forKey: cleanupKey) else {
+      return
+    }
+
+    let descriptor = FetchDescriptor<DayEntry>()
+
+    do {
+      let allEntries = try context.fetch(descriptor)
+      var cleanedCount = 0
+
+      for entry in allEntries {
+        // Only clear legacy 1080px thumbnail
+        if entry.drawingThumbnail1080 != nil {
+          entry.drawingThumbnail1080 = nil
+          cleanedCount += 1
+        }
       }
 
-      let descriptor = FetchDescriptor<DayEntry>()
-
-      do {
-        let allEntries = try context.fetch(descriptor)
-        var cleanedCount = 0
-
-        for entry in allEntries {
-          // Only clear legacy 1080px thumbnail
-          if entry.drawingThumbnail1080 != nil {
-            entry.drawingThumbnail1080 = nil
-            cleanedCount += 1
-          }
-        }
-
-        if cleanedCount > 0 {
-          try context.save()
-          print("LegacyThumbnailCleanup: Cleaned up \(cleanedCount) entries with 1080px thumbnails on startup")
-        }
-
-        UserDefaults.standard.set(true, forKey: cleanupKey)
-      } catch {
-        print("LegacyThumbnailCleanup: Failed during startup: \(error)")
+      if cleanedCount > 0 {
+        try context.save()
+        print("LegacyThumbnailCleanup: Cleaned up \(cleanedCount) entries with 1080px thumbnails on startup")
       }
+
+      UserDefaults.standard.set(true, forKey: cleanupKey)
+    } catch {
+      print("LegacyThumbnailCleanup: Failed during startup: \(error)")
     }
   }
 
   /// Regenerates all thumbnails with dual sizes (20px thicker strokes + 200px normal)
-  private static func runDualThumbnailRegeneration(container: ModelContainer) {
+  private static func runDualThumbnailRegeneration(container: ModelContainer) async {
     let regenerationKey = "hasRegeneratedDualThumbnails_v1"
 
     // Only run once
@@ -427,39 +391,36 @@ struct JoodleApp: App {
       return
     }
 
-    // Run asynchronously to not block app startup
-    Task.detached {
-      let context = ModelContext(container)
-      let descriptor = FetchDescriptor<DayEntry>()
+    let context = ModelContext(container)
+    let descriptor = FetchDescriptor<DayEntry>()
 
-      do {
-        let allEntries = try context.fetch(descriptor)
-        var regeneratedCount = 0
+    do {
+      let allEntries = try context.fetch(descriptor)
+      var regeneratedCount = 0
 
-        for entry in allEntries {
-          if let drawingData = entry.drawingData, !drawingData.isEmpty {
-            let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(
-              from: drawingData)
-            entry.drawingThumbnail20 = thumbnails.0
-            entry.drawingThumbnail200 = thumbnails.1
-            regeneratedCount += 1
+      for entry in allEntries {
+        if let drawingData = entry.drawingData, !drawingData.isEmpty {
+          let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(
+            from: drawingData)
+          entry.drawingThumbnail20 = thumbnails.0
+          entry.drawingThumbnail200 = thumbnails.1
+          regeneratedCount += 1
 
-            // Save periodically to avoid memory buildup
-            if regeneratedCount % 10 == 0 {
-              try? context.save()
-            }
+          // Save periodically to avoid memory buildup
+          if regeneratedCount % 10 == 0 {
+            try? context.save()
           }
         }
-
-        if regeneratedCount > 0 {
-          try context.save()
-          print("DualThumbnailRegeneration: Regenerated \(regeneratedCount) entries with 20px + 200px thumbnails on startup")
-        }
-
-        UserDefaults.standard.set(true, forKey: regenerationKey)
-      } catch {
-        print("DualThumbnailRegeneration: Failed during startup: \(error)")
       }
+
+      if regeneratedCount > 0 {
+        try context.save()
+        print("DualThumbnailRegeneration: Regenerated \(regeneratedCount) entries with 20px + 200px thumbnails on startup")
+      }
+
+      UserDefaults.standard.set(true, forKey: regenerationKey)
+    } catch {
+      print("DualThumbnailRegeneration: Failed during startup: \(error)")
     }
   }
 
