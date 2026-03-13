@@ -1253,19 +1253,6 @@ ID: \(deviceIdentifier)
         Button("Preview Membership Banner") {
           showBannerPreview = true
         }
-        
-        Button("Expire Grace Period Now", role: .destructive) {
-          // Set grace period start to 8 days ago so it's already expired
-          let expiredDate = Date().addingTimeInterval(-8 * 24 * 60 * 60)
-          GracePeriodManager.shared.setGracePeriodStart(expiredDate)
-          print("⏰ DEBUG: Grace period force-expired (start set to \(expiredDate))")
-        }
-        
-        Button("Reset Grace Period (7 days)") {
-          GracePeriodManager.shared.resetGracePeriod()
-          GracePeriodManager.shared.startGracePeriodIfNeeded()
-          print("🎉 DEBUG: Grace period reset to 7 days from now")
-        }
 #endif
       }
       .sheet(isPresented: $showSubscriptionTesting) {
@@ -1276,6 +1263,23 @@ ID: \(deviceIdentifier)
         MembershipBannerPreviewView()
       }
 #endif
+    }
+    
+    if isNonProductionEnvironment && !simulateProductionEnvironment {
+      Section("Grace Period Testing") {
+        Button("Expire Grace Period Now", role: .destructive) {
+          // Set grace period start to 8 days ago so it's already expired
+          let expiredDate = Date().addingTimeInterval(-8 * 24 * 60 * 60)
+          GracePeriodManager.shared.setGracePeriodStart(expiredDate)
+          print("⏰ Grace period force-expired (start set to \(expiredDate))")
+        }
+        
+        Button("Reset Grace Period (7 days)") {
+          GracePeriodManager.shared.resetGracePeriod()
+          GracePeriodManager.shared.startGracePeriodIfNeeded()
+          print("🎉 Grace period reset to 7 days from now")
+        }
+      }
     }
     
     if isSimulatingProduction {
