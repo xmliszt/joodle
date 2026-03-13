@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import UIKit
 
 // MARK: - Joodle Access State
 
@@ -52,6 +53,9 @@ struct DrawingCanvasView: View {
 
   /// Task for async thumbnail generation on dismiss
   @State private var thumbnailTask: Task<Void, Never>?
+
+  /// Short-lived background task used when persisting drawing data during app backgrounding.
+  @State private var backgroundSaveTaskId: UIBackgroundTaskIdentifier = .invalid
 
   /// Tracks whether the drawing was already persisted during this dismiss cycle.
   /// Prevents `.onDisappear` from double-saving after `onChange(of: isShowing)` or `saveDrawing()` already saved.
@@ -230,7 +234,9 @@ struct DrawingCanvasView: View {
       // Guard by isShowing so a hidden canvas (DI devices) doesn't accidentally
       // re-save stale paths for an entry that was deleted in EntryEditingView.
       if newPhase == .background, !isMockMode, isShowing {
-        saveDrawingToStore()
+        beginBackgroundSaveTaskIfNeeded()
+        saveDrawingToStore(generateThumbnails: false, scheduleWidgetSync: false)
+        endBackgroundSaveTaskIfNeeded()
       }
     }
     .confirmationDialog("Clear Drawing", isPresented: $showClearConfirmation) {
@@ -603,7 +609,7 @@ struct DrawingCanvasView: View {
     }
   }
 
-  private func saveDrawingToStore() {
+  private func saveDrawingToStore(generateThumbnails: Bool = true, scheduleWidgetSync: Bool = true) {
     // If the canvas was never loaded (e.g. hidden DI canvas torn down on
     // entry switch), skip saving to avoid overwriting another entry's doodle
     // with empty paths.
@@ -636,6 +642,9 @@ struct DrawingCanvasView: View {
           try? modelContext.save()
         }
 
+        if scheduleWidgetSync {
+          WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
+        }
 
       }
       return
@@ -657,25 +666,49 @@ struct DrawingCanvasView: View {
       // Save drawing data synchronously so it persists immediately.
       try? modelContext.save()
 
-      // Generate thumbnails asynchronously — runs right after dismiss,
-      // no artificial delay since this only fires once on canvas close.
-      thumbnailTask?.cancel()
-      thumbnailTask = Task {
-        let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
-        guard !Task.isCancelled else { return }
+      if generateThumbnails {
+        // Generate thumbnails asynchronously — runs right after dismiss,
+        // no artificial delay since this only fires once on canvas close.
+        thumbnailTask?.cancel()
+        thumbnailTask = Task {
+          let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
+          guard !Task.isCancelled else { return }
 
-        await MainActor.run {
-          entryToSave.drawingThumbnail20 = thumbnails.0
-          entryToSave.drawingThumbnail200 = thumbnails.1
-          try? modelContext.save()
+          await MainActor.run {
+            entryToSave.drawingThumbnail20 = thumbnails.0
+            entryToSave.drawingThumbnail200 = thumbnails.1
+            try? modelContext.save()
+          }
         }
+      } else {
+        // Avoid extra writes when app is transitioning to background.
+        thumbnailTask?.cancel()
       }
     } catch {
       print("Failed to save drawing data: \(error)")
     }
 
-    // Schedule a debounced widget update so rapid strokes don't overload WidgetCenter
-    WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
+    if scheduleWidgetSync {
+      // Schedule a debounced widget update so rapid strokes don't overload WidgetCenter
+      WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
+    }
+  }
+
+  private func beginBackgroundSaveTaskIfNeeded() {
+    guard backgroundSaveTaskId == .invalid else { return }
+
+    backgroundSaveTaskId = UIApplication.shared.beginBackgroundTask(withName: "PersistDrawingOnBackground") {
+      Task { @MainActor in
+        endBackgroundSaveTaskIfNeeded()
+      }
+    }
+  }
+
+  private func endBackgroundSaveTaskIfNeeded() {
+    guard backgroundSaveTaskId != .invalid else { return }
+
+    UIApplication.shared.endBackgroundTask(backgroundSaveTaskId)
+    backgroundSaveTaskId = .invalid
   }
 
 

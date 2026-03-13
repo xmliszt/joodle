@@ -693,7 +693,7 @@ struct ContentView: View {
     try? modelContext.save()
 
     // Sync note to widgets
-    WidgetHelper.shared.updateWidgetData(in: modelContext)
+    WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
 
     dateForNotePrompt = nil
   }
