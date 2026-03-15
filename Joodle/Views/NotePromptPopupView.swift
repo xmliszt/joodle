@@ -17,7 +17,7 @@ struct NotePromptPopupView: View {
 
   @State private var noteText: String = ""
   @State private var isAnimating: Bool = false
-  @FocusState private var isTextFieldFocused: Bool
+  @State private var isTextFieldFocused: Bool = false
 
   private var canSave: Bool {
     !noteText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -63,16 +63,18 @@ struct NotePromptPopupView: View {
           .padding(.bottom, 16)
 
           // Text Editor
-          TextEditor(text: $noteText)
-            .font(.appBody())
-            .multilineTextAlignment(.leading)
-            .focused($isTextFieldFocused)
-            .scrollContentBackground(.hidden)
-            .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 160)
-            .padding(12)
-            .background(Color(UIColor.systemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .padding(.horizontal, 20)
+          ScrollView {
+            NoteTextEditor(text: $noteText, isFocused: $isTextFieldFocused)
+              .padding(.horizontal, 8)
+              .padding(.vertical, 4)
+          }
+          .scrollIndicators(.hidden)
+          .scrollDismissesKeyboard(.never)
+          .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 160)
+          .padding(4)
+          .background(Color(UIColor.systemBackground))
+          .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+          .padding(.horizontal, 20)
 
           // Helper text with quick link to settings
           VStack {

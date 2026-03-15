@@ -111,7 +111,7 @@ struct NoteEditingPopupView: View {
   }
 }
 
-private struct NoteTextEditor: UIViewRepresentable {
+struct NoteTextEditor: UIViewRepresentable {
   @Binding var text: String
   @Binding var isFocused: Bool
 
