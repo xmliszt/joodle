@@ -53,9 +53,9 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   /// The lowest position that user can drag
   @State private var MAX_SPLIT_POSITION: CGFloat = 1.0
   /// Any value beyond this will be considered dismissed
-  private let DISMISS_POSITION: CGFloat = 0.8
+  private let DISMISS_POSITION: CGFloat = 0.6
   /// Snap position includes 1.0, which means topView will be occupying the fullscreen
-  @State private var SNAP_POSITIONS: [CGFloat] = [0.15, 0.5, 0.75, 1.0]
+  @State private var SNAP_POSITIONS: [CGFloat] = [0.15, 0.5, 1.0]
   /// Compensate corner radius so it is just a bit smaller than device actual radius
   private let CORNER_RADIUS_COMPENSATION: CGFloat = 5
 

@@ -83,9 +83,9 @@ struct EntryEditingView: View {
     // Use absolute Y position thresholds instead of ratio
     // This accounts for safe area insets and drag handle offset
     // Compact threshold: when top Y is around half screen height (~420pt on iPhone)
-    // Expanded threshold: when top Y is near top of screen (~150pt to account for safe area + handle)
+    // Expanded threshold: must be >= topYPosition at 0.15 split (safeAreaTop + 0.15*containerHeight + dragHandle ≈ 180-205pt depending on device)
     let compactYThreshold: CGFloat = screenHeight * 0.48
-    let expandedYThreshold: CGFloat = screenHeight * 0.18
+    let expandedYThreshold: CGFloat = screenHeight * 0.26
 
     if topYPosition >= compactYThreshold {
       return minDrawingSize
@@ -416,6 +416,10 @@ struct EntryEditingView: View {
       // Header with date and edit button
       VStack {
         ZStack {
+          // Anchor ZStack to a fixed height so the center date label never
+          // shifts vertically when left/right buttons appear or disappear.
+          Color.clear.frame(height: 44)
+
           // Left side - Share button
           HStack {
             if #available(iOS 26.0, *) {
