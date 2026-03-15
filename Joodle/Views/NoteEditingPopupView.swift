@@ -41,22 +41,26 @@ struct NoteEditingPopupView: View {
         Spacer()
         ScrollViewReader { proxy in
           ScrollView {
-            NoteTextEditor(text: $noteText, isFocused: $isFocused)
-              .padding(.horizontal, 16)
-              .padding(.vertical, 12)
-
-            if noteText.count >= 2000 {
-              Text("Character limit reached")
-                .font(.caption2)
-                .foregroundStyle(.red)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+            VStack(alignment: .leading, spacing: 0) {
+              NoteTextEditor(text: $noteText, isFocused: $isFocused)
                 .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-            }
+                .padding(.vertical, 12)
+                .transaction { $0.animation = nil }
 
-            Color.clear
-              .frame(height: 1)
-              .id(bottomAnchorID)
+              if noteText.count >= 2000 {
+                Text("Character limit reached")
+                  .font(.caption2)
+                  .foregroundStyle(.red)
+                  .frame(maxWidth: .infinity, alignment: .trailing)
+                  .padding(.horizontal, 16)
+                  .padding(.bottom, 8)
+              }
+
+              Color.clear
+                .frame(height: 1)
+                .id(bottomAnchorID)
+            }
+            .frame(minHeight: visibleEditorHeight, alignment: .top)
           }
           .scrollIndicators(.hidden)
           .scrollDismissesKeyboard(.never)
@@ -65,31 +69,24 @@ struct NoteEditingPopupView: View {
           .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
           .padding(.horizontal, 20)
           // Prevent taps on the card from propagating to the background dismiss gesture
-          .scaleEffect(isAnimating ? 1.0 : 0.9)
           .opacity(isAnimating ? 1.0 : 0.0)
-          .offset(y: isAnimating ? 0 : 20)
-          .blur(radius: isAnimating ? 0 : 4)
-          .animation(.spring(response: 0.35, dampingFraction: 0.75), value: isAnimating)
+          .animation(.easeInOut(duration: 0.2), value: isAnimating)
           .onTapGesture {}
           .onAppear {
-            scrollEditorToBottom(using: proxy, animated: false)
+            DispatchQueue.main.async {
+              proxy.scrollTo(bottomAnchorID, anchor: .bottom)
+            }
           }
           .onChange(of: noteText) { _, _ in
             guard isFocused else { return }
-            scrollEditorToBottom(using: proxy, animated: true)
-          }
-          .onChange(of: isFocused) { _, focused in
-            guard focused else { return }
-            scrollEditorToBottom(using: proxy, animated: false)
+            proxy.scrollTo(bottomAnchorID, anchor: .bottom)
           }
         }
         Spacer()
       }
     }
     .onAppear {
-      withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-        isAnimating = true
-      }
+      isAnimating = true
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
         isFocused = true
       }
@@ -98,26 +95,13 @@ struct NoteEditingPopupView: View {
 
   private func dismiss() {
     isFocused = false
-    withAnimation(.easeInOut(duration: 0.2)) {
-      isAnimating = false
-    }
+    isAnimating = false
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
       onSave(noteText)
       onDismiss()
     }
   }
 
-  private func scrollEditorToBottom(using proxy: ScrollViewProxy, animated: Bool) {
-    DispatchQueue.main.async {
-      if animated {
-        withAnimation(.easeOut(duration: 0.12)) {
-          proxy.scrollTo(bottomAnchorID, anchor: .bottom)
-        }
-      } else {
-        proxy.scrollTo(bottomAnchorID, anchor: .bottom)
-      }
-    }
-  }
 }
 
 struct NoteTextEditor: UIViewRepresentable {
@@ -141,16 +125,30 @@ struct NoteTextEditor: UIViewRepresentable {
 
   func updateUIView(_ uiView: UITextView, context: Context) {
     if uiView.text != text {
+      // Nil delegate temporarily to prevent textViewDidChange from firing
+      // and creating a feedback loop back into updateUIView
+      uiView.delegate = nil
       let selectedRange = uiView.selectedRange
       uiView.text = text
       uiView.selectedRange = selectedRange
+      uiView.delegate = context.coordinator
     }
-    if isFocused && !uiView.isFirstResponder {
-      uiView.becomeFirstResponder()
-      let endPosition = uiView.endOfDocument
-      uiView.selectedTextRange = uiView.textRange(from: endPosition, to: endPosition)
-    } else if !isFocused && uiView.isFirstResponder {
-      uiView.resignFirstResponder()
+    if isFocused && !uiView.isFirstResponder && !context.coordinator.isMakingFirstResponder {
+      // Defer out of the SwiftUI render cycle: calling becomeFirstResponder() synchronously
+      // triggers UIKit layout → safe area changes → updateUIView fires again on the same
+      // run loop tick before isMakingFirstResponder takes effect, causing a re-entrant cycle.
+      context.coordinator.isMakingFirstResponder = true
+      DispatchQueue.main.async {
+        uiView.becomeFirstResponder()
+        let endPosition = uiView.endOfDocument
+        uiView.selectedTextRange = uiView.textRange(from: endPosition, to: endPosition)
+      }
+    } else if !isFocused && uiView.isFirstResponder && !context.coordinator.isResigningFirstResponder {
+      context.coordinator.isMakingFirstResponder = false
+      context.coordinator.isResigningFirstResponder = true
+      DispatchQueue.main.async {
+        uiView.resignFirstResponder()
+      }
     }
   }
 
@@ -169,6 +167,8 @@ struct NoteTextEditor: UIViewRepresentable {
 
   class Coordinator: NSObject, UITextViewDelegate {
     var parent: NoteTextEditor
+    var isMakingFirstResponder = false
+    var isResigningFirstResponder = false
 
     init(_ parent: NoteTextEditor) {
       self.parent = parent
@@ -177,19 +177,28 @@ struct NoteTextEditor: UIViewRepresentable {
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
       let currentText = textView.text ?? ""
       let newLength = currentText.count - range.length + text.count
-      return newLength <= parent.maxLength
+      // Always allow deletions; only block additions that exceed the limit
+      return text.isEmpty || newLength <= parent.maxLength
     }
 
     func textViewDidChange(_ textView: UITextView) {
-      parent.text = textView.text
+      if parent.text != textView.text {
+        parent.text = textView.text
+      }
     }
 
     func textViewDidBeginEditing(_ textView: UITextView) {
-      DispatchQueue.main.async { self.parent.isFocused = true }
+      isMakingFirstResponder = false
+      DispatchQueue.main.async {
+        if !self.parent.isFocused { self.parent.isFocused = true }
+      }
     }
 
     func textViewDidEndEditing(_ textView: UITextView) {
-      DispatchQueue.main.async { self.parent.isFocused = false }
+      isResigningFirstResponder = false
+      DispatchQueue.main.async {
+        if self.parent.isFocused { self.parent.isFocused = false }
+      }
     }
   }
 }

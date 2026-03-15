@@ -126,9 +126,7 @@ struct NotePromptPopupView: View {
             Button {
               let trimmedNote = noteText.trimmingCharacters(in: .whitespacesAndNewlines)
               onSave(trimmedNote)
-              withAnimation(.easeInOut(duration: 0.2)) {
-                isAnimating = false
-              }
+              isAnimating = false
               DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 isPresented = false
               }
@@ -148,21 +146,14 @@ struct NotePromptPopupView: View {
         .padding(.horizontal, 32)
         // Prevent tap on popup from dismissing
         .onTapGesture {}
-        // Scale and opacity animation
-        .scaleEffect(isAnimating ? 1.0 : 0.9)
+        // Opacity animation
         .opacity(isAnimating ? 1.0 : 0.0)
-        .offset(y: isAnimating ? 0 : 20)
-        .blur(radius: isAnimating ? 0 : 4)
-        .animation(.spring(response: 0.35, dampingFraction: 0.75), value: isAnimating)
+        .animation(.easeInOut(duration: 0.2), value: isAnimating)
         Spacer()
       }
     }
     .onAppear {
-      // Trigger entry animation
-      withAnimation {
-        isAnimating = true
-      }
-      // Auto-focus text field after animation completes
+      isAnimating = true
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
         isTextFieldFocused = true
       }
@@ -171,9 +162,7 @@ struct NotePromptPopupView: View {
 
   private func dismissPopup() {
     isTextFieldFocused = false
-    withAnimation(.easeInOut(duration: 0.2)) {
-      isAnimating = false
-    }
+    isAnimating = false
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
       isPresented = false
     }
