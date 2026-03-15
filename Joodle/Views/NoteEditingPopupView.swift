@@ -45,6 +45,15 @@ struct NoteEditingPopupView: View {
               .padding(.horizontal, 16)
               .padding(.vertical, 12)
 
+            if noteText.count >= 2000 {
+              Text("Character limit reached")
+                .font(.caption2)
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+            }
+
             Color.clear
               .frame(height: 1)
               .id(bottomAnchorID)
@@ -114,6 +123,7 @@ struct NoteEditingPopupView: View {
 struct NoteTextEditor: UIViewRepresentable {
   @Binding var text: String
   @Binding var isFocused: Bool
+  var maxLength: Int = 2000
 
   func makeUIView(context: Context) -> UITextView {
     let descriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: .body)
@@ -162,6 +172,12 @@ struct NoteTextEditor: UIViewRepresentable {
 
     init(_ parent: NoteTextEditor) {
       self.parent = parent
+    }
+
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+      let currentText = textView.text ?? ""
+      let newLength = currentText.count - range.length + text.count
+      return newLength <= parent.maxLength
     }
 
     func textViewDidChange(_ textView: UITextView) {

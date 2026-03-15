@@ -67,6 +67,15 @@ struct NotePromptPopupView: View {
             NoteTextEditor(text: $noteText, isFocused: $isTextFieldFocused)
               .padding(.horizontal, 8)
               .padding(.vertical, 4)
+
+            if noteText.count >= 2000 {
+              Text("Character limit reached")
+                .font(.caption2)
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 4)
+            }
           }
           .scrollIndicators(.hidden)
           .scrollDismissesKeyboard(.never)
