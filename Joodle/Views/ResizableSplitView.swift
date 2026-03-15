@@ -5,7 +5,6 @@
 //  Created by Li Yuxuan on 16/8/25.
 //
 
-import Combine
 import SwiftUI
 
 struct ResizableSplitView<Top: View, Bottom: View>: View {
@@ -14,7 +13,6 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   @State private var splitPosition: CGFloat = 1.0
   @State private var isSnapping: Bool = false
   @State private var hasShownBottomView: Bool = false
-  @State private var isKeyboardVisible: Bool = false
   @State private var isDraggable: Bool = true
   /// Temporary drag offset tracked by the gesture system; resets to 0 when drag ends.
   /// Using @GestureState avoids the feedback loop where updating @State during drag
@@ -187,6 +185,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         }
       }
       .onChange(of: _geometry.size) { _, newValue in
+        guard dragOffset == 0 else { return }
         let newHeight = newValue.height * splitPosition
         self.onTopViewHeightChange?(newHeight)
       }
@@ -196,35 +195,6 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
           splitPosition = newValue ? 0.5 : 1.0
         } completion: {
           hasShownBottomView = newValue
-          let newHeight = _geometry.size.height * splitPosition
-          self.onTopViewHeightChange?(newHeight)
-        }
-      }
-      .onReceive(Publishers.keyboardInfo) { info in
-        guard dragOffset == 0 else { return }
-        let keyboardHeight = info.height
-        withAnimation(.springFkingSatifying) {
-          // Keyboard dismissed
-          if keyboardHeight == 0.0 {
-            isKeyboardVisible = false
-            MIN_SPLIT_POSITION = 0.0
-            MAX_SPLIT_POSITION = 1.0
-            // Only restore split position if bottom view is still present
-            // Otherwise keep it at 1.0 to properly dismiss the bottom view
-            splitPosition = hasBottomView ? 0.5 : 1.0
-            SNAP_POSITIONS = [0.15, 0.5, 0.75, 1.0]
-            isDraggable = true
-          }
-          // Keyboard is shown
-          else {
-            isKeyboardVisible = true
-            MIN_SPLIT_POSITION = 0
-            MAX_SPLIT_POSITION = 0.5
-            splitPosition = 0.15
-            SNAP_POSITIONS = [0.15]
-            // Prevent drag
-            isDraggable = false
-          }
           let newHeight = _geometry.size.height * splitPosition
           self.onTopViewHeightChange?(newHeight)
         }

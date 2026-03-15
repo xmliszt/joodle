@@ -25,119 +25,126 @@ struct NotePromptPopupView: View {
 
   var body: some View {
     ZStack {
-      // Dimmed background - tap to dismiss
-      Color.black.opacity(isAnimating ? 0.4 : 0)
+      // Full-screen blurred backdrop — tap to dismiss
+      Rectangle()
+        .fill(.ultraThinMaterial)
         .ignoresSafeArea()
         .onTapGesture {
           dismissPopup()
         }
-        .animation(.easeInOut(duration: 0.25), value: isAnimating)
 
-      // Popup content
-      VStack(spacing: 0) {
-        // Header
-        VStack(spacing: 16) {
-          DoodleRendererView(
-            size: 80,
-            hasEntry: true,
-            dotStyle: .present,
-            drawingData: drawingData,
-            strokeColor: .appAccent,
-            strokeMultiplier: 1.0,
-            renderScale: 1.0
-          )
-          .frame(width: 80, height: 80)
-          .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-              .fill(Color(UIColor.secondarySystemBackground))
-          )
-          .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+      // Popup content — wrapped in spacers so it stays above the keyboard
+      VStack {
+        Spacer()
+        VStack(spacing: 0) {
+          // Header
+          VStack(spacing: 16) {
+            DoodleRendererView(
+              size: 80,
+              hasEntry: true,
+              dotStyle: .present,
+              drawingData: drawingData,
+              strokeColor: .appAccent,
+              strokeMultiplier: 1.0,
+              renderScale: 1.0
+            )
+            .frame(width: 80, height: 80)
+            .background(
+              RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(UIColor.secondarySystemBackground))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-          Text("Write something about this moment")
-            .font(.appSubheadline())
-            .foregroundStyle(.secondary)
-        }
-        .padding(.top, 24)
-        .padding(.bottom, 16)
+            Text("Write something about this moment")
+              .font(.appSubheadline())
+              .foregroundStyle(.secondary)
+          }
+          .padding(.top, 24)
+          .padding(.bottom, 16)
 
-        // Text Editor
-        TextEditor(text: $noteText)
-          .font(.appBody())
-          .focused($isTextFieldFocused)
-          .scrollContentBackground(.hidden)
-          .frame(minHeight: 120, maxHeight: 160)
-          .padding(12)
-          .background(Color(UIColor.secondarySystemBackground))
-          .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+          // Text Editor
+          TextEditor(text: $noteText)
+            .font(.appBody())
+            .multilineTextAlignment(.leading)
+            .focused($isTextFieldFocused)
+            .scrollContentBackground(.hidden)
+            .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 160)
+            .padding(12)
+            .background(Color(UIColor.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .padding(.horizontal, 20)
+
+          // Helper text with quick link to settings
+          VStack {
+            HStack(spacing: 0) {
+              Text("You can turn off this prompt in ")
+                .font(.appFont(size: 10))
+                .foregroundStyle(.secondary)
+              Button {
+                dismissPopup()
+                // Small delay to let popup dismiss before navigating
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                  onNavigateToSettings()
+                }
+              } label: {
+                Text("Settings > Customization")
+                  .font(.appFont(size: 10))
+                  .foregroundStyle(.blue)
+              }
+            }
+          }
+          .padding(.top, 12)
           .padding(.horizontal, 20)
 
-        // Helper text with quick link to settings
-        VStack {
-          HStack(spacing: 0) {
-            Text("You can turn off this prompt in ")
-              .font(.appFont(size: 10))
-              .foregroundStyle(.secondary)
+          // Buttons
+          HStack(spacing: 12) {
+            // Cancel button
             Button {
               dismissPopup()
-              // Small delay to let popup dismiss before navigating
-              DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                onNavigateToSettings()
+            } label: {
+              Text("Cancel")
+                .font(.appHeadline())
+                .foregroundColor(.primary)
+                .frame(maxWidth: 237)
+                .frame(height: 48)
+                .background(.appTextSecondary.opacity(0.3))
+                .clipShape(Capsule())
+            }
+
+            // Save button
+            Button {
+              let trimmedNote = noteText.trimmingCharacters(in: .whitespacesAndNewlines)
+              onSave(trimmedNote)
+              withAnimation(.easeInOut(duration: 0.2)) {
+                isAnimating = false
+              }
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                isPresented = false
               }
             } label: {
-              Text("Settings > Customization")
-                .font(.appFont(size: 10))
-                .foregroundStyle(.blue)
+              Text("Save")
             }
+            .buttonStyle(OnboardingButtonStyle())
+            .disabled(!canSave)
           }
+          .padding(.horizontal, 20)
+          .padding(.top, 20)
+          .padding(.bottom, 24)
         }
-        .padding(.top, 12)
-        .padding(.horizontal, 20)
-
-        // Buttons
-        HStack(spacing: 12) {
-          // Cancel button
-          Button {
-            dismissPopup()
-          } label: {
-            Text("Cancel")
-              .font(.appHeadline())
-              .foregroundColor(.primary)
-              .frame(maxWidth: 237)
-              .frame(height: 48)
-              .background(.appTextSecondary.opacity(0.3))
-              .clipShape(Capsule())
-          }
-
-          // Save button
-          Button {
-            let trimmedNote = noteText.trimmingCharacters(in: .whitespacesAndNewlines)
-            onSave(trimmedNote)
-            withAnimation(.easeInOut(duration: 0.2)) {
-              isAnimating = false
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-              isPresented = false
-            }
-          } label: {
-            Text("Save")
-          }
-          .buttonStyle(OnboardingButtonStyle())
-          .disabled(!canSave)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 20)
-        .padding(.bottom, 24)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .shadow(color: .black.opacity(0.15), radius: 20, y: 10)
+        .padding(.horizontal, 32)
+        // Prevent tap on popup from dismissing
+        .onTapGesture {}
+        // Scale and opacity animation
+        .scaleEffect(isAnimating ? 1.0 : 0.9)
+        .opacity(isAnimating ? 1.0 : 0.0)
+        .offset(y: isAnimating ? 0 : 20)
+        .blur(radius: isAnimating ? 0 : 4)
+        .animation(.spring(response: 0.35, dampingFraction: 0.75), value: isAnimating)
+        Spacer()
       }
-      .background(Color(UIColor.systemBackground))
-      .clipShape(RoundedRectangle(cornerRadius: 24))
-      .shadow(color: .black.opacity(0.15), radius: 20, y: 10)
-      .padding(.horizontal, 32)
-      // Prevent tap on popup from dismissing
-      .onTapGesture {}
-      // Scale and opacity animation
-      .scaleEffect(isAnimating ? 1 : 0.8)
-      .opacity(isAnimating ? 1 : 0)
-      .animation(.spring(response: 0.35, dampingFraction: 0.75), value: isAnimating)
     }
     .onAppear {
       // Trigger entry animation
@@ -166,7 +173,7 @@ struct NotePromptPopupView: View {
   @Previewable @State var isPresented = true
 
   ZStack {
-    Color.blue.opacity(0.3)
+    Color.white
       .ignoresSafeArea()
 
     if isPresented {
@@ -188,7 +195,7 @@ struct NotePromptPopupView: View {
   @Previewable @State var isPresented = true
 
   ZStack {
-    Color.blue.opacity(0.3)
+    Color.black
       .ignoresSafeArea()
 
     if isPresented {

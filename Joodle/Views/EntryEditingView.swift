@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import Combine
 
 struct EntryEditingView: View {
   @Environment(\.colorScheme) private var colorScheme
@@ -19,6 +20,13 @@ struct EntryEditingView: View {
   private let mockStore: MockDataStore?
   private let tutorialMode: Bool
   private let showReminderSheetBinding: Binding<Bool>?
+  /// Called when the user taps the note area to begin editing. Provides initial text and a save
+  /// handler. The parent is responsible for presenting NoteEditingPopupView so it can be overlaid
+  /// on the full screen for a proper blur effect.
+  private let onNoteEditRequested: ((String, @escaping (String) -> Void) -> Void)?
+  /// Called when EntryEditingView wants to proactively close the note-editing popup (e.g. on date
+  /// change). The parent should dismiss NoteEditingPopupView in response.
+  private let onNoteEditDismissed: (() -> Void)?
 
   init(
     date: Date?,
@@ -27,7 +35,9 @@ struct EntryEditingView: View {
     onFocusChange: ((Bool) -> Void)? = nil,
     mockStore: MockDataStore? = nil,
     tutorialMode: Bool = false,
-    showReminderSheetBinding: Binding<Bool>? = nil
+    showReminderSheetBinding: Binding<Bool>? = nil,
+    onNoteEditRequested: ((String, @escaping (String) -> Void) -> Void)? = nil,
+    onNoteEditDismissed: (() -> Void)? = nil
   ) {
     self.date = date
     self.selectedEntry = entry
@@ -36,6 +46,8 @@ struct EntryEditingView: View {
     self.mockStore = mockStore
     self.tutorialMode = tutorialMode
     self.showReminderSheetBinding = showReminderSheetBinding
+    self.onNoteEditRequested = onNoteEditRequested
+    self.onNoteEditDismissed = onNoteEditDismissed
     _textContent = State(initialValue: entry?.body ?? "")
     _entry = State(initialValue: entry)
   }
@@ -44,7 +56,7 @@ struct EntryEditingView: View {
   @State private var currentTime = Date()
   @State private var isTimerActive = false
   @State private var textContent: String = ""
-  @FocusState private var isTextFieldFocused
+  @State private var isEditingNote: Bool = false
   @State private var entry: DayEntry?
   @State private var showButtons = true
   @State private var showShareSheet = false
@@ -84,31 +96,6 @@ struct EntryEditingView: View {
       // As topYPosition goes from compactYThreshold to expandedYThreshold, progress goes from 0 to 1
       let progress = (compactYThreshold - topYPosition) / (compactYThreshold - expandedYThreshold)
       return minDrawingSize + (maxDrawingSize - minDrawingSize) * progress
-    }
-  }
-
-  private var textContentHeight: CGFloat {
-    let minHeight: CGFloat = 100
-    let maxHeight = max(minHeight, 180)
-
-    guard screenHeight > 0 else { return minHeight }
-
-    // Use absolute Y position thresholds instead of ratio
-    // This accounts for safe area insets and drag handle offset
-    // Compact threshold: when top Y is around half screen height (~420pt on iPhone)
-    // Expanded threshold: when top Y is near top of screen (~150pt to account for safe area + handle)
-    let compactYThreshold: CGFloat = screenHeight * 0.48
-    let expandedYThreshold: CGFloat = screenHeight * 0.18
-
-    if topYPosition >= compactYThreshold {
-      return minHeight
-    } else if topYPosition <= expandedYThreshold {
-      return maxHeight
-    } else {
-      // Linear interpolation between 160 and maxDrawingSize
-      // As topYPosition goes from compactYThreshold to expandedYThreshold, progress goes from 0 to 1
-      let progress = (compactYThreshold - topYPosition) / (compactYThreshold - expandedYThreshold)
-      return minHeight + (maxHeight - minHeight) * progress
     }
   }
 
@@ -207,111 +194,39 @@ struct EntryEditingView: View {
     return "\(entry.dateString)::\(entry.body)::\(entry.drawingData?.hashValue ?? 0)"
   }
 
+  private func setEditingNotePresented(_ value: Bool) {
+    var transaction = Transaction()
+    transaction.disablesAnimations = true
+    withTransaction(transaction) {
+      isEditingNote = value
+    }
+    if value {
+      onNoteEditRequested?(textContent) { text in
+        textContent = text
+        guard let date else { return }
+        if isMockMode {
+          saveMockNote(text: text, for: date)
+        } else {
+          saveNote(text: text, for: date)
+        }
+        setEditingNotePresented(false)
+      }
+    } else {
+      onNoteEditDismissed?()
+    }
+  }
+
   var body: some View {
     ZStack {
       VStack(alignment: .leading, spacing: 0) {
+        // Spacer for header
         Rectangle()
           .fill(.clear)
-          .frame(maxWidth: .infinity, maxHeight: 16)
+          .frame(maxWidth: .infinity, maxHeight: 28)
 
         // Note content
         ScrollView {
           VStack(alignment: .leading, spacing: 0) {
-            // Text content
-            ZStack(alignment: .topLeading) {
-              // Both mock mode and real mode use TextEditor for full editing
-              TextEditor(text: $textContent)
-                .font(.appBody())
-                .lineSpacing(4)
-                .foregroundColor(.textColor)
-                .background(.backgroundColor)
-                .frame(height: textContentHeight)
-                .disableAutocorrection(false)
-                .autocapitalization(.sentences)
-                .focused($isTextFieldFocused)
-                // Nudge to align with placeholder text
-                .padding(.horizontal, -5)
-                .padding(.vertical, 12)
-                .onDisappear {
-                  withAnimation {
-                    isTextFieldFocused = false
-                  } completion: {
-                    guard let date, textContent.isEmpty == false else { return }
-                    if isMockMode {
-                      saveMockNote(text: textContent, for: date)
-                    } else {
-                      saveNote(text: textContent, for: date)
-                    }
-                  }
-                }
-                .onChange(of: isTextFieldFocused) { _, newValue in
-                  onFocusChange?(newValue)
-
-                  // When starting to edit, hide buttons immediately
-                  if newValue {
-                    showButtons = false
-                  }
-                  // When done editing, delay button appearance for smooth transition
-                  else {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                      withAnimation(.easeIn(duration: 0.25)) {
-                        showButtons = true
-                      }
-                    }
-                  }
-                }
-                .scrollDismissesKeyboard(.never)
-              if textContent.isEmpty {
-                Text("Tap to write a note...")
-                  .font(.appBody())
-                  .foregroundColor(.textColor.opacity(0.3))
-                  .offset(y: 20)
-                  .allowsHitTesting(false)  // Important: prevents blocking TextEditor
-              }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            // MARK: Overlay gradient
-            .overlay(alignment: .top) {
-              ZStack {
-                Rectangle().fill(.backgroundColor) // blur layer
-
-                LinearGradient(
-                  gradient: Gradient(stops: [
-                    .init(color: Color.black.opacity(1.0), location: 0.0),
-                    .init(color: Color.black.opacity(0.0), location: 0.5),
-                    .init(color: Color.black.opacity(0.0), location: 1.0),
-                  ]),
-                  startPoint: .bottom,
-                  endPoint: .top
-                )
-                .blendMode(.destinationOut)  // punch transparency into the blur
-              }
-              .compositingGroup()  // required for destinationOut to work
-              .frame(height: 40)
-              .offset(y: -20)
-              .allowsHitTesting(false)
-            }
-            .overlay(alignment: .bottom) {
-              ZStack {
-                Rectangle().fill(.backgroundColor)  // blur layer
-
-                LinearGradient(
-                  gradient: Gradient(stops: [
-                    .init(color: Color.black.opacity(1.0), location: 0.0),
-                    .init(color: Color.black.opacity(0.0), location: 0.5),
-                    .init(color: Color.black.opacity(0.0), location: 1.0),
-                  ]),
-                  startPoint: .top,
-                  endPoint: .bottom
-                )
-                .blendMode(.destinationOut)  // punch transparency into the blur
-              }
-              .compositingGroup()  // required for destinationOut to work
-              .frame(height: 40)
-              .offset(y: 20)
-              .allowsHitTesting(false)
-            }
-
             // Drawing content
             if let drawingData = displayDrawingData, !drawingData.isEmpty {
               VStack(alignment: .center, spacing: 8) {
@@ -349,10 +264,34 @@ struct EntryEditingView: View {
                 onOpenDrawingCanvas?()
               }
             }
+
+            // Note text display — tappable to open the editing popup
+            Button {
+              setEditingNotePresented(true)
+            } label: {
+              ZStack(alignment: .topLeading) {
+                Text(textContent.isEmpty ? " " : textContent)
+                  .font(.appBody())
+                  .lineSpacing(4)
+                  .foregroundColor(.textColor)
+                  .frame(maxWidth: .infinity, alignment: .leading)
+                  .padding(.vertical, 12)
+                if textContent.isEmpty {
+                  Text("Tap to write a note...")
+                    .font(.appBody())
+                    .foregroundColor(.textColor.opacity(0.3))
+                    .padding(.vertical, 12)
+                    .allowsHitTesting(false)
+                }
+              }
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .contentShape(Rectangle())
+            }
+            .buttonStyle(NoteDisplayButtonStyle())
           }
           .frame(maxWidth: .infinity, alignment: .leading)
           // Offset the header part
-          .padding(.vertical, 24)
+          .padding(.vertical, 32)
         }
         .scrollDismissesKeyboard(.never)
       }
@@ -367,17 +306,14 @@ struct EntryEditingView: View {
               containerWidth = frame.width
             }
             .onChange(of: geometry.frame(in: .global)) { _, newFrame in
-              topYPosition = newFrame.minY
-              containerWidth = newFrame.width
+              let newY = newFrame.minY
+              let newWidth = newFrame.width
+              guard newY != topYPosition || newWidth != containerWidth else { return }
+              topYPosition = newY
+              containerWidth = newWidth
             }
         }
       )
-      .contentShape(Rectangle()) // Ensure the background is tappable
-      .onTapGesture {
-        if isTextFieldFocused {
-          confirmAndDismiss()
-        }
-      }
       .onAppear {
         // Load entry first
         guard let date else { return }
@@ -401,10 +337,8 @@ struct EntryEditingView: View {
           }
         }
 
-        // Unfocus
-        withAnimation {
-          isTextFieldFocused = false
-        }
+        // Close popup if open
+        setEditingNotePresented(false)
 
         // Update entry if got new date
         if let newDate = newValue {
@@ -420,7 +354,7 @@ struct EntryEditingView: View {
         // Skip in mock mode
         guard !isMockMode else { return }
         guard let date else { return }
-        refreshEntryState(for: date, preserveUserInput: isTextFieldFocused)
+        refreshEntryState(for: date, preserveUserInput: isEditingNote)
       }
       .onChange(of: entry) { _, _ in
         // Skip in mock mode
@@ -428,6 +362,22 @@ struct EntryEditingView: View {
 
         // Restart timer when entry changes (loaded or modified)
         startTimerIfNeeded()
+      }
+      .onChange(of: isEditingNote) { _, newValue in
+        onFocusChange?(newValue)
+
+        // When editing begins, hide header buttons immediately
+        if newValue {
+          showButtons = false
+        }
+        // When editing ends, delay button appearance for smooth transition
+        else {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            withAnimation(.easeIn(duration: 0.25)) {
+              showButtons = true
+            }
+          }
+        }
       }
       .onDisappear {
         stopTimer()
@@ -459,6 +409,9 @@ struct EntryEditingView: View {
           .presentationDragIndicator(.visible)
         }
       }
+      .transaction { transaction in
+        transaction.disablesAnimations = true
+      }
 
       // Header with date and edit button
       VStack {
@@ -471,10 +424,10 @@ struct EntryEditingView: View {
                   // Share button
                   // - only show when:
                   //   - not in mock mode
-                  //   - and not focused on text field
+                  //   - and not editing
                   //   - and should show buttons
                   //   - and has entry content
-                  if !isMockMode && !isTextFieldFocused && showButtons && hasEntryContent {
+                  if !isMockMode && !isEditingNote && showButtons && hasEntryContent {
                     Button {
                       showShareSheet = true
                     } label: {
@@ -487,9 +440,9 @@ struct EntryEditingView: View {
                   // Reminder Button
                   // - only show when:
                   //   - entry is today or future
-                  //   - and not focused on text field
+                  //   - and not editing
                   //   - and should show buttons
-                  if (isToday || isFuture) && !isTextFieldFocused && showButtons {
+                  if (isToday || isFuture) && !isEditingNote && showButtons {
                     Button {
                       setShowReminderSheet(true)
                     } label: {
@@ -511,17 +464,17 @@ struct EntryEditingView: View {
 
                 }
               }
-              .animation(.springFkingSatifying, value: isTextFieldFocused)
+              .animation(.springFkingSatifying, value: isEditingNote)
               .animation(.springFkingSatifying, value: hasEntryContent)
             } else {
               HStack(spacing: 8) {
                 // Share button
                 // - only show when:
                 //   - not in mock mode
-                //   - and not focused on text field
+                //   - and not editing
                 //   - and should show buttons
                 //   - and has entry content
-                if !isMockMode && !isTextFieldFocused && showButtons && hasEntryContent {
+                if !isMockMode && !isEditingNote && showButtons && hasEntryContent {
                   Button {
                     // Track share card opened
                     let hasDrawing = displayDrawingData != nil && !displayDrawingData!.isEmpty
@@ -538,9 +491,9 @@ struct EntryEditingView: View {
                 // Reminder Button
                 // - only show when:
                 //   - entry is today or future
-                //   - and not focused on text field
+                //   - and not editing
                 //   - and should show buttons
-                if (isToday || isFuture) && !isTextFieldFocused && showButtons {
+                if (isToday || isFuture) && !isEditingNote && showButtons {
                   Button {
                     setShowReminderSheet(true)
                   } label: {
@@ -566,7 +519,7 @@ struct EntryEditingView: View {
                 }
 
               }
-              .animation(.springFkingSatifying, value: isTextFieldFocused)
+              .animation(.springFkingSatifying, value: isEditingNote)
               .animation(.springFkingSatifying, value: hasEntryContent)
           }
           Spacer()
@@ -592,25 +545,14 @@ struct EntryEditingView: View {
           }
         }
 
-        // Right side - Confirm, Delete, Drawing buttons
+        // Right side - Delete, Drawing buttons
         HStack {
           Spacer()
           if #available(iOS 26.0, *) {
             GlassEffectContainer(spacing: 8) {
               HStack(spacing: 8) {
-                // Confirm button
-                if isTextFieldFocused {
-                  Button {
-                    confirmAndDismiss()
-                  } label: {
-                    Image(systemName: "checkmark")
-                  }
-                  .circularGlassButton()
-                  .transition(.opacity.animation(.springFkingSatifying))
-                }
-
                 // Delete entry button - only in real mode
-                if hasEntryContent && !isTextFieldFocused && showButtons && !isMockMode {
+                if hasEntryContent && !isEditingNote && showButtons && !isMockMode {
                   Button {
                     showDeleteConfirmation = true
                   } label: {
@@ -621,7 +563,7 @@ struct EntryEditingView: View {
                 }
 
                 // Drawing canvas button
-                if !isTextFieldFocused && showButtons {
+                if !isEditingNote && showButtons {
                   Button {
                     self.onOpenDrawingCanvas?()
                   } label: {
@@ -635,24 +577,13 @@ struct EntryEditingView: View {
                 }
               }
             }
-            .animation(.springFkingSatifying, value: isTextFieldFocused)
+            .animation(.springFkingSatifying, value: isEditingNote)
             .animation(.springFkingSatifying, value: hasEntryContent)
           } else {
             // Fallback on earlier versions
             HStack(spacing: 8) {
-              // Confirm button
-              if isTextFieldFocused {
-                Button {
-                  confirmAndDismiss()
-                } label: {
-                  Image(systemName: "checkmark")
-                }
-                .circularGlassButton()
-                .transition(.opacity.animation(.springFkingSatifying))
-              }
-
               // Delete entry button - only in real mode
-              if hasEntryContent && !isTextFieldFocused && showButtons && !isMockMode {
+              if hasEntryContent && !isEditingNote && showButtons && !isMockMode {
                 Button {
                   showDeleteConfirmation = true
                 } label: {
@@ -663,7 +594,7 @@ struct EntryEditingView: View {
               }
 
               // Drawing canvas button
-              if !isTextFieldFocused && showButtons {
+              if !isEditingNote && showButtons {
                 Button {
                   self.onOpenDrawingCanvas?()
                 } label: {
@@ -676,7 +607,7 @@ struct EntryEditingView: View {
                 .transition(.opacity)
               }
             }
-            .animation(.springFkingSatifying, value: isTextFieldFocused)
+            .animation(.springFkingSatifying, value: isEditingNote)
             .animation(.springFkingSatifying, value: hasEntryContent)
           }
         }
@@ -703,8 +634,9 @@ struct EntryEditingView: View {
       Spacer()
     }
     .padding(20)
+    }
+    .animation(.easeInOut(duration: 0.2), value: isEditingNote)
   }
-}
 
 // MARK: - Private Methods
 
@@ -773,8 +705,6 @@ private func deleteEntry() {
   entry.deleteAllForSameDate(in: modelContext)
   textContent = ""
   self.entry = nil
-
-
 }
 
 /// Save note to mock store (tutorial mode)
@@ -838,18 +768,16 @@ func saveNote(text: String, for date: Date) {
   // Sync new text entry to widgets
   WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
 }
-
-private func confirmAndDismiss() {
-  withAnimation(.easeIn(duration: 0.25)) {
-    isTextFieldFocused = false
-    guard let date else { return }
-    if isMockMode {
-      saveMockNote(text: textContent, for: date)
-    } else {
-      saveNote(text: textContent, for: date)
-    }
-  }
 }
+
+// MARK: - NoteDisplayButtonStyle
+
+private struct NoteDisplayButtonStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+      .opacity(configuration.isPressed ? 0.4 : 1.0)
+      .animation(.easeInOut(duration: 0.12), value: configuration.isPressed)
+  }
 }
 
 // MARK: - Previews

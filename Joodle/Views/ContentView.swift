@@ -37,6 +37,9 @@ struct ContentView: View {
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
   @State private var showNotePromptPopup: Bool = false
+  @State private var isNoteEditing: Bool = false
+  @State private var noteEditingInitialText: String = ""
+  @State private var noteEditingSaveHandler: ((String) -> Void)?
   /// Tracks the natural content height of the drawing canvas sheet (non-DI devices) for adaptive detent
   @State private var drawingCanvasSheetHeight: CGFloat = 460
   @State private var dateForNotePrompt: Date? = nil
@@ -207,6 +210,14 @@ struct ContentView: View {
                     scrollToRelevantDate(
                       itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
                   }
+                },
+                onNoteEditRequested: { initialText, onSave in
+                  noteEditingInitialText = initialText
+                  noteEditingSaveHandler = onSave
+                  isNoteEditing = true
+                },
+                onNoteEditDismissed: {
+                  isNoteEditing = false
                 }
               )
             }, hasBottomView: dataProvider.selectedDateItem != nil,
@@ -315,6 +326,16 @@ struct ContentView: View {
           }
         )
         .id("DynamicIslandExpandedView-\(dataProvider.selectedDateItem?.id ?? "none")")
+      }
+
+      // Note editing popup — shown when user taps the note area in EntryEditingView
+      if isNoteEditing, let saveHandler = noteEditingSaveHandler {
+        NoteEditingPopupView(
+          initialText: noteEditingInitialText,
+          onSave: saveHandler,
+          onDismiss: { isNoteEditing = false }
+        )
+        .zIndex(100)
       }
 
       // Note prompt popup - shown after first doodle
