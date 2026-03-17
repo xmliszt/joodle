@@ -36,11 +36,9 @@ struct DrawingPreviewView: View {
       )
       .frame(width: size, height: size)
     } else {
-      // Empty state
-      Image(systemName: "scribble.variable")
-        .font(.appFont(size: actualSize * 0.16)) // Approx ratio based on ExcerptView (100/600)
+      // Empty state - transparent but sized so backgrounds applied externally still render
+      Color.clear
         .frame(width: actualSize, height: actualSize)
-        .foregroundColor(.textColor.opacity(0.3))
     }
   }
 }
