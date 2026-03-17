@@ -606,7 +606,7 @@ struct ShareCardSelectorView: View {
             startOfWeek: UserPreferences.shared.startOfWeek,
             entries: weekEntries,
             showWatermark: false,
-            strokeMultiplier: 2.0
+            strokeMultiplier: 1.0
           )
           .preferredColorScheme(previewColorScheme)
         case .monthGrid:
@@ -616,7 +616,7 @@ struct ShareCardSelectorView: View {
             startOfWeek: UserPreferences.shared.startOfWeek,
             entries: monthEntries,
             showWatermark: false,
-            strokeMultiplier: 2.0
+            strokeMultiplier: 1.0
           )
           .preferredColorScheme(previewColorScheme)
         default:
