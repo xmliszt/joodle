@@ -345,7 +345,7 @@ struct InteractiveTutorialView: View {
                                     isScrubbing: $isScrubbing,
                                     highlightedId: highlightedId,
                                     callbacks: createGridCallbacks(geometry: geometry),
-                                    minimumPressDuration: 0.2,
+                                    minimumPressDuration: 0.3,
                                     allowsHitTesting: true,
                                     overlayContent: AnyView(
                                         todayEntryAnchorOverlay(geometry: geometry, itemsSpacing: itemsSpacing)

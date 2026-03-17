@@ -126,7 +126,7 @@ struct ContentView: View {
                       isScrubbing: $isScrubbing,
                       highlightedId: highlightedId,
                       callbacks: createGridCallbacks(geometry: geometry, scrollProxy: scrollProxy),
-                      minimumPressDuration: 0.1,
+                      minimumPressDuration: 0.3,
                       allowsHitTesting: true,
                       overlayContent: nil,
                       customHitTestFunction: { location in
