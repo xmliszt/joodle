@@ -33,6 +33,11 @@ struct ShareCardSelectorView: View {
   @State private var yearEntries: [ShareCardDayEntry] = []
   @State private var yearPercentage: Double = 0.0
 
+  // Year grid data selection
+  @State private var selectedYear: Int = Calendar.current.component(.year, from: Date())
+  @State private var earliestYear: Int = Calendar.current.component(.year, from: Date())
+  @State private var showYearPicker: Bool = false
+
   // Week grid data
   @State private var selectedWeekStart: Date = Date()
   @State private var weekEntries: [DayEntry] = []
@@ -51,12 +56,7 @@ struct ShareCardSelectorView: View {
 
   /// Check if the selected year is the current year
   private var isCurrentYear: Bool {
-    switch mode {
-    case .yearGrid(let year):
-      return year == Calendar.current.component(.year, from: Date())
-    default:
-      return false
-    }
+    selectedYear == Calendar.current.component(.year, from: Date())
   }
 
   /// Returns the percentage only if it's the current year, otherwise nil
@@ -112,17 +112,14 @@ struct ShareCardSelectorView: View {
     switch mode {
     case .entry:
       return String(localized: "Share Your Day")
-    case .yearGrid(let year):
-      return String(localized: "Share Year \(year, format: .number.grouping(.never))")
+    case .yearGrid:
+      return String(localized: "Share Year \(selectedYear, format: .number.grouping(.never))")
     }
   }
 
-  /// The current year from the mode
+  /// The currently selected year (can be navigated away from the initial mode year)
   private var currentModeYear: Int {
-    switch mode {
-    case .yearGrid(let year): return year
-    default: return Calendar.current.component(.year, from: Date())
-    }
+    selectedYear
   }
 
   /// Formatted week date range string for navigation display
@@ -192,11 +189,13 @@ struct ShareCardSelectorView: View {
               }
             }
 
-            // Week/Month navigation arrows
+            // Week/Month/Year navigation arrows
             if selectedStyle.isWeekStyle {
               weekNavigationView
             } else if selectedStyle.isMonthStyle {
               monthNavigationView
+            } else if selectedStyle.isYearGridStyle {
+              yearNavigationView
             }
           }
         }
@@ -306,6 +305,17 @@ struct ShareCardSelectorView: View {
       .sheet(item: $shareItem) { item in
         ShareSheet(items: item.items)
       }
+      .sheet(isPresented: $showYearPicker) {
+        YearPickerSheet(earliestYear: earliestYear, selectedYear: $selectedYear) {
+          loadYearData(for: selectedYear)
+          selectedWeekStart = computeWeekStart(for: Calendar.current.date(from: DateComponents(year: selectedYear, month: 1, day: 1)) ?? Date())
+          selectedMonth = 1
+          loadWeekData(for: selectedWeekStart)
+          loadMonthData(for: selectedYear, month: 1)
+        }
+        .presentationDetents([.height(300)])
+        .presentationDragIndicator(.visible)
+      }
       .sheet(isPresented: $showWeekPicker) {
         WeekPickerSheet(
           year: currentModeYear,
@@ -379,6 +389,8 @@ struct ShareCardSelectorView: View {
       selectedStyle = .minimal
     case .yearGrid(let year):
       selectedStyle = .weekGrid
+      selectedYear = year
+      fetchEarliestYear()
       loadYearData(for: year)
       // Initialize week start for current week
       selectedWeekStart = computeWeekStart(for: Date())
@@ -387,6 +399,16 @@ struct ShareCardSelectorView: View {
       // Pre-load week and month data
       loadWeekData(for: selectedWeekStart)
       loadMonthData(for: year, month: selectedMonth)
+    }
+  }
+
+  private func fetchEarliestYear() {
+    var descriptor = FetchDescriptor<DayEntry>(
+      sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+    )
+    descriptor.fetchLimit = 1
+    if let firstEntry = try? modelContext.fetch(descriptor).first {
+      earliestYear = Calendar.current.component(.year, from: firstEntry.createdAt)
     }
   }
 
@@ -531,6 +553,67 @@ struct ShareCardSelectorView: View {
     loadMonthData(for: currentModeYear, month: newMonth)
   }
 
+  private var yearNavigationView: some View {
+    HStack(spacing: 16) {
+      Button {
+        navigateYear(by: -1)
+      } label: {
+        Image(systemName: "chevron.left")
+          .font(.appFont(size: 16, weight: .semibold))
+          .foregroundColor(canNavigateYearBackward ? .textColor : .secondaryTextColor.opacity(0.3))
+      }
+      .disabled(!canNavigateYearBackward)
+
+      Button {
+        showYearPicker = true
+      } label: {
+        HStack(spacing: 4) {
+          Text(String(selectedYear))
+            .font(.appFont(size: 14, weight: .medium))
+            .foregroundColor(.textColor)
+          Image(systemName: "chevron.up.chevron.down")
+            .font(.appFont(size: 10, weight: .medium))
+            .foregroundColor(.secondaryTextColor)
+        }
+        .frame(minWidth: 80)
+      }
+
+      Button {
+        navigateYear(by: 1)
+      } label: {
+        Image(systemName: "chevron.right")
+          .font(.appFont(size: 16, weight: .semibold))
+          .foregroundColor(canNavigateYearForward ? .textColor : .secondaryTextColor.opacity(0.3))
+      }
+      .disabled(!canNavigateYearForward)
+    }
+    .animation(.springFkingSatifying, value: selectedYear)
+  }
+
+  private var canNavigateYearBackward: Bool {
+    selectedYear > earliestYear
+  }
+
+  private var canNavigateYearForward: Bool {
+    selectedYear < Calendar.current.component(.year, from: Date())
+  }
+
+  private func navigateYear(by offset: Int) {
+    let newYear = selectedYear + offset
+    let currentCalYear = Calendar.current.component(.year, from: Date())
+    guard newYear >= earliestYear && newYear <= currentCalYear else { return }
+    selectedYear = newYear
+    loadYearData(for: newYear)
+    // Reset week to first week of the new year
+    if let firstOfYear = Calendar.current.date(from: DateComponents(year: newYear, month: 1, day: 1)) {
+      selectedWeekStart = computeWeekStart(for: firstOfYear)
+      loadWeekData(for: selectedWeekStart)
+    }
+    // Reset month to January of the new year
+    selectedMonth = 1
+    loadMonthData(for: newYear, month: 1)
+  }
+
   @ViewBuilder
   private func cardPreview(style: ShareCardStyle) -> some View {
     ZStack {
@@ -588,20 +671,20 @@ struct ShareCardSelectorView: View {
         default:
           EmptyView()
         }
-      case .yearGrid(let year):
+      case .yearGrid:
         switch style {
         case .yearGridDots:
-          YearGridDotsView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: false)
+          YearGridDotsView(year: selectedYear, percentage: displayPercentage, entries: yearEntries, showWatermark: false)
             .preferredColorScheme(previewColorScheme)
         case .yearGridJoodles:
-          YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: false)
+          YearGridJoodlesView(year: selectedYear, percentage: displayPercentage, entries: yearEntries, showWatermark: false)
             .preferredColorScheme(previewColorScheme)
         case .yearGridJoodlesOnly:
-          YearGridJoodlesView(year: year, percentage: displayPercentage, entries: yearEntries, showWatermark: false, showEmptyDots: false)
+          YearGridJoodlesView(year: selectedYear, percentage: displayPercentage, entries: yearEntries, showWatermark: false, showEmptyDots: false)
             .preferredColorScheme(previewColorScheme)
         case .weekGrid:
           WeekGridView(
-            year: year,
+            year: selectedYear,
             weekStartDate: selectedWeekStart,
             startOfWeek: UserPreferences.shared.startOfWeek,
             entries: weekEntries,
@@ -611,7 +694,7 @@ struct ShareCardSelectorView: View {
           .preferredColorScheme(previewColorScheme)
         case .monthGrid:
           MonthGridView(
-            year: year,
+            year: selectedYear,
             month: selectedMonth,
             startOfWeek: UserPreferences.shared.startOfWeek,
             entries: monthEntries,
@@ -673,11 +756,11 @@ struct ShareCardSelectorView: View {
         colorScheme: previewColorScheme,
         showWatermark: watermarkSetting
       )
-    case .yearGrid(let year):
+    case .yearGrid:
       if style.isWeekStyle {
         return ShareCardRenderer.shared.renderWeekGridCard(
           style: style,
-          year: year,
+          year: selectedYear,
           weekStartDate: selectedWeekStart,
           startOfWeek: UserPreferences.shared.startOfWeek,
           entries: weekEntries,
@@ -687,7 +770,7 @@ struct ShareCardSelectorView: View {
       } else if style.isMonthStyle {
         return ShareCardRenderer.shared.renderMonthGridCard(
           style: style,
-          year: year,
+          year: selectedYear,
           month: selectedMonth,
           startOfWeek: UserPreferences.shared.startOfWeek,
           entries: monthEntries,
@@ -697,7 +780,7 @@ struct ShareCardSelectorView: View {
       }
       return ShareCardRenderer.shared.renderYearGridCard(
         style: style,
-        year: year,
+        year: selectedYear,
         percentage: displayPercentage,
         entries: yearEntries,
         colorScheme: previewColorScheme,
@@ -773,13 +856,14 @@ struct ShareCardSelectorView: View {
     let style = selectedStyle
     let colorScheme = previewColorScheme
     
-    // Capture week/month state for background rendering
+    // Capture week/month/year state for background rendering
+    let capturedYear = selectedYear
     let capturedWeekStart = selectedWeekStart
     let capturedWeekEntries = weekEntries
     let capturedMonth = selectedMonth
     let capturedMonthEntries = monthEntries
     let capturedStartOfWeek = UserPreferences.shared.startOfWeek
-    
+
     Task.detached { [mode, yearEntries, displayPercentage] in
       // Render on background thread
       let image = await Self.renderCardToImageBackground(
@@ -789,6 +873,7 @@ struct ShareCardSelectorView: View {
         colorScheme: colorScheme,
         yearEntries: yearEntries,
         displayPercentage: displayPercentage,
+        selectedYear: capturedYear,
         weekStartDate: capturedWeekStart,
         weekEntries: capturedWeekEntries,
         selectedMonth: capturedMonth,
@@ -814,6 +899,7 @@ struct ShareCardSelectorView: View {
     colorScheme: ColorScheme,
     yearEntries: [ShareCardDayEntry],
     displayPercentage: Double?,
+    selectedYear: Int = Calendar.current.component(.year, from: Date()),
     weekStartDate: Date = Date(),
     weekEntries: [DayEntry] = [],
     selectedMonth: Int = 1,
@@ -829,11 +915,11 @@ struct ShareCardSelectorView: View {
         colorScheme: colorScheme,
         showWatermark: watermarkSetting
       )
-    case .yearGrid(let year):
+    case .yearGrid:
       if style.isWeekStyle {
         return ShareCardRenderer.shared.renderWeekGridCard(
           style: style,
-          year: year,
+          year: selectedYear,
           weekStartDate: weekStartDate,
           startOfWeek: startOfWeek,
           entries: weekEntries,
@@ -843,7 +929,7 @@ struct ShareCardSelectorView: View {
       } else if style.isMonthStyle {
         return ShareCardRenderer.shared.renderMonthGridCard(
           style: style,
-          year: year,
+          year: selectedYear,
           month: selectedMonth,
           startOfWeek: startOfWeek,
           entries: monthEntries,
@@ -853,7 +939,7 @@ struct ShareCardSelectorView: View {
       }
       return ShareCardRenderer.shared.renderYearGridCard(
         style: style,
-        year: year,
+        year: selectedYear,
         percentage: displayPercentage,
         entries: yearEntries,
         colorScheme: colorScheme,
