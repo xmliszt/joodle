@@ -218,6 +218,9 @@ struct ContentView: View {
                 },
                 onNoteEditDismissed: {
                   isNoteEditing = false
+                },
+                onMoveDrawingRequested: {
+                  print("[MoveDrawing] Move drawing requested")
                 }
               )
             }, hasBottomView: dataProvider.selectedDateItem != nil,

@@ -27,6 +27,9 @@ struct EntryEditingView: View {
   /// Called when EntryEditingView wants to proactively close the note-editing popup (e.g. on date
   /// change). The parent should dismiss NoteEditingPopupView in response.
   private let onNoteEditDismissed: (() -> Void)?
+  /// Called when user taps the date label to initiate a drawing move.
+  /// Only fires when the current entry has a drawing.
+  private let onMoveDrawingRequested: (() -> Void)?
 
   init(
     date: Date?,
@@ -37,7 +40,8 @@ struct EntryEditingView: View {
     tutorialMode: Bool = false,
     showReminderSheetBinding: Binding<Bool>? = nil,
     onNoteEditRequested: ((String, @escaping (String) -> Void) -> Void)? = nil,
-    onNoteEditDismissed: (() -> Void)? = nil
+    onNoteEditDismissed: (() -> Void)? = nil,
+    onMoveDrawingRequested: (() -> Void)? = nil
   ) {
     self.date = date
     self.selectedEntry = entry
@@ -48,6 +52,7 @@ struct EntryEditingView: View {
     self.showReminderSheetBinding = showReminderSheetBinding
     self.onNoteEditRequested = onNoteEditRequested
     self.onNoteEditDismissed = onNoteEditDismissed
+    self.onMoveDrawingRequested = onMoveDrawingRequested
     _textContent = State(initialValue: entry?.body ?? "")
     _entry = State(initialValue: entry)
   }
@@ -131,6 +136,14 @@ struct EntryEditingView: View {
       return mockEntry?.drawingData
     }
     return entry?.drawingData
+  }
+
+  /// Whether the current entry has a drawing that can be moved
+  private var hasDrawing: Bool {
+    if isMockMode {
+      return mockEntry?.drawingData != nil && !(mockEntry?.drawingData?.isEmpty ?? true)
+    }
+    return entry?.drawingData != nil && !(entry?.drawingData?.isEmpty ?? true)
   }
 
   /// Whether there's an entry with content
@@ -530,24 +543,31 @@ struct EntryEditingView: View {
         }
 
         // Center - Date and weekday/countdown
-        VStack(alignment: .center) {
-          if let date {
-            Text(CalendarDate.from(date).displayStringWithoutYear)
-              .font(.appHeadline())
-              .foregroundColor(.textColor)
-          }
-          HStack(spacing: 8) {
-            if let countdown = countdownText {
-              Text(countdown)
-                .font(.appSubheadline())
-                .foregroundColor(.appAccent.opacity(0.7))
-            } else {
-              Text(weekdayLabel)
-                .font(.appSubheadline())
-                .foregroundColor(isToday ? .appAccent : .secondaryTextColor)
+        Button {
+          onMoveDrawingRequested?()
+        } label: {
+          VStack(alignment: .center) {
+            if let date {
+              Text(CalendarDate.from(date).displayStringWithoutYear)
+                .font(.appHeadline())
+                .foregroundColor(.textColor)
+            }
+            HStack(spacing: 8) {
+              if let countdown = countdownText {
+                Text(countdown)
+                  .font(.appSubheadline())
+                  .foregroundColor(.appAccent.opacity(0.7))
+              } else {
+                Text(weekdayLabel)
+                  .font(.appSubheadline())
+                  .foregroundColor(isToday ? .appAccent : .secondaryTextColor)
+              }
             }
           }
         }
+        .buttonStyle(NoteDisplayButtonStyle())
+        .disabled(!hasDrawing || isMockMode)
+        .opacity(hasDrawing && !isMockMode ? 1.0 : 0.6)
 
         // Right side - Delete, Drawing buttons
         HStack {
