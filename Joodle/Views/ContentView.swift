@@ -33,6 +33,19 @@ struct ContentView: View {
   @State private var highlightedId: String?
   // --- END GESTURE STATE ---
 
+  // --- MOVE DRAWING STATE ---
+  /// Whether user is in "move drawing" mode
+  @State private var isMovingDrawing = false
+  /// The source entry whose drawing is being moved (stored independently of selectedDateItem)
+  @State private var moveSourceEntry: DayEntry?
+  /// The source date for the drawing being moved
+  @State private var moveSourceDate: Date?
+  /// Target date selected by the user for the confirmation alert
+  @State private var moveTargetDate: Date?
+  /// Whether to show the move confirmation alert
+  @State private var showMoveConfirmation = false
+  // --- END MOVE DRAWING STATE ---
+
   @State private var yearGridViewSize: CGSize = .zero
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
@@ -131,7 +144,9 @@ struct ContentView: View {
                       overlayContent: nil,
                       customHitTestFunction: { location in
                         getItemId(at: location, for: geometry)
-                      }
+                      },
+                      isInMoveMode: isMovingDrawing,
+                      moveSourceDateString: isMovingDrawing ? moveSourceDateString : nil
                     )
                     .simultaneousGesture(
                       MagnificationGesture()
@@ -161,8 +176,11 @@ struct ContentView: View {
                   .onChange(of: dataProvider.selectedYear) {
                     hitTestingGrid = []  // Clear grid to trigger rebuild
                     gridMetrics = nil
-                    // Deselect any selected date item
-                    dataProvider.clearSelection()
+
+                    // Don't clear selection in move mode — user is browsing years for a target
+                    if !isMovingDrawing {
+                      dataProvider.clearSelection()
+                    }
 
                     DispatchQueue.main.async {
                       scrollToTodayOrTop(scrollProxy: scrollProxy)
@@ -220,7 +238,7 @@ struct ContentView: View {
                   isNoteEditing = false
                 },
                 onMoveDrawingRequested: {
-                  print("[MoveDrawing] Move drawing requested")
+                  enterMoveDrawingMode()
                 }
               )
             }, hasBottomView: dataProvider.selectedDateItem != nil,
@@ -256,7 +274,8 @@ struct ContentView: View {
             onSettingsAction: {
               UIApplication.shared.hideKeyboard()
               navigateToSettings = true
-            }
+            },
+            isInMoveMode: isMovingDrawing
           )
         }
       }
@@ -359,6 +378,21 @@ struct ContentView: View {
         )
         .zIndex(100)
       }
+
+      // Move drawing mode — floating instruction bar (interactive)
+      if isMovingDrawing {
+        VStack {
+          Spacer()
+          MoveDrawingBottomBar(onCancel: {
+            exitMoveDrawingMode(reselectSource: true)
+          })
+        }
+        .ignoresSafeArea(.container, edges: .bottom)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 40)
+        .zIndex(51)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+      }
     }
     .postHogScreenView("Home")
     .alert("Subscription Ended", isPresented: $subscriptionManager.subscriptionJustExpired) {
@@ -370,6 +404,19 @@ struct ContentView: View {
     }
     .sheet(isPresented: $showGraceExpiredPaywall) {
       StandalonePaywallView(source: "grace_expired")
+    }
+    .alert(String(localized: "Move Drawing"), isPresented: $showMoveConfirmation) {
+      Button(String(localized: "Move"), role: .none) {
+        executeMoveDrawing()
+      }
+      Button(String(localized: "Cancel"), role: .cancel) {
+        // Stay in move mode — user can pick another date
+        moveTargetDate = nil
+      }
+    } message: {
+      if let targetDate = moveTargetDate {
+        Text(String(localized: "Move your drawing to \(CalendarDate.from(targetDate).displayString)?"))
+      }
     }
     .onAppear {
       // Sync widget data when app launches — batch subscription + entries into one reload pass
@@ -415,6 +462,7 @@ struct ContentView: View {
     .onChange(of: selectedDateFromWidget) { _, newDate in
       // Handle deep link from widget
       guard let date = newDate, let scrollProxy = scrollProxy else { return }
+      guard !isMovingDrawing else { return }
 
       // Clear the binding after handling
       DispatchQueue.main.async {
@@ -450,6 +498,7 @@ struct ContentView: View {
   private func createGridCallbacks(geometry: GeometryProxy, scrollProxy: ScrollViewProxy) -> GridInteractionCallbacks {
     GridInteractionCallbacks(
       onScrubbingBegan: { location in
+        if isMovingDrawing { return }
         highlightedId = nil
         isScrubbing = true
         dataProvider.clearSelection()
@@ -459,11 +508,13 @@ struct ContentView: View {
         highlightedId = newId
       },
       onScrubbingChanged: { location in
+        if isMovingDrawing { return }
         let newId = getItemId(at: location, for: geometry)
         if newId != highlightedId { Haptic.play() }
         highlightedId = newId
       },
       onScrubbingEnded: { _ in
+        if isMovingDrawing { return }
         if let highlightedId, let item = dataProvider.getItem(from: highlightedId) {
           selectDateItem(item: item, scrollProxy: scrollProxy)
         }
@@ -472,6 +523,16 @@ struct ContentView: View {
       },
       onTap: { location in
         if isScrubbing { return }
+
+        // Move mode: tap selects a target date
+        if isMovingDrawing {
+          guard let itemId = getItemId(at: location, for: geometry),
+                let item = dataProvider.getItem(from: itemId)
+          else { return }
+          handleMoveModeTap(item: item)
+          return
+        }
+
         guard let itemId = getItemId(at: location, for: geometry),
               let item = dataProvider.getItem(from: itemId)
         else { return }
@@ -488,6 +549,7 @@ struct ContentView: View {
 
   // MARK: User interactions
   private func handlePinchChanged(value: MagnificationGesture.Value) {
+    if isMovingDrawing { return }  // No view mode changes in move mode
     if isPinching { return }
 
     isPinching = true
@@ -623,6 +685,160 @@ struct ContentView: View {
 
     // Track view mode change
     AnalyticsManager.shared.trackViewModeChanged(to: newViewMode.rawValue, from: previousMode)
+  }
+
+  // MARK: - Move Drawing Mode
+
+  /// Enter move drawing mode — store source entry and collapse bottom panel
+  private func enterMoveDrawingMode() {
+    guard let entry = selectedEntry,
+          entry.drawingData != nil,
+          !(entry.drawingData?.isEmpty ?? true),
+          let date = dataProvider.selectedDateItem?.date
+    else { return }
+
+    moveSourceEntry = entry
+    moveSourceDate = date
+
+    // Switch to regular view if currently in minimized mode
+    if dataProvider.viewMode != .now {
+      withAnimation(.springFkingSatifying) {
+        dataProvider.toggleViewMode(to: .now)
+      }
+    }
+
+    // Collapse bottom panel by clearing selection
+    dataProvider.clearSelection()
+
+    // Activate move mode after a brief delay so the panel collapse animation plays
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+      withAnimation(.springFkingSatifying) {
+        isMovingDrawing = true
+      }
+    }
+
+    Haptic.play(with: .medium)
+  }
+
+  /// Exit move drawing mode and optionally re-select the source date
+  private func exitMoveDrawingMode(reselectSource: Bool = true) {
+    withAnimation(.springFkingSatifying) {
+      isMovingDrawing = false
+    }
+
+    // Re-open the source entry if requested (e.g. on cancel)
+    if reselectSource, let date = moveSourceDate, let scrollProxy {
+      let itemId = dataProvider.getItemId(for: date)
+      let item = DateItem(id: itemId, date: Calendar.current.startOfDay(for: date))
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        selectDateItem(item: item, scrollProxy: scrollProxy)
+      }
+    }
+
+    moveSourceEntry = nil
+    moveSourceDate = nil
+    moveTargetDate = nil
+  }
+
+  /// Handle a tap in move drawing mode — check if target is valid and show confirmation
+  private func handleMoveModeTap(item: DateItem) {
+    // Check if target has a drawing already
+    let targetEntry = entries.first(where: { $0.matches(date: item.date) })
+    let targetHasDrawing = targetEntry?.drawingData != nil && !(targetEntry?.drawingData?.isEmpty ?? true)
+
+    // Ignore taps on dates that already have drawings
+    if targetHasDrawing { return }
+
+    // Ignore taps on the source date itself
+    if let sourceDate = moveSourceDate,
+       Calendar.current.isDate(item.date, inSameDayAs: sourceDate) {
+      return
+    }
+
+    // Valid target — show confirmation
+    moveTargetDate = item.date
+    showMoveConfirmation = true
+    Haptic.play()
+  }
+
+  /// Execute the drawing move from source to target date
+  private func executeMoveDrawing() {
+    guard let targetDate = moveTargetDate,
+          let sourceDate = moveSourceDate
+    else { return }
+
+    // Re-fetch source entry to ensure it's fresh
+    let freshSourceEntry = DayEntry.findOrCreate(for: sourceDate, in: modelContext)
+    guard freshSourceEntry.drawingData != nil && !(freshSourceEntry.drawingData?.isEmpty ?? true) else {
+      // Drawing was somehow removed — exit move mode
+      exitMoveDrawingMode(reselectSource: false)
+      return
+    }
+
+    // 1. Get or create the target entry
+    let targetEntry = DayEntry.findOrCreate(for: targetDate, in: modelContext)
+
+    // 2. Move drawing data
+    targetEntry.drawingData = freshSourceEntry.drawingData
+    targetEntry.drawingThumbnail20 = freshSourceEntry.drawingThumbnail20
+    targetEntry.drawingThumbnail200 = freshSourceEntry.drawingThumbnail200
+
+    // 3. Clear drawing from source
+    freshSourceEntry.drawingData = nil
+    freshSourceEntry.drawingThumbnail20 = nil
+    freshSourceEntry.drawingThumbnail200 = nil
+
+    // 4. If source entry is now empty (no text, no drawing), delete it
+    if freshSourceEntry.body.isEmpty {
+      freshSourceEntry.deleteAllForSameDate(in: modelContext)
+    }
+
+    // 5. Save
+    try? modelContext.save()
+
+    // 6. Sync widgets
+    WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
+
+    // 7. Track analytics
+    AnalyticsManager.shared.trackDrawingMoved(
+      fromDate: CalendarDate.from(sourceDate).dateString,
+      toDate: CalendarDate.from(targetDate).dateString
+    )
+
+    // 8. Haptic feedback
+    Haptic.play(with: .medium)
+
+    // 9. Exit move mode and select the target date
+    let targetItemId = dataProvider.getItemId(for: targetDate)
+    let targetItem = DateItem(id: targetItemId, date: Calendar.current.startOfDay(for: targetDate))
+
+    withAnimation(.springFkingSatifying) {
+      isMovingDrawing = false
+    }
+    moveSourceEntry = nil
+    moveSourceDate = nil
+    moveTargetDate = nil
+
+    // Select the target date to show the moved drawing
+    if let scrollProxy {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        selectDateItem(item: targetItem, scrollProxy: scrollProxy)
+      }
+    }
+  }
+
+  /// Set of dateStrings that have drawings (for move mode target filtering)
+  private var datesWithDrawings: Set<String> {
+    Set(entries.compactMap { entry in
+      guard let data = entry.drawingData, !data.isEmpty else { return nil }
+      return entry.dateString
+    })
+  }
+
+  /// Source date string for the drawing being moved
+  private var moveSourceDateString: String? {
+    guard let date = moveSourceDate else { return nil }
+    return CalendarDate.from(date).dateString
   }
 
   // MARK: Layout Calculations

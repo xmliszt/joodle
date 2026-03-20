@@ -16,9 +16,20 @@ struct DotView: View {
     let withEntry: Bool
     let dotStyle: DotStyle
     let scale: CGFloat
+    let isAvailableForMove: Bool
+
+    init(size: CGFloat, highlighted: Bool, withEntry: Bool, dotStyle: DotStyle, scale: CGFloat, isAvailableForMove: Bool = false) {
+        self.size = size
+        self.highlighted = highlighted
+        self.withEntry = withEntry
+        self.dotStyle = dotStyle
+        self.scale = scale
+        self.isAvailableForMove = isAvailableForMove
+    }
 
     // MARK: Computed dot color
     private var dotColor: Color {
+        if isAvailableForMove { return .appAccent.opacity(0.8) }
         if highlighted { return .appSecondary }
 
         // Override base color if it is a present dot.

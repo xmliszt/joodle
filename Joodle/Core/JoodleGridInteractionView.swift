@@ -91,6 +91,12 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
   /// If nil, falls back to CalendarGridHelper.itemId()
   let customHitTestFunction: HitTestFunction?
 
+  /// Whether the grid is in move-drawing mode
+  let isInMoveMode: Bool
+
+  /// The source date string being moved (to highlight it differently)
+  let moveSourceDateString: String?
+
   // MARK: - Initializer
 
   init(
@@ -103,7 +109,9 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
     minimumPressDuration: Double = 0.1,
     allowsHitTesting: Bool = true,
     overlayContent: AnyView? = nil,
-    customHitTestFunction: HitTestFunction? = nil
+    customHitTestFunction: HitTestFunction? = nil,
+    isInMoveMode: Bool = false,
+    moveSourceDateString: String? = nil
   ) {
     self.dataProvider = dataProvider
     self.additionalEntries = additionalEntries
@@ -115,6 +123,8 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
     self.allowsHitTesting = allowsHitTesting
     self.overlayContent = overlayContent
     self.customHitTestFunction = customHitTestFunction
+    self.isInMoveMode = isInMoveMode
+    self.moveSourceDateString = moveSourceDateString
   }
 
   // MARK: - Computed Properties
@@ -152,7 +162,9 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
       items: dataProvider.itemsInYear,
       entries: allEntries,
       highlightedItemId: isScrubbing ? highlightedId : nil,
-      selectedItemId: dataProvider.selectedDateItem?.id
+      selectedItemId: dataProvider.selectedDateItem?.id,
+      isInMoveMode: isInMoveMode,
+      moveSourceDateString: moveSourceDateString
     )
     .overlay(
       LongPressScrubRecognizer(

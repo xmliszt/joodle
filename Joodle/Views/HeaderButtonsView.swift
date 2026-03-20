@@ -14,6 +14,8 @@ struct HeaderButtonsView: View {
   let onToggleViewMode: () -> Void
   let onSettingsAction: () -> Void
 
+  /// When true, hides the view mode toggle button (move drawing mode)
+  var isInMoveMode: Bool = false
   /// When true, adds tutorial highlight anchors to interactive elements
   var tutorialMode: Bool = false
 
@@ -28,7 +30,7 @@ struct HeaderButtonsView: View {
       GlassEffectContainer(spacing: spacing) {
         HStack(spacing: spacing) {
           // Settings Button (Left) - only visible when in year mode
-          if viewMode == .year {
+          if viewMode == .year && !isInMoveMode {
             Button(action: onSettingsAction) {
               Image(systemName: "gearshape")
             }
@@ -43,25 +45,28 @@ struct HeaderButtonsView: View {
             .glassEffectID("share", in: namespace)
           }
 
-          // Main Toggle Button (Right) - changes icon based on viewMode
-          Button(action: onToggleViewMode) {
-            Image(systemName: viewMode == .now ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
-          }
-          .circularGlassButton()
-          .glassEffectID("view-mode", in: namespace)
-          .applyIf(tutorialMode) { view in
-            view.tutorialHighlightAnchor(.viewModeButton)
+          // Main Toggle Button (Right) - hidden in move mode
+          if !isInMoveMode {
+            Button(action: onToggleViewMode) {
+              Image(systemName: viewMode == .now ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+            }
+            .circularGlassButton()
+            .glassEffectID("view-mode", in: namespace)
+            .applyIf(tutorialMode) { view in
+              view.tutorialHighlightAnchor(.viewModeButton)
+            }
           }
         }
       }
       .animation(.springFkingSatifying, value: viewMode)
+      .animation(.springFkingSatifying, value: isInMoveMode)
       .sheet(isPresented: $showingShareSheet) {
         ShareCardSelectorView(year: currentYear)
       }
     } else {
       HStack(spacing: spacing) {
         // Settings Button (Left) - only visible when in year mode
-        if viewMode == .year {
+        if viewMode == .year && !isInMoveMode {
           Button(action: onSettingsAction) {
             Image(systemName: "gearshape")
           }
@@ -76,16 +81,19 @@ struct HeaderButtonsView: View {
           .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
         }
 
-        // Main Toggle Button (Right) - changes icon based on viewMode
-        Button(action: onToggleViewMode) {
-          Image(systemName: viewMode == .now ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
-        }
-        .circularGlassButton()
-        .applyIf(tutorialMode) { view in
-          view.tutorialHighlightAnchor(.viewModeButton)
+        // Main Toggle Button (Right) - hidden in move mode
+        if !isInMoveMode {
+          Button(action: onToggleViewMode) {
+            Image(systemName: viewMode == .now ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+          }
+          .circularGlassButton()
+          .applyIf(tutorialMode) { view in
+            view.tutorialHighlightAnchor(.viewModeButton)
+          }
         }
       }
       .animation(.springFkingSatifying, value: viewMode)
+      .animation(.springFkingSatifying, value: isInMoveMode)
       .sheet(isPresented: $showingShareSheet) {
         ShareCardSelectorView(year: currentYear)
       }

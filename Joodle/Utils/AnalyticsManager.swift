@@ -96,6 +96,9 @@ final class AnalyticsManager {
         // Grace Period
         case gracePeriodStarted = "grace_period_started"
         case gracePeriodExpired = "grace_period_expired"
+
+        // Drawing
+        case drawingMoved = "drawing_moved"
     }
 
     // MARK: - Property Keys
@@ -189,6 +192,10 @@ final class AnalyticsManager {
         // Grace Period
         case gracePeriodStartDate = "grace_period_start_date"
         case gracePeriodDaysRemaining = "grace_period_days_remaining"
+
+        // Drawing Move
+        case fromDate = "from_date"
+        case toDate = "to_date"
     }
 
     // MARK: - Tracking Methods
@@ -525,6 +532,12 @@ final class AnalyticsManager {
         track(.remoteAlertDismissed, properties: [
             .alertId: alertId
         ])
+    }
+
+    // MARK: Drawing
+
+    func trackDrawingMoved(fromDate: String, toDate: String) {
+        track(.drawingMoved, properties: [.fromDate: fromDate, .toDate: toDate])
     }
 
     // MARK: User Identification

@@ -276,6 +276,20 @@ struct EntryEditingView: View {
               .onTapGesture {
                 onOpenDrawingCanvas?()
               }
+              .contextMenu {
+                if !isMockMode {
+                  Button {
+                    onMoveDrawingRequested?()
+                  } label: {
+                    Label("Move to Another Date", systemImage: "arrow.up.right.square")
+                  }
+                  Button {
+                    onOpenDrawingCanvas?()
+                  } label: {
+                    Label("Edit Drawing", systemImage: "pencil")
+                  }
+                }
+              }
             }
 
             // Note text display — tappable to open the editing popup
@@ -543,31 +557,24 @@ struct EntryEditingView: View {
         }
 
         // Center - Date and weekday/countdown
-        Button {
-          onMoveDrawingRequested?()
-        } label: {
-          VStack(alignment: .center) {
-            if let date {
-              Text(CalendarDate.from(date).displayStringWithoutYear)
-                .font(.appHeadline())
-                .foregroundColor(.textColor)
-            }
-            HStack(spacing: 8) {
-              if let countdown = countdownText {
-                Text(countdown)
-                  .font(.appSubheadline())
-                  .foregroundColor(.appAccent.opacity(0.7))
-              } else {
-                Text(weekdayLabel)
-                  .font(.appSubheadline())
-                  .foregroundColor(isToday ? .appAccent : .secondaryTextColor)
-              }
+        VStack(alignment: .center) {
+          if let date {
+            Text(CalendarDate.from(date).displayStringWithoutYear)
+              .font(.appHeadline())
+              .foregroundColor(.textColor)
+          }
+          HStack(spacing: 8) {
+            if let countdown = countdownText {
+              Text(countdown)
+                .font(.appSubheadline())
+                .foregroundColor(.appAccent.opacity(0.7))
+            } else {
+              Text(weekdayLabel)
+                .font(.appSubheadline())
+                .foregroundColor(isToday ? .appAccent : .secondaryTextColor)
             }
           }
         }
-        .buttonStyle(NoteDisplayButtonStyle())
-        .disabled(!hasDrawing || isMockMode)
-        .opacity(hasDrawing && !isMockMode ? 1.0 : 0.6)
 
         // Right side - Delete, Drawing buttons
         HStack {

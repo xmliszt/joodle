@@ -41,6 +41,10 @@ struct YearGridView: View {
   let highlightedItemId: String?
   /// The id of the selected item
   let selectedItemId: String?
+  /// Whether we're in move-drawing mode
+  let isInMoveMode: Bool
+  /// The source date string for the drawing being moved
+  let moveSourceDateString: String?
 
   // MARK: Animation State
   /// Tracks whether the entry animation has completed
@@ -130,6 +134,9 @@ struct YearGridView: View {
               )
               let hashValue = abs(item.id.hashValue)
               let animationDelay = Double(hashValue % 500) / 1000.0
+              let dateString = CalendarDate.from(item.date).dateString
+              let isSourceDate = isInMoveMode && moveSourceDateString == dateString
+              let isAvailableForMove = isInMoveMode && !hasDrawing && !isSourceDate
 
               YearGridDotCell(
                 viewMode: viewMode,
@@ -141,7 +148,10 @@ struct YearGridView: View {
                 isSelected: isSelected,
                 scale: scale,
                 hasAnimated: hasAnimated,
-                animationDelay: animationDelay
+                animationDelay: animationDelay,
+                isInMoveMode: isInMoveMode,
+                isAvailableForMove: isAvailableForMove,
+                isSourceDate: isSourceDate
               )
               .equatable()
               .id(scrollId)
@@ -333,6 +343,9 @@ private struct YearGridDotCell: View, Equatable {
   let scale: CGFloat
   let hasAnimated: Bool
   let animationDelay: Double
+  let isInMoveMode: Bool
+  let isAvailableForMove: Bool
+  let isSourceDate: Bool
 
   nonisolated static func == (lhs: Self, rhs: Self) -> Bool {
     lhs.isHighlighted == rhs.isHighlighted &&
@@ -342,7 +355,10 @@ private struct YearGridDotCell: View, Equatable {
     lhs.hasEntry == rhs.hasEntry &&
     lhs.hasDrawing == rhs.hasDrawing &&
     lhs.dotStyle == rhs.dotStyle &&
-    lhs.viewMode == rhs.viewMode
+    lhs.viewMode == rhs.viewMode &&
+    lhs.isInMoveMode == rhs.isInMoveMode &&
+    lhs.isAvailableForMove == rhs.isAvailableForMove &&
+    lhs.isSourceDate == rhs.isSourceDate
   }
 
   var body: some View {
@@ -352,7 +368,7 @@ private struct YearGridDotCell: View, Equatable {
       DrawingDisplayView(
         entry: entry,
         displaySize: viewMode.drawingSize,
-        dotStyle: dotStyle,
+        dotStyle: isInMoveMode && !isSourceDate ? .past : dotStyle,
         accent: false,
         highlighted: isHighlighted || isSelected,
         scale: scale,
@@ -376,6 +392,7 @@ private struct YearGridDotCell: View, Equatable {
         .delay(animationDelay),
         value: hasAnimated
       )
+      .opacity(isInMoveMode ? (isSourceDate ? 1.0 : 0.3) : 1.0)
     } else {
       // Show regular dot
       DotView(
@@ -383,7 +400,8 @@ private struct YearGridDotCell: View, Equatable {
         highlighted: isHighlighted || isSelected,
         withEntry: hasEntry,
         dotStyle: dotStyle,
-        scale: scale
+        scale: scale,
+        isAvailableForMove: isAvailableForMove
       )
       .frame(width: viewMode.dotSize, height: viewMode.dotSize)
     }
@@ -456,7 +474,9 @@ private struct YearGridDotCell: View, Equatable {
         items: sampleItems,
         entries: sampleEntries,
         highlightedItemId: nil,
-        selectedItemId: nil
+        selectedItemId: nil,
+        isInMoveMode: false,
+        moveSourceDateString: nil
       )
       YearGridView(
         year: currentYear,
@@ -465,7 +485,9 @@ private struct YearGridDotCell: View, Equatable {
         items: sampleItems,
         entries: sampleEntries,
         highlightedItemId: nil,
-        selectedItemId: nil
+        selectedItemId: nil,
+        isInMoveMode: false,
+        moveSourceDateString: nil
       )
     }
   }

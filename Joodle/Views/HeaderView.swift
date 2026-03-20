@@ -16,6 +16,8 @@ struct HeaderView: View {
   let onToggleViewMode: () -> Void
   let onSettingsAction: () -> Void
 
+  /// When true, hides the view mode toggle button (move drawing mode)
+  var isInMoveMode: Bool = false
   /// When true, adds tutorial highlight anchors to interactive elements
   var tutorialMode: Bool = false
 
@@ -91,6 +93,7 @@ struct HeaderView: View {
           currentYear: selectedYear,
           onToggleViewMode: onToggleViewMode,
           onSettingsAction: onSettingsAction,
+          isInMoveMode: isInMoveMode,
           tutorialMode: tutorialMode
         )
       }
