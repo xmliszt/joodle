@@ -147,25 +147,6 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
                 topTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
                 style: .continuous)
             )
-          // Drag gesture handling for bottom container as well
-            .gesture(
-              (!isDraggable || !allowHandleDrag)
-              ? nil
-              : DragGesture(minimumDistance: 0, coordinateSpace: .named("splitContainer"))
-                .updating($dragOffset) { value, state, transaction in
-                  state = value.translation.height
-                  transaction.animation = nil
-                }
-                .onEnded { value in
-                  let movement = value.translation.height / _geometry.size.height
-                  let finalPos = clamp(
-                    value: splitPosition + movement,
-                    min: MIN_SPLIT_POSITION,
-                    max: MAX_SPLIT_POSITION
-                  )
-                  snapToPosition(finalPos, totalHeight: _geometry.size.height)
-                }
-            )
         }
       }
       .coordinateSpace(name: "splitContainer")
