@@ -286,7 +286,7 @@ struct EntryEditingView: View {
                   Button {
                     onOpenDrawingCanvas?()
                   } label: {
-                    Label("Edit Drawing", systemImage: "pencil")
+                    Label("Edit Doodle", systemImage: "pencil")
                   }
                 }
               }

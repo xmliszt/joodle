@@ -405,7 +405,7 @@ struct ContentView: View {
     .sheet(isPresented: $showGraceExpiredPaywall) {
       StandalonePaywallView(source: "grace_expired")
     }
-    .alert(String(localized: "Move Drawing"), isPresented: $showMoveConfirmation) {
+    .alert(String(localized: "Move Doodle"), isPresented: $showMoveConfirmation) {
       Button(String(localized: "Move"), role: .none) {
         executeMoveDrawing()
       }
@@ -415,7 +415,7 @@ struct ContentView: View {
       }
     } message: {
       if let targetDate = moveTargetDate {
-        Text(String(localized: "Move your drawing to \(CalendarDate.from(targetDate).displayString)?"))
+        Text(String(localized: "Move your doodle to \(CalendarDate.from(targetDate).displayString)?"))
       }
     }
     .onAppear {

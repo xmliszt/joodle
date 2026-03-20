@@ -12,7 +12,7 @@ struct MoveDrawingBottomBar: View {
 
   var body: some View {
     HStack(spacing: 16) {
-      Text(String(localized: "Choose a date to move your drawing"))
+      Text(String(localized: "Choose a date to move your doodle"))
         .font(.appSubheadline())
         .foregroundColor(.textColor)
         .lineLimit(1)
