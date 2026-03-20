@@ -15,6 +15,9 @@ struct PaywallConfiguration {
   /// Whether to use onboarding-style buttons
   var useOnboardingStyle: Bool = false
 
+  /// The source/trigger that caused this paywall to be shown (for analytics attribution)
+  var paywallSource: String = "unknown"
+
   /// Called when a purchase is completed successfully
   var onPurchaseComplete: (() -> Void)?
 
@@ -654,7 +657,7 @@ struct PaywallContentView: View {
       // Restore Purchases
       Button {
         Task {
-          await storeManager.restorePurchases()
+          await storeManager.restorePurchases(paywallSource: configuration.paywallSource)
           if storeManager.hasActiveSubscription {
             configuration.onRestoreComplete?()
           }
@@ -719,7 +722,7 @@ struct PaywallContentView: View {
 
     Task {
       do {
-        let transaction = try await storeManager.purchase(product)
+        let transaction = try await storeManager.purchase(product, paywallSource: configuration.paywallSource)
 
         if transaction != nil {
           // Don't reset isPurchasing here - the view will be dismissed

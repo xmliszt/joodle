@@ -9,6 +9,8 @@ import SwiftUI
 import StoreKit
 
 struct StandalonePaywallView: View {
+    let source: String
+
     @Environment(\.dismiss) private var dismiss
     @StateObject private var storeManager = StoreKitManager.shared
     @StateObject private var subscriptionManager = SubscriptionManager.shared
@@ -25,6 +27,7 @@ struct StandalonePaywallView: View {
                 } else {
                     PaywallContentView(configuration: PaywallConfiguration(
                         useOnboardingStyle: false,
+                        paywallSource: source,
                         onPurchaseComplete: {
                             Task { @MainActor in
                                 await subscriptionManager.updateSubscriptionStatus()
@@ -54,10 +57,11 @@ struct StandalonePaywallView: View {
             }
 
             isCheckingSubscription = false
+            AnalyticsManager.shared.trackPaywallViewed(source: source)
         }
     }
 }
 
 #Preview {
-    StandalonePaywallView()
+    StandalonePaywallView(source: "preview")
 }

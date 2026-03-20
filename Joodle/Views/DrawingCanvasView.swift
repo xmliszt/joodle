@@ -246,9 +246,10 @@ struct DrawingCanvasView: View {
       Text("Clear all drawing?")
     }
     .sheet(isPresented: $showPaywall) {
-      StandalonePaywallView()
+      StandalonePaywallView(source: "entry_limit")
     }
     .preferredColorScheme(.dark)
+    .postHogScreenView("Drawing Canvas")
   }
 
   // MARK: - Access Control UI

@@ -196,6 +196,7 @@ struct SettingsView: View {
   @State private var showNotificationDeniedAlert = false
   @State private var showPlaceholderGenerator = false
   @State private var showPaywall = false
+  @State private var paywallSource = "settings"
   @State private var showSubscriptions = false
   @State private var showAppStats = false
 #if DEBUG
@@ -377,6 +378,7 @@ struct SettingsView: View {
     .navigationDestination(isPresented: $showCustomization) {
       CustomizationSettingsView(
         showPaywall: $showPaywall,
+        paywallSource: $paywallSource,
         pendingThemeColor: $pendingThemeColor,
         showThemeOverlay: $showThemeOverlay,
         scrollToNotePromptSetting: scrollToNotePromptSetting
@@ -426,7 +428,7 @@ struct SettingsView: View {
     }
 #endif
     .sheet(isPresented: $showPaywall) {
-      StandalonePaywallView()
+      StandalonePaywallView(source: paywallSource)
     }
     .navigationDestination(isPresented: $showSubscriptions) {
       SubscriptionsView()
@@ -660,6 +662,7 @@ struct SettingsView: View {
       NavigationLink {
         CustomizationSettingsView(
           showPaywall: $showPaywall,
+          paywallSource: $paywallSource,
           pendingThemeColor: $pendingThemeColor,
           showThemeOverlay: $showThemeOverlay
         )
@@ -1495,6 +1498,7 @@ struct CustomizationSettingsView: View {
   @Environment(\.userPreferences) private var userPreferences
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @Binding var showPaywall: Bool
+  @Binding var paywallSource: String
   @Binding var pendingThemeColor: ThemeColor?
   @Binding var showThemeOverlay: Bool
   private var themeColorManager = ThemeColorManager.shared
@@ -1502,8 +1506,9 @@ struct CustomizationSettingsView: View {
   /// When true, scrolls to the "Prompt for notes after doodling" toggle on appear
   var scrollToNotePromptSetting: Bool = false
   
-  init(showPaywall: Binding<Bool>, pendingThemeColor: Binding<ThemeColor?>, showThemeOverlay: Binding<Bool>, scrollToNotePromptSetting: Bool = false) {
+  init(showPaywall: Binding<Bool>, paywallSource: Binding<String>, pendingThemeColor: Binding<ThemeColor?>, showThemeOverlay: Binding<Bool>, scrollToNotePromptSetting: Bool = false) {
     self._showPaywall = showPaywall
+    self._paywallSource = paywallSource
     self._pendingThemeColor = pendingThemeColor
     self._showThemeOverlay = showThemeOverlay
     self.scrollToNotePromptSetting = scrollToNotePromptSetting
@@ -1555,6 +1560,7 @@ struct CustomizationSettingsView: View {
         // For free users, show paywall when they try to disable it
         if !subscriptionManager.hasPremiumAccess && !newValue {
           userPreferences.shareCardWatermarkEnabled = true // Revert to ON
+          paywallSource = "watermark_toggle"
           showPaywall = true // Show paywall sheet
           return
         }
@@ -1682,6 +1688,7 @@ struct CustomizationSettingsView: View {
           ThemeColorPaletteView(
             subscriptionManager: subscriptionManager,
             onLockedColorTapped: {
+              paywallSource = "locked_color"
               showPaywall = true
             },
             onColorChangeStarted: { color in

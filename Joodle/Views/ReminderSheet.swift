@@ -181,7 +181,7 @@ struct ReminderSheet: View {
                 }
             }
             .sheet(isPresented: $showPaywall) {
-                StandalonePaywallView()
+                StandalonePaywallView(source: "reminder")
             }
             .alert("Invalid Alarm Time", isPresented: $showPastTimeAlert) {
                 Button("OK", role: .cancel) { }
@@ -199,6 +199,7 @@ struct ReminderSheet: View {
                 Text("Please enable notifications in Settings to receive notifications for the anniversary alarms.")
             }
         }
+        .postHogScreenView("Reminder Sheet")
 
     }
 }

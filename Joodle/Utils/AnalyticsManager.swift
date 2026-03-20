@@ -36,18 +36,13 @@ final class AnalyticsManager {
 
         // Navigation & UI
         case viewModeChanged = "view_mode_changed"
-        case yearChanged = "year_changed"
-        case scrubbingUsed = "scrubbing_used"
-        case pinchGestureUsed = "pinch_gesture_used"
+        case calendarYearNavigated = "calendar_year_navigated"
 
         // Subscription
         case paywallViewed = "paywall_viewed"
         case paywallDismissed = "paywall_dismissed"
         case subscriptionStarted = "subscription_started"
         case subscriptionRestored = "subscription_restored"
-        case subscriptionCancelled = "subscription_cancelled"
-        case subscriptionExpired = "subscription_expired"
-        case offerCodeRedeemed = "offer_code_redeemed"
         case restorePurchasesAttempted = "restore_purchases_attempted"
         case purchaseFailed = "purchase_failed"
 
@@ -55,12 +50,10 @@ final class AnalyticsManager {
         case shareCardOpened = "share_card_opened"
         case shareCardStyleSelected = "share_card_style_selected"
         case shareCardShared = "share_card_shared"
-        case shareCardCancelled = "share_card_cancelled"
 
         // iCloud Sync
         case iCloudSyncEnabled = "icloud_sync_enabled"
         case iCloudSyncDisabled = "icloud_sync_disabled"
-        case iCloudSyncStatusViewed = "icloud_sync_status_viewed"
 
         // Reminders
         case dailyReminderEnabled = "daily_reminder_enabled"
@@ -76,7 +69,6 @@ final class AnalyticsManager {
         case dataImportFailed = "data_import_failed"
 
         // Tutorials
-        case tutorialStepViewed = "tutorial_step_viewed"
         case tutorialStepCompleted = "tutorial_step_completed"
         case tutorialCompleted = "tutorial_completed"
         case tutorialSkipped = "tutorial_skipped"
@@ -85,12 +77,6 @@ final class AnalyticsManager {
         case faqQuestionExpanded = "faq_question_expanded"
         case changelogViewed = "changelog_viewed"
         case externalLinkOpened = "external_link_opened"
-        case contactUsOpened = "contact_us_opened"
-        case reviewPromptShown = "review_prompt_shown"
-
-        // Widgets
-        case widgetDataUpdated = "widget_data_updated"
-        case widgetTapped = "widget_tapped"
 
         // Theme & Appearance
         case themeColorChanged = "theme_color_changed"
@@ -110,8 +96,6 @@ final class AnalyticsManager {
         // Grace Period
         case gracePeriodStarted = "grace_period_started"
         case gracePeriodExpired = "grace_period_expired"
-        case graceExpiredPaywallShown = "grace_expired_paywall_shown"
-        case graceExpiredPaywallDismissed = "grace_expired_paywall_dismissed"
     }
 
     // MARK: - Property Keys
@@ -207,42 +191,6 @@ final class AnalyticsManager {
         case gracePeriodDaysRemaining = "grace_period_days_remaining"
     }
 
-    // MARK: - Screen Names
-
-    enum ScreenName: String {
-        case home = "home"
-        case settings = "settings"
-        case iCloudSync = "icloud_sync"
-        case customization = "customization"
-        case dailyReminder = "daily_reminder"
-        case backupRestore = "backup_restore"
-        case interactions = "interactions"
-        case anniversaryAlarms = "anniversary_alarms"
-        case experimentalFeatures = "experimental_features"
-        case subscriptions = "subscriptions"
-        case paywall = "paywall"
-        case shareCard = "share_card"
-        case faq = "faq"
-        case changelog = "changelog"
-        case changelogDetail = "changelog_detail"
-        case learnCoreFeatures = "learn_core_features"
-        case tutorial = "tutorial"
-        case entryEditing = "entry_editing"
-        case drawingCanvas = "drawing_canvas"
-        case reminderSheet = "reminder_sheet"
-        case notePrompt = "note_prompt"
-
-        // Onboarding screens
-        case onboardingDrawing = "onboarding_drawing"
-        case onboardingValueProp = "onboarding_value_prop"
-        case onboardingTutorial = "onboarding_tutorial"
-        case onboardingWidgets = "onboarding_widgets"
-        case onboardingPaywall = "onboarding_paywall"
-        case onboardingICloudConfig = "onboarding_icloud_config"
-        case onboardingDailyReminder = "onboarding_daily_reminder"
-        case onboardingCompletion = "onboarding_completion"
-    }
-
     // MARK: - Tracking Methods
 
     /// Track an event with optional properties
@@ -301,20 +249,10 @@ final class AnalyticsManager {
         ])
     }
 
-    func trackYearChanged(to year: Int, from previousYear: Int) {
-        track(.yearChanged, properties: [
+    func trackCalendarYearNavigated(to year: Int, from previousYear: Int) {
+        track(.calendarYearNavigated, properties: [
             .year: year,
             .previousYear: previousYear
-        ])
-    }
-
-    func trackScrubbingUsed() {
-        track(.scrubbingUsed)
-    }
-
-    func trackPinchGestureUsed(resultingMode: String) {
-        track(.pinchGestureUsed, properties: [
-            .viewMode: resultingMode
         ])
     }
 
@@ -333,7 +271,7 @@ final class AnalyticsManager {
         ])
     }
 
-    func trackSubscriptionStarted(productId: String, isTrial: Bool, isOfferCode: Bool, offerCodeId: String? = nil) {
+    func trackSubscriptionStarted(productId: String, isTrial: Bool, isOfferCode: Bool, offerCodeId: String? = nil, paywallSource: String? = nil) {
         var props: [PropertyKey: Any] = [
             .productId: productId,
             .isTrial: isTrial,
@@ -342,20 +280,29 @@ final class AnalyticsManager {
         if let offerCodeId = offerCodeId {
             props[.offerCodeId] = offerCodeId
         }
+        if let paywallSource {
+            props[.paywallSource] = paywallSource
+        }
         track(.subscriptionStarted, properties: props)
     }
 
-    func trackSubscriptionRestored(productId: String) {
-        track(.subscriptionRestored, properties: [
-            .productId: productId
-        ])
+    func trackSubscriptionRestored(productId: String, paywallSource: String? = nil) {
+        var props: [PropertyKey: Any] = [.productId: productId]
+        if let paywallSource {
+            props[.paywallSource] = paywallSource
+        }
+        track(.subscriptionRestored, properties: props)
     }
 
-    func trackPurchaseFailed(productId: String, errorMessage: String) {
-        track(.purchaseFailed, properties: [
+    func trackPurchaseFailed(productId: String, errorMessage: String, paywallSource: String? = nil) {
+        var props: [PropertyKey: Any] = [
             .productId: productId,
             .errorMessage: errorMessage
-        ])
+        ]
+        if let paywallSource {
+            props[.paywallSource] = paywallSource
+        }
+        track(.purchaseFailed, properties: props)
     }
 
     func trackRestorePurchasesAttempted(success: Bool) {
@@ -376,16 +323,6 @@ final class AnalyticsManager {
 
     func trackGracePeriodExpired() {
         track(.gracePeriodExpired)
-    }
-
-    func trackGraceExpiredPaywallShown() {
-        track(.graceExpiredPaywallShown)
-    }
-
-    func trackGraceExpiredPaywallDismissed(didPurchase: Bool) {
-        track(.graceExpiredPaywallDismissed, properties: [
-            .settingValue: didPurchase ? "purchased" : "dismissed"
-        ])
     }
 
     // MARK: Share
@@ -488,13 +425,6 @@ final class AnalyticsManager {
     }
 
     // MARK: Tutorial
-
-    func trackTutorialStepViewed(stepName: String, stepIndex: Int) {
-        track(.tutorialStepViewed, properties: [
-            .tutorialStep: stepName,
-            .stepIndex: stepIndex
-        ])
-    }
 
     func trackTutorialStepCompleted(stepName: String, stepIndex: Int) {
         track(.tutorialStepCompleted, properties: [

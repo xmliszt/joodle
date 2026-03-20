@@ -188,7 +188,7 @@ class StoreKitManager: NSObject, ObservableObject {
 
     // MARK: - Purchase Product
 
-    func purchase(_ product: Product) async throws -> Transaction? {
+    func purchase(_ product: Product, paywallSource: String? = nil) async throws -> Transaction? {
         isLoading = true
         errorMessage = nil
 
@@ -211,7 +211,8 @@ class StoreKitManager: NSObject, ObservableObject {
                     productId: product.id,
                     isTrial: isInTrialPeriod,
                     isOfferCode: hasRedeemedOfferCode,
-                    offerCodeId: offerCodeId
+                    offerCodeId: offerCodeId,
+                    paywallSource: paywallSource
                 )
 
                 // Finish the transaction after we've updated our state
@@ -221,7 +222,7 @@ class StoreKitManager: NSObject, ObservableObject {
 
             case .userCancelled:
                 // Track purchase cancelled (user cancelled)
-                AnalyticsManager.shared.trackPaywallDismissed(source: "purchase", didPurchase: false)
+                AnalyticsManager.shared.trackPaywallDismissed(source: paywallSource ?? "unknown", didPurchase: false)
                 return nil
 
             case .pending:
@@ -236,7 +237,8 @@ class StoreKitManager: NSObject, ObservableObject {
             // Track purchase failed
             AnalyticsManager.shared.trackPurchaseFailed(
                 productId: product.id,
-                errorMessage: error.localizedDescription
+                errorMessage: error.localizedDescription,
+                paywallSource: paywallSource
             )
             throw error
         }
@@ -244,7 +246,7 @@ class StoreKitManager: NSObject, ObservableObject {
 
     // MARK: - Restore Purchase
 
-    func restorePurchases() async {
+    func restorePurchases(paywallSource: String? = nil) async {
         isLoading = true
         errorMessage = nil
 
@@ -258,7 +260,7 @@ class StoreKitManager: NSObject, ObservableObject {
             let success = hasActiveSubscription
             AnalyticsManager.shared.trackRestorePurchasesAttempted(success: success)
             if success, let productId = currentProductID {
-                AnalyticsManager.shared.trackSubscriptionRestored(productId: productId)
+                AnalyticsManager.shared.trackSubscriptionRestored(productId: productId, paywallSource: paywallSource)
             }
         } catch {
             errorMessage = String(localized: "Failed to restore purchase: \(error.localizedDescription)")

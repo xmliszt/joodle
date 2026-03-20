@@ -46,7 +46,7 @@ struct YearSelectorView: View {
           }
           // Track year change
           if year != previousYear {
-            AnalyticsManager.shared.trackYearChanged(to: year, from: previousYear)
+            AnalyticsManager.shared.trackCalendarYearNavigated(to: year, from: previousYear)
           }
         }
       }

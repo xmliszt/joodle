@@ -350,6 +350,7 @@ struct ShareCardSelectorView: View {
         await SubscriptionManager.shared.verifySubscriptionForAccess()
       }
       .interactiveDismissDisabled(isSharing || isExportingAnimated)
+      .postHogScreenView("Share Card")
     }
   }
 

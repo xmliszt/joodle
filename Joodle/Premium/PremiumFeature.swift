@@ -397,7 +397,7 @@ struct PremiumGatedButton<Label: View>: View {
                 }
         }
         .sheet(isPresented: $showPaywall) {
-            StandalonePaywallView()
+            StandalonePaywallView(source: "premium_gate")
         }
     }
 }

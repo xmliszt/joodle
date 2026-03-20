@@ -478,7 +478,7 @@ struct JoodleApp: App {
                 Haptic.play()
               }
               .sheet(isPresented: $showPaywallFromWidget) {
-                StandalonePaywallView()
+                StandalonePaywallView(source: "widget")
                   .presentationDetents([.large])
               }
               .alert("Enable iCloud Sync", isPresented: $showPendingRestartAlert) {

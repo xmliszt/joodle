@@ -39,5 +39,6 @@ struct OnboardingFlowView: View {
                 dismiss()
             }
         }
+        .postHogScreenView("Onboarding")
     }
 }

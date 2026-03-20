@@ -640,6 +640,7 @@ struct EntryEditingView: View {
     .padding(20)
     }
     .animation(.easeInOut(duration: 0.2), value: isEditingNote)
+    .postHogScreenView("Entry Editing")
   }
 
 // MARK: - Private Methods

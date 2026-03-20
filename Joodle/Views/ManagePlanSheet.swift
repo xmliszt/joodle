@@ -290,7 +290,7 @@ struct ManagePlanSheet: View {
 
     Task {
       do {
-        let transaction = try await storeManager.purchase(product)
+        let transaction = try await storeManager.purchase(product, paywallSource: "manage_plan")
 
         if transaction != nil {
           // Purchase succeeded — dismiss the sheet

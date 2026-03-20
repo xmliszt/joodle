@@ -357,6 +357,7 @@ struct ContentView: View {
         .zIndex(100)
       }
     }
+    .postHogScreenView("Home")
     .alert("Subscription Ended", isPresented: $subscriptionManager.subscriptionJustExpired) {
       Button("OK") {
         subscriptionManager.acknowledgeExpiry()
@@ -365,7 +366,7 @@ struct ContentView: View {
       Text("Your Joodle Pro subscription has ended. Some features are now limited.")
     }
     .sheet(isPresented: $showGraceExpiredPaywall) {
-      StandalonePaywallView()
+      StandalonePaywallView(source: "grace_expired")
     }
     .onAppear {
       // Sync widget data when app launches — batch subscription + entries into one reload pass
@@ -381,7 +382,6 @@ struct ContentView: View {
         if gracePeriodManager.shouldShowGraceExpiredPaywall && !subscriptionManager.hasPremiumAccess {
           showGraceExpiredPaywall = true
           gracePeriodManager.markGraceExpiredPaywallShown()
-          AnalyticsManager.shared.trackGraceExpiredPaywallShown()
         }
       }
     }
@@ -461,9 +461,6 @@ struct ContentView: View {
         highlightedId = newId
       },
       onScrubbingEnded: { _ in
-        // Track scrubbing gesture used
-        AnalyticsManager.shared.trackScrubbingUsed()
-
         if let highlightedId, let item = dataProvider.getItem(from: highlightedId) {
           selectDateItem(item: item, scrollProxy: scrollProxy)
         }
@@ -502,12 +499,10 @@ struct ContentView: View {
 
     // Pinch in: switch from "now" to "year" mode
     if value < scaleThreshold && dataProvider.viewMode == .now {
-      AnalyticsManager.shared.trackPinchGestureUsed(resultingMode: "year")
       toggleViewMode(to: .year)
     }
     // Pinch out: switch from "year" to "now" mode
     else if value > expandThreshold && dataProvider.viewMode == .year {
-      AnalyticsManager.shared.trackPinchGestureUsed(resultingMode: "now")
       toggleViewMode(to: .now)
     }
   }
