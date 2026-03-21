@@ -61,6 +61,8 @@ extension View {
         switch anchor {
         case .drawingCanvas:
             return AnyView(tutorialHighlightAnchor("drawingCanvas", coordinateSpace: coordinateSpace))
+        case .entryDrawing:
+            return AnyView(tutorialHighlightAnchor("entryDrawing", coordinateSpace: coordinateSpace))
         case .button(let id):
             return AnyView(tutorialHighlightAnchor(id, coordinateSpace: coordinateSpace))
         case .gridEntry(let offset):

@@ -258,7 +258,17 @@ struct EntryEditingView: View {
                   .frame(width: drawingDisplaySize, height: drawingDisplaySize)
                   .background(.appSurface)
                   .clipShape(RoundedRectangle(cornerRadius: 20))
+                  .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 20))
                   .animation(.springFkingSatifying, value: drawingDisplaySize)
+                  .contextMenu {
+                    // In tutorial view, only show the move option
+                    Button {
+                      onMoveDrawingRequested?()
+                    } label: {
+                      Label(String(localized: "Move to Another Date"), systemImage: "arrow.up.right.square")
+                    }
+                  }
+                  .tutorialHighlightAnchor("entryDrawing", isEnabled: tutorialMode)
                 } else {
                   DrawingDisplayView(
                     entry: entry,

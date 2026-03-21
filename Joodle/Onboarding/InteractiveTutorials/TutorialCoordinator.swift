@@ -191,6 +191,8 @@ class TutorialCoordinator: ObservableObject {
             return highlightFrames[key]
         case .drawingCanvas:
             return highlightFrames["drawingCanvas"]
+        case .entryDrawing:
+            return highlightFrames["entryDrawing"]
         case .gesture, .none:
             return nil
         }
@@ -226,6 +228,12 @@ class TutorialCoordinator: ObservableObject {
             shouldAdvance = true
 
         case (.doubleTapCompleted, .doubleTapCompleted):
+            shouldAdvance = true
+
+        case (.drawingMoved, .drawingMoved):
+            shouldAdvance = true
+
+        case (.moveContextMenuOptionTapped, .moveContextMenuOptionTapped):
             shouldAdvance = true
 
         default:
@@ -265,6 +273,8 @@ enum TutorialEvent: Equatable {
     case yearChanged
     case sheetDismissed
     case doubleTapCompleted
+    case drawingMoved
+    case moveContextMenuOptionTapped
 }
 
 // MARK: - Preview Extensions

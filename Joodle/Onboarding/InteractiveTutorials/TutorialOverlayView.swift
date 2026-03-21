@@ -39,7 +39,7 @@ struct TutorialOverlayView: View {
             ZStack {
                 if let step = coordinator.currentStep {
                     switch step.highlightAnchor {
-                    case .button, .gridEntry, .drawingCanvas:
+                    case .button, .gridEntry, .drawingCanvas, .entryDrawing:
                         // Dimmed overlay with cutout for highlighted element
                         if let frame = coordinator.getHighlightFrame(for: step.highlightAnchor) {
                             let paddedFrame = frame.insetBy(
@@ -74,12 +74,14 @@ struct TutorialOverlayView: View {
                                 // Pulsing highlight ring
                                 HighlightRing(frame: paddedFrame, cornerRadius: highlightCornerRadius)
 
-                                // Tooltip
-                                TutorialTooltipView(
-                                    tooltip: step.tooltip,
-                                    highlightFrame: frame,
-                                    screenSize: geometry.size
-                                )
+                                // Tooltip (optional — some steps use custom instruction UI)
+                                if let tooltip = step.tooltip {
+                                    TutorialTooltipView(
+                                        tooltip: tooltip,
+                                        highlightFrame: frame,
+                                        screenSize: geometry.size
+                                    )
+                                }
                             }
                         } else {
                             // Frame not yet available - show loading state
@@ -103,12 +105,14 @@ struct TutorialOverlayView: View {
 
                       
                         // Centered tooltip
-                        TutorialTooltipView(
-                            tooltip: step.tooltip,
-                            highlightFrame: nil,
-                            screenSize: geometry.size
-                        )
-                        .offset(y: -64)
+                        if let tooltip = step.tooltip {
+                            TutorialTooltipView(
+                                tooltip: tooltip,
+                                highlightFrame: nil,
+                                screenSize: geometry.size
+                            )
+                            .offset(y: -64)
+                        }
                       }
                       
 
@@ -117,11 +121,13 @@ struct TutorialOverlayView: View {
                         Color.black.opacity(dimOpacity)
                             .allowsHitTesting(false)
 
-                        TutorialTooltipView(
-                            tooltip: step.tooltip,
-                            highlightFrame: nil,
-                            screenSize: geometry.size
-                        )
+                        if let tooltip = step.tooltip {
+                            TutorialTooltipView(
+                                tooltip: tooltip,
+                                highlightFrame: nil,
+                                screenSize: geometry.size
+                            )
+                        }
                     }
                 }
             }

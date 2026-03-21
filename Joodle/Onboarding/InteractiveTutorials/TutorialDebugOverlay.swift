@@ -322,6 +322,8 @@ struct TutorialDebugOverlay: View {
             return "none"
         case .drawingCanvas:
           return "drawingCanvas"
+        case .entryDrawing:
+          return "entryDrawing"
         }
     }
 
@@ -343,6 +345,10 @@ struct TutorialDebugOverlay: View {
           return "buttonTapped:\(id)"
         case .doubleTapCompleted:
           return "doubleTap"
+        case .drawingMoved:
+          return "doodleMoved"
+        case .moveContextMenuOptionTapped:
+          return "moveContextMenuOptionTap"
         }
     }
 
@@ -358,6 +364,8 @@ struct TutorialDebugOverlay: View {
             return "clearSelection"
         case .navigateToToday:
             return "navToday"
+        case .prepareForMoveDrawing:
+            return "prepareForMove"
         }
     }
 }

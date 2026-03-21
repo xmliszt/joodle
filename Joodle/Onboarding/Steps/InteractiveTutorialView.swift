@@ -35,6 +35,10 @@ struct InteractiveTutorialView: View {
     @State private var scrollProxy: ScrollViewProxy?
     @State private var hasScrolledToEntry = false
 
+    // Move mode confirmation alert state
+    @State private var moveTutorialTargetDate: Date?
+    @State private var showMoveTutorialConfirmation = false
+
     // Standalone mode state (for black screen fix when presented as fullScreenCover)
     @State private var isReady = false
     @State private var forceRefresh = UUID()
@@ -176,8 +180,34 @@ struct InteractiveTutorialView: View {
                                 .ignoresSafeArea()
                         }
 
+                        // Move drawing mode overlays (shown instead of tutorial overlay)
+                        if mockStore.isInMoveMode {
+                            MoveDrawingGradientBorder()
+                                .ignoresSafeArea()
+                                .allowsHitTesting(false)
+                                .transition(.opacity)
+
+                            // Tutorial instruction anchored at top center
+                            VStack(spacing: 0) {
+                                Spacer().frame(height: geometry.safeAreaInsets.top + 20)
+                                Text(String(localized: "Tap any date to move your doodle there"))
+                                    .font(.appSubheadline(weight: .medium))
+                                    .foregroundColor(.white)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 10)
+                                    .background(Capsule().fill(Color.appAccent.opacity(0.9)))
+                                Spacer()
+                            }
+                            .frame(maxWidth: .infinity)
+                            .allowsHitTesting(false)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+
+                        }
+
                         // Tutorial overlay (dimmed with cutout + tooltip)
-                        if coordinator.isActive && hasAnimatedIn {
+                        // Hidden while in move mode — move mode UI provides instructions
+                        if coordinator.isActive && hasAnimatedIn && !mockStore.isInMoveMode {
                             TutorialOverlayView(coordinator: coordinator)
                                 .opacity(overlayOpacity)
                         }
@@ -349,7 +379,9 @@ struct InteractiveTutorialView: View {
                                     allowsHitTesting: true,
                                     overlayContent: AnyView(
                                         todayEntryAnchorOverlay(geometry: geometry, itemsSpacing: itemsSpacing)
-                                    )
+                                    ),
+                                    isInMoveMode: mockStore.isInMoveMode,
+                                    moveSourceDateString: mockStore.moveSourceDateString
                                 )
 
                                 // Extra space at bottom for scrolling
@@ -375,7 +407,10 @@ struct InteractiveTutorialView: View {
                         onFocusChange: nil,
                         mockStore: mockStore,
                         tutorialMode: true,
-                        showReminderSheetBinding: $showReminderSheet
+                        showReminderSheetBinding: $showReminderSheet,
+                        onMoveDrawingRequested: {
+                            handleMoveDrawingRequested()
+                        }
                     )
                 },
                 hasBottomView: mockStore.selectedDateItem != nil,
@@ -417,10 +452,9 @@ struct InteractiveTutorialView: View {
                 if coordinator.isActive,
                    let step = coordinator.currentStep,
                    step.type == .drawAndEdit,
-                   step.highlightAnchor == .drawingCanvas {
-                    SheetTutorialOverlay(
-                        tooltip: step.tooltip
-                    )
+                   step.highlightAnchor == .drawingCanvas,
+                   let tooltip = step.tooltip {
+                    SheetTutorialOverlay(tooltip: tooltip)
                 }
             }
             .fixedSize(horizontal: false, vertical: true)
@@ -440,6 +474,23 @@ struct InteractiveTutorialView: View {
                 )
                 .presentationDetents([.height(280)])
                 .presentationDragIndicator(.visible)
+            }
+        }
+        // Move confirmation alert (matches real app flow)
+        .alert(String(localized: "Move Doodle"), isPresented: $showMoveTutorialConfirmation) {
+            Button(String(localized: "Move"), role: .none) {
+                if let targetDate = moveTutorialTargetDate {
+                    mockStore.performMockMove(to: targetDate)
+                    _ = coordinator.checkEndCondition(.drawingMoved)
+                }
+                moveTutorialTargetDate = nil
+            }
+            Button(String(localized: "Cancel"), role: .cancel) {
+                moveTutorialTargetDate = nil
+            }
+        } message: {
+            if let targetDate = moveTutorialTargetDate {
+                Text(String(localized: "Move your doodle to \(CalendarDate.from(targetDate).displayString)?"))
             }
         }
     }
@@ -514,6 +565,10 @@ struct InteractiveTutorialView: View {
                 mockStore.ensureFutureYear()
                 mockStore.populateAnniversaryEntry()
 
+            case .moveDrawing:
+                // Need EntryEditingView open so user can see drawing and access context menu
+                mockStore.selectDate(Date())
+
             case .none:
                 break
             }
@@ -528,7 +583,8 @@ struct InteractiveTutorialView: View {
 
         // Only scroll to today for steps that need it
         // addReminder shows future year content, switchYear doesn't need scroll
-        let needsScrollToToday = startingStepType != .addReminder && startingStepType != .switchYear
+        let needsScrollToToday = startingStepType != .addReminder
+            && startingStepType != .switchYear
 
         // Scroll to today's entry after a short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -618,6 +674,23 @@ struct InteractiveTutorialView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 mockStore.selectDate(Date())
             }
+
+        case .prepareForMoveDrawing:
+            // Return to current year, clear any selection (closes anniversary entry view), scroll to today, then select today's entry
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                mockStore.selectedYear = Calendar.current.component(.year, from: Date())
+                mockStore.clearSelection()
+            }
+            hasScrolledToEntry = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                scrollToTodayEntry()
+            }
+            // Select today after scroll settles so EntryEditingView opens with the drawing
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    mockStore.selectDate(Date())
+                }
+            }
         }
     }
 
@@ -699,6 +772,25 @@ struct InteractiveTutorialView: View {
         }
     }
 
+    /// Called when the user taps "Move to Another Date" from the context menu in tutorial mode.
+    /// Advances past the context-menu sub-step, then collapses the bottom view and enters move mode.
+    private func handleMoveDrawingRequested() {
+        _ = coordinator.checkEndCondition(.moveContextMenuOptionTapped)
+
+        // Match real app: switch to now view and collapse bottom panel first
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            mockStore.viewMode = .now
+            mockStore.clearSelection()
+        }
+
+        // Enter move mode after the panel collapse animation plays
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                mockStore.enterMoveMode()
+            }
+        }
+    }
+
     /// Handle selection changes during transition - prevents accidental selections before tutorial is ready
     private func handleSelectionChangeDuringTransition(from oldValue: DateItem?, to newValue: DateItem?) {
         // Only apply this safety check during the scrubbing step and before transition is complete
@@ -749,6 +841,7 @@ struct InteractiveTutorialView: View {
     private func createGridCallbacks(geometry: GeometryProxy) -> GridInteractionCallbacks {
         GridInteractionCallbacks(
             onScrubbingBegan: { location in
+                if mockStore.isInMoveMode { return }
                 highlightedId = nil
                 isScrubbing = true
                 coordinator.isUserScrubbing = true  // Hide highlight overlay
@@ -758,11 +851,13 @@ struct InteractiveTutorialView: View {
                 highlightedId = newId
             },
             onScrubbingChanged: { location in
+                if mockStore.isInMoveMode { return }
                 let newId = getItemId(at: location, geometry: geometry)
                 if newId != highlightedId { Haptic.play() }
                 highlightedId = newId
             },
             onScrubbingEnded: { location in
+                if mockStore.isInMoveMode { return }
                 if let highlightedId, let item = getItem(from: highlightedId) {
                     mockStore.selectDate(item.date)
                 }
@@ -771,9 +866,33 @@ struct InteractiveTutorialView: View {
                 coordinator.isUserScrubbing = false  // Show highlight overlay again
             },
             onTap: { location in
+                if isScrubbing { return }
+
+                // Move mode: tap selects a target date — show confirmation alert (matches real app)
+                if mockStore.isInMoveMode {
+                    guard let itemId = getItemId(at: location, geometry: geometry),
+                          let item = getItem(from: itemId)
+                    else { return }
+
+                    // Ignore taps on dates that already have a drawing (not valid targets)
+                    let targetHasDrawing = mockStore.getEntry(for: item.date)?.hasDrawing ?? false
+                    if targetHasDrawing { return }
+
+                    // Ignore taps on the source date itself
+                    if let sourceString = mockStore.moveSourceDateString,
+                       CalendarDate.from(item.date).dateString == sourceString { return }
+
+                    // Valid target — show confirmation alert
+                    moveTutorialTargetDate = item.date
+                    showMoveTutorialConfirmation = true
+                    Haptic.play()
+                    return
+                }
+
                 handleGridTap(at: location, geometry: geometry)
             },
             onPinchEnded: { value in
+                if mockStore.isInMoveMode { return }
                 handlePinchGesture(value: value)
             }
         )
@@ -987,18 +1106,20 @@ private struct TutorialHeaderView: View {
 
                 Spacer()
 
-                // View mode toggle button
-                Button {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        mockStore.viewMode = mockStore.viewMode == .now ? .year : .now
+                // View mode toggle button — hidden during move mode
+                if !mockStore.isInMoveMode {
+                    Button {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            mockStore.viewMode = mockStore.viewMode == .now ? .year : .now
+                        }
+                    } label: {
+                        Image(systemName: mockStore.viewMode == .now
+                              ? "arrow.down.right.and.arrow.up.left"
+                              : "arrow.up.left.and.arrow.down.right")
                     }
-                } label: {
-                    Image(systemName: mockStore.viewMode == .now
-                          ? "arrow.down.right.and.arrow.up.left"
-                          : "arrow.up.left.and.arrow.down.right")
+                    .circularGlassButton()
+                    .tutorialHighlightAnchor(.viewModeButton)
                 }
-                .circularGlassButton()
-                .tutorialHighlightAnchor(.viewModeButton)
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
@@ -1058,5 +1179,14 @@ private struct TutorialHeaderView: View {
         viewModel: viewModel,
         singleStepMode: true,
         startingStepType: .switchViewMode
+    )
+}
+
+#Preview("Single Step - Move Drawing") {
+    let viewModel = OnboardingViewModel()
+    return InteractiveTutorialView(
+        viewModel: viewModel,
+        singleStepMode: true,
+        startingStepType: .moveDrawing
     )
 }

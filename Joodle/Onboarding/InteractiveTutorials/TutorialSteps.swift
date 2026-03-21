@@ -103,6 +103,25 @@ struct TutorialSteps {
             ),
             endCondition: .sheetDismissed,
             prerequisiteSetup: .populateAnniversaryEntry
+        ),
+
+        // Step 7a: Move Drawing - long-press drawing to open context menu
+        TutorialStepConfig(
+            type: .moveDrawing,
+            highlightAnchor: .entryDrawing,
+            tooltip: TutorialTooltip(
+                message: "Long press your doodle and tap the option to \"Move to Another Date\"",
+                position: .above
+            ),
+            endCondition: .moveContextMenuOptionTapped,
+            prerequisiteSetup: .prepareForMoveDrawing
+        ),
+
+        // Step 7b: Move Drawing - pick a target date (move mode active, custom top-center instruction shown)
+        TutorialStepConfig(
+            type: .moveDrawing,
+            highlightAnchor: .none,
+            endCondition: .drawingMoved
         )
     ]
 

@@ -93,6 +93,12 @@ class MockDataStore: ObservableObject {
     /// Whether the reminder sheet is showing
     @Published var showReminderSheet: Bool = false
 
+    /// Whether move-drawing mode is active
+    @Published var isInMoveMode: Bool = false
+
+    /// The dateString of the entry whose drawing is being moved
+    @Published var moveSourceDateString: String? = nil
+
     // MARK: - Init
 
     init(initialYear: Int = Calendar.current.component(.year, from: Date())) {
@@ -227,6 +233,44 @@ class MockDataStore: ObservableObject {
         }
     }
 
+    // MARK: - Move Drawing Mode
+
+    /// Enter move-drawing mode with today's drawing as the source
+    func enterMoveMode(sourceDate: Date = Date()) {
+        let dateString = CalendarDate.from(sourceDate).dateString
+        guard entries.first(where: { $0.dateString == dateString })?.hasDrawing == true else { return }
+        moveSourceDateString = dateString
+        isInMoveMode = true
+    }
+
+    /// Perform the mock move: transfer drawing data from source to the given target date
+    func performMockMove(to targetDate: Date) {
+        guard let sourceString = moveSourceDateString,
+              let sourceIndex = entries.firstIndex(where: { $0.dateString == sourceString })
+        else { return }
+
+        let drawingData = entries[sourceIndex].drawingData
+
+        // Remove drawing from source entry
+        entries[sourceIndex].drawingData = nil
+
+        // Add drawing to target entry (create if needed)
+        let targetDateString = CalendarDate.from(targetDate).dateString
+        if let targetIndex = entries.firstIndex(where: { $0.dateString == targetDateString }) {
+            entries[targetIndex].drawingData = drawingData
+        } else {
+            entries.append(MockDayEntry(date: targetDate, body: "", drawingData: drawingData))
+        }
+
+        exitMoveMode()
+    }
+
+    /// Exit move-drawing mode without performing a move
+    func exitMoveMode() {
+        isInMoveMode = false
+        moveSourceDateString = nil
+    }
+
     /// Reset all state
     func reset() {
         entries.removeAll()
@@ -235,6 +279,8 @@ class MockDataStore: ObservableObject {
         viewMode = .now
         showDrawingCanvas = false
         showReminderSheet = false
+        isInMoveMode = false
+        moveSourceDateString = nil
         selectedYear = Calendar.current.component(.year, from: Date())
     }
 

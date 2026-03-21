@@ -439,7 +439,7 @@ struct MockUIElementsView: View {
                         .foregroundColor(.green)
                     }
 
-                    Text(step.tooltip.message)
+                    Text(step.tooltip?.message ?? "—")
                         .font(.appCaption())
                         .foregroundColor(.secondary)
                         .lineLimit(2)
@@ -486,6 +486,8 @@ private func anchorDescription(_ anchor: TutorialHighlightAnchor) -> String {
         return "Drawing Canvas"
     case .none:
         return "None"
+    case .entryDrawing:
+        return "Entry Drawing"
     }
 }
 
@@ -501,6 +503,8 @@ private func endDescription(_ condition: TutorialEndCondition) -> String {
     case .yearChanged: return "Year Changes"
     case .sheetDismissed: return "Sheet Closes"
     case .doubleTapCompleted: return "Double Tap"
+    case .drawingMoved: return "Doodle Moved"
+    case .moveContextMenuOptionTapped: return "Move Context Menu Option Tapped"
     }
 }
 
