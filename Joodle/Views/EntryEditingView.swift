@@ -268,27 +268,26 @@ struct EntryEditingView: View {
                   .frame(width: drawingDisplaySize, height: drawingDisplaySize)
                   .background(.appSurface)
                   .clipShape(RoundedRectangle(cornerRadius: 20))
+                  .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 20))
                   .animation(.springFkingSatifying, value: drawingDisplaySize)
+                  .contextMenu {
+                    Button {
+                      onMoveDrawingRequested?()
+                    } label: {
+                      Label("Move to Another Date", systemImage: "arrow.up.right.square")
+                    }
+                    Button {
+                      onOpenDrawingCanvas?()
+                    } label: {
+                      Label("Edit Doodle", systemImage: "pencil")
+                    }
+                  }
                 }
               }
               .frame(maxWidth: .infinity)
               .contentShape(Rectangle())
               .onTapGesture {
                 onOpenDrawingCanvas?()
-              }
-              .contextMenu {
-                if !isMockMode {
-                  Button {
-                    onMoveDrawingRequested?()
-                  } label: {
-                    Label("Move to Another Date", systemImage: "arrow.up.right.square")
-                  }
-                  Button {
-                    onOpenDrawingCanvas?()
-                  } label: {
-                    Label("Edit Doodle", systemImage: "pencil")
-                  }
-                }
               }
             }
 
