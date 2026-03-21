@@ -67,6 +67,11 @@ struct InteractiveTutorialView: View {
         coordinator.currentStep?.type == .scrubbing
     }
 
+    /// Whether the current step is the moveDrawing step (disable tap-to-edit on drawing)
+    private var isMoveDrawingStep: Bool {
+        coordinator.currentStep?.type == .moveDrawing
+    }
+
     /// Whether device has Dynamic Island
     private var hasDynamicIsland: Bool {
         UIDevice.hasDynamicIsland
@@ -410,7 +415,8 @@ struct InteractiveTutorialView: View {
                         showReminderSheetBinding: $showReminderSheet,
                         onMoveDrawingRequested: {
                             handleMoveDrawingRequested()
-                        }
+                        },
+                        disableDrawingTap: isMoveDrawingStep
                     )
                 },
                 hasBottomView: mockStore.selectedDateItem != nil,

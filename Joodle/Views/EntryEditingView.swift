@@ -30,6 +30,9 @@ struct EntryEditingView: View {
   /// Called when user taps the date label to initiate a drawing move.
   /// Only fires when the current entry has a drawing.
   private let onMoveDrawingRequested: (() -> Void)?
+  /// When true, tapping the drawing display does NOT open the drawing canvas.
+  /// Used during the moveDrawing tutorial step so the user must use the context menu.
+  private let disableDrawingTap: Bool
 
   init(
     date: Date?,
@@ -41,7 +44,8 @@ struct EntryEditingView: View {
     showReminderSheetBinding: Binding<Bool>? = nil,
     onNoteEditRequested: ((String, @escaping (String) -> Void) -> Void)? = nil,
     onNoteEditDismissed: (() -> Void)? = nil,
-    onMoveDrawingRequested: (() -> Void)? = nil
+    onMoveDrawingRequested: (() -> Void)? = nil,
+    disableDrawingTap: Bool = false
   ) {
     self.date = date
     self.selectedEntry = entry
@@ -53,6 +57,7 @@ struct EntryEditingView: View {
     self.onNoteEditRequested = onNoteEditRequested
     self.onNoteEditDismissed = onNoteEditDismissed
     self.onMoveDrawingRequested = onMoveDrawingRequested
+    self.disableDrawingTap = disableDrawingTap
     _textContent = State(initialValue: entry?.body ?? "")
     _entry = State(initialValue: entry)
   }
@@ -260,6 +265,10 @@ struct EntryEditingView: View {
                   .clipShape(RoundedRectangle(cornerRadius: 20))
                   .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 20))
                   .animation(.springFkingSatifying, value: drawingDisplaySize)
+                  .onTapGesture {
+                    guard !disableDrawingTap else { return }
+                    onOpenDrawingCanvas?()
+                  }
                   .contextMenu {
                     // In tutorial view, only show the move option
                     Button {
@@ -280,6 +289,9 @@ struct EntryEditingView: View {
                   .clipShape(RoundedRectangle(cornerRadius: 20))
                   .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 20))
                   .animation(.springFkingSatifying, value: drawingDisplaySize)
+                  .onTapGesture {
+                    onOpenDrawingCanvas?()
+                  }
                   .contextMenu {
                     Button {
                       onMoveDrawingRequested?()
@@ -296,9 +308,6 @@ struct EntryEditingView: View {
               }
               .frame(maxWidth: .infinity)
               .contentShape(Rectangle())
-              .onTapGesture {
-                onOpenDrawingCanvas?()
-              }
             }
 
             // Note text display — tappable to open the editing popup
