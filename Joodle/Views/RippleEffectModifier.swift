@@ -44,6 +44,7 @@ struct RippleModifier: ViewModifier {
   var origin: CGPoint
   var elapsedTime: TimeInterval
   var duration: TimeInterval
+  var accentColor: Color = .accentColor
 
   var amplitude: Double = 12
   var frequency: Double = 15
@@ -57,7 +58,8 @@ struct RippleModifier: ViewModifier {
       .float(amplitude),
       .float(frequency),
       .float(decay),
-      .float(speed)
+      .float(speed),
+      .color(accentColor)
     )
 
     let maxSampleOffset = maxSampleOffset

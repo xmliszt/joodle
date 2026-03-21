@@ -15,7 +15,8 @@ half4 Ripple(
     float amplitude,
     float frequency,
     float decay,
-    float speed
+    float speed,
+    half4 accentColor
 ) {
     // The distance of the current pixel position from `origin`.
     float distance = length(position - origin);
@@ -41,6 +42,18 @@ half4 Ripple(
 
     // Lighten or darken the color based on the ripple amount and its alpha component.
     color.rgb += 0.3 * (rippleAmount / amplitude) * color.a;
+
+    // Accent color tint: the wave envelope decays from 1.0 to 0 as the ripple
+    // travels outward and subsides. Pixels closer to the origin see the wave
+    // sooner and their tint begins fading earlier; distant pixels receive a
+    // proportionally lower opacity because the envelope has decayed further by
+    // the time the wave reaches them. This produces a colored ripple that
+    // spreads across the screen and gradually fades to nothing.
+    float envelope = exp(-decay * time);               // 1 → 0 as ripple subsides
+    float tintAlpha = 0.7 * envelope * float(accentColor.a);
+
+    // Blend accent color over the distorted content.
+    color.rgb = mix(color.rgb, accentColor.rgb, half(tintAlpha));
 
     return color;
 }

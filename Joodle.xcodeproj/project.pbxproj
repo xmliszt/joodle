@@ -102,11 +102,6 @@
 			path = Widgets;
 			sourceTree = "<group>";
 		};
-		FABB3D8E2EBF4E7300C8CCBA /* Fonts */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Fonts;
-			sourceTree = "<group>";
-		};
 		FADC35852E48C2E1007AE111 /* Joodle */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -199,7 +194,6 @@
 				FA85D44E2EB7AECA007D82EE /* Frameworks */,
 				FADC35842E48C2E1007AE111 /* Products */,
 				FAFABCCE2F01268C0018FA14 /* Videos */,
-				FABB3D8E2EBF4E7300C8CCBA /* Fonts */,
 			);
 			sourceTree = "<group>";
 		};
@@ -255,7 +249,6 @@
 				FA85D4622EB7AECB007D82EE /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				FABB3D8E2EBF4E7300C8CCBA /* Fonts */,
 				FADC35852E48C2E1007AE111 /* Joodle */,
 				FAE73C552EC0D32800AFCED7 /* Shared */,
 				FAFABCCE2F01268C0018FA14 /* Videos */,
@@ -458,7 +451,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = WidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 115;
+				CURRENT_PROJECT_VERSION = 116;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widgets/Info.plist;
@@ -492,7 +485,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = WidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 115;
+				CURRENT_PROJECT_VERSION = 116;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Widgets/Info.plist;
@@ -529,7 +522,7 @@
 				CODE_SIGN_ENTITLEMENTS = joodle/joodle.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 115;
+				CURRENT_PROJECT_VERSION = 116;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -571,7 +564,7 @@
 				CODE_SIGN_ENTITLEMENTS = joodle/joodle.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 115;
+				CURRENT_PROJECT_VERSION = 116;
 				DEVELOPMENT_TEAM = AB3TLZ2LJT;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
