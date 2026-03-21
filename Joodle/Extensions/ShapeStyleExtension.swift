@@ -47,3 +47,32 @@ extension ShapeStyle where Self == Color {
     Color(UIColor.separator)
   }
 }
+
+extension Color {
+    func hueRotated(by degrees: Double) -> Color {
+        // Convert to UIColor to access HSB components
+        let uiColor = UIColor(self)
+
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        // If we can’t get HSB, just return self
+        guard uiColor.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha) else {
+            return self
+        }
+
+        // Rotate hue in [0, 1]
+        let delta = CGFloat(degrees / 360.0)
+        var newHue = hue + delta
+        if newHue < 0 { newHue += 1 }
+        if newHue > 1 { newHue -= 1 }
+
+        let rotated = UIColor(hue: newHue,
+                              saturation: saturation,
+                              brightness: brightness,
+                              alpha: alpha)
+        return Color(rotated)
+    }
+}

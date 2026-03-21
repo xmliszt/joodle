@@ -379,6 +379,15 @@ struct ContentView: View {
         .zIndex(100)
       }
 
+      // Move drawing mode — animated gradient border (non-interactive)
+      if isMovingDrawing {
+        MoveDrawingGradientBorder()
+          .ignoresSafeArea()
+          .allowsHitTesting(false)
+          .zIndex(50)
+          .transition(.opacity)
+      }
+
       // Move drawing mode — floating instruction bar (interactive)
       if isMovingDrawing {
         VStack {
