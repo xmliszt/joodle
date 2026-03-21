@@ -36,6 +36,10 @@ struct ContentView: View {
   // --- MOVE DRAWING STATE ---
   /// Whether user is in "move drawing" mode
   @State private var isMovingDrawing = false
+  /// Ripple animation trigger — increment to fire a new ripple
+  @State private var rippleTrigger: Int = 0
+  /// Screen-space origin for the ripple (set to screen center when entering move mode)
+  @State private var rippleOrigin: CGPoint = .zero
   /// The source entry whose drawing is being moved (stored independently of selectedDateItem)
   @State private var moveSourceEntry: DayEntry?
   /// The source date for the drawing being moved
@@ -382,6 +386,7 @@ struct ContentView: View {
       // Move drawing mode — animated gradient border (non-interactive)
       if isMovingDrawing {
         MoveDrawingGradientBorder()
+          .modifier(RippleEffect(at: rippleOrigin, trigger: rippleTrigger))
           .ignoresSafeArea()
           .allowsHitTesting(false)
           .zIndex(50)
@@ -724,6 +729,9 @@ struct ContentView: View {
       withAnimation(.springFkingSatifying) {
         isMovingDrawing = true
       }
+      let bounds = UIScreen.main.bounds
+      rippleOrigin = CGPoint(x: bounds.width / 2, y: bounds.height / 2)
+      rippleTrigger += 1
     }
 
     Haptic.play(with: .medium)
