@@ -5494,7 +5494,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如何为 Joodle 启用 iCloud 云服务同步？"
+            "value": "如何为 Joodle 启��� iCloud 云服务同步？"
           }
         },
         "fr": {
@@ -6016,7 +6016,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "집중력이 손전등 빛이라면, 지금 무엇을 비추고 있는지 그려보세요."
+            "value": "집중력��� 손전등 빛이라면, 지금 무엇을 비추고 있는지 그려보세요."
           }
         },
         "zh-Hans": {
@@ -6604,7 +6604,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "通过 iCloud 云服务让你所有设备上的涂鸦保持同步��"
+            "value": "通过 iCloud 云服务让你所有设备上的涂鸦保持同步。"
           }
         },
         "fr": {
@@ -8228,7 +8228,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "아직 동기화가 감��되지 않음"
+            "value": "아직 동기화가 감지되지 않음"
           }
         },
         "zh-Hans": {
@@ -9612,7 +9612,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "빠��� 동작"
+            "value": "빠른 동작"
           }
         },
         "zh-Hans": {
@@ -10036,7 +10036,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "지금 다시 시작"
+            "value": "지�� 다시 시작"
           }
         },
         "zh-Hans": {
@@ -13884,7 +13884,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "欢迎回来！"
+            "value": "欢迎回��！"
           }
         },
         "fr": {
