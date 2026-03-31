@@ -722,7 +722,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "发生系统错误。请稍后再试。"
+            "value": "发生系统错误。请稍后���试。"
           }
         },
         "fr": {
@@ -1535,7 +1535,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "仅应用内修改不会影响商店工具包（StoreKit）。请使用 \"从商店工具包同步\" 恢复实际状态。"
+            "value": "仅应用内修改不会影响商店工具包（StoreKit）。请使用 \"从商店工具包同步\" 恢复实际状��。"
           }
         },
         "fr": {
@@ -5494,7 +5494,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "如何为 Joodle 启��� iCloud 云服务同步？"
+            "value": "如何为 Joodle 启用 iCloud 云服务同步？"
           }
         },
         "fr": {
@@ -6016,7 +6016,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "집중력��� 손전등 빛이라면, 지금 무엇을 비추고 있는지 그려보세요."
+            "value": "집중력이 손전등 빛이라면, 지금 무엇을 비추고 있는지 그려보세요."
           }
         },
         "zh-Hans": {
@@ -10036,7 +10036,7 @@
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "지�� 다시 시작"
+            "value": "지금 다시 시작"
           }
         },
         "zh-Hans": {
@@ -13884,7 +13884,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "欢迎回��！"
+            "value": "欢迎回来！"
           }
         },
         "fr": {
