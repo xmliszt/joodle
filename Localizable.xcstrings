@@ -64,7 +64,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "  └─ Thumbnails"
+            "value": "  └─ Miniatures"
           }
         }
       }
@@ -86,7 +86,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "\"Minimized\" view mode gives you an overview of your entire annee. Additional sharing is disponible in this view mode a share your entire annee."
+            "value": "Le mode « Minimisé » vous offre une vue d'ensemble de toute votre année. Un partage supplémentaire est disponible dans ce mode pour partager votre année entière."
           }
         }
       }
@@ -108,7 +108,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "\"Normal\" view mode gives you a more focused view avec 7 days per row representing the 7 days of a semaine. Layout is shifted a match the weekday."
+            "value": "Le mode « Normal » offre une vue plus détaillée avec 7 jours par ligne représentant les 7 jours de la semaine. La disposition s'adapte au jour de la semaine."
           }
         }
       }
@@ -130,7 +130,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "\"Saved a iCloud\" is disabled in system settings. a activer sync, go a:\n\nParametres → [Your Name] → iCloud → Saved a iCloud → Joodle\n\net turn on the toggle."
+            "value": "« Enregistré sur iCloud » est désactivé dans les réglages système. Pour activer la synchronisation, allez dans :\n\nRéglages → [Votre nom] → iCloud → Enregistré sur iCloud → Joodle\n\net activez l'option."
           }
         }
       }
@@ -152,7 +152,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "\"Saved a iCloud\" is disabled. activer it in Parametres → [Your Name] → iCloud → Saved a iCloud → Joodle."
+            "value": "« Enregistré sur iCloud » est désactivé. Activez-le dans Réglages → [Votre nom] → iCloud → Enregistré sur iCloud → Joodle."
           }
         }
       }
@@ -230,7 +230,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "/ annee"
+            "value": "/ an"
           }
         }
       }
@@ -278,7 +278,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@\n\nIf this issue persists, veuillez contact the developer."
+            "value": "%@\n\nSi ce problème persiste, veuillez contacter le développeur."
           }
         }
       }
@@ -332,7 +332,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ / mo"
+            "value": "%@ / mois"
           }
         }
       }
@@ -416,7 +416,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ color%2$@%3$@"
+            "value": "Couleur %1$@%2$@%3$@"
           }
         }
       }
@@ -440,7 +440,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ entries"
+            "value": "%@ entrées"
           }
         }
       }
@@ -464,7 +464,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ frames"
+            "value": "%@ cadres"
           }
         }
       }
@@ -488,7 +488,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ gratuit trial"
+            "value": "%@ d'essai gratuit"
           }
         }
       }
@@ -510,7 +510,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ Joodles left"
+            "value": "%@ Joodles restants"
           }
         }
       }
@@ -538,7 +538,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ per %2$@. Cancel anytime."
+            "value": "%1$@ par %2$@. Résiliable à tout moment."
           }
         }
       }
@@ -658,7 +658,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "© %@ Li Yuxuan. All Rights Reserved."
+            "value": "© %@ Li Yuxuan. Tous droits réservés."
           }
         }
       }
@@ -728,7 +728,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "A system erreur occurred. veuillez reessayer later."
+            "value": "Une erreur système s'est produite. Veuillez réessayer plus tard."
           }
         }
       }
@@ -752,7 +752,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "About Experimental Features"
+            "value": "À propos des fonctionnalités expérimentales"
           }
         }
       }
@@ -776,7 +776,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Access a all Joodle widgets"
+            "value": "Accès à tous les widgets Joodle"
           }
         }
       }
@@ -800,7 +800,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Access a all widgets"
+            "value": "Accès à tous les widgets"
           }
         }
       }
@@ -868,7 +868,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Active Products"
+            "value": "Produits actifs"
           }
         }
       }
@@ -890,7 +890,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add a watermark on share cards"
+            "value": "Ajouter un filigrane sur les cartes de partage"
           }
         }
       }
@@ -912,7 +912,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add accueil Screen widgets"
+            "value": "Ajouter des widgets à l'écran d'accueil"
           }
         }
       }
@@ -934,7 +934,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add Joodle a your accueil screen"
+            "value": "Ajoutez Joodle à votre écran d'accueil"
           }
         }
       }
@@ -958,7 +958,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add Joodle a your accueil screen, lock screen, or even in StandBy mode"
+            "value": "Ajoutez Joodle à votre écran d'accueil, écran de verrouillage, ou même en mode StandBy"
           }
         }
       }
@@ -982,7 +982,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add Joodle a your lock screen"
+            "value": "Ajoutez Joodle à votre écran de verrouillage"
           }
         }
       }
@@ -1004,7 +1004,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add Joodle a your StandBy screen"
+            "value": "Ajoutez Joodle à votre écran StandBy"
           }
         }
       }
@@ -1026,7 +1026,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add Lock Screen widgets"
+            "value": "Ajouter des widgets à l'écran de verrouillage"
           }
         }
       }
@@ -1048,7 +1048,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add StandBy Screen widgets"
+            "value": "Ajouter des widgets à l'écran StandBy"
           }
         }
       }
@@ -1071,7 +1071,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Additional context"
+            "value": "Contexte supplémentaire"
           }
         }
       }
@@ -1095,7 +1095,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alarm Time"
+            "value": "Heure de l'alarme"
           }
         }
       }
@@ -1117,7 +1117,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "All Share Templates"
+            "value": "Tous les modèles de partage"
           }
         }
       }
@@ -1141,7 +1141,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "All taps: %@"
+            "value": "Tous les appuis : %@"
           }
         }
       }
@@ -1165,7 +1165,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "All widgets"
+            "value": "Tous les widgets"
           }
         }
       }
@@ -1307,7 +1307,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Anniversary"
+            "value": "Anniversaire"
           }
         }
       }
@@ -1331,7 +1331,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Anniversary Alarm Time"
+            "value": "Heure de l'alarme d'anniversaire"
           }
         }
       }
@@ -1355,7 +1355,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Anniversary Alarms"
+            "value": "Alarmes d'anniversaire"
           }
         }
       }
@@ -1379,7 +1379,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Announcement Types"
+            "value": "Types d'annonces"
           }
         }
       }
@@ -1403,7 +1403,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Announcements"
+            "value": "Annonces"
           }
         }
       }
@@ -1425,7 +1425,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Parametres"
+            "value": "Réglages de l'app"
           }
         }
       }
@@ -1449,7 +1449,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Stats"
+            "value": "Statistiques de l'app"
           }
         }
       }
@@ -1473,7 +1473,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "App Status"
+            "value": "État de l'app"
           }
         }
       }
@@ -1519,7 +1519,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "App tips et tutorials"
+            "value": "Astuces et tutoriels"
           }
         }
       }
@@ -1541,7 +1541,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "App-only changes don't affect StoreKit. Use 'Synchronisation depuis StoreKit' a restaurer actual status."
+            "value": "Les modifications dans l'app n'affectent pas StoreKit. Utilisez « Synchroniser depuis StoreKit » pour restaurer l'état réel."
           }
         }
       }
@@ -1587,7 +1587,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auto renews %@ until canceled."
+            "value": "Renouvellement automatique %@ jusqu'à résiliation."
           }
         }
       }
@@ -1657,7 +1657,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Backup & restaurer"
+            "value": "Sauvegarde et restauration"
           }
         }
       }
@@ -1681,7 +1681,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Backup Locally"
+            "value": "Sauvegarder localement"
           }
         }
       }
@@ -1705,7 +1705,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Banner Preview"
+            "value": "Aperçu de la bannière"
           }
         }
       }
@@ -1729,7 +1729,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Beautiful templates pour sharing"
+            "value": "De beaux modèles de partage"
           }
         }
       }
@@ -1753,7 +1753,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "BEST VALUE"
+            "value": "MEILLEURE OFFRE"
           }
         }
       }
@@ -1777,7 +1777,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Billed annually"
+            "value": "Facturé annuellement"
           }
         }
       }
@@ -1801,7 +1801,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Billed monthly"
+            "value": "Facturé mensuellement"
           }
         }
       }
@@ -1825,7 +1825,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Blue"
+            "value": "Bleu"
           }
         }
       }
@@ -1849,7 +1849,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Brown"
+            "value": "Marron"
           }
         }
       }
@@ -1871,7 +1871,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Browse Your Joodles"
+            "value": "Parcourir vos Joodles"
           }
         }
       }
@@ -1893,7 +1893,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Buy Joodle Pro"
+            "value": "Acheter Joodle Pro"
           }
         }
       }
@@ -1917,7 +1917,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Can Synchronisation"
+            "value": "Synchronisation possible"
           }
         }
       }
@@ -1965,7 +1965,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cancel anytime"
+            "value": "Résiliable à tout moment"
           }
         }
       }
@@ -1989,7 +1989,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Capture a moment of your jour on the canvas below."
+            "value": "Capturez un moment de votre journée sur le canevas ci-dessous."
           }
         }
       }
@@ -2011,7 +2011,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Capture this moment"
+            "value": "Capturer cet instant"
           }
         }
       }
@@ -2033,7 +2033,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Capture today's moment in Joodle."
+            "value": "Capturez l'instant du jour dans Joodle."
           }
         }
       }
@@ -2057,7 +2057,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Change View Mode"
+            "value": "Changer le mode d'affichage"
           }
         }
       }
@@ -2079,7 +2079,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Changelog content is unavailable."
+            "value": "Le contenu du journal des modifications est indisponible."
           }
         }
       }
@@ -2103,7 +2103,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Changelog not found"
+            "value": "Journal des modifications introuvable"
           }
         }
       }
@@ -2127,7 +2127,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Character limit reached"
+            "value": "Limite de caractères atteinte"
           }
         }
       }
@@ -2151,7 +2151,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Check back later pour updates."
+            "value": "Revenez plus tard pour les mises à jour."
           }
         }
       }
@@ -2175,7 +2175,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Check iCloud Account"
+            "value": "Vérifier le compte iCloud"
           }
         }
       }
@@ -2199,7 +2199,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Check iCloud Storage"
+            "value": "Vérifier le stockage iCloud"
           }
         }
       }
@@ -2223,7 +2223,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Checking..."
+            "value": "Vérification…"
           }
         }
       }
@@ -2247,7 +2247,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose which types of announcements you'd like a receive."
+            "value": "Choisissez les types d'annonces que vous souhaitez recevoir."
           }
         }
       }
@@ -2269,7 +2269,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose Your Plan"
+            "value": "Choisissez votre forfait"
           }
         }
       }
@@ -2293,7 +2293,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clear"
+            "value": "Effacer"
           }
         }
       }
@@ -2317,7 +2317,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clear all drawing?"
+            "value": "Effacer tout le dessin ?"
           }
         }
       }
@@ -2339,7 +2339,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clear All Seeded Data (≤2024)"
+            "value": "Effacer toutes les données de test (≤2024)"
           }
         }
       }
@@ -2363,7 +2363,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clear Drawing"
+            "value": "Effacer le dessin"
           }
         }
       }
@@ -2385,7 +2385,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clear Duplicates"
+            "value": "Effacer les doublons"
           }
         }
       }
@@ -2409,7 +2409,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clear iCloud KVS (Synchronisation History)"
+            "value": "Effacer iCloud KVS (historique de synchronisation)"
           }
         }
       }
@@ -2431,7 +2431,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clear Seeded Data pour %@"
+            "value": "Effacer les données de test pour %@"
           }
         }
       }
@@ -2455,7 +2455,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Clear Taps"
+            "value": "Effacer les appuis"
           }
         }
       }
@@ -2479,7 +2479,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "fermer the app completely et reopen it a refresh the sync connection."
+            "value": "Fermez complètement l'app et rouvrez-la pour rafraîchir la connexion de synchronisation."
           }
         }
       }
@@ -2501,7 +2501,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Color Scheme"
+            "value": "Thème de couleurs"
           }
         }
       }
@@ -2525,7 +2525,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Community"
+            "value": "Communauté"
           }
         }
       }
@@ -2547,7 +2547,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Connect a the internet a activer iCloud sync."
+            "value": "Connectez-vous à Internet pour activer la synchronisation iCloud."
           }
         }
       }
@@ -2571,7 +2571,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Contact Support"
+            "value": "Contacter le support"
           }
         }
       }
@@ -2617,7 +2617,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Content Breakdown"
+            "value": "Répartition du contenu"
           }
         }
       }
@@ -2665,7 +2665,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copy a Clipboard"
+            "value": "Copier dans le presse-papiers"
           }
         }
       }
@@ -2689,7 +2689,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Could not load changelog content."
+            "value": "Impossible de charger le journal des modifications."
           }
         }
       }
@@ -2711,7 +2711,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Count"
+            "value": "Nombre"
           }
         }
       }
@@ -2735,7 +2735,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Create a local backup of your Joodle entries or restaurer depuis a previous backup. Backups are saved as JSON files."
+            "value": "Créez une sauvegarde locale de vos entrées Joodle ou restaurez à partir d'une sauvegarde précédente. Les sauvegardes sont enregistrées en fichiers JSON."
           }
         }
       }
@@ -2759,7 +2759,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Create Aujourd'hui's Doodle"
+            "value": "Créer le gribouillis du jour"
           }
         }
       }
@@ -2783,7 +2783,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Current"
+            "value": "Actuel"
           }
         }
       }
@@ -2805,7 +2805,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Current Status"
+            "value": "État actuel"
           }
         }
       }
@@ -2828,7 +2828,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Current translation"
+            "value": "Traduction actuelle"
           }
         }
       }
@@ -2852,7 +2852,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Currently on %@"
+            "value": "Actuellement sur %@"
           }
         }
       }
@@ -2876,7 +2876,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Customization"
+            "value": "Personnalisation"
           }
         }
       }
@@ -2900,7 +2900,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Daily Reminder"
+            "value": "Rappel quotidien"
           }
         }
       }
@@ -2922,7 +2922,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Danger Zone"
+            "value": "Zone dangereuse"
           }
         }
       }
@@ -2966,7 +2966,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Data restored depuis iCloud"
+            "value": "Données restaurées depuis iCloud"
           }
         }
       }
@@ -2990,7 +2990,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Data Seeder"
+            "value": "Générateur de données"
           }
         }
       }
@@ -3012,7 +3012,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Debug"
+            "value": "Débogage"
           }
         }
       }
@@ -3034,7 +3034,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Default View Mode"
+            "value": "Mode d'affichage par défaut"
           }
         }
       }
@@ -3080,7 +3080,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delete Empty Entries"
+            "value": "Supprimer les entrées vides"
           }
         }
       }
@@ -3102,7 +3102,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delete Note"
+            "value": "Supprimer la note"
           }
         }
       }
@@ -3126,7 +3126,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delete Selected (%@)"
+            "value": "Supprimer la sélection (%@)"
           }
         }
       }
@@ -3148,7 +3148,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delete this note? This cannot be undone."
+            "value": "Supprimer cette note ? Cette action est irréversible."
           }
         }
       }
@@ -3172,7 +3172,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Detailed"
+            "value": "Détaillé"
           }
         }
       }
@@ -3196,7 +3196,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Details"
+            "value": "Détails"
           }
         }
       }
@@ -3220,7 +3220,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Developer Options"
+            "value": "Options développeur"
           }
         }
       }
@@ -3242,7 +3242,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Desactiver"
+            "value": "Désactiver"
           }
         }
       }
@@ -3264,7 +3264,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "desactiver iCloud Synchronisation"
+            "value": "Désactiver la synchronisation iCloud"
           }
         }
       }
@@ -3288,7 +3288,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Termine"
+            "value": "Terminé"
           }
         }
       }
@@ -3310,7 +3310,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Doodle & more note"
+            "value": "Gribouillis et plus de notes"
           }
         }
       }
@@ -3334,7 +3334,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Doodle & note snippet"
+            "value": "Gribouillis et extrait de note"
           }
         }
       }
@@ -3356,7 +3356,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Doodle et countdown"
+            "value": "Gribouillis et compte à rebours"
           }
         }
       }
@@ -3380,7 +3380,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Doodle only"
+            "value": "Gribouillis uniquement"
           }
         }
       }
@@ -3404,7 +3404,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Doodle the keys you used most today (accueil keys, car keys, or laptop keys)."
+            "value": "Dessinez les clés que vous avez le plus utilisées aujourd'hui (clés de maison, de voiture ou touches de clavier)."
           }
         }
       }
@@ -3428,7 +3428,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Doodle the pattern of the crumbs or objects on your table at this moment."
+            "value": "Dessinez le motif des miettes ou des objets sur votre table en ce moment."
           }
         }
       }
@@ -3452,7 +3452,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dot Position Tweaker"
+            "value": "Ajusteur de position des points"
           }
         }
       }
@@ -3476,7 +3476,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Double-tap the handle a quickly jump a today's entry"
+            "value": "Appuyez deux fois sur la poignée pour accéder rapidement à l'entrée du jour"
           }
         }
       }
@@ -3500,7 +3500,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Download in App Store"
+            "value": "Télécharger sur l'App Store"
           }
         }
       }
@@ -3524,7 +3524,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Download New Version"
+            "value": "Télécharger la nouvelle version"
           }
         }
       }
@@ -3546,7 +3546,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Downloading depuis iCloud..."
+            "value": "Téléchargement depuis iCloud…"
           }
         }
       }
@@ -3570,7 +3570,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw a candle. How much of it 'burned down' during your workday?"
+            "value": "Dessinez une bougie. Combien a-t-elle « fondu » pendant votre journée de travail ?"
           }
         }
       }
@@ -3594,7 +3594,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw a Post-it note avec the one word that sums up your afternoon."
+            "value": "Dessinez un Post-it avec le seul mot qui résume votre après-midi."
           }
         }
       }
@@ -3618,7 +3618,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw a simple ouvrir door. What is one tiny thing you can see on the other side?"
+            "value": "Dessinez une simple porte ouverte. Quelle petite chose voyez-vous de l'autre côté ?"
           }
         }
       }
@@ -3642,7 +3642,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw a simple tea cup. Is it overflowing, half-full, or bone dry?"
+            "value": "Dessinez une simple tasse de thé. Est-elle pleine à ras bord, à moitié pleine, ou complètement vide ?"
           }
         }
       }
@@ -3666,7 +3666,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw a small backpack. Draw one heavy rock inside pour your biggest worry."
+            "value": "Dessinez un petit sac à dos. Dessinez une grosse pierre à l'intérieur pour votre plus grande inquiétude."
           }
         }
       }
@@ -3690,7 +3690,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw a tiny trophy pour one thing you actually finished today."
+            "value": "Dessinez un petit trophée pour une chose que vous avez vraiment terminée aujourd'hui."
           }
         }
       }
@@ -3714,7 +3714,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw et Edit Joodle"
+            "value": "Dessiner et modifier un Joodle"
           }
         }
       }
@@ -3738,7 +3738,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw as much as you want, no limits"
+            "value": "Dessinez autant que vous voulez, sans limites"
           }
         }
       }
@@ -3762,7 +3762,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw or edit your Joodle, then tap ✓ a save"
+            "value": "Dessinez ou modifiez votre Joodle, puis appuyez sur ✓ pour enregistrer"
           }
         }
       }
@@ -3786,7 +3786,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw Placeholder"
+            "value": "Dessiner un espace réservé"
           }
         }
       }
@@ -3808,7 +3808,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw the footwear you just took off, exactly where they landed."
+            "value": "Dessinez les chaussures que vous venez d'enlever, exactement là où elles ont atterri."
           }
         }
       }
@@ -3830,7 +3830,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw the shape of the steam or the ripples in your current drink."
+            "value": "Dessinez la forme de la vapeur ou les ondulations dans votre boisson actuelle."
           }
         }
       }
@@ -3854,7 +3854,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw the specific way your blanket or sleeves are wrinkled right now."
+            "value": "Dessinez la façon exacte dont votre couverture ou vos manches sont froissées en ce moment."
           }
         }
       }
@@ -3876,7 +3876,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw the very last thing you ate—just the crumbs or the wrapper."
+            "value": "Dessinez la toute dernière chose que vous avez mangée — juste les miettes ou l'emballage."
           }
         }
       }
@@ -3900,7 +3900,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Draw your energy as a literal battery. How many bars are left?"
+            "value": "Dessinez votre énergie sous forme de batterie. Combien de barres reste-t-il ?"
           }
         }
       }
@@ -3922,7 +3922,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drawing data is stored as individual files in the App Group container (no size limit). Only metadata et thumbnails go into UserDefaults."
+            "value": "Les données de dessin sont stockées en fichiers individuels dans le conteneur App Group (sans limite de taille). Seuls les métadonnées et les miniatures vont dans UserDefaults."
           }
         }
       }
@@ -3944,7 +3944,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drawing files (on disk)"
+            "value": "Fichiers de dessin (sur disque)"
           }
         }
       }
@@ -3966,7 +3966,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Drawing Size"
+            "value": "Taille du dessin"
           }
         }
       }
@@ -3990,7 +3990,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Duplicate Details"
+            "value": "Détails des doublons"
           }
         }
       }
@@ -4012,7 +4012,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Duplicate Entries"
+            "value": "Entrées en double"
           }
         }
       }
@@ -4040,7 +4040,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Each entry: %1$@ drawing data. Total estimate: ~%2$@ widget payload pour %3$lld entries."
+            "value": "Chaque entrée : %1$@ de données de dessin. Estimation totale : ~%2$@ de données widget pour %3$lld entrées."
           }
         }
       }
@@ -4062,7 +4062,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Edit Doodle"
+            "value": "Modifier le gribouillis"
           }
         }
       }
@@ -4086,7 +4086,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Editing Locked"
+            "value": "Modification verrouillée"
           }
         }
       }
@@ -4110,7 +4110,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Empty Entries"
+            "value": "Entrées vides"
           }
         }
       }
@@ -4154,7 +4154,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "activer & Restart Joodle"
+            "value": "Activer et redémarrer Joodle"
           }
         }
       }
@@ -4178,7 +4178,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "activer Announcements"
+            "value": "Activer les annonces"
           }
         }
       }
@@ -4202,7 +4202,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "activer Daily Reminder"
+            "value": "Activer le rappel quotidien"
           }
         }
       }
@@ -4226,7 +4226,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "activer iCloud Synchronisation"
+            "value": "Activer la synchronisation iCloud"
           }
         }
       }
@@ -4250,7 +4250,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "activer System iCloud pour Joodle"
+            "value": "Activer iCloud système pour Joodle"
           }
         }
       }
@@ -4274,7 +4274,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "End"
+            "value": "Fin"
           }
         }
       }
@@ -4298,7 +4298,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ensure you have disponible iCloud storage space. Go a Parametres → [Your Name] → iCloud → Manage Storage."
+            "value": "Assurez-vous d'avoir de l'espace de stockage iCloud disponible. Allez dans Réglages → [Votre nom] → iCloud → Gérer le stockage."
           }
         }
       }
@@ -4322,7 +4322,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Entries by annee"
+            "value": "Entrées par année"
           }
         }
       }
@@ -4370,7 +4370,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excerpt"
+            "value": "Extrait"
           }
         }
       }
@@ -4394,7 +4394,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excerpt Video"
+            "value": "Vidéo d'extrait"
           }
         }
       }
@@ -4418,7 +4418,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exit Production Simulation"
+            "value": "Quitter la simulation de production"
           }
         }
       }
@@ -4442,7 +4442,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exit tutorial"
+            "value": "Quitter le tutoriel"
           }
         }
       }
@@ -4466,7 +4466,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Experimental Features"
+            "value": "Fonctionnalités expérimentales"
           }
         }
       }
@@ -4490,7 +4490,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Experimental features are fun little projects that we are testing. These features may affect performance or battery life."
+            "value": "Les fonctionnalités expérimentales sont de petits projets amusants que nous testons. Elles peuvent affecter les performances ou l'autonomie de la batterie."
           }
         }
       }
@@ -4514,7 +4514,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Expire Grace Period Now"
+            "value": "Expirer la période de grâce maintenant"
           }
         }
       }
@@ -4536,7 +4536,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Expires %@"
+            "value": "Expire le %@"
           }
         }
       }
@@ -4558,7 +4558,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Export complete"
+            "value": "Exportation terminée"
           }
         }
       }
@@ -4582,7 +4582,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "External Parametres"
+            "value": "Réglages externes"
           }
         }
       }
@@ -4606,7 +4606,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Failed a Load"
+            "value": "Échec du chargement"
           }
         }
       }
@@ -4628,7 +4628,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Failed a load products: %@"
+            "value": "Échec du chargement des produits : %@"
           }
         }
       }
@@ -4652,7 +4652,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Failed a parse response: %@"
+            "value": "Échec de l'analyse de la réponse : %@"
           }
         }
       }
@@ -4674,7 +4674,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Failed a restaurer achat: %@"
+            "value": "Échec de la restauration de l'achat : %@"
           }
         }
       }
@@ -4698,7 +4698,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fetch Remote Alert Now"
+            "value": "Récupérer l'alerte distante maintenant"
           }
         }
       }
@@ -4722,7 +4722,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Find a shadow on the floor. Draw its exact outline right now."
+            "value": "Trouvez une ombre au sol. Dessinez son contour exact maintenant."
           }
         }
       }
@@ -4746,7 +4746,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Follow on X"
+            "value": "Suivre sur X"
           }
         }
       }
@@ -4770,7 +4770,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "pour Everything Else"
+            "value": "Pour tout le reste"
           }
         }
       }
@@ -4794,7 +4794,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Forever yours"
+            "value": "À vous pour toujours"
           }
         }
       }
@@ -4840,7 +4840,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "gratuit ACCESS"
+            "value": "ACCÈS GRATUIT"
           }
         }
       }
@@ -4862,7 +4862,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "gratuit access · %@ left"
+            "value": "Accès gratuit · %@ restant"
           }
         }
       }
@@ -4892,7 +4892,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "gratuit account can only edit the first %1$lld Joodles. This Joodle is #%2$lld."
+            "value": "Un compte gratuit ne peut modifier que les %1$lld premiers Joodles. Ce Joodle est le n°%2$lld."
           }
         }
       }
@@ -4914,7 +4914,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "gratuit TRIAL"
+            "value": "ESSAI GRATUIT"
           }
         }
       }
@@ -4938,7 +4938,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "gratuit trial • Promo code applied"
+            "value": "Essai gratuit • Code promo appliqué"
           }
         }
       }
@@ -4962,7 +4962,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "gratuit trial active"
+            "value": "Essai gratuit actif"
           }
         }
       }
@@ -4986,7 +4986,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Questions frequentes"
+            "value": "Questions fréquentes"
           }
         }
       }
@@ -5010,7 +5010,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "General"
+            "value": "Général"
           }
         }
       }
@@ -5034,7 +5034,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Generate Placeholder"
+            "value": "Générer un espace réservé"
           }
         }
       }
@@ -5058,7 +5058,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gesture Hint"
+            "value": "Indice de geste"
           }
         }
       }
@@ -5082,7 +5082,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Get a daily notification a remind you a capture your moment in Joodle."
+            "value": "Recevez une notification quotidienne pour vous rappeler de capturer votre moment dans Joodle."
           }
         }
       }
@@ -5106,7 +5106,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Get a gentle nudge every jour a capture your moment in Joodle."
+            "value": "Recevez un petit rappel chaque jour pour capturer votre moment dans Joodle."
           }
         }
       }
@@ -5128,7 +5128,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Get early access a experimental features"
+            "value": "Accédez en avant-première aux fonctionnalités expérimentales"
           }
         }
       }
@@ -5152,7 +5152,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Get In Touch avec Us"
+            "value": "Contactez-nous"
           }
         }
       }
@@ -5176,7 +5176,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Get Involved"
+            "value": "Participer"
           }
         }
       }
@@ -5200,7 +5200,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Get Joodle Pro"
+            "value": "Obtenir Joodle Pro"
           }
         }
       }
@@ -5222,7 +5222,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Get Promo Code pour Early Tester"
+            "value": "Obtenir un code promo pour testeur"
           }
         }
       }
@@ -5244,7 +5244,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Go a Parametres → [Your Name] → iCloud → Apps Using iCloud → Joodle et turn ON the toggle. This is required pour sync a work."
+            "value": "Allez dans Réglages → [Votre nom] → iCloud → Apps utilisant iCloud → Joodle et activez l'option. Cela est nécessaire pour que la synchronisation fonctionne."
           }
         }
       }
@@ -5268,7 +5268,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Go a Parametres → [Your Name] et ensure you're signed in a iCloud."
+            "value": "Allez dans Réglages → [Votre nom] et vérifiez que vous êtes connecté à iCloud."
           }
         }
       }
@@ -5292,7 +5292,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Grace Period (%@d)"
+            "value": "Période de grâce (%@j)"
           }
         }
       }
@@ -5316,7 +5316,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Grace Period Testing"
+            "value": "Test de la période de grâce"
           }
         }
       }
@@ -5338,7 +5338,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Grant abonnement (App Only)"
+            "value": "Accorder l'abonnement (app uniquement)"
           }
         }
       }
@@ -5362,7 +5362,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Green"
+            "value": "Vert"
           }
         }
       }
@@ -5386,7 +5386,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Haptic Feedback"
+            "value": "Retour haptique"
           }
         }
       }
@@ -5410,7 +5410,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Haptic feedback also depends on your device's vibration setting in Parametres > Accessibility > Touch > Vibration."
+            "value": "Le retour haptique dépend aussi du réglage de vibration de votre appareil dans Réglages > Accessibilité > Toucher > Vibration."
           }
         }
       }
@@ -5434,7 +5434,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Highlight Frame"
+            "value": "Cadre en surbrillance"
           }
         }
       }
@@ -5478,7 +5478,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "How is your charging cable or headphone wire tangled on the surface near you?"
+            "value": "Comment votre câble de charge ou vos écouteurs sont-ils emmêlés sur la surface près de vous ?"
           }
         }
       }
@@ -5500,7 +5500,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "How a activer iCloud Synchronisation pour Joodle?"
+            "value": "Comment activer la synchronisation iCloud pour Joodle ?"
           }
         }
       }
@@ -5524,7 +5524,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "How a Get Promo Code"
+            "value": "Comment obtenir un code promo"
           }
         }
       }
@@ -5548,7 +5548,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "How a use Joodle?"
+            "value": "Comment utiliser Joodle ?"
           }
         }
       }
@@ -5570,7 +5570,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud Account"
+            "value": "Compte iCloud"
           }
         }
       }
@@ -5616,7 +5616,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud disabled in Parametres"
+            "value": "iCloud désactivé dans les Réglages"
           }
         }
       }
@@ -5638,7 +5638,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud Disabled in System Parametres"
+            "value": "iCloud désactivé dans les Réglages système"
           }
         }
       }
@@ -5662,7 +5662,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud Documents disabled in Parametres"
+            "value": "Documents iCloud désactivés dans les Réglages"
           }
         }
       }
@@ -5686,7 +5686,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud is disponible"
+            "value": "iCloud est disponible"
           }
         }
       }
@@ -5708,7 +5708,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud is disabled in iOS Parametres. activer it in \"Parametres → [Your Name] → iCloud → Saved a iCloud -> Joodle\" a sync."
+            "value": "iCloud est désactivé dans les réglages iOS. Activez-le dans « Réglages → [Votre nom] → iCloud → Enregistré sur iCloud → Joodle » pour synchroniser."
           }
         }
       }
@@ -5730,7 +5730,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud is disabled in Parametres"
+            "value": "iCloud est désactivé dans les Réglages"
           }
         }
       }
@@ -5752,7 +5752,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud is disabled in Parametres. activer it in 'Parametres → [Your Name] → iCloud → Saved a iCloud → Joodle'."
+            "value": "iCloud est désactivé dans les Réglages. Activez-le dans « Réglages → [Votre nom] → iCloud → Enregistré sur iCloud → Joodle »."
           }
         }
       }
@@ -5796,7 +5796,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud is not disponible. veuillez check your settings."
+            "value": "iCloud n'est pas disponible. Veuillez vérifier vos réglages."
           }
         }
       }
@@ -5818,7 +5818,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud is restricted on this device."
+            "value": "iCloud est restreint sur cet appareil."
           }
         }
       }
@@ -5840,7 +5840,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud is temporarily unavailable."
+            "value": "iCloud est temporairement indisponible."
           }
         }
       }
@@ -5888,7 +5888,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud Synchronisation"
+            "value": "Synchronisation iCloud"
           }
         }
       }
@@ -5910,7 +5910,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud Synchronisation is enabled but requires a restart a start working. Your data will sync after you restart the app."
+            "value": "La synchronisation iCloud est activée mais nécessite un redémarrage pour fonctionner. Vos données seront synchronisées après le redémarrage de l'app."
           }
         }
       }
@@ -5934,7 +5934,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud Unavailable"
+            "value": "iCloud indisponible"
           }
         }
       }
@@ -5956,7 +5956,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud was disabled in Parametres. veuillez restart the app."
+            "value": "iCloud a été désactivé dans les Réglages. Veuillez redémarrer l'app."
           }
         }
       }
@@ -5980,7 +5980,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "If today was a plant, draw how many leaves it grew (or lost) today."
+            "value": "Si aujourd'hui était une plante, dessinez combien de feuilles elle a poussé (ou perdu) aujourd'hui."
           }
         }
       }
@@ -6004,7 +6004,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "If your brain was a weather map, draw the clouds or sun over it now."
+            "value": "Si votre cerveau était une carte météo, dessinez les nuages ou le soleil dessus maintenant."
           }
         }
       }
@@ -6028,7 +6028,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "If your focus was a flashlight beam, draw what it is pointing at."
+            "value": "Si votre concentration était un faisceau de lampe torche, dessinez ce qu'il éclaire."
           }
         }
       }
@@ -6050,7 +6050,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "If your stress was a jar of tangled wires, draw how messy the wires are."
+            "value": "Si votre stress était un bocal de fils emmêlés, dessinez à quel point les fils sont en désordre."
           }
         }
       }
@@ -6074,7 +6074,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Imagine seeing a annee of your life in a single glance. Each Joodle carries a special piece of memory. Always private. Always yours."
+            "value": "Imaginez voir une année de votre vie en un seul coup d'œil. Chaque Joodle porte un fragment de souvenir. Toujours privé. Toujours à vous."
           }
         }
       }
@@ -6096,7 +6096,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Import complete"
+            "value": "Importation terminée"
           }
         }
       }
@@ -6120,7 +6120,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Import Result"
+            "value": "Résultat de l'importation"
           }
         }
       }
@@ -6142,7 +6142,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "In \"Parametres\", go a \"Labs\" section, then tap on \"Experimental Features\"."
+            "value": "Dans « Réglages », allez dans la section « Labo », puis appuyez sur « Fonctionnalités expérimentales »."
           }
         }
       }
@@ -6166,7 +6166,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "in %@"
+            "value": "dans %@"
           }
         }
       }
@@ -6188,7 +6188,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "In-App Actions"
+            "value": "Actions dans l'app"
           }
         }
       }
@@ -6258,7 +6258,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Interactive Tutorials"
+            "value": "Tutoriels interactifs"
           }
         }
       }
@@ -6282,7 +6282,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Invalid Alarm Time"
+            "value": "Heure d'alarme invalide"
           }
         }
       }
@@ -6306,7 +6306,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Invalid API URL"
+            "value": "URL d'API invalide"
           }
         }
       }
@@ -6330,7 +6330,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Is Synchronisation"
+            "value": "En cours de synchronisation"
           }
         }
       }
@@ -6352,7 +6352,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Join WhatsApp Community"
+            "value": "Rejoindre la communauté WhatsApp"
           }
         }
       }
@@ -6398,7 +6398,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Joodle can't sync avec iCloud because \"Saved a iCloud\" is disabled in system settings."
+            "value": "Joodle ne peut pas se synchroniser avec iCloud car « Enregistré sur iCloud » est désactivé dans les réglages système."
           }
         }
       }
@@ -6422,7 +6422,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Joodle is now disponible in App Store!"
+            "value": "Joodle est maintenant disponible sur l'App Store !"
           }
         }
       }
@@ -6468,7 +6468,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Joodle Reminder"
+            "value": "Rappel Joodle"
           }
         }
       }
@@ -6492,7 +6492,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Joodle Aujourd'hui"
+            "value": "Joodle du jour"
           }
         }
       }
@@ -6514,7 +6514,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Joodle will automatically sync your journal entries et preferences a iCloud."
+            "value": "Joodle synchronisera automatiquement vos entrées de journal et vos préférences sur iCloud."
           }
         }
       }
@@ -6538,7 +6538,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Jump a mois"
+            "value": "Aller au mois"
           }
         }
       }
@@ -6562,7 +6562,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Jump a semaine"
+            "value": "Aller à la semaine"
           }
         }
       }
@@ -6586,7 +6586,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Jump a annee"
+            "value": "Aller à l'année"
           }
         }
       }
@@ -6610,7 +6610,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep your Joodles synced across all your devices avec iCloud."
+            "value": "Gardez vos Joodles synchronisés sur tous vos appareils avec iCloud."
           }
         }
       }
@@ -6634,7 +6634,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Labs"
+            "value": "Labo"
           }
         }
       }
@@ -6682,7 +6682,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Language Changed"
+            "value": "Langue modifiée"
           }
         }
       }
@@ -6704,7 +6704,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Last observed: %@"
+            "value": "Dernière observation : %@"
           }
         }
       }
@@ -6726,7 +6726,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Last synced at"
+            "value": "Dernière synchronisation"
           }
         }
       }
@@ -6750,7 +6750,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Later"
+            "value": "Plus tard"
           }
         }
       }
@@ -6774,7 +6774,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Learn Core Features"
+            "value": "Découvrir les fonctionnalités essentielles"
           }
         }
       }
@@ -6798,7 +6798,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Learn how a get a promo code as an early tester"
+            "value": "Découvrez comment obtenir un code promo en tant que testeur"
           }
         }
       }
@@ -6820,7 +6820,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Learn how a get a quick peek at the weekday labels in \"Normal\" view mode"
+            "value": "Découvrez comment voir rapidement les jours de la semaine en mode « Normal »"
           }
         }
       }
@@ -6844,7 +6844,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Legal"
+            "value": "Mentions légales"
           }
         }
       }
@@ -6868,7 +6868,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Let’s Joodle!"
+            "value": "C’est parti !"
           }
         }
       }
@@ -6892,7 +6892,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Lifetime"
+            "value": "À vie"
           }
         }
       }
@@ -6914,7 +6914,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "LIFETIME"
+            "value": "À VIE"
           }
         }
       }
@@ -6960,7 +6960,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Limit reached"
+            "value": "Limite atteinte"
           }
         }
       }
@@ -6984,7 +6984,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "chargement changelogs..."
+            "value": "Chargement du journal des modifications…"
           }
         }
       }
@@ -7008,7 +7008,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "chargement pricing..."
+            "value": "Chargement des tarifs…"
           }
         }
       }
@@ -7054,7 +7054,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Long press on your accueil screen, tap the + button, search pour \"Joodle\", et add a widget. Some widgets are configurable. Tap the widget while in edit mode a configure."
+            "value": "Appuyez longuement sur votre écran d'accueil, appuyez sur le bouton +, recherchez « Joodle », et ajoutez un widget. Certains widgets sont configurables. Appuyez sur le widget en mode édition pour le configurer."
           }
         }
       }
@@ -7076,7 +7076,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Long press on your lock screen, tap \"Customize\", then \"ADD widgets\", find \"Joodle\", et tap or drag the widget onto the lock screen."
+            "value": "Appuyez longuement sur votre écran de verrouillage, appuyez sur « Personnaliser », puis « AJOUTER DES WIDGETS », trouvez « Joodle », et appuyez ou glissez le widget sur l'écran de verrouillage."
           }
         }
       }
@@ -7100,7 +7100,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Long press your doodle et tap the option a \"Move a Another Date\""
+            "value": "Appuyez longuement sur votre gribouillis et choisissez l'option « Déplacer à une autre date »"
           }
         }
       }
@@ -7122,7 +7122,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Long press, tap the + button, search pour \"Joodle\", et add a widget. Some widgets are configurable. Tap the widget while in edit mode a configure."
+            "value": "Appuyez longuement, appuyez sur le bouton +, recherchez « Joodle », et ajoutez un widget. Certains widgets sont configurables. Appuyez sur le widget en mode édition pour le configurer."
           }
         }
       }
@@ -7144,7 +7144,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Look at your dominant hand. Draw the shape it makes resting on your lap."
+            "value": "Regardez votre main dominante. Dessinez la forme qu'elle prend posée sur vos genoux."
           }
         }
       }
@@ -7168,7 +7168,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Look up. What is the shape of the cloud or the patch of sky you see?"
+            "value": "Levez les yeux. Quelle forme a le nuage ou le morceau de ciel que vous voyez ?"
           }
         }
       }
@@ -7192,7 +7192,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Made avec Joodle"
+            "value": "Créé avec Joodle"
           }
         }
       }
@@ -7214,7 +7214,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Make sure you are on TestFlight. Take a screenshot, then tap \"Share Beta Feedback...\". Write \"I want promo code\" in the feedback section. et most importantly, include your email address in \"Share Your Email\" section so that we can send the code a you!"
+            "value": "Assurez-vous d'être sur TestFlight. Prenez une capture d'écran, puis appuyez sur « Share Beta Feedback... ». Écrivez « I want promo code » dans la section de commentaires. Et surtout, incluez votre adresse e-mail dans la section « Share Your Email » pour que nous puissions vous envoyer le code !"
           }
         }
       }
@@ -7238,7 +7238,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Make sure you have an active internet connection (Wi-Fi or cellular data). Current status: %@"
+            "value": "Assurez-vous d'avoir une connexion Internet active (Wi-Fi ou données cellulaires). État actuel : %@"
           }
         }
       }
@@ -7262,7 +7262,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Manage or Cancel via App Store"
+            "value": "Gérer ou résilier via l'App Store"
           }
         }
       }
@@ -7286,7 +7286,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Manage photos permission, Siri et search, et notification appearance in the system Parametres app."
+            "value": "Gérez les autorisations photos, Siri et recherche, et l'apparence des notifications dans l'app Réglages du système."
           }
         }
       }
@@ -7310,7 +7310,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gerer l'abonnement"
+            "value": "Gérer l'abonnement"
           }
         }
       }
@@ -7334,7 +7334,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Manage your abonnement, change plans, or cancel anytime."
+            "value": "Gérez votre abonnement, changez de forfait, ou résiliez à tout moment."
           }
         }
       }
@@ -7358,7 +7358,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Manual Actions"
+            "value": "Actions manuelles"
           }
         }
       }
@@ -7428,7 +7428,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Minimal Video"
+            "value": "Vidéo minimale"
           }
         }
       }
@@ -7452,7 +7452,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Minimized"
+            "value": "Minimisé"
           }
         }
       }
@@ -7476,7 +7476,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Missing Date String"
+            "value": "Chaîne de date manquante"
           }
         }
       }
@@ -7498,7 +7498,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Monday"
+            "value": "Lundi"
           }
         }
       }
@@ -7570,7 +7570,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "mois Grid"
+            "value": "Grille mensuelle"
           }
         }
       }
@@ -7594,7 +7594,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "monthly"
+            "value": "mensuel"
           }
         }
       }
@@ -7618,7 +7618,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Monthly"
+            "value": "Mensuel"
           }
         }
       }
@@ -7642,7 +7642,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "More accent colors"
+            "value": "Plus de couleurs d'accentuation"
           }
         }
       }
@@ -7664,7 +7664,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Move"
+            "value": "Déplacer"
           }
         }
       }
@@ -7688,7 +7688,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Move a Doodle"
+            "value": "Déplacer un gribouillis"
           }
         }
       }
@@ -7710,7 +7710,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Move Doodle"
+            "value": "Déplacer le gribouillis"
           }
         }
       }
@@ -7732,7 +7732,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Move a Another Date"
+            "value": "Déplacer à une autre date"
           }
         }
       }
@@ -7754,7 +7754,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Move your doodle a %@?"
+            "value": "Déplacer votre gribouillis vers %@ ?"
           }
         }
       }
@@ -7778,7 +7778,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Navigate Years"
+            "value": "Naviguer entre les années"
           }
         }
       }
@@ -7802,7 +7802,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Need Help?"
+            "value": "Besoin d'aide ?"
           }
         }
       }
@@ -7824,7 +7824,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "reseau"
+            "value": "Réseau"
           }
         }
       }
@@ -7848,7 +7848,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "reseau erreur: %@"
+            "value": "Erreur réseau : %@"
           }
         }
       }
@@ -7870,7 +7870,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "reseau erreur: %@. Check internet connection."
+            "value": "Erreur réseau : %@. Vérifiez votre connexion Internet."
           }
         }
       }
@@ -7892,7 +7892,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "reseau erreur. veuillez check your internet connection et reessayer."
+            "value": "Erreur réseau. Veuillez vérifier votre connexion Internet et réessayer."
           }
         }
       }
@@ -7916,7 +7916,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Neutral"
+            "value": "Neutre"
           }
         }
       }
@@ -7964,7 +7964,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Next Anniversary"
+            "value": "Prochain anniversaire"
           }
         }
       }
@@ -7988,7 +7988,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun active abonnement"
+            "value": "Aucun abonnement actif"
           }
         }
       }
@@ -8012,7 +8012,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun Anniversary Alarms"
+            "value": "Aucune alarme d'anniversaire"
           }
         }
       }
@@ -8036,7 +8036,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun Changelogs"
+            "value": "Aucun journal des modifications"
           }
         }
       }
@@ -8060,7 +8060,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun FAQ data disponible"
+            "value": "Aucune donnée FAQ disponible"
           }
         }
       }
@@ -8084,7 +8084,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun frame registered"
+            "value": "Aucun cadre enregistré"
           }
         }
       }
@@ -8128,7 +8128,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun compte iCloud trouve"
+            "value": "Aucun compte iCloud trouvé"
           }
         }
       }
@@ -8150,7 +8150,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun iCloud account found. veuillez sign in a iCloud in Parametres."
+            "value": "Aucun compte iCloud trouvé. Veuillez vous connecter à iCloud dans Réglages."
           }
         }
       }
@@ -8174,7 +8174,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun iCloud disponible. Sign in a iCloud in Parametres."
+            "value": "Aucun compte iCloud disponible. Connectez-vous à iCloud dans Réglages."
           }
         }
       }
@@ -8218,7 +8218,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun internet connection. iCloud sync requires an active internet connection."
+            "value": "Aucune connexion Internet. La synchronisation iCloud nécessite une connexion Internet active."
           }
         }
       }
@@ -8240,7 +8240,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aucun sync observed yet"
+            "value": "Aucune synchronisation observée pour le moment"
           }
         }
       }
@@ -8308,7 +8308,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Not entitled a access these products."
+            "value": "Vous n'êtes pas autorisé à accéder à ces produits."
           }
         }
       }
@@ -8332,7 +8332,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Not Found"
+            "value": "Introuvable"
           }
         }
       }
@@ -8378,7 +8378,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Notifications Disabled"
+            "value": "Notifications désactivées"
           }
         }
       }
@@ -8402,7 +8402,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Desactive"
+            "value": "Désactivé"
           }
         }
       }
@@ -8450,7 +8450,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "one-time"
+            "value": "ponctuel"
           }
         }
       }
@@ -8472,7 +8472,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "One-time payment of %@. Aucun abonnement, no recurring charges. Unlock all features forever."
+            "value": "Paiement unique de %@. Sans abonnement, sans frais récurrents. Déverrouillez toutes les fonctionnalités pour toujours."
           }
         }
       }
@@ -8496,7 +8496,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "One-time achat, yours forever"
+            "value": "Achat unique, à vous pour toujours"
           }
         }
       }
@@ -8520,7 +8520,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "One-time achat. Aucun abonnement."
+            "value": "Achat unique. Sans abonnement."
           }
         }
       }
@@ -8544,7 +8544,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only %@ / mois"
+            "value": "Seulement %@ / mois"
           }
         }
       }
@@ -8568,7 +8568,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ouvrir les parametres iOS"
+            "value": "Ouvrir les Réglages iOS"
           }
         }
       }
@@ -8592,7 +8592,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "ouvrir Joodle"
+            "value": "Ouvrir Joodle"
           }
         }
       }
@@ -8616,7 +8616,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "ouvrir Next Anniversary"
+            "value": "Ouvrir le prochain anniversaire"
           }
         }
       }
@@ -8640,7 +8640,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ouvrir les parametres"
+            "value": "Ouvrir les Réglages"
           }
         }
       }
@@ -8662,7 +8662,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "ouvrir Spotlight Search by swiping down on accueil screen. Search pour \"Joodle\". Tap on any quick action."
+            "value": "Ouvrez la recherche Spotlight en balayant l'écran d'accueil vers le bas. Recherchez \"Joodle\". Touchez n'importe quelle action rapide."
           }
         }
       }
@@ -8686,7 +8686,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "ouvrir your Joodle et let your fingertips capture the moments that matter. Each stroke adds a memory, building a collection that grows avec you."
+            "value": "Ouvrez votre Joodle et laissez vos doigts capturer les moments qui comptent. Chaque trait ajoute un souvenir et construit une collection qui grandit avec vous."
           }
         }
       }
@@ -8710,7 +8710,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Opens Joodle a create or edit today's doodle entry"
+            "value": "Ouvre Joodle pour créer ou modifier l'entrée du doodle d'aujourd'hui"
           }
         }
       }
@@ -8734,7 +8734,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Opens Joodle a the next upcoming anniversary entry"
+            "value": "Ouvre Joodle sur la prochaine entrée d'anniversaire"
           }
         }
       }
@@ -8758,7 +8758,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Opens the Joodle app"
+            "value": "Ouvre l'app Joodle"
           }
         }
       }
@@ -8806,7 +8806,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Origin"
+            "value": "Origine"
           }
         }
       }
@@ -8830,7 +8830,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Overview"
+            "value": "Aperçu"
           }
         }
       }
@@ -8854,7 +8854,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Passing Time Backdrop"
+            "value": "Arrière-plan du temps qui passe"
           }
         }
       }
@@ -8878,7 +8878,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pay once, own it forever."
+            "value": "Payez une fois, gardez-le pour toujours."
           }
         }
       }
@@ -8902,7 +8902,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "per %@"
+            "value": "par %@"
           }
         }
       }
@@ -8926,7 +8926,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pinch outward a zoom back a normal view"
+            "value": "Pincez vers l'extérieur pour revenir à la vue normale"
           }
         }
       }
@@ -8974,7 +8974,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Plan change scheduled"
+            "value": "Changement de forfait planifié"
           }
         }
       }
@@ -9021,7 +9021,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "veuillez describe the translation issue you found."
+            "value": "Veuillez décrire le problème de traduction que vous avez trouvé."
           }
         }
       }
@@ -9045,7 +9045,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "veuillez activer notifications in Parametres a receive daily reminders."
+            "value": "Veuillez activer les notifications dans Réglages pour recevoir des rappels quotidiens."
           }
         }
       }
@@ -9069,7 +9069,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "veuillez activer notifications in Parametres a receive notifications pour the anniversary alarms."
+            "value": "Veuillez activer les notifications dans Réglages pour recevoir les notifications des alarmes d'anniversaire."
           }
         }
       }
@@ -9094,7 +9094,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "veuillez restart Joodle pour the change a take full effect."
+            "value": "Veuillez redémarrer Joodle pour que le changement prenne pleinement effet."
           }
         }
       }
@@ -9118,7 +9118,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Preparing..."
+            "value": "Préparation..."
           }
         }
       }
@@ -9166,7 +9166,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Preview Membership Banner"
+            "value": "Aperçu de la bannière d'abonnement"
           }
         }
       }
@@ -9190,7 +9190,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Preview State"
+            "value": "État de l'aperçu"
           }
         }
       }
@@ -9214,7 +9214,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Print Debug Info a Console"
+            "value": "Afficher les infos de débogage dans la console"
           }
         }
       }
@@ -9330,7 +9330,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Products not disponible in your region. Check App Store Connect territories."
+            "value": "Produits indisponibles dans votre région. Vérifiez les territoires dans App Store Connect."
           }
         }
       }
@@ -9352,7 +9352,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Progress"
+            "value": "Progression"
           }
         }
       }
@@ -9374,7 +9374,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "PROMO APPLIED"
+            "value": "PROMO APPLIQUÉE"
           }
         }
       }
@@ -9396,7 +9396,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "PROMO CODE"
+            "value": "CODE PROMO"
           }
         }
       }
@@ -9420,7 +9420,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Promo code active"
+            "value": "Code promo activé"
           }
         }
       }
@@ -9442,7 +9442,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Promo ends %@"
+            "value": "Promo se termine %@"
           }
         }
       }
@@ -9488,7 +9488,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Prompt pour notes after doodling"
+            "value": "Demander des notes après le doodle"
           }
         }
       }
@@ -9510,7 +9510,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "achat could not be completed. It may be pending approval or was cancelled. veuillez check your abonnement status depuis \"Parametres > [Your Name] > abonnements\""
+            "value": "L'achat n'a pas pu être finalisé. Il est peut-être en attente d'approbation ou a été annulé. Veuillez vérifier l'état de votre abonnement dans \"Réglages > [Votre nom] > Abonnements\""
           }
         }
       }
@@ -9556,7 +9556,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "achat failed: %@"
+            "value": "Échec de l'achat : %@"
           }
         }
       }
@@ -9602,7 +9602,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quick Access depuis Siri Shortcuts"
+            "value": "Accès rapide via Raccourcis Siri"
           }
         }
       }
@@ -9624,7 +9624,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quick Actions"
+            "value": "Actions rapides"
           }
         }
       }
@@ -9646,7 +9646,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quick Peek at Weekday Labels"
+            "value": "Aperçu rapide des libellés des jours"
           }
         }
       }
@@ -9670,7 +9670,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quick Travel a Aujourd'hui"
+            "value": "Retour rapide à aujourd'hui"
           }
         }
       }
@@ -9692,7 +9692,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quickly jump a today or upcoming anniversary via Siri Shortcuts"
+            "value": "Accédez rapidement à aujourd'hui ou au prochain anniversaire via Raccourcis Siri"
           }
         }
       }
@@ -9714,7 +9714,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Recommend Joodle"
+            "value": "Recommander Joodle"
           }
         }
       }
@@ -9738,7 +9738,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Red"
+            "value": "Rouge"
           }
         }
       }
@@ -9762,7 +9762,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Redeem"
+            "value": "Utiliser"
           }
         }
       }
@@ -9786,7 +9786,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Redeem Promo Code"
+            "value": "Utiliser le code promo"
           }
         }
       }
@@ -9810,7 +9810,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Refresh iCloud Availability"
+            "value": "Actualiser la disponibilité d'iCloud"
           }
         }
       }
@@ -9834,7 +9834,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Regenerating thumbnails..."
+            "value": "Régénération des miniatures..."
           }
         }
       }
@@ -9858,7 +9858,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Registered"
+            "value": "Enregistré"
           }
         }
       }
@@ -9882,7 +9882,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reminder Time"
+            "value": "Heure du rappel"
           }
         }
       }
@@ -9904,7 +9904,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Request was cancelled."
+            "value": "La requête a été annulée."
           }
         }
       }
@@ -9928,7 +9928,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Requires premium abonnement"
+            "value": "Nécessite un abonnement premium"
           }
         }
       }
@@ -9952,7 +9952,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reset"
+            "value": "Réinitialiser"
           }
         }
       }
@@ -9976,7 +9976,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reset Changelog State"
+            "value": "Réinitialiser l'état du journal des modifications"
           }
         }
       }
@@ -10000,7 +10000,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reset Grace Period (7 days)"
+            "value": "Réinitialiser la période de grâce (7 jours)"
           }
         }
       }
@@ -10024,7 +10024,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reset Remote Alert State"
+            "value": "Réinitialiser l'état des alertes distantes"
           }
         }
       }
@@ -10048,7 +10048,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Restart Now"
+            "value": "Redémarrer maintenant"
           }
         }
       }
@@ -10070,7 +10070,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Restart Required"
+            "value": "Redémarrage requis"
           }
         }
       }
@@ -10094,7 +10094,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Restart the App"
+            "value": "Redémarrer l'app"
           }
         }
       }
@@ -10118,7 +10118,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "restaurer depuis Local Backup"
+            "value": "Restaurer depuis une sauvegarde locale"
           }
         }
       }
@@ -10186,7 +10186,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Restoring data depuis iCloud..."
+            "value": "Restauration des données depuis iCloud..."
           }
         }
       }
@@ -10210,7 +10210,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Resubscribe"
+            "value": "Se réabonner"
           }
         }
       }
@@ -10234,7 +10234,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Result"
+            "value": "Résultat"
           }
         }
       }
@@ -10282,7 +10282,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Revisit Onboarding"
+            "value": "Revoir l'onboarding"
           }
         }
       }
@@ -10306,7 +10306,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Revisit Onboarding?"
+            "value": "Revoir l'onboarding ?"
           }
         }
       }
@@ -10328,7 +10328,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Revoke abonnement (App Only)"
+            "value": "Révoquer l'abonnement (app uniquement)"
           }
         }
       }
@@ -10352,7 +10352,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rough jour? Great jour?"
+            "value": "Journée difficile ? Excellente journée ?"
           }
         }
       }
@@ -10400,55 +10400,53 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Save %@ per annee."
+            "value": "Économisez %@ par an."
           }
         }
       }
     },
-    "SAVE %lld%%": {
-      "comment": "Text to be displayed as a badge indicating a savings offer. The argument is the percentage of savings.",
-      "isCommentAutoGenerated": true,
+    "SAVE %@": {
+      "comment": "Text to be displayed as a badge indicating a savings offer. The argument is the locale-formatted percentage (e.g. 30%).",
       "localizations": {
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld%% 절약"
+            "value": "%@ 절약"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "节省%lld%%"
+            "value": "节省%@"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "SAVE %lld%%"
+            "value": "ÉCONOMISEZ %@"
           }
         }
       }
     },
-    "Save %lld%% vs monthly": {
-      "comment": "A subtitle indicating the savings percentage when switching from a monthly to a yearly subscription. The single placeholder is replaced with the actual percentage.",
-      "isCommentAutoGenerated": true,
+    "Save %@ vs monthly": {
+      "comment": "A subtitle indicating the savings percentage when switching from a monthly to a yearly subscription. The argument is the locale-formatted percentage.",
       "localizations": {
         "ko": {
           "stringUnit": {
             "state": "translated",
-            "value": "월간 대비 %lld%% 절약"
+            "value": "월간 대비 %@ 절약"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "相比月付节省%lld%%"
+            "value": "相比月付节省%@"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Save %lld%% vs monthly"
+            "value": "Économisez %@ par rapport au mensuel"
           }
         }
       }
@@ -10472,7 +10470,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Save $00.00 per annee."
+            "value": "Économisez $00.00 par an."
           }
         }
       }
@@ -10495,7 +10493,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Screen or feature"
+            "value": "Écran ou fonctionnalité"
           }
         }
       }
@@ -10523,7 +10521,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seed %1$@ Entries pour %2$@"
+            "value": "Générer %1$@ entrées pour %2$@"
           }
         }
       }
@@ -10545,7 +10543,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seeded (debug/stress)"
+            "value": "Généré (debug/stress)"
           }
         }
       }
@@ -10569,7 +10567,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Select a plan a get started"
+            "value": "Choisissez une offre pour commencer"
           }
         }
       }
@@ -10593,7 +10591,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Server erreur: %@"
+            "value": "Erreur serveur : %@"
           }
         }
       }
@@ -10617,7 +10615,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Set Alarm"
+            "value": "Définir une alarme"
           }
         }
       }
@@ -10641,7 +10639,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Set alarms pour future Joodle entries a get notified on special dates."
+            "value": "Définissez des alarmes pour les futures entrées Joodle afin d'être notifié aux dates spéciales."
           }
         }
       }
@@ -10663,7 +10661,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Set an Anniversary Alarm"
+            "value": "Définir une alarme d'anniversaire"
           }
         }
       }
@@ -10685,7 +10683,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Setting up iCloud sync..."
+            "value": "Configuration de la synchronisation iCloud..."
           }
         }
       }
@@ -10709,7 +10707,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Parametres"
+            "value": "Réglages"
           }
         }
       }
@@ -10733,7 +10731,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Parametres > Customization"
+            "value": "Réglages > Personnalisation"
           }
         }
       }
@@ -10757,7 +10755,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Setup"
+            "value": "Configuration"
           }
         }
       }
@@ -10779,7 +10777,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Setup complete"
+            "value": "Configuration terminée"
           }
         }
       }
@@ -10827,7 +10825,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Share identifier avec joodle@liyuxuan.dev a help debug achat issues:"
+            "value": "Partagez l'identifiant avec joodle@liyuxuan.dev pour aider au débogage des problèmes d'achat :"
           }
         }
       }
@@ -10849,7 +10847,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Share annee %@"
+            "value": "Partager l'année %@"
           }
         }
       }
@@ -10871,7 +10869,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Share Your jour"
+            "value": "Partagez votre journée"
           }
         }
       }
@@ -10893,7 +10891,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Share Your mois"
+            "value": "Partagez votre mois"
           }
         }
       }
@@ -10917,7 +10915,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Share Your semaine"
+            "value": "Partagez votre semaine"
           }
         }
       }
@@ -10939,7 +10937,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sharing sans watermark"
+            "value": "Partage sans filigrane"
           }
         }
       }
@@ -10961,7 +10959,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show a popup a add notes after doodling"
+            "value": "Afficher une fenêtre pour ajouter des notes après le doodle"
           }
         }
       }
@@ -10983,7 +10981,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show Manage abonnements Sheet"
+            "value": "Afficher la feuille de gestion des abonnements"
           }
         }
       }
@@ -11007,7 +11005,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show Overlay"
+            "value": "Afficher la superposition"
           }
         }
       }
@@ -11029,7 +11027,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show Redeem Code Sheet"
+            "value": "Afficher la feuille de code promo"
           }
         }
       }
@@ -11053,7 +11051,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show Test Remote Alert"
+            "value": "Afficher l'alerte distante de test"
           }
         }
       }
@@ -11077,7 +11075,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Shows an animated water level that drains throughout the jour in the background. Water level reacts a the tilting of your device."
+            "value": "Affiche en arrière-plan un niveau d'eau animé qui baisse au fil de la journée. Le niveau d'eau réagit à l'inclinaison de votre appareil."
           }
         }
       }
@@ -11101,7 +11099,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Simulate Production Environment"
+            "value": "Simuler l'environnement de production"
           }
         }
       }
@@ -11125,7 +11123,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Size"
+            "value": "Taille"
           }
         }
       }
@@ -11173,7 +11171,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Skip All"
+            "value": "Tout passer"
           }
         }
       }
@@ -11197,7 +11195,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Skip tutorial"
+            "value": "Passer le tutoriel"
           }
         }
       }
@@ -11221,7 +11219,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Special offers et promotions"
+            "value": "Offres spéciales et promotions"
           }
         }
       }
@@ -11245,7 +11243,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Spot A Translation erreur?"
+            "value": "Vous avez repéré une erreur de traduction ?"
           }
         }
       }
@@ -11267,7 +11265,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Start of semaine"
+            "value": "Début de la semaine"
           }
         }
       }
@@ -11289,7 +11287,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Start of semaine affects the layout in \"Normal\" view mode."
+            "value": "Le début de la semaine affecte la disposition en mode d'affichage \"Normal\"."
           }
         }
       }
@@ -11311,7 +11309,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Starting sync..."
+            "value": "Démarrage de la synchronisation..."
           }
         }
       }
@@ -11335,7 +11333,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Status"
+            "value": "Statut"
           }
         }
       }
@@ -11359,7 +11357,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Step"
+            "value": "Étape"
           }
         }
       }
@@ -11381,7 +11379,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Stress Test Seeder"
+            "value": "Générateur de données de stress test"
           }
         }
       }
@@ -11405,7 +11403,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Submit Testing Feedback"
+            "value": "Envoyer un retour de test"
           }
         }
       }
@@ -11427,7 +11425,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Submit Your Feedback"
+            "value": "Envoyer votre avis"
           }
         }
       }
@@ -11449,7 +11447,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Subscribe a Joodle Pro"
+            "value": "S'abonner à Joodle Pro"
           }
         }
       }
@@ -11473,7 +11471,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Subscribed ✓"
+            "value": "Abonné ✓"
           }
         }
       }
@@ -11521,7 +11519,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "abonnement Ended"
+            "value": "Abonnement terminé"
           }
         }
       }
@@ -11543,7 +11541,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "abonnement ending"
+            "value": "Abonnement se terminant"
           }
         }
       }
@@ -11567,7 +11565,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "abonnement Testing"
+            "value": "Test d'abonnement"
           }
         }
       }
@@ -11591,7 +11589,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "abonnement Testing Console"
+            "value": "Console de test d'abonnement"
           }
         }
       }
@@ -11614,7 +11612,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Suggested correction"
+            "value": "Correction suggérée"
           }
         }
       }
@@ -11636,7 +11634,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sunday"
+            "value": "Dimanche"
           }
         }
       }
@@ -11660,7 +11658,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Swipe left a delete, or tap Edit a select multiple alarms."
+            "value": "Balayez vers la gauche pour supprimer, ou touchez Modifier pour sélectionner plusieurs alarmes."
           }
         }
       }
@@ -11684,7 +11682,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Switch Plan"
+            "value": "Changer d'offre"
           }
         }
       }
@@ -11708,7 +11706,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Switching between abonnement plans is handled by the App Store. Tap a new plan a achat it, or use \"Manage or Cancel via App Store\" a change or cancel your current abonnement."
+            "value": "Le changement d'offre d'abonnement est géré par l'App Store. Touchez une nouvelle offre pour l'acheter, ou utilisez \"Gérer ou annuler via l'App Store\" pour modifier ou annuler votre abonnement actuel."
           }
         }
       }
@@ -11738,7 +11736,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Switching a %1$@ (%2$@) at next renewal"
+            "value": "Passage à %1$@ (%2$@) au prochain renouvellement"
           }
         }
       }
@@ -11768,7 +11766,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Switching a %1$@ (%2$@) on %3$@"
+            "value": "Passage à %1$@ (%2$@) le %3$@"
           }
         }
       }
@@ -11792,7 +11790,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Swtich a \"Normal\" view mode, then scroll a the top of the grid, continue a scroll et you should see the weekday labels. a change the Start of semaine, go a \"Parametres\" > \"General\" > \"Customization\" > \"Start of semaine\"."
+            "value": "Passez en mode d'affichage \"Normal\", puis faites défiler jusqu'en haut de la grille. Continuez de défiler et vous verrez les libellés des jours de la semaine. Pour modifier le début de la semaine, allez dans \"Réglages\" > \"Général\" > \"Personnalisation\" > \"Début de la semaine\"."
           }
         }
       }
@@ -11816,7 +11814,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisation disabled"
+            "value": "Synchronisation désactivée"
           }
         }
       }
@@ -11840,7 +11838,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisation enabled"
+            "value": "Synchronisation activée"
           }
         }
       }
@@ -11884,7 +11882,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisation is disabled in app. activer it a sync avec iCloud."
+            "value": "La synchronisation est désactivée dans l'app. Activez-la pour synchroniser avec iCloud."
           }
         }
       }
@@ -11908,7 +11906,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisation may be in progress"
+            "value": "La synchronisation est peut-être en cours"
           }
         }
       }
@@ -11932,7 +11930,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisation Status"
+            "value": "Statut de synchronisation"
           }
         }
       }
@@ -11978,7 +11976,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisation a iCloud is enabled"
+            "value": "La synchronisation vers iCloud est activée"
           }
         }
       }
@@ -12070,7 +12068,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Systeme"
+            "value": "Système"
           }
         }
       }
@@ -12092,7 +12090,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "System erreur: %@"
+            "value": "Erreur système : %@"
           }
         }
       }
@@ -12116,7 +12114,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap any date a move your doodle there"
+            "value": "Touchez une date pour y déplacer votre doodle"
           }
         }
       }
@@ -12138,7 +12136,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap each scenario pour step-by-step testing instructions."
+            "value": "Touchez chaque scénario pour voir les instructions de test étape par étape."
           }
         }
       }
@@ -12162,7 +12160,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap on your Joodle sans releasing your finger, then start dragging a browse"
+            "value": "Touchez votre Joodle sans relâcher le doigt, puis commencez à glisser pour parcourir"
           }
         }
       }
@@ -12186,7 +12184,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap a ouvrir the canvas"
+            "value": "Touchez pour ouvrir le canevas"
           }
         }
       }
@@ -12210,7 +12208,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap a select the future annee"
+            "value": "Touchez pour sélectionner l'année future"
           }
         }
       }
@@ -12234,7 +12232,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap a select this color"
+            "value": "Touchez pour sélectionner cette couleur"
           }
         }
       }
@@ -12258,7 +12256,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap a set an anniversary alarm. Anniversary alarm can only be set if it is today or in the future."
+            "value": "Touchez pour définir une alarme d'anniversaire. Une alarme d'anniversaire ne peut être définie que pour aujourd'hui ou une date future."
           }
         }
       }
@@ -12282,7 +12280,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap a switch a minimized view a see the whole annee"
+            "value": "Touchez pour passer à la vue minimisée et voir l'année entière"
           }
         }
       }
@@ -12304,7 +12302,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tap a write a note..."
+            "value": "Touchez pour écrire une note..."
           }
         }
       }
@@ -12328,7 +12326,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Teal"
+            "value": "Bleu canard"
           }
         }
       }
@@ -12396,7 +12394,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Test Scenarios"
+            "value": "Scénarios de test"
           }
         }
       }
@@ -12440,7 +12438,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Thanks pour supporting Joodle!"
+            "value": "Merci de soutenir Joodle !"
           }
         }
       }
@@ -12464,7 +12462,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "The selected time has already passed. veuillez choose a future time pour your anniversary alarm."
+            "value": "L'heure sélectionnée est déjà passée. Veuillez choisir une heure future pour votre alarme d'anniversaire."
           }
         }
       }
@@ -12488,7 +12486,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Theme Changed"
+            "value": "Thème modifié"
           }
         }
       }
@@ -12510,7 +12508,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Theme Color"
+            "value": "Couleur du thème"
           }
         }
       }
@@ -12532,7 +12530,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "This device is not capable of making payments."
+            "value": "Cet appareil ne permet pas d'effectuer des paiements."
           }
         }
       }
@@ -12554,7 +12552,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "This product is not disponible in your region."
+            "value": "Ce produit n'est pas disponible dans votre région."
           }
         }
       }
@@ -12578,7 +12576,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "This will restart the full onboarding experience. Aujourd'hui's entry may be overwritten, et you will go through preference setup again."
+            "value": "Cela redémarrera toute l'expérience d'onboarding. L'entrée d'aujourd'hui peut être écrasée, et vous devrez refaire la configuration des préférences."
           }
         }
       }
@@ -12600,7 +12598,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "This will sync your journal entries et preferences avec iCloud, making them disponible across all your devices.\n\nRequires internet connection et active iCloud account."
+            "value": "Cela synchronisera vos entrées de journal et vos préférences avec iCloud, les rendant disponibles sur tous vos appareils.\n\nNécessite une connexion Internet et un compte iCloud actif."
           }
         }
       }
@@ -12622,7 +12620,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Time a check your Joodle pour %@"
+            "value": "Il est temps de consulter votre Joodle pour %@"
           }
         }
       }
@@ -12644,7 +12642,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Time a check your Joodle!"
+            "value": "Il est temps de consulter votre Joodle !"
           }
         }
       }
@@ -12666,7 +12664,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Time a Joodle 🌸"
+            "value": "L'heure de Joodle 🌸"
           }
         }
       }
@@ -12690,7 +12688,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tips & Tutorials"
+            "value": "Astuces et tutoriels"
           }
         }
       }
@@ -12712,7 +12710,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "a activer iCloud sync, Joodle needs a fermer et restart.\n\nYour data is safe et will sync a iCloud when you reopen the app."
+            "value": "Pour activer la synchronisation iCloud, Joodle doit se fermer puis redémarrer.\n\nVos données sont en sécurité et seront synchronisées vers iCloud lorsque vous rouvrirez l'app."
           }
         }
       }
@@ -12736,7 +12734,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "a activer sync, you must activer \"Saved a iCloud\" pour Joodle in iCloud Parametres: Parametres → [Your Name] → iCloud → Saved a iCloud → Joodle."
+            "value": "Pour activer la synchronisation, vous devez activer \"Enregistré sur iCloud\" pour Joodle dans les réglages iCloud : Réglages → [Votre nom] → iCloud → Enregistré sur iCloud → Joodle."
           }
         }
       }
@@ -12758,7 +12756,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "a activer sync, you must activer \"Saved a iCloud\" pour Joodle in iCloud Parametres: Parametres → [Your Name] → iCloud → Saved a iCloud → Joodle. "
+            "value": "Pour activer la synchronisation, vous devez activer \"Enregistré sur iCloud\" pour Joodle dans les réglages iCloud : Réglages → [Votre nom] → iCloud → Enregistré sur iCloud → Joodle. "
           }
         }
       }
@@ -12782,7 +12780,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "a start syncing your Joodles a iCloud, Joodle needs a restart.\n\nYour Joodle has been saved et will sync after restart."
+            "value": "Pour commencer à synchroniser vos Joodles avec iCloud, Joodle doit redémarrer.\n\nVotre Joodle a été enregistré et sera synchronisé après le redémarrage."
           }
         }
       }
@@ -12828,7 +12826,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Toggle Synchronisation Off / On"
+            "value": "Activer / désactiver la synchronisation"
           }
         }
       }
@@ -12874,7 +12872,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Total entries"
+            "value": "Total des entrées"
           }
         }
       }
@@ -12898,7 +12896,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Total Entries"
+            "value": "Total des entrées"
           }
         }
       }
@@ -12920,7 +12918,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trial ends %@"
+            "value": "L'essai se termine %@"
           }
         }
       }
@@ -12942,7 +12940,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trial ends %@ • Promo next"
+            "value": "L'essai se termine %@ • Promo ensuite"
           }
         }
       }
@@ -12964,7 +12962,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trigger widget mise a jour Now"
+            "value": "Déclencher la mise à jour du widget maintenant"
           }
         }
       }
@@ -12986,7 +12984,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Troubleshooting Guide"
+            "value": "Guide de dépannage"
           }
         }
       }
@@ -13008,7 +13006,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Try disabling iCloud sync, waiting 10 seconds, then re-enabling it. This recreates the sync connection."
+            "value": "Essayez de désactiver la synchronisation iCloud, attendez 10 secondes, puis réactivez-la. Cela recrée la connexion de synchronisation."
           }
         }
       }
@@ -13032,7 +13030,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tutorial Complete!"
+            "value": "Tutoriel terminé !"
           }
         }
       }
@@ -13056,7 +13054,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tutorial Debug"
+            "value": "Débogage du tutoriel"
           }
         }
       }
@@ -13102,7 +13100,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unable a determine iCloud status."
+            "value": "Impossible de déterminer l'état iCloud."
           }
         }
       }
@@ -13124,7 +13122,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unable a load FAQs. veuillez check your connection et reessayer."
+            "value": "Impossible de charger les FAQ. Veuillez vérifier votre connexion et réessayer."
           }
         }
       }
@@ -13192,7 +13190,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unexpected StoreKit erreur: %@"
+            "value": "Erreur StoreKit inattendue : %@"
           }
         }
       }
@@ -13216,7 +13214,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unique Dates"
+            "value": "Dates uniques"
           }
         }
       }
@@ -13238,7 +13236,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unknown iCloud status."
+            "value": "Statut iCloud inconnu."
           }
         }
       }
@@ -13260,7 +13258,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unknown StoreKit erreur. Check App Store Connect configuration."
+            "value": "Erreur StoreKit inconnue. Vérifiez la configuration App Store Connect."
           }
         }
       }
@@ -13284,7 +13282,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "illimite anniverary alarms"
+            "value": "Alarmes d'anniversaire illimitées"
           }
         }
       }
@@ -13308,7 +13306,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "illimite Joodle entries"
+            "value": "Entrées Joodle illimitées"
           }
         }
       }
@@ -13356,7 +13354,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock all features forever"
+            "value": "Déverrouillez toutes les fonctionnalités pour toujours"
           }
         }
       }
@@ -13380,7 +13378,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock Joodle Pro"
+            "value": "Déverrouiller Joodle Pro"
           }
         }
       }
@@ -13404,7 +13402,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock my memories"
+            "value": "Déverrouiller mes souvenirs"
           }
         }
       }
@@ -13428,7 +13426,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "mise a jour"
+            "value": "METTRE À JOUR"
           }
         }
       }
@@ -13452,7 +13450,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "mise a jour Alarm"
+            "value": "Mettre à jour l'alarme"
           }
         }
       }
@@ -13476,7 +13474,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Updating Theme"
+            "value": "Mise à jour du thème"
           }
         }
       }
@@ -13500,7 +13498,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mettre a niveau"
+            "value": "Mettre à niveau"
           }
         }
       }
@@ -13524,7 +13522,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Passez a Joodle Pro pour des Joodles illimites"
+            "value": "Passez à Joodle Pro pour des Joodles illimités"
           }
         }
       }
@@ -13546,7 +13544,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Uploading a iCloud..."
+            "value": "Envoi vers iCloud..."
           }
         }
       }
@@ -13568,7 +13566,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "UserDefaults exceeds 1 MB — widgets may mise a jour slowly"
+            "value": "UserDefaults dépasse 1 Mo - les widgets peuvent se mettre à jour lentement"
           }
         }
       }
@@ -13590,7 +13588,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "UserDefaults exceeds 4 MB — widgets will be throttled!"
+            "value": "UserDefaults dépasse 4 Mo - les widgets seront limités !"
           }
         }
       }
@@ -13612,7 +13610,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "UserDefaults payload"
+            "value": "Charge utile UserDefaults"
           }
         }
       }
@@ -13634,7 +13632,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "UserDefaults payload within safe limits"
+            "value": "Charge utile UserDefaults dans les limites sûres"
           }
         }
       }
@@ -13658,7 +13656,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Verify Internet Connection"
+            "value": "Vérifier la connexion Internet"
           }
         }
       }
@@ -13754,7 +13752,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "View All Plans"
+            "value": "Voir toutes les offres"
           }
         }
       }
@@ -13776,7 +13774,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "View Mode"
+            "value": "Mode d'affichage"
           }
         }
       }
@@ -13798,7 +13796,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Visit Developer Website"
+            "value": "Visiter le site du développeur"
           }
         }
       }
@@ -13820,7 +13818,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Watermark when sharing"
+            "value": "Filigrane lors du partage"
           }
         }
       }
@@ -13866,7 +13864,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "semaine Grid"
+            "value": "Grille hebdomadaire"
           }
         }
       }
@@ -13890,7 +13888,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Welcome back!"
+            "value": "Bon retour !"
           }
         }
       }
@@ -13914,7 +13912,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "What does the screen of your laptop or tablet look like avec its current tabs ouvrir?"
+            "value": "À quoi ressemble l'écran de votre ordinateur portable ou de votre tablette avec ses onglets actuellement ouverts ?"
           }
         }
       }
@@ -13938,7 +13936,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "What's New"
+            "value": "Nouveautés"
           }
         }
       }
@@ -13960,7 +13958,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Whatsapp, events, et community updates"
+            "value": "WhatsApp, événements et actualités de la communauté"
           }
         }
       }
@@ -13982,7 +13980,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "When enabled, Joodle automatically syncs your journal entries et preferences a iCloud."
+            "value": "Lorsque cette option est activée, Joodle synchronise automatiquement vos entrées de journal et vos préférences avec iCloud."
           }
         }
       }
@@ -14006,7 +14004,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "When enabled, the app will behave as if it's running in production (App Store release)."
+            "value": "Lorsque cette option est activée, l'app se comporte comme si elle s'exécutait en production (version App Store)."
           }
         }
       }
@@ -14028,7 +14026,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "When enabled, you may occasionally see announcements when opening the app. You can customize which types of announcements you'd like a receive below."
+            "value": "Lorsque cette option est activée, vous pouvez voir occasionnellement des annonces à l'ouverture de l'app. Vous pouvez personnaliser ci-dessous les types d'annonces que vous souhaitez recevoir."
           }
         }
       }
@@ -14050,7 +14048,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "widget Payload Memory"
+            "value": "Mémoire de la charge utile des widgets"
           }
         }
       }
@@ -14074,7 +14072,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "widget Tutorials"
+            "value": "Tutoriels des widgets"
           }
         }
       }
@@ -14098,7 +14096,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "widgets everywhere"
+            "value": "Des widgets partout"
           }
         }
       }
@@ -14122,7 +14120,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "avec Drawing"
+            "value": "Avec dessin"
           }
         }
       }
@@ -14144,7 +14142,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "avec drawings"
+            "value": "Avec dessins"
           }
         }
       }
@@ -14166,7 +14164,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "avec Text Only"
+            "value": "Avec texte uniquement"
           }
         }
       }
@@ -14190,7 +14188,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ecrire un avis"
+            "value": "Écrire un avis"
           }
         }
       }
@@ -14214,7 +14212,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Write something about this moment"
+            "value": "Écrivez quelque chose à propos de ce moment"
           }
         }
       }
@@ -14236,7 +14234,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Xcode Quick Reference"
+            "value": "Référence rapide Xcode"
           }
         }
       }
@@ -14260,7 +14258,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "annee"
+            "value": "an"
           }
         }
       }
@@ -14282,7 +14280,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Annee"
+            "value": "Année"
           }
         }
       }
@@ -14304,7 +14302,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "annee %@ Status"
+            "value": "Statut de l'année %@"
           }
         }
       }
@@ -14328,7 +14326,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "annee Grid"
+            "value": "Grille annuelle"
           }
         }
       }
@@ -14352,7 +14350,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "annee Grid avec Joodles"
+            "value": "Grille annuelle avec Joodles"
           }
         }
       }
@@ -14376,7 +14374,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "annee Grid avec Joodles Only"
+            "value": "Grille annuelle avec Joodles uniquement"
           }
         }
       }
@@ -14400,7 +14398,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "annee progress avec doodles"
+            "value": "Progression annuelle avec doodles"
           }
         }
       }
@@ -14424,7 +14422,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "annee progress avec doodles only"
+            "value": "Progression annuelle avec doodles uniquement"
           }
         }
       }
@@ -14448,7 +14446,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "annee progress avec dots"
+            "value": "Progression annuelle avec points"
           }
         }
       }
@@ -14472,7 +14470,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "yearly"
+            "value": "annuel"
           }
         }
       }
@@ -14496,7 +14494,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yearly"
+            "value": "Annuel"
           }
         }
       }
@@ -14518,7 +14516,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Yellow"
+            "value": "Jaune"
           }
         }
       }
@@ -14542,7 +14540,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You already own Joodle forever. There is no need a achat abonnement plans."
+            "value": "Vous possédez déjà Joodle pour toujours. Il n'est pas nécessaire d'acheter des offres d'abonnement."
           }
         }
       }
@@ -14566,7 +14564,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You are currently simulating production environment. Tap a return a development mode."
+            "value": "Vous simulez actuellement l'environnement de production. Touchez pour revenir au mode développement."
           }
         }
       }
@@ -14588,7 +14586,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You are not entitled a this product."
+            "value": "Vous n'êtes pas autorisé à utiliser ce produit."
           }
         }
       }
@@ -14612,7 +14610,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You can turn off this prompt in "
+            "value": "Vous pouvez désactiver cette invite dans "
           }
         }
       }
@@ -14636,7 +14634,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You created your first Joodle!"
+            "value": "Vous avez créé votre premier Joodle !"
           }
         }
       }
@@ -14658,7 +14656,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You have gratuit access a all Pro features pour %@ more."
+            "value": "Vous avez un accès gratuit à toutes les fonctionnalités Pro pendant encore %@."
           }
         }
       }
@@ -14680,7 +14678,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You have full access a all features. Thank you pour your support!"
+            "value": "Vous avez un accès complet à toutes les fonctionnalités. Merci pour votre soutien !"
           }
         }
       }
@@ -14704,7 +14702,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You own Joodle Pro forever. Thank you pour your support!"
+            "value": "Vous possédez Joodle Pro pour toujours. Merci pour votre soutien !"
           }
         }
       }
@@ -14728,7 +14726,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You'll continue a have access a Joodle Pro until %@. After that, you'll lose access a all premium features. Re-subscribe a continue enjoying Joodle Pro after your current period ends."
+            "value": "Vous continuerez à avoir accès à Joodle Pro jusqu'au %@. Après cela, vous perdrez l'accès à toutes les fonctionnalités premium. Réabonnez-vous pour continuer à profiter de Joodle Pro après la fin de votre période actuelle."
           }
         }
       }
@@ -14752,7 +14750,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You're all set!"
+            "value": "Tout est prêt !"
           }
         }
       }
@@ -14776,7 +14774,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You're ready a start Joodling"
+            "value": "Vous êtes prêt à commencer à Joodler"
           }
         }
       }
@@ -14798,7 +14796,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "You've reached your gratuit Joodle limit"
+            "value": "Vous avez atteint votre limite de Joodles gratuits"
           }
         }
       }
@@ -14822,7 +14820,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your Current Plan"
+            "value": "Votre offre actuelle"
           }
         }
       }
@@ -14844,7 +14842,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your data will remain on this device et in iCloud, but will stop syncing avec other devices."
+            "value": "Vos données resteront sur cet appareil et dans iCloud, mais ne seront plus synchronisées avec les autres appareils."
           }
         }
       }
@@ -14868,7 +14866,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your Joodle Pro abonnement has ended. Some features are now limited."
+            "value": "Votre abonnement Joodle Pro est terminé. Certaines fonctionnalités sont désormais limitées."
           }
         }
       }
@@ -14892,7 +14890,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your memories are still here, quietly waiting pour you. Rediscover the Joodles you once created, each carrying a piece of your story."
+            "value": "Vos souvenirs sont toujours là, à vous attendre en silence. Redécouvrez les Joodles que vous avez créés autrefois, chacun portant un fragment de votre histoire."
           }
         }
       }
@@ -14916,7 +14914,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your mois in doodles"
+            "value": "Votre mois en doodles"
           }
         }
       }
@@ -14940,7 +14938,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your new theme is ready!"
+            "value": "Votre nouveau thème est prêt !"
           }
         }
       }
@@ -14964,7 +14962,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your abonnement will automatically renew on %@. Manage your abonnement, change plans, or cancel anytime."
+            "value": "Votre abonnement sera renouvelé automatiquement le %@. Gérez votre abonnement, changez d'offre ou annulez à tout moment."
           }
         }
       }
@@ -14988,7 +14986,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your semaine in doodles"
+            "value": "Votre semaine en doodles"
           }
         }
       }

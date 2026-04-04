@@ -273,14 +273,16 @@ struct ManagePlanSheet: View {
 
   private func yearlySavingsSubtitle() -> String {
     if let percentage = storeManager.savingsPercentage() {
-      return String(localized: "Save \(percentage)% vs monthly")
+      let formatted = (Double(percentage) / 100).formatted(.percent)
+      return String(localized: "Save \(formatted) vs monthly")
     }
     return String(localized: "Billed annually")
   }
 
   private func savingsBadgeText() -> String? {
     guard let percentage = storeManager.savingsPercentage() else { return nil }
-    return String(localized: "SAVE \(percentage)%")
+    let formatted = (Double(percentage) / 100).formatted(.percent)
+    return String(localized: "SAVE \(formatted)")
   }
 
   // MARK: - Purchase Logic

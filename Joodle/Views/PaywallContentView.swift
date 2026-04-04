@@ -811,7 +811,8 @@ struct PaywallContentView: View {
 
   private func savingsBadgeText() -> String? {
     if let percentage = storeManager.savingsPercentage() {
-      return String(localized: "SAVE \(percentage)%")
+      let formatted = (Double(percentage) / 100).formatted(.percent)
+      return String(localized: "SAVE \(formatted)")
     }
     return String(localized: "BEST VALUE")
   }
