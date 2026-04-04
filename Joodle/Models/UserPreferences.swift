@@ -413,6 +413,7 @@ final class UserPreferences {
 enum AppLanguage: String, CaseIterable, Identifiable {
   case en
   case zhHans
+  case fr
   case ko
 
   var id: String { code }
@@ -421,6 +422,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     switch self {
     case .en: return "en"
     case .zhHans: return "zh-Hans"
+    case .fr: return "fr"
     case .ko: return "ko"
     }
   }
@@ -430,6 +432,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     switch self {
     case .en: return "English"
     case .zhHans: return "简体中文"
+    case .fr: return "Français"
     case .ko: return "한국어"
     }
   }
