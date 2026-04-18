@@ -395,21 +395,6 @@ struct SettingsView: View {
     .preferredColorScheme(userPreferences.preferredColorScheme)
     .navigationBarBackButtonHidden(showThemeOverlay)
     .interactiveDismissDisabled(showThemeOverlay)
-    .overlay {
-      if showThemeOverlay, let color = pendingThemeColor {
-        ThemeColorLoadingOverlay(
-          themeColorManager: themeColorManager,
-          selectedColor: color,
-          onDismiss: {
-            withAnimation {
-              showThemeOverlay = false
-              pendingThemeColor = nil
-            }
-          }
-        )
-        .id(color)
-      }
-    }
     .onChange(of: userPreferences.preferredColorScheme) { _, _ in
       NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
     }

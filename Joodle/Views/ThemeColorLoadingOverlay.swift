@@ -15,7 +15,6 @@ struct ThemeColorLoadingOverlay: View {
 
     @State private var showCompletionScreen = false
     @State private var hasTriggeredCompletion = false
-    @State private var hasSeenRegenerationStart = false
 
     var body: some View {
         ZStack {
@@ -102,42 +101,56 @@ struct ThemeColorLoadingOverlay: View {
             // Reset state for fresh overlay instance
             showCompletionScreen = false
             hasTriggeredCompletion = false
-            hasSeenRegenerationStart = false
         }
-        .onChange(of: themeColorManager.isRegenerating) { _, isRegenerating in
-            if isRegenerating {
-                hasSeenRegenerationStart = true
-            } else if hasSeenRegenerationStart {
-                // Only trigger completion after we've seen regeneration start
+        .onChange(of: themeColorManager.isRegenerating) { _, _ in
+            if shouldComplete() {
                 triggerCompletion()
             }
         }
-        .onChange(of: themeColorManager.regenerationProgress) { _, progress in
-            if progress >= 1.0 && hasSeenRegenerationStart {
+        .onChange(of: themeColorManager.regenerationProgress) { _, _ in
+            if shouldComplete() {
+                triggerCompletion()
+            }
+        }
+        .onChange(of: themeColorManager.totalEntriesToProcess) { _, _ in
+            if shouldComplete() {
                 triggerCompletion()
             }
         }
         .task {
-            // Check initial state - if already regenerating, mark it
-            if themeColorManager.isRegenerating {
-                hasSeenRegenerationStart = true
+            // Handle fast-complete paths (e.g. no drawings) where regeneration may
+            // start and finish before this overlay observes intermediate states.
+            if shouldComplete() {
+                triggerCompletion()
+                return
             }
 
-            // Poll for completion state in case onChange misses rapid state changes
+            // Poll as a safety net in case rapid state changes are missed by onChange.
             while !hasTriggeredCompletion {
                 try? await Task.sleep(for: .milliseconds(100))
 
-                if themeColorManager.isRegenerating {
-                    hasSeenRegenerationStart = true
-                }
-
-                // Check for completion: regeneration started and now finished
-                if hasSeenRegenerationStart && !themeColorManager.isRegenerating {
+                if shouldComplete() {
                     triggerCompletion()
                     break
                 }
             }
         }
+    }
+
+    private func shouldComplete() -> Bool {
+        // Normal completion path
+        if !themeColorManager.isRegenerating && themeColorManager.regenerationProgress >= 1.0 {
+            return true
+        }
+
+        // Fast path: for zero-entry runs, the manager can finish before this
+        // overlay observes isRegenerating = true. If the selected color is
+        // already applied and manager is idle, treat as complete.
+        if !themeColorManager.isRegenerating && UserPreferences.shared.accentColor == selectedColor {
+            return true
+        }
+
+        return false
     }
 
     private func triggerCompletion() {

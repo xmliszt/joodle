@@ -41,6 +41,7 @@ final class ThemeColorManager {
         isRegenerating = true
         regenerationProgress = 0
         entriesProcessed = 0
+        totalEntriesToProcess = 0
 
         // Fetch all entries with drawings
         let descriptor = FetchDescriptor<DayEntry>()
