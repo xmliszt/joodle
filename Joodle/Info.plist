@@ -18,6 +18,12 @@
 			</array>
 		</dict>
 	</array>
+	<key>FacebookAppID</key>
+	<string>$(FACEBOOK_APP_ID)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 	</array>

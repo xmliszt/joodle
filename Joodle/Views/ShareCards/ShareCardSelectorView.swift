@@ -54,6 +54,29 @@ struct ShareCardSelectorView: View {
   @State private var exportProgress: Double = 0.0
   @State private var isExportingAnimated: Bool = false
 
+  // Instagram share state
+  @State private var isSharingToInstagram: Bool = false
+
+  /// Instagram brand gradient (top-left yellow → orange → pink → purple bottom-right)
+  private var instagramGradient: LinearGradient {
+    LinearGradient(
+      colors: [
+        Color(red: 0.99, green: 0.85, blue: 0.47),
+        Color(red: 0.96, green: 0.52, blue: 0.16),
+        Color(red: 0.87, green: 0.16, blue: 0.48),
+        Color(red: 0.51, green: 0.22, blue: 0.69),
+        Color(red: 0.32, green: 0.36, blue: 0.83)
+      ],
+      startPoint: .topLeading,
+      endPoint: .bottomTrailing
+    )
+  }
+
+  /// Whether the Instagram quick-share button should be shown for the current style
+  private var showsInstagramButton: Bool {
+    InstagramShareHelper.isInstagramInstalled
+  }
+
   /// Check if the selected year is the current year
   private var isCurrentYear: Bool {
     selectedYear == Calendar.current.component(.year, from: Date())
@@ -206,17 +229,9 @@ struct ShareCardSelectorView: View {
         if #available(iOS 26.0, *) {
           GlassEffectContainer(spacing: 12) {
             HStack(spacing: 12) {
-              Button {
-                withAnimation(.springFkingSatifying) {
-                  previewColorScheme = previewColorScheme == .light ? .dark : .light
-                }
-              } label: {
-                Image(systemName: previewColorScheme == .light ? "sun.max.fill" : "moon.stars.fill")
-                .fontWeight(.semibold)
-                .foregroundColor(.textColor)
-              }
-              .circularGlassButton(tintColor: .appAccent)
-              .disabled(isSharing || isExportingAnimated)
+              themeToggleButton
+                .glassEffect(.regular.interactive())
+                .disabled(isSharing || isExportingAnimated)
 
 
               Button {
@@ -244,22 +259,19 @@ struct ShareCardSelectorView: View {
               }
               .glassEffect(.regular.interactive())
               .disabled(isSharing || shareItem != nil || isExportingAnimated)
+
+              if showsInstagramButton {
+                instagramShareButton
+                  .glassEffect(.regular.interactive())
+                  .disabled(isSharing || isSharingToInstagram || isExportingAnimated)
+              }
             }
           }
           .padding(.horizontal, UIDevice.screenCornerRadius / 2)
         } else {
           HStack(spacing: 12) {
-            Button {
-              withAnimation(.springFkingSatifying) {
-                previewColorScheme = previewColorScheme == .light ? .dark : .light
-              }
-            } label: {
-              Image(systemName: previewColorScheme == .light ? "sun.max.fill" : "moon.stars.fill")
-              .fontWeight(.semibold)
-              .foregroundColor(.textColor)
-            }
-            .circularGlassButton()
-            .disabled(isSharing || isExportingAnimated)
+            themeToggleButton
+              .disabled(isSharing || isExportingAnimated)
 
             Button {
               shareCard()
@@ -284,6 +296,11 @@ struct ShareCardSelectorView: View {
               .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
             }
             .disabled(isSharing || shareItem != nil || isExportingAnimated)
+
+            if showsInstagramButton {
+              instagramShareButton
+                .disabled(isSharing || isSharingToInstagram || isExportingAnimated)
+            }
           }
           .padding(.horizontal, UIDevice.screenCornerRadius / 2)
         }
@@ -351,6 +368,49 @@ struct ShareCardSelectorView: View {
       }
       .interactiveDismissDisabled(isSharing || isExportingAnimated)
       .postHogScreenView("Share Card")
+    }
+  }
+
+  // MARK: - Theme Toggle Button
+
+  @ViewBuilder
+  private var themeToggleButton: some View {
+    Button {
+      withAnimation(.springFkingSatifying) {
+        previewColorScheme = previewColorScheme == .light ? .dark : .light
+      }
+    } label: {
+      Image(systemName: previewColorScheme == .light ? "sun.max.fill" : "moon.stars.fill")
+        .font(.appFont(size: 18, weight: .semibold))
+        .foregroundColor(.textColor)
+        .frame(width: 56, height: 56)
+        .contentShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
+    }
+  }
+
+  // MARK: - Instagram Share Button
+
+  @ViewBuilder
+  private var instagramShareButton: some View {
+    Button {
+      shareToInstagram()
+    } label: {
+      ZStack {
+        if isSharingToInstagram {
+          ProgressView()
+            .tint(.white)
+        } else {
+          Image("Social/instagram")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: 26, height: 26)
+            .foregroundColor(.white)
+        }
+      }
+      .frame(width: 56, height: 56)
+      .background(instagramGradient)
+      .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
     }
   }
 
@@ -946,6 +1006,111 @@ struct ShareCardSelectorView: View {
         colorScheme: colorScheme,
         showWatermark: watermarkSetting
       )
+    }
+  }
+
+  private func shareToInstagram() {
+    guard !isSharing, !isSharingToInstagram, !isExportingAnimated else { return }
+
+    let watermarkSetting = UserPreferences.shared.shareCardWatermarkEnabled
+
+    if selectedStyle.isAnimatedStyle {
+      shareAnimatedToInstagram(watermarkSetting: watermarkSetting)
+      return
+    }
+
+    isSharingToInstagram = true
+
+    let style = selectedStyle
+    let colorScheme = previewColorScheme
+    let capturedYear = selectedYear
+    let capturedWeekStart = selectedWeekStart
+    let capturedWeekEntries = weekEntries
+    let capturedMonth = selectedMonth
+    let capturedMonthEntries = monthEntries
+    let capturedStartOfWeek = UserPreferences.shared.startOfWeek
+
+    Task.detached { [mode, yearEntries, displayPercentage] in
+      let image = await Self.renderCardToImageBackground(
+        mode: mode,
+        style: style,
+        watermarkSetting: watermarkSetting,
+        colorScheme: colorScheme,
+        yearEntries: yearEntries,
+        displayPercentage: displayPercentage,
+        selectedYear: capturedYear,
+        weekStartDate: capturedWeekStart,
+        weekEntries: capturedWeekEntries,
+        selectedMonth: capturedMonth,
+        monthEntries: capturedMonthEntries,
+        startOfWeek: capturedStartOfWeek
+      )
+
+      await MainActor.run {
+        isSharingToInstagram = false
+        guard let image = image else { return }
+
+        AnalyticsManager.shared.trackShareCardShared(
+          style: style.rawValue,
+          format: "instagram_stories",
+          includesWatermark: watermarkSetting,
+          colorScheme: colorScheme == .dark ? "dark" : "light"
+        )
+
+        InstagramShareHelper.shareToStories(
+          backgroundImage: image,
+          isDarkMode: colorScheme == .dark
+        )
+      }
+    }
+  }
+
+  private func shareAnimatedToInstagram(watermarkSetting: Bool) {
+    guard case .entry(let entry, let date) = mode else { return }
+    guard selectedStyle.isVideoStyle else { return }
+
+    isExportingAnimated = true
+    exportProgress = 0.0
+
+    let style = selectedStyle
+    let colorScheme = previewColorScheme
+
+    Task.detached {
+      do {
+        let fileURL = try await ShareCardRenderer.shared.renderAnimatedVideo(
+          style: style,
+          entry: entry,
+          date: date,
+          colorScheme: colorScheme,
+          showWatermark: watermarkSetting,
+          progressCallback: { progress in
+            Task { @MainActor in
+              self.exportProgress = progress
+            }
+          }
+        )
+
+        await MainActor.run {
+          self.isExportingAnimated = false
+          self.exportProgress = 0.0
+          guard let fileURL = fileURL else { return }
+
+          AnalyticsManager.shared.trackShareCardShared(
+            style: style.rawValue,
+            format: "instagram_stories_video",
+            includesWatermark: watermarkSetting,
+            colorScheme: colorScheme == .dark ? "dark" : "light"
+          )
+
+          InstagramShareHelper.shareToStories(backgroundVideo: fileURL)
+        }
+      } catch {
+        print("Failed to export animated card for Instagram: \(error)")
+        await MainActor.run {
+          self.isExportingAnimated = false
+          self.exportProgress = 0.0
+        }
+      }
     }
   }
 
