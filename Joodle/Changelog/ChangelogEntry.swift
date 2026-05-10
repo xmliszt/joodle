@@ -27,8 +27,8 @@ struct ChangelogEntry: Identifiable, Hashable {
     /// Release date
     let date: Date
 
-    /// Optional remote image URL displayed below the header
-    let headerImageURL: URL?
+    /// Remote image URLs displayed below the header. May contain 0, 1, or many entries.
+    let headerImageURLs: [URL]
 
     /// Markdown formatted changelog content
     let markdownContent: String
@@ -54,7 +54,7 @@ struct ChangelogEntry: Identifiable, Hashable {
         minor: Int,
         build: Int,
         date: Date,
-        headerImageURL: URL? = nil,
+        headerImageURLs: [URL] = [],
         markdownContent: String
     ) {
         self.id = version
@@ -63,7 +63,7 @@ struct ChangelogEntry: Identifiable, Hashable {
         self.minor = minor
         self.build = build
         self.date = date
-        self.headerImageURL = headerImageURL
+        self.headerImageURLs = headerImageURLs
         self.markdownContent = markdownContent
     }
 }

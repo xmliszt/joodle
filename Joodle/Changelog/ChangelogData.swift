@@ -147,7 +147,7 @@ enum ChangelogData {
             minor: minor,
             build: build,
             date: date,
-            headerImageURL: nil, // Header images come from remote API
+            headerImageURLs: [], // Header images come from remote API
             markdownContent: content
         )
     }

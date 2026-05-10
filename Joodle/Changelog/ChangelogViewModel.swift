@@ -167,7 +167,7 @@ final class ChangelogViewModel: ObservableObject {
             ChangelogIndexEntry(
                 version: entry.version,
                 date: formatDate(entry.date),
-                headerImageURL: entry.headerImageURL?.absoluteString
+                headerImageURLs: entry.headerImageURLs.isEmpty ? nil : entry.headerImageURLs.map(\.absoluteString)
             )
         }
 
@@ -216,7 +216,7 @@ extension ChangelogViewModel {
             minor: components.minor,
             build: components.build,
             date: date,
-            headerImageURL: indexEntry.headerImageURL.flatMap { URL(string: $0) },
+            headerImageURLs: (indexEntry.headerImageURLs ?? []).compactMap { URL(string: $0) },
             markdownContent: "" // Empty until loaded
         )
     }

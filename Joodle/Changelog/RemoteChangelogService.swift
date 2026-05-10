@@ -18,7 +18,7 @@ struct ChangelogIndexResponse: Codable {
 struct ChangelogIndexEntry: Codable, Identifiable {
     let version: String
     let date: String
-    let headerImageURL: String?
+    let headerImageURLs: [String]?
     var displayVersion: String {
         guard let v = versionComponents else { return version }
         return "\(v.major).\(v.minor) (\(v.build))"
@@ -45,7 +45,7 @@ struct ChangelogIndexEntry: Codable, Identifiable {
 struct ChangelogDetailResponse: Codable {
     let version: String
     let date: String
-    let headerImageURL: String?
+    let headerImageURLs: [String]?
     let markdown: String
 }
 
@@ -218,7 +218,7 @@ actor RemoteChangelogService {
             minor: components.minor,
             build: components.build,
             date: date,
-            headerImageURL: indexEntry.headerImageURL.flatMap { URL(string: $0) },
+            headerImageURLs: (indexEntry.headerImageURLs ?? []).compactMap { URL(string: $0) },
             markdownContent: markdown
         )
     }
