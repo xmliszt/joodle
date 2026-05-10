@@ -98,7 +98,7 @@ actor RemoteChangelogService {
 
     /// Base URL for the changelog API
     /// Update this to your Vercel API endpoint
-    private let baseURL = "https://portfolio-git-joodle-118-xmliszts-projects.vercel.app/api/changelogs/joodle"
+    private let baseURL = "https://liyuxuan.dev/api/changelogs/joodle"
     private var currentLocale: String { LocaleProvider.currentLanguageCode }
 
     // MARK: - Caching
