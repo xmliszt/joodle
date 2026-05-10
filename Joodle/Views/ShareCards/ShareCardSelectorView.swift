@@ -244,9 +244,6 @@ struct ShareCardSelectorView: View {
                       .contentTransition(.numericText())
                       .animation(.springFkingSatifying, value: exportProgress)
                   } else {
-                    Image(systemName: shareButtonIcon)
-                      .font(.appFont(size: 18, weight: .semibold))
-
                     Text(shareButtonText)
                       .font(.appFont(size: 18, weight:.semibold))
                   }
@@ -265,6 +262,7 @@ struct ShareCardSelectorView: View {
                   .glassEffect(.regular.interactive())
                   .disabled(isSharing || isSharingToInstagram || isExportingAnimated)
               }
+
             }
           }
           .padding(.horizontal, UIDevice.screenCornerRadius / 2)
@@ -282,9 +280,6 @@ struct ShareCardSelectorView: View {
                     .font(.appFont(size: 18, weight: .semibold))
                     .contentTransition(.numericText())
                 } else {
-                  Image(systemName: shareButtonIcon)
-                    .font(.appFont(size: 18, weight: .semibold))
-
                   Text(shareButtonText)
                     .font(.appFont(size: 18, weight:.semibold))
                 }
@@ -301,6 +296,7 @@ struct ShareCardSelectorView: View {
               instagramShareButton
                 .disabled(isSharing || isSharingToInstagram || isExportingAnimated)
             }
+
           }
           .padding(.horizontal, UIDevice.screenCornerRadius / 2)
         }
