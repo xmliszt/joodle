@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import MarkdownUI
 
 /// Detail view for a single changelog entry, used in Settings navigation
@@ -35,8 +36,6 @@ struct ChangelogDetailView: View {
                 // Optional Header Images (hidden when empty)
                 if !entry.headerImageURLs.isEmpty {
                     HeaderImageCarouselView(urls: entry.headerImageURLs)
-                        .frame(maxWidth: 300)
-                        .frame(maxWidth: .infinity, alignment: .center)
                         .padding()
                 }
 
@@ -94,10 +93,12 @@ struct HeaderImageCarouselView: View {
 
     @State private var currentIndex = 0
     @State private var autoScrollTimer: Timer?
+    @State private var aspectRatio: CGFloat?
 
     var body: some View {
         if urls.count == 1, let url = urls.first {
             imageView(url: url)
+                .frame(maxWidth: .infinity)
         } else {
             VStack(spacing: 12) {
                 TabView(selection: $currentIndex) {
@@ -107,7 +108,9 @@ struct HeaderImageCarouselView: View {
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
-                .frame(height: 200)
+                .frame(maxWidth: .infinity)
+                .aspectRatio(aspectRatio ?? (9.0 / 19.5), contentMode: .fit)
+                .task { await loadAspectRatio() }
                 .onAppear { startAutoScroll() }
                 .onDisappear { stopAutoScroll() }
                 .onChange(of: currentIndex) { _, _ in restartAutoScroll() }
@@ -117,9 +120,20 @@ struct HeaderImageCarouselView: View {
         }
     }
 
+    private func loadAspectRatio() async {
+        guard aspectRatio == nil, let firstURL = urls.first else { return }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: firstURL)
+            guard let image = UIImage(data: data), image.size.height > 0 else { return }
+            let ratio = image.size.width / image.size.height
+            await MainActor.run { aspectRatio = ratio }
+        } catch {
+            // keep default
+        }
+    }
+
     private func imageView(url: URL) -> some View {
         AnimatedImageView(url: url)
-            .frame(maxWidth: .infinity, alignment: .center)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 

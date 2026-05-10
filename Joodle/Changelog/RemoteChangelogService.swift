@@ -19,6 +19,13 @@ struct ChangelogIndexEntry: Codable, Identifiable {
     let version: String
     let date: String
     let headerImageURLs: [String]?
+
+    private enum CodingKeys: String, CodingKey {
+        case version
+        case date
+        case headerImageURLs = "headerImageURL"
+    }
+
     var displayVersion: String {
         guard let v = versionComponents else { return version }
         return "\(v.major).\(v.minor) (\(v.build))"
@@ -47,6 +54,13 @@ struct ChangelogDetailResponse: Codable {
     let date: String
     let headerImageURLs: [String]?
     let markdown: String
+
+    private enum CodingKeys: String, CodingKey {
+        case version
+        case date
+        case headerImageURLs = "headerImageURL"
+        case markdown
+    }
 }
 
 // MARK: - Service Errors
@@ -84,7 +98,7 @@ actor RemoteChangelogService {
 
     /// Base URL for the changelog API
     /// Update this to your Vercel API endpoint
-    private let baseURL = "https://liyuxuan.dev/api/changelogs/joodle"
+    private let baseURL = "https://portfolio-git-joodle-118-xmliszts-projects.vercel.app/api/changelogs/joodle"
     private var currentLocale: String { LocaleProvider.currentLanguageCode }
 
     // MARK: - Caching
