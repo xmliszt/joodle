@@ -415,6 +415,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
   case zhHans
   case fr
   case ko
+  case ja
 
   var id: String { code }
 
@@ -424,6 +425,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case .zhHans: return "zh-Hans"
     case .fr: return "fr"
     case .ko: return "ko"
+    case .ja: return "ja"
     }
   }
 
@@ -434,6 +436,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case .zhHans: return "简体中文"
     case .fr: return "Français"
     case .ko: return "한국어"
+    case .ja: return "日本語"
     }
   }
 
