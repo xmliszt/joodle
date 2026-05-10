@@ -305,7 +305,7 @@ struct DrawingDisplayView: View {
           trimmedPath,
           with: .color(foregroundColor),
           style: StrokeStyle(
-            lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1) * strokeMultiplier,
+            lineWidth: DRAWING_LINE_WIDTH * strokeMultiplier,
             lineCap: .round,
             lineJoin: .round
           )
@@ -402,7 +402,7 @@ struct DrawingDisplayView: View {
             trimmedPath,
             with: .color(foregroundColor),
             style: StrokeStyle(
-              lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1) * strokeMultiplier,
+              lineWidth: DRAWING_LINE_WIDTH * strokeMultiplier,
               lineCap: .round,
               lineJoin: .round
             )
@@ -443,7 +443,7 @@ struct DrawingDisplayView: View {
           path,
           with: .color(foregroundColor),
           style: StrokeStyle(
-            lineWidth: DRAWING_LINE_WIDTH * (displaySize <= 20 ? 2 : 1) * strokeMultiplier,
+            lineWidth: DRAWING_LINE_WIDTH * strokeMultiplier,
             lineCap: .round,
             lineJoin: .round
           )

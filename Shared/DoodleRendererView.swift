@@ -110,7 +110,7 @@ struct DoodleRendererView: View {
     drawingData: Data? = nil,
     thumbnail: Data? = nil,
     strokeColor: Color,
-    strokeMultiplier: CGFloat = 3.0,
+    strokeMultiplier: CGFloat = 1.0,
     renderScale: CGFloat = 2.0,
     showEmptyDot: Bool = true
   ) {

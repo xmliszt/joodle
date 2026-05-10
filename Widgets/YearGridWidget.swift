@@ -280,7 +280,7 @@ struct YearGridWidgetView: View {
             dotStyle: dotStyle,
             thumbnail: showJoodles ? dayEntry?.thumbnail : nil,
             strokeColor: themeColor,
-            strokeMultiplier: 2.0,
+            strokeMultiplier: 1.0,
             renderScale: showJoodles ? 2.0 : 3.0,
             showEmptyDot: showEmptyDots
           )

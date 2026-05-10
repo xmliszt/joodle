@@ -11,7 +11,7 @@ final class BackupScheduler {
   static let taskIdentifier = "dev.liyuxuan.joodle.backup"
   static let autoBackupEnabledKey = "autoBackupEnabled"
   static let lastAutoBackupAtKey = "lastAutoBackupAt"
-  private static let intervalSeconds: TimeInterval = 60 * 60 * 24
+  static let intervalSeconds: TimeInterval = 60 * 60 * 24
 
   private var isAutoBackupEnabled: Bool {
     let defaults = UserDefaults.standard

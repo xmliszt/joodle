@@ -947,7 +947,11 @@ struct ContentView: View {
     // Sync note to widgets
     WidgetHelper.shared.scheduleWidgetDataUpdate(in: modelContext)
 
-    dateForNotePrompt = nil
+    // Defer clearing until after the popup's dismiss animation completes,
+    // so the doodle preview keeps its drawing data while the dialog animates out.
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+      dateForNotePrompt = nil
+    }
   }
 
   /// Adjusts the touch location from the parent coordinate system to the grid's coordinate system

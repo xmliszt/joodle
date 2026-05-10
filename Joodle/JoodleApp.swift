@@ -281,6 +281,7 @@ struct JoodleApp: App {
     runLegacyThumbnailCleanup(container: container)
     await CanvasSizeMigration.runIfNeeded(container: container)
     await runDualThumbnailRegeneration(container: container)
+    await runThinStrokeThumbnailRegeneration(container: container)
   }
 
   /// Cleans up duplicate entries (same dateString) by merging content and deleting duplicates
@@ -425,6 +426,47 @@ struct JoodleApp: App {
       UserDefaults.standard.set(true, forKey: regenerationKey)
     } catch {
       print("DualThumbnailRegeneration: Failed during startup: \(error)")
+    }
+  }
+
+  /// Regenerates thumbnails to use the unified thin stroke (1.0× multiplier)
+  /// instead of the previous 3× thick-stroke variant baked into 20px thumbnails.
+  private static func runThinStrokeThumbnailRegeneration(container: ModelContainer) async {
+    let regenerationKey = "hasRegeneratedThinStrokeThumbnails_v1"
+
+    guard !UserDefaults.standard.bool(forKey: regenerationKey) else {
+      return
+    }
+
+    let context = ModelContext(container)
+    let descriptor = FetchDescriptor<DayEntry>()
+
+    do {
+      let allEntries = try context.fetch(descriptor)
+      var regeneratedCount = 0
+
+      for entry in allEntries {
+        if let drawingData = entry.drawingData, !drawingData.isEmpty {
+          let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(
+            from: drawingData)
+          entry.drawingThumbnail20 = thumbnails.0
+          entry.drawingThumbnail200 = thumbnails.1
+          regeneratedCount += 1
+
+          if regeneratedCount % 10 == 0 {
+            try? context.save()
+          }
+        }
+      }
+
+      if regeneratedCount > 0 {
+        try context.save()
+        print("ThinStrokeThumbnailRegeneration: Regenerated \(regeneratedCount) entries on startup")
+      }
+
+      UserDefaults.standard.set(true, forKey: regenerationKey)
+    } catch {
+      print("ThinStrokeThumbnailRegeneration: Failed during startup: \(error)")
     }
   }
 

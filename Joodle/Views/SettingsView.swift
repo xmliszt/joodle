@@ -1136,14 +1136,14 @@ ID: \(deviceIdentifier)
       .onLongPressGesture {
         showDeviceIdentifierAlert = true
       }
-      .alert("Share identifier with joodle@liyuxuan.dev to help debug purchase issues:", isPresented: $showDeviceIdentifierAlert) {
-        Button("Copy to Clipboard") {
-          UIPasteboard.general.string = deviceIdentifier
-        }
-        Button("Cancel", role: .cancel) { }
-      } message: {
-        Text(deviceIdentifier)
+    }
+    .alert("Share identifier with joodle@liyuxuan.dev to help debug purchase issues:", isPresented: $showDeviceIdentifierAlert) {
+      Button("Copy to Clipboard") {
+        UIPasteboard.general.string = deviceIdentifier
       }
+      Button("Cancel", role: .cancel) { }
+    } message: {
+      Text(deviceIdentifier)
     }
   }
   
@@ -2004,9 +2004,7 @@ struct BackupRestoreSettingsView: View {
               Text("Automatic iCloud Backup")
                 .foregroundColor(.primary)
               if autoBackupEnabled {
-                Text(lastAutoBackupAt > 0
-                     ? "Last backup: \(Self.relativeBackupDate(from: lastAutoBackupAt))"
-                     : "No backup yet")
+                Text(Self.autoBackupSubtitle(lastBackupAt: lastAutoBackupAt))
                   .font(.appCaption())
                   .foregroundColor(.secondary)
               }
@@ -2186,6 +2184,35 @@ struct BackupRestoreSettingsView: View {
     return formatter.localizedString(for: date, relativeTo: Date())
   }
 
+  /// Subtitle for the automatic backup row.
+  /// - For the first hour after a backup, shows how long ago the last backup ran.
+  /// - After that, shows the remaining duration until the next scheduled backup.
+  private static func autoBackupSubtitle(lastBackupAt: Double) -> String {
+    guard lastBackupAt > 0 else {
+      return String(localized: "No backup yet", comment: "Subtitle on Automatic iCloud Backup row when no backup has run yet.")
+    }
+    let now = Date()
+    let lastDate = Date(timeIntervalSince1970: lastBackupAt)
+    let elapsed = now.timeIntervalSince(lastDate)
+    let oneHour: TimeInterval = 60 * 60
+
+    if elapsed < oneHour {
+      let relative = relativeBackupDate(from: lastBackupAt)
+      return String(localized: "Last backup: \(relative)", comment: "Subtitle showing how long ago the last automatic iCloud backup ran.")
+    }
+
+    let remaining = BackupScheduler.intervalSeconds - elapsed
+    let formatter = RelativeDateTimeFormatter()
+    formatter.unitsStyle = .full
+    if remaining <= 0 {
+      // Backup is overdue but hasn't run yet (e.g. iOS hasn't woken the BGTask).
+      return String(localized: "Next backup soon", comment: "Subtitle on Automatic iCloud Backup row when the next backup is overdue but hasn't run.")
+    }
+    let nextDate = now.addingTimeInterval(remaining)
+    let relative = formatter.localizedString(for: nextDate, relativeTo: now)
+    return String(localized: "Next backup \(relative)", comment: "Subtitle showing time until the next automatic iCloud backup. The placeholder is a localized relative time like 'in 5 hours'.")
+  }
+
   private func saveToICloudDrive() {
     // Avoid running while CloudKit is actively syncing
     if CloudSyncManager.shared.isSyncing {
@@ -2200,13 +2227,12 @@ struct BackupRestoreSettingsView: View {
         let descriptor = FetchDescriptor<DayEntry>()
         let entries = try context.fetch(descriptor)
         let data = try BackupManager.shared.serializeEntries(entries)
-        let url = try BackupManager.shared.writeBackupToICloudDrive(data: data)
+        _ = try BackupManager.shared.writeBackupToICloudDrive(data: data)
         UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: BackupScheduler.lastAutoBackupAtKey)
         let entryCount = entries.count
-        let filename = url.lastPathComponent
 
         await MainActor.run {
-          iCloudSaveMessage = "Backup saved to iCloud Drive: \(filename)"
+          iCloudSaveMessage = String(localized: "Backup saved", comment: "Confirmation shown after a manual iCloud backup completes successfully.")
           showICloudSaveAlert = true
           AnalyticsManager.shared.trackDataExported(entryCount: entryCount)
         }

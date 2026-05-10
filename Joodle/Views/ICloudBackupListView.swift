@@ -15,18 +15,15 @@ struct ICloudBackupListView: View {
   @State private var resultMessage: String?
   @State private var showResultAlert = false
 
-  private static let dateFormatter: DateFormatter = {
-    let f = DateFormatter()
-    f.dateStyle = .medium
-    f.timeStyle = .short
-    return f
-  }()
-
   private static let byteFormatter: ByteCountFormatter = {
     let f = ByteCountFormatter()
     f.countStyle = .file
     return f
   }()
+
+  private static func formatDate(_ date: Date) -> String {
+    date.formatted(date: .abbreviated, time: .shortened)
+  }
 
   var body: some View {
     Group {
@@ -43,19 +40,21 @@ struct ICloudBackupListView: View {
               Button {
                 pendingRestore = file
               } label: {
-                VStack(alignment: .leading, spacing: 4) {
-                  Text(Self.dateFormatter.string(from: file.createdAt))
+                HStack {
+                  Text(Self.formatDate(file.createdAt))
                     .foregroundColor(.primary)
+                  Spacer()
                   Text(Self.byteFormatter.string(fromByteCount: file.sizeBytes))
                     .font(.caption)
                     .foregroundColor(.secondary)
                 }
               }
+              .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
               .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                 Button(role: .destructive) {
                   pendingDelete = file
                 } label: {
-                  Label("Delete", systemImage: "trash")
+                  Image(systemName: "trash")
                 }
               }
             }
@@ -68,7 +67,6 @@ struct ICloudBackupListView: View {
     .navigationTitle("iCloud Backups")
     .navigationBarTitleDisplayMode(.inline)
     .task { await loadBackups() }
-    .refreshable { await loadBackups() }
     .alert(
       "Restore from this backup?",
       isPresented: Binding(
@@ -80,7 +78,7 @@ struct ICloudBackupListView: View {
       Button("Restore", role: .destructive) { restore(file) }
       Button("Cancel", role: .cancel) { pendingRestore = nil }
     } message: { file in
-      Text("This will permanently replace all current entries with the backup from \(Self.dateFormatter.string(from: file.createdAt)). This cannot be undone.")
+      Text("This will permanently replace all current entries with the backup from \(Self.formatDate(file.createdAt)). This cannot be undone.")
     }
     .alert(
       "Delete this backup?",
@@ -93,7 +91,7 @@ struct ICloudBackupListView: View {
       Button("Delete", role: .destructive) { delete(file) }
       Button("Cancel", role: .cancel) { pendingDelete = nil }
     } message: { file in
-      Text("The backup from \(Self.dateFormatter.string(from: file.createdAt)) will be removed from iCloud Drive.")
+      Text("The backup from \(Self.formatDate(file.createdAt)) will be removed from iCloud Drive.")
     }
     .alert("iCloud Backup", isPresented: $showResultAlert) {
       Button("OK", role: .cancel) { }
