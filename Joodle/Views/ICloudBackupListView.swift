@@ -35,7 +35,7 @@ struct ICloudBackupListView: View {
       } else if let error = loadError {
         ContentUnavailableView("Couldn't load backups", systemImage: "exclamationmark.icloud", description: Text(error))
       } else if backups.isEmpty {
-        ContentUnavailableView("No backups yet", systemImage: "icloud", description: Text("Tap Save to iCloud Drive to create your first backup."))
+        ContentUnavailableView("No backups yet", systemImage: "icloud")
       } else {
         List {
           Section {
