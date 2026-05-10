@@ -93,7 +93,7 @@ class DrawingThumbnailGenerator {
           }
 
           cgContext.addPath(path)
-          cgContext.setLineWidth(max(DRAWING_LINE_WIDTH * scale, 1.0))
+          cgContext.setLineWidth(DRAWING_LINE_WIDTH * scale)
           cgContext.setLineCap(.round)
           cgContext.setLineJoin(.round)
           cgContext.strokePath()

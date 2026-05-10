@@ -432,18 +432,22 @@ struct JoodleApp: App {
   /// Regenerates thumbnails to use the unified thin stroke (1.0× multiplier)
   /// instead of the previous 3× thick-stroke variant baked into 20px thumbnails.
   private static func runThinStrokeThumbnailRegeneration(container: ModelContainer) async {
-    let regenerationKey = "hasRegeneratedThinStrokeThumbnails_v1"
+    let regenerationKey = "hasRegeneratedThinStrokeThumbnails_v3"
 
     guard !UserDefaults.standard.bool(forKey: regenerationKey) else {
+      print("ThinStrokeThumbnailRegeneration: Skipping — \(regenerationKey) already set")
       return
     }
 
+    print("ThinStrokeThumbnailRegeneration: Starting…")
     let context = ModelContext(container)
     let descriptor = FetchDescriptor<DayEntry>()
 
     do {
       let allEntries = try context.fetch(descriptor)
+      print("ThinStrokeThumbnailRegeneration: Fetched \(allEntries.count) entries; scanning for ones with drawing data")
       var regeneratedCount = 0
+      var skippedCount = 0
 
       for entry in allEntries {
         if let drawingData = entry.drawingData, !drawingData.isEmpty {
@@ -455,16 +459,18 @@ struct JoodleApp: App {
 
           if regeneratedCount % 10 == 0 {
             try? context.save()
+            print("ThinStrokeThumbnailRegeneration: Progress — \(regeneratedCount) regenerated so far")
           }
+        } else {
+          skippedCount += 1
         }
       }
 
-      if regeneratedCount > 0 {
-        try context.save()
-        print("ThinStrokeThumbnailRegeneration: Regenerated \(regeneratedCount) entries on startup")
-      }
+      try context.save()
+      print("ThinStrokeThumbnailRegeneration: Done — regenerated \(regeneratedCount), skipped \(skippedCount) entries with no drawing data")
 
       UserDefaults.standard.set(true, forKey: regenerationKey)
+      print("ThinStrokeThumbnailRegeneration: Set \(regenerationKey) = true")
     } catch {
       print("ThinStrokeThumbnailRegeneration: Failed during startup: \(error)")
     }

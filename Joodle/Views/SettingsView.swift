@@ -1819,8 +1819,15 @@ struct AnniversaryAlarmsSettingsView: View {
                 showPastTimeAlert = true
               }
             )
+            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+              Button(role: .destructive) {
+                reminderManager.removeReminder(for: reminder.dateString)
+              } label: {
+                Image(systemName: "trash")
+              }
+              .tint(.red)
+            }
           }
-          .onDelete(perform: deleteReminders)
         } footer: {
           Text("Swipe left to delete, or tap Edit to select multiple alarms.")
         }
@@ -1851,13 +1858,6 @@ struct AnniversaryAlarmsSettingsView: View {
       Button("OK", role: .cancel) { }
     } message: {
       Text("The selected time has already passed. Please choose a future time for your anniversary alarm.")
-    }
-  }
-  
-  private func deleteReminders(at offsets: IndexSet) {
-    let remindersToDelete = offsets.map { sortedReminders[$0] }
-    for reminder in remindersToDelete {
-      reminderManager.removeReminder(for: reminder.dateString)
     }
   }
   
