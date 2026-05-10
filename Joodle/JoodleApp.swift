@@ -11,6 +11,7 @@ import SwiftUI
 import UIKit
 import Combine
 import PostHog
+import BackgroundTasks
 
 // AppDelegate to enforce portrait orientation and handle notifications
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -237,6 +238,9 @@ struct JoodleApp: App {
     #if DEBUG
     DebugDataSeeder.shared.seedTestEntriesIfNeeded(container: container)
     #endif
+
+    BackupScheduler.shared.register()
+    BackupScheduler.shared.schedulePeriodicBackup()
   }
 
   /// Syncs the current theme color preference to widgets via App Group

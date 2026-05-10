@@ -1988,9 +1988,82 @@ struct BackupRestoreSettingsView: View {
   @State private var exportDocument: JSONDocument?
   @State private var importMessage = ""
   @State private var showImportAlert = false
-  
+  @State private var showICloudSaveAlert = false
+  @State private var iCloudSaveMessage = ""
+  @AppStorage(BackupScheduler.autoBackupEnabledKey) private var autoBackupEnabled = true
+  @AppStorage(BackupScheduler.lastAutoBackupAtKey) private var lastAutoBackupAt: Double = 0
+  @State private var iCloudAvailable = true
+
   var body: some View {
     Form {
+      Section {
+        Toggle(isOn: $autoBackupEnabled) {
+          HStack {
+            SettingsIconView(systemName: "clock.arrow.circlepath", backgroundColor: .green)
+            VStack(alignment: .leading, spacing: 2) {
+              Text("Automatic iCloud Backup")
+                .foregroundColor(.primary)
+              if autoBackupEnabled {
+                Text(lastAutoBackupAt > 0
+                     ? "Last backup: \(Self.relativeBackupDate(from: lastAutoBackupAt))"
+                     : "No backup yet")
+                  .font(.appCaption())
+                  .foregroundColor(.secondary)
+              }
+            }
+          }
+        }
+        .disabled(!iCloudAvailable)
+        .onChange(of: autoBackupEnabled) { _, newValue in
+          if newValue {
+            BackupScheduler.shared.schedulePeriodicBackup()
+          } else {
+            BackupScheduler.shared.cancelScheduledBackup()
+          }
+        }
+
+        if !iCloudAvailable {
+          HStack(alignment: .top, spacing: 12) {
+            SettingsIconView(systemName: "exclamationmark.triangle.fill", backgroundColor: .orange)
+            VStack(alignment: .leading, spacing: 2) {
+              Text("iCloud Drive is not available for Joodle")
+                .foregroundColor(.primary)
+              Text("Make sure you're signed in to iCloud, then turn Joodle on under Settings → [Your Name] → iCloud → Saved to iCloud → Drive → Apps Syncing to iCloud Drive.")
+                .font(.appCaption())
+                .foregroundColor(.secondary)
+            }
+          }
+        }
+      } footer: {
+        Text("Joodle will back up your entries about once a day.")
+      }
+
+      Section {
+        Button(action: { saveToICloudDrive() }) {
+          HStack {
+            SettingsIconView(systemName: "icloud.and.arrow.up.fill", backgroundColor: .blue)
+            Text("Save Backup to iCloud Drive Now")
+              .foregroundColor(.primary)
+            Spacer()
+            Image(systemName: "chevron.right")
+              .font(.appCaption())
+              .foregroundColor(.secondary)
+          }
+        }
+        .disabled(!iCloudAvailable)
+
+        NavigationLink {
+          ICloudBackupListView()
+        } label: {
+          HStack {
+            SettingsIconView(systemName: "list.bullet.rectangle", backgroundColor: .blue)
+            Text("Manage iCloud Backups")
+              .foregroundColor(.primary)
+          }
+        }
+        .disabled(!iCloudAvailable)
+      }
+
       Section {
         Button(action: { exportData() }) {
           HStack {
@@ -2003,7 +2076,7 @@ struct BackupRestoreSettingsView: View {
               .foregroundColor(.secondary)
           }
         }
-        
+
         Button(action: { showFileImporter = true }) {
           HStack {
             SettingsIconView(systemName: "square.and.arrow.down.fill", backgroundColor: .gray)
@@ -2015,13 +2088,18 @@ struct BackupRestoreSettingsView: View {
               .foregroundColor(.secondary)
           }
         }
-      } footer: {
-        Text("Create a local backup of your Joodle entries or restore from a previous backup. Backups are saved as JSON files.")
       }
     }
     .navigationTitle("Backup & Restore")
     .navigationBarTitleDisplayMode(.inline)
     .postHogScreenView("Backup & Restore Settings")
+    .onAppear { refreshICloudAvailability() }
+    .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+      refreshICloudAvailability()
+    }
+    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name.NSUbiquityIdentityDidChange)) { _ in
+      refreshICloudAvailability()
+    }
     .fileExporter(
       isPresented: $showFileExporter,
       document: exportDocument,
@@ -2050,6 +2128,11 @@ struct BackupRestoreSettingsView: View {
       Button("OK", role: .cancel) { }
     } message: {
       Text(importMessage)
+    }
+    .alert("iCloud Backup", isPresented: $showICloudSaveAlert) {
+      Button("OK", role: .cancel) { }
+    } message: {
+      Text(iCloudSaveMessage)
     }
   }
   
@@ -2080,6 +2163,63 @@ struct BackupRestoreSettingsView: View {
         }
       } catch {
         print("Failed to prepare export: \(error)")
+      }
+    }
+  }
+
+  private func refreshICloudAvailability() {
+    let containerID = BackupManager.ubiquityContainerIdentifier
+    Task.detached(priority: .utility) {
+      let fm = FileManager.default
+      let available = fm.ubiquityIdentityToken != nil
+        && fm.url(forUbiquityContainerIdentifier: containerID) != nil
+      await MainActor.run {
+        iCloudAvailable = available
+      }
+    }
+  }
+
+  private static func relativeBackupDate(from timeInterval: Double) -> String {
+    let date = Date(timeIntervalSince1970: timeInterval)
+    let formatter = RelativeDateTimeFormatter()
+    formatter.unitsStyle = .full
+    return formatter.localizedString(for: date, relativeTo: Date())
+  }
+
+  private func saveToICloudDrive() {
+    // Avoid running while CloudKit is actively syncing
+    if CloudSyncManager.shared.isSyncing {
+      iCloudSaveMessage = "iCloud sync is active. Please try again later."
+      showICloudSaveAlert = true
+      return
+    }
+    let container = modelContext.container
+    Task.detached {
+      do {
+        let context = ModelContext(container)
+        let descriptor = FetchDescriptor<DayEntry>()
+        let entries = try context.fetch(descriptor)
+        let data = try BackupManager.shared.serializeEntries(entries)
+        let url = try BackupManager.shared.writeBackupToICloudDrive(data: data)
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: BackupScheduler.lastAutoBackupAtKey)
+        let entryCount = entries.count
+        let filename = url.lastPathComponent
+
+        await MainActor.run {
+          iCloudSaveMessage = "Backup saved to iCloud Drive: \(filename)"
+          showICloudSaveAlert = true
+          AnalyticsManager.shared.trackDataExported(entryCount: entryCount)
+        }
+      } catch BackupManager.BackupError.ubiquityUnavailable {
+        await MainActor.run {
+          iCloudSaveMessage = "iCloud Drive is not available. Make sure you're signed into iCloud and iCloud Drive is enabled."
+          showICloudSaveAlert = true
+        }
+      } catch {
+        await MainActor.run {
+          iCloudSaveMessage = "Failed to save backup: \(error.localizedDescription)"
+          showICloudSaveAlert = true
+        }
       }
     }
   }
