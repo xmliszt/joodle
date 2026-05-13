@@ -54,6 +54,34 @@ final class BackupScheduler {
     }
   }
 
+  /// Runs an auto-backup immediately if auto-backup is enabled and the last
+  /// backup is older than `intervalSeconds`. Use this on app foreground to
+  /// cover cases where iOS never woke the BGProcessingTask (e.g. the user
+  /// rarely opens the app, or the device hasn't met BGTask conditions).
+  func runBackupIfOverdue() {
+    guard isAutoBackupEnabled else { return }
+    let defaults = UserDefaults.standard
+    let last = defaults.double(forKey: Self.lastAutoBackupAtKey)
+    let now = Date().timeIntervalSince1970
+    if last > 0, now - last < Self.intervalSeconds {
+      return
+    }
+    Task.detached(priority: .utility) {
+      let syncing = await MainActor.run { CloudSyncManager.shared.isSyncing }
+      if syncing { return }
+      do {
+        let container = ModelContainerManager.shared.container
+        let context = ModelContext(container)
+        let entries = try context.fetch(FetchDescriptor<DayEntry>())
+        let data = try BackupManager.shared.serializeEntries(entries)
+        _ = try BackupManager.shared.writeBackupToICloudDrive(data: data)
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: Self.lastAutoBackupAtKey)
+      } catch {
+        print("BackupScheduler: foreground catch-up backup failed: \(error)")
+      }
+    }
+  }
+
   private func handle(task: BGProcessingTask) {
     schedulePeriodicBackup()
 

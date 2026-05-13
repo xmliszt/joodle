@@ -432,7 +432,7 @@ struct JoodleApp: App {
   /// Regenerates thumbnails to use the unified thin stroke (1.0× multiplier)
   /// instead of the previous 3× thick-stroke variant baked into 20px thumbnails.
   private static func runThinStrokeThumbnailRegeneration(container: ModelContainer) async {
-    let regenerationKey = "hasRegeneratedThinStrokeThumbnails_v3"
+    let regenerationKey = "hasRegeneratedThinStrokeThumbnails_v4"
 
     guard !UserDefaults.standard.bool(forKey: regenerationKey) else {
       print("ThinStrokeThumbnailRegeneration: Skipping — \(regenerationKey) already set")
@@ -471,6 +471,14 @@ struct JoodleApp: App {
 
       UserDefaults.standard.set(true, forKey: regenerationKey)
       print("ThinStrokeThumbnailRegeneration: Set \(regenerationKey) = true")
+
+      // Push refreshed thumbnails to the widget shared store so the year grid
+      // widget picks up the new 1× stroke renders instead of the cached 3× ones.
+      if regeneratedCount > 0 {
+        await MainActor.run {
+          WidgetHelper.shared.updateWidgetData(in: ModelContext(container))
+        }
+      }
     } catch {
       print("ThinStrokeThumbnailRegeneration: Failed during startup: \(error)")
     }

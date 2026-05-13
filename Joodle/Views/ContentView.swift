@@ -450,7 +450,6 @@ struct ContentView: View {
       }
     }
     .onChange(of: scenePhase) { _, newPhase in
-      // Only sync widget data when app goes to background to ensure data is saved
       switch newPhase {
       case .background:
         // Avoid extra fetch/write contention if CloudKit is actively syncing while backgrounding.
@@ -460,6 +459,10 @@ struct ContentView: View {
           // App went to background - sync data one final time
           WidgetHelper.shared.updateWidgetData(in: modelContext)
         }
+      case .active:
+        // iOS may never wake the BGProcessingTask if the user rarely opens the
+        // app. Catch up on foreground if the last auto-backup is overdue.
+        BackupScheduler.shared.runBackupIfOverdue()
       default:
         break
       }

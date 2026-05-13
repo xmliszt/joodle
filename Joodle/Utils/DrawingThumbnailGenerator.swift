@@ -55,7 +55,17 @@ class DrawingThumbnailGenerator {
 
   /// Generate thumbnail from decoded path data using Core Graphics
   private func generateThumbnailCG(from pathsData: [PathData], size: CGFloat, color: UIColor) -> Data? {
-    let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
+    // Pin bitmap scale at 3× so thumbnails are device-independent. By default
+    // UIGraphicsImageRenderer uses the current screen's scale, which on Mac
+    // (iPad-app-on-Mac) is often 1.0 — producing a literal 20×20 PNG that
+    // looks pixelated when CloudKit syncs it back to a Retina iPhone.
+    let format = UIGraphicsImageRendererFormat.default()
+    format.scale = 3.0
+    format.opaque = false
+    let renderer = UIGraphicsImageRenderer(
+      size: CGSize(width: size, height: size),
+      format: format
+    )
 
     let image = renderer.image { context in
       let cgContext = context.cgContext
