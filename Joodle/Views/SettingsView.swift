@@ -85,6 +85,7 @@ struct SettingsRowView: View {
           .foregroundColor(.secondary)
       }
     }
+    .contentShape(Rectangle())
   }
 }
 
