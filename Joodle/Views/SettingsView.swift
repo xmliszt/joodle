@@ -183,6 +183,7 @@ struct SettingsView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
+  @Environment(\.openURL) private var openURL
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @StateObject private var storeKitManager = StoreKitManager.shared
   @StateObject private var reminderManager = ReminderManager.shared
@@ -496,7 +497,9 @@ struct SettingsView: View {
   @ViewBuilder
   private var betaTesterSection: some View {
     Section {
-      Link(destination: URL(string: "https://apps.apple.com/sg/app/joodle-journaling-with-doodle/id6756204776")!) {
+      Button {
+        openURL(URL(string: "https://apps.apple.com/sg/app/joodle-journaling-with-doodle/id6756204776")!)
+      } label: {
         HStack {
           if #available(iOS 18.0, *) {
             Image(systemName: "fireworks")
@@ -526,6 +529,7 @@ struct SettingsView: View {
             .font(.appCaption())
             .foregroundColor(.secondary)
         }
+        .contentShape(Rectangle())
       }
     } footer: {
       Text("Joodle is now available in App Store!")
@@ -916,7 +920,9 @@ ID: \(deviceIdentifier)
       }
       
       if let mailURL = contactUsMailURL {
-        Link(destination: mailURL) {
+        Button {
+          openURL(mailURL)
+        } label: {
           SettingsRowView(
             icon: "envelope.fill",
             iconColor: .indigo,
@@ -940,7 +946,10 @@ ID: \(deviceIdentifier)
   @ViewBuilder
   private var getInvolvedSection: some View {
     Section {
-      Link(destination: URL(string: "https://chat.whatsapp.com/FF2rMEiSOwe9hsRapSyvdY")!) {
+      Button {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "whatsapp_community", type: "social")
+        openURL(URL(string: "https://chat.whatsapp.com/FF2rMEiSOwe9hsRapSyvdY")!)
+      } label: {
         HStack {
           Image("Social/whatsapp")
             .resizable()
@@ -954,12 +963,13 @@ ID: \(deviceIdentifier)
             .font(.appCaption())
             .foregroundColor(.secondary)
         }
+        .contentShape(Rectangle())
       }
-      .simultaneousGesture(TapGesture().onEnded {
-        AnalyticsManager.shared.trackExternalLinkOpened(url: "whatsapp_community", type: "social")
-      })
-      
-      Link(destination: URL(string: "https://x.com/xmliszt")!) {
+
+      Button {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "x.com/xmliszt", type: "social")
+        openURL(URL(string: "https://x.com/xmliszt")!)
+      } label: {
         HStack {
           Image("Social/twitter")
             .resizable()
@@ -973,12 +983,13 @@ ID: \(deviceIdentifier)
             .font(.appCaption())
             .foregroundColor(.secondary)
         }
+        .contentShape(Rectangle())
       }
-      .simultaneousGesture(TapGesture().onEnded {
-        AnalyticsManager.shared.trackExternalLinkOpened(url: "x.com/xmliszt", type: "social")
-      })
-      
-      Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle")!) {
+
+      Button {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "liyuxuan.dev/apps/joodle", type: "website")
+        openURL(URL(string: "https://liyuxuan.dev/apps/joodle")!)
+      } label: {
         SettingsRowView(
           icon: "globe.americas.fill",
           iconColor: .pink,
@@ -986,9 +997,6 @@ ID: \(deviceIdentifier)
           isExternal: true
         )
       }
-      .simultaneousGesture(TapGesture().onEnded {
-        AnalyticsManager.shared.trackExternalLinkOpened(url: "liyuxuan.dev/apps/joodle", type: "website")
-      })
       
       Button {
         AnalyticsManager.shared.trackExternalLinkOpened(url: "feedback", type: "feedback")
@@ -1003,7 +1011,10 @@ ID: \(deviceIdentifier)
       }
       
       if isProductionEnvironment {
-        Link(destination: URL(string: "https://tinyurl.com/joodle-feedback")!) {
+        Button {
+          AnalyticsManager.shared.trackExternalLinkOpened(url: "joodle-feedback", type: "feedback")
+          openURL(URL(string: "https://tinyurl.com/joodle-feedback")!)
+        } label: {
           SettingsRowView(
             icon: "bubble.left.and.bubble.right.fill",
             iconColor: .pink,
@@ -1011,13 +1022,13 @@ ID: \(deviceIdentifier)
             isExternal: true
           )
         }
-        .simultaneousGesture(TapGesture().onEnded {
-          AnalyticsManager.shared.trackExternalLinkOpened(url: "joodle-feedback", type: "feedback")
-        })
       }
 
       if let mailURL = translationFeedbackMailURL {
-        Link(destination: mailURL) {
+        Button {
+          AnalyticsManager.shared.trackExternalLinkOpened(url: "translation_feedback", type: "feedback")
+          openURL(mailURL)
+        } label: {
           SettingsRowView(
             icon: "character.bubble.fill",
             iconColor: .pink,
@@ -1025,9 +1036,6 @@ ID: \(deviceIdentifier)
             isExternal: true
           )
         }
-        .simultaneousGesture(TapGesture().onEnded {
-          AnalyticsManager.shared.trackExternalLinkOpened(url: "translation_feedback", type: "feedback")
-        })
       }
 
       
@@ -1061,7 +1069,10 @@ ID: \(deviceIdentifier)
   @ViewBuilder
   private var legalSection: some View {
     Section {
-      Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!) {
+      Button {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "privacy-policy", type: "legal")
+        openURL(URL(string: "https://liyuxuan.dev/apps/joodle/privacy-policy")!)
+      } label: {
         SettingsRowView(
           icon: "hand.raised.fill",
           iconColor: .gray,
@@ -1069,11 +1080,11 @@ ID: \(deviceIdentifier)
           isExternal: true
         )
       }
-      .simultaneousGesture(TapGesture().onEnded {
-        AnalyticsManager.shared.trackExternalLinkOpened(url: "privacy-policy", type: "legal")
-      })
-      
-      Link(destination: URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!) {
+
+      Button {
+        AnalyticsManager.shared.trackExternalLinkOpened(url: "terms-of-service", type: "legal")
+        openURL(URL(string: "https://liyuxuan.dev/apps/joodle/terms-of-service")!)
+      } label: {
         SettingsRowView(
           icon: "doc.text.fill",
           iconColor: .gray,
@@ -1081,9 +1092,6 @@ ID: \(deviceIdentifier)
           isExternal: true
         )
       }
-      .simultaneousGesture(TapGesture().onEnded {
-        AnalyticsManager.shared.trackExternalLinkOpened(url: "terms-of-service", type: "legal")
-      })
     } header: {
       Text("Legal")
     }
