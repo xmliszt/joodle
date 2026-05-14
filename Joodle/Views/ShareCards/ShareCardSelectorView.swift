@@ -449,10 +449,15 @@ struct ShareCardSelectorView: View {
       selectedYear = year
       fetchEarliestYear()
       loadYearData(for: year)
-      // Initialize week start for current week
-      selectedWeekStart = computeWeekStart(for: Date())
-      // Initialize month to current month
-      selectedMonth = Calendar.current.component(.month, from: Date())
+      let currentYear = Calendar.current.component(.year, from: Date())
+      if year == currentYear {
+        selectedWeekStart = computeWeekStart(for: Date())
+        selectedMonth = Calendar.current.component(.month, from: Date())
+      } else {
+        let firstOfYear = Calendar.current.date(from: DateComponents(year: year, month: 1, day: 1)) ?? Date()
+        selectedWeekStart = computeWeekStart(for: firstOfYear)
+        selectedMonth = 1
+      }
       // Pre-load week and month data
       loadWeekData(for: selectedWeekStart)
       loadMonthData(for: year, month: selectedMonth)
