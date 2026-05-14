@@ -15,10 +15,20 @@
   ],
   "products" : [
     {
-      "displayPrice" : "69.98",
+      "displayPrice" : "49.98",
       "familyShareable" : false,
       "internalID" : "6758905894",
       "localizations" : [
+        {
+          "description" : "すべての機能を永久に解放",
+          "displayName" : "Joodle Pro 永久版",
+          "locale" : "ja"
+        },
+        {
+          "description" : "Débloquez toutes les fonctionnalités à vie",
+          "displayName" : "Joodle Pro à vie",
+          "locale" : "fr"
+        },
         {
           "description" : "모든 기능을 영구적으로 해제",
           "displayName" : "Joodle Pro 평생 라이선스",
@@ -48,8 +58,8 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 794937670.45553601,
-    "_locale" : "zh_Hans",
+    "_lastSynchronizedDate" : 800461453.797719,
+    "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "SGP",
     "_storeKitErrors" : [
@@ -96,7 +106,31 @@
     {
       "id" : "21852566",
       "localizations" : [
-
+        {
+          "description" : "",
+          "displayName" : "Joodle Pro",
+          "locale" : "ja"
+        },
+        {
+          "description" : "",
+          "displayName" : "Joodle Pro",
+          "locale" : "ko"
+        },
+        {
+          "description" : "",
+          "displayName" : "Joodle Pro",
+          "locale" : "fr"
+        },
+        {
+          "description" : "",
+          "displayName" : "Joodle Pro",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "",
+          "displayName" : "Joodle Pro",
+          "locale" : "zh_Hans"
+        }
       ],
       "name" : "Joodle Pro",
       "subscriptions" : [
@@ -104,15 +138,49 @@
           "adHocOffers" : [
 
           ],
-          "codeOffers" : [
-
+          "billingPlans" : [
+            {
+              "billingPlanType" : "BILLED_UPFRONT",
+              "commitmentDisplayPrice" : "3.98",
+              "displayPrice" : "3.98",
+              "internalID" : "6757140768_BILLED_UPFRONT",
+              "isEnabled" : true
+            }
           ],
-          "displayPrice" : "5.98",
+          "codeOffers" : [
+            {
+              "billingPlanType" : "BILLED_UPFRONT",
+              "eligibility" : [
+                "existing",
+                "expired",
+                "new"
+              ],
+              "internalID" : "97528DBF",
+              "isStackable" : false,
+              "numberOfPeriods" : 1,
+              "paymentMode" : "free",
+              "referenceName" : "1-Month Joodle Pro Free",
+              "subscriptionPeriod" : "P2M"
+            }
+          ],
+          "displayPrice" : "3.98",
           "familyShareable" : false,
           "groupNumber" : 2,
           "internalID" : "6757140768",
-          "introductoryOffer" : null,
+          "introductoryOffers" : [
+
+          ],
           "localizations" : [
+            {
+              "description" : "すべての機能を1ヶ月間解放",
+              "displayName" : "Joodle Pro 月額プラン",
+              "locale" : "ja"
+            },
+            {
+              "description" : "Débloquez toutes les fonctionnalités pendant un an",
+              "displayName" : "Joodle Pro Mensuel",
+              "locale" : "fr"
+            },
             {
               "description" : "Unlock all features for a month",
               "displayName" : "Joodle Pro Monthly",
@@ -142,14 +210,24 @@
           "adHocOffers" : [
 
           ],
+          "billingPlans" : [
+            {
+              "billingPlanType" : "BILLED_UPFRONT",
+              "commitmentDisplayPrice" : "29.98",
+              "displayPrice" : "29.98",
+              "internalID" : "6757140365_BILLED_UPFRONT",
+              "isEnabled" : true
+            }
+          ],
           "codeOffers" : [
             {
+              "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
                 "new",
                 "existing",
                 "expired"
               ],
-              "internalID" : "5DDF1109",
+              "internalID" : "3D619863",
               "isStackable" : true,
               "numberOfPeriods" : 1,
               "paymentMode" : "free",
@@ -157,12 +235,13 @@
               "subscriptionPeriod" : "P1M"
             },
             {
+              "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
-                "expired",
+                "existing",
                 "new",
-                "existing"
+                "expired"
               ],
-              "internalID" : "542116E1",
+              "internalID" : "9E8EAE6D",
               "isStackable" : true,
               "numberOfPeriods" : 1,
               "paymentMode" : "free",
@@ -170,16 +249,23 @@
               "subscriptionPeriod" : "P1Y"
             }
           ],
-          "displayPrice" : "49.98",
+          "displayPrice" : "29.98",
           "familyShareable" : true,
           "groupNumber" : 1,
           "internalID" : "6757140365",
-          "introductoryOffer" : null,
+          "introductoryOffers" : [
+
+          ],
           "localizations" : [
             {
-              "description" : "일년 동안 모든 기능 해제",
-              "displayName" : "Joodle Pro 연간",
-              "locale" : "ko"
+              "description" : "すべての機能を1年間解放",
+              "displayName" : "Joodle Pro 年額プラン",
+              "locale" : "ja"
+            },
+            {
+              "description" : "Débloquez toutes les fonctionnalités pendant un an",
+              "displayName" : "Joodle Pro Annuel",
+              "locale" : "fr"
             },
             {
               "description" : "一年解锁全部功能",
@@ -190,6 +276,11 @@
               "description" : "Unlock all features for a year",
               "displayName" : "Joodle Pro Yearly",
               "locale" : "en_US"
+            },
+            {
+              "description" : "일 년 동안 모든 기능 잠금 해제",
+              "displayName" : "Joodle Pro 연간",
+              "locale" : "ko"
             }
           ],
           "productID" : "dev.liyuxuan.joodle.pro.yearly",
@@ -205,7 +296,7 @@
     }
   ],
   "version" : {
-    "major" : 4,
+    "major" : 5,
     "minor" : 0
   }
 }
