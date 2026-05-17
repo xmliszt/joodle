@@ -2074,6 +2074,7 @@ struct BackupRestoreSettingsView: View {
               .font(.appCaption())
               .foregroundColor(.secondary)
           }
+          .opacity(iCloudAvailable ? 1.0 : 0.4)
         }
         .disabled(!iCloudAvailable)
 
@@ -2085,6 +2086,7 @@ struct BackupRestoreSettingsView: View {
             Text("Manage iCloud Backups")
               .foregroundColor(.primary)
           }
+          .opacity(iCloudAvailable ? 1.0 : 0.4)
         }
         .disabled(!iCloudAvailable)
       }

@@ -454,9 +454,6 @@ struct EntryEditingView: View {
           .presentationDragIndicator(.visible)
         }
       }
-      .transaction { transaction in
-        transaction.disablesAnimations = true
-      }
 
       // Header with date and edit button
       VStack {
