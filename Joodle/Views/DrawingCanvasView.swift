@@ -87,25 +87,19 @@ struct DrawingCanvasView: View {
 
   // MARK: - Concentric Corner Radius
 
-  /// Canvas corner radius computed to be concentric with the device screen
-  /// corners and the DI container border.
+  /// Canvas corner radius computed to be concentric with the floating
+  /// `DynamicIslandExpandedView` container border (used on every device).
+  /// Container clip = `screenCornerRadius - containerInset`, with an 8pt
+  /// inner padding inside the container.
   private var canvasCornerRadius: CGFloat {
-    if UIDevice.hasDynamicIsland {
-      // DI container clips at (R - d) with 10pt padding,
-      // so content area corner = R - d - 10.
-      // Canvas is inset by canvasPadding from that content area.
-      let diContainerPadding: CGFloat = 8
-      return max(
-        UIDevice.screenCornerRadius
-          - UIDevice.dynamicIslandFrame.origin.y
-          - diContainerPadding,
-        0
-      )
-    } else {
-      // Sheet presentationCornerRadius = R.
-      // Canvas is inset by canvasPadding horizontally.
-      return max(UIDevice.screenCornerRadius, 0)
-    }
+    let containerInset: CGFloat = UIDevice.hasDynamicIsland
+      ? UIDevice.dynamicIslandFrame.origin.y
+      : 10
+    let diContainerPadding: CGFloat = 8
+    return max(
+      UIDevice.screenCornerRadius - containerInset - diContainerPadding,
+      0
+    )
   }
 
   /// Whether editing is allowed based on subscription status
@@ -198,18 +192,6 @@ struct DrawingCanvasView: View {
             .padding(.bottom, 4)
         }
 
-        // In-sheet shutter button for non-Dynamic-Island devices.
-        // Extending the VStack here causes `readHeight` in ContentView to grow
-        // the sheet's presentation detent, pushing the canvas up automatically.
-        if isCameraLive, !UIDevice.hasDynamicIsland {
-          ShutterButton(style: .outline) {
-            Task { await cameraContext.capture() }
-          }
-          .disabled(isShutterCycling)
-          .padding(.top, 12)
-          .padding(.bottom, 24)
-          .transition(.opacity.combined(with: .scale(scale: 0.9)))
-        }
       }
       .animation(.springFkingSatifying, value: currentPrompt == nil)
       .animation(.springFkingSatifying, value: promptID)
@@ -225,14 +207,18 @@ struct DrawingCanvasView: View {
     // instead of letting the underlying white surface show through.
     .background(Color.black)
     .onDisappear {
-      // Safety net for non-DI devices: when the sheet is swiped away, SwiftUI may
-      // tear down the view without propagating the isShowing binding change, so
-      // onChange(of: isShowing) never fires. Save here as a last resort.
+      // Safety net for cases where SwiftUI tears the view down (e.g. selection
+      // cleared while canvas is still showing) without propagating the
+      // isShowing binding change, so onChange(of: isShowing) never fires.
       guard !didSaveOnDismiss else { return }
       if isMockMode {
         saveMockDrawing()
       } else {
         saveDrawingToStore()
+        // Mirror the teardown that onChange(of: isShowing) would have done,
+        // otherwise the camera session / LED can stay alive after the
+        // floating container is removed.
+        cameraContext.reset()
       }
     }
     .onAppear {
@@ -501,7 +487,7 @@ struct DrawingCanvasView: View {
     } label: {
       Image(systemName: "arrow.triangle.2.circlepath.camera")
     }
-    .circularGlassButton(tintColor: .white)
+    .circularGlassButton()
     .disabled(isShutterCycling)
   }
 

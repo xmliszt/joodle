@@ -29,6 +29,62 @@ struct DynamicIslandExpandedView<Content: View>: View {
     self.onDismiss = onDismiss
   }
 
+  // MARK: - Layout adaptation
+  //
+  // On Dynamic Island devices the floating container hides behind the DI
+  // cutout when collapsed. On notch / non-cutout devices there's no pill to
+  // hide behind, so the container starts just below the top safe area and
+  // collapses to zero size when hidden.
+
+  /// Symmetric inset used as the horizontal padding between the container and
+  /// the device's screen edges. Picked to keep the container corner radius
+  /// concentric with the device's screen corners.
+  private var containerHorizontalInset: CGFloat {
+    if UIDevice.hasDynamicIsland {
+      return UIDevice.dynamicIslandFrame.origin.y
+    } else {
+      return 10
+    }
+  }
+
+  /// Y offset where the top edge of the floating container starts.
+  private var containerTopOffset: CGFloat {
+    if UIDevice.hasDynamicIsland {
+      return UIDevice.dynamicIslandFrame.origin.y
+    } else {
+      // Land just below the notch / status bar area.
+      return UIDevice.topSafeAreaInset
+    }
+  }
+
+  /// Height reserved at the top of the container so the content doesn't draw
+  /// under the DI cutout. Zero on non-DI devices since the container starts
+  /// below the notch.
+  private var topContentInset: CGFloat {
+    UIDevice.hasDynamicIsland ? UIDevice.dynamicIslandSize.height : 0
+  }
+
+  /// Size of the collapsed container. On DI devices this matches the DI
+  /// capsule so it tucks behind the cutout. On non-DI devices we collapse
+  /// to zero — there's no cutout to align with.
+  private var collapsedSize: CGSize {
+    UIDevice.hasDynamicIsland ? UIDevice.dynamicIslandSize : .zero
+  }
+
+  /// Outer container corner radius, concentric with the device screen.
+  private var containerCornerRadius: CGFloat {
+    max(UIDevice.screenCornerRadius - containerHorizontalInset, 0)
+  }
+
+  /// Content clip corner radius — accounts for the 8pt inner padding.
+  private var contentCornerRadius: CGFloat {
+    max(containerCornerRadius - 8, 0)
+  }
+
+  private var expandedContentWidth: CGFloat {
+    UIScreen.main.bounds.width - (containerHorizontalInset * 2)
+  }
+
   var body: some View {
     ZStack {
       // Backdrop that creates the blur effect when expanded, plus an optional
@@ -42,27 +98,29 @@ struct DynamicIslandExpandedView<Content: View>: View {
       VStack {
         // Visible content
         VStack(spacing: 0) {
-          // Safe area spacer to prevent content from going behind the Dynamic Island
-          Spacer()
-            .frame(maxWidth: .infinity, maxHeight: UIDevice.dynamicIslandSize.height)
+          // Top reserved space so content doesn't draw under the DI cutout.
+          if topContentInset > 0 {
+            Spacer()
+              .frame(maxWidth: .infinity, maxHeight: topContentInset)
+          }
 
           // The content
           content
-            .frame(width: UIScreen.main.bounds.width - (UIDevice.dynamicIslandFrame.origin.y * 2))
-            .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius - UIDevice.dynamicIslandFrame.origin.y - 8, style: .continuous))
+            .frame(width: expandedContentWidth)
+            .clipShape(RoundedRectangle(cornerRadius: contentCornerRadius, style: .continuous))
             .opacity(isExpanded ? 1 : 0)
             .blur(radius: isExpanded ? 0 : 50)
             .scaleEffect(isExpanded ? 1 : 0)
             .animation(.springFkingSatifying, value: isExpanded)
         }
         .frame(
-          width: isExpanded ? UIScreen.main.bounds.width - (UIDevice.dynamicIslandFrame.origin.y * 2) : UIDevice.dynamicIslandSize.width,
-          height: isExpanded ? nil : UIDevice.dynamicIslandSize.height,
+          width: isExpanded ? expandedContentWidth : collapsedSize.width,
+          height: isExpanded ? nil : collapsedSize.height,
           alignment: .top)
         // Black to blend into dynamic island cutout
         .background(.black)
         // Corner radius matches border of the device
-        .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius - UIDevice.dynamicIslandFrame.origin.y, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: containerCornerRadius, style: .continuous))
         // Subtle shadow to make it hovered
         .shadow(color: isExpanded ? .black.opacity(0.1) : .clear, radius: SHADOW_RADIUS, y: 10)
         // Animation: when collapse, no spring as that will not fully conceal it in the dynamic island area as it is bouncy
@@ -74,8 +132,8 @@ struct DynamicIslandExpandedView<Content: View>: View {
         Spacer()
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-      // Move it so that it is at the position of dynamic island
-      .offset(y: UIDevice.dynamicIslandFrame.origin.y)
+      // Move it so that it is at the position of dynamic island / below the notch
+      .offset(y: containerTopOffset)
     }
     .ignoresSafeArea(.all, edges: .vertical)
     // Define hit zone

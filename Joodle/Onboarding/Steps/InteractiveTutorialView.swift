@@ -26,8 +26,6 @@ struct InteractiveTutorialView: View {
     // View state
     @State private var showDrawingCanvas = false
     @State private var showReminderSheet = false
-    /// Tracks the natural content height of the drawing canvas sheet (non-DI devices) for adaptive detent
-    @State private var drawingCanvasSheetHeight: CGFloat = 460
     /// Stub camera context — feature is fully gated behind isMockMode and never activates here.
     @StateObject private var tutorialCameraContext = CameraReferenceContext()
     @State private var isScrubbing = false
@@ -72,11 +70,6 @@ struct InteractiveTutorialView: View {
     /// Whether the current step is the moveDrawing step (disable tap-to-edit on drawing)
     private var isMoveDrawingStep: Bool {
         coordinator.currentStep?.type == .moveDrawing
-    }
-
-    /// Whether device has Dynamic Island
-    private var hasDynamicIsland: Bool {
-        UIDevice.hasDynamicIsland
     }
 
     // MARK: - Init (Onboarding mode)
@@ -148,30 +141,28 @@ struct InteractiveTutorialView: View {
                         tutorialContent(geometry: geometry)
                             .opacity(gridOpacity)
 
-                        // Dynamic Island expanded view for drawing canvas (on supported devices)
-                        if hasDynamicIsland {
-                            DynamicIslandExpandedView(
-                                isExpanded: $showDrawingCanvas,
-                                content: {
-                                    DrawingCanvasView(
-                                        date: mockStore.selectedDateItem?.date ?? Date(),
-                                        entry: nil,
-                                        onDismiss: {
-                                            showDrawingCanvas = false
-                                        },
-                                        isShowing: showDrawingCanvas,
-                                        mockStore: mockStore,
-                                        mockEntry: mockStore.selectedEntry
-                                    )
-                                    .environmentObject(tutorialCameraContext)
-                                    .tutorialHighlightAnchor(.drawingCanvas)
-                                },
-                                hidden: false,
-                                onDismiss: {
-                                    showDrawingCanvas = false
-                                }
-                            )
-                        }
+                        // Floating drawing canvas — uniform across all devices.
+                        DynamicIslandExpandedView(
+                            isExpanded: $showDrawingCanvas,
+                            content: {
+                                DrawingCanvasView(
+                                    date: mockStore.selectedDateItem?.date ?? Date(),
+                                    entry: nil,
+                                    onDismiss: {
+                                        showDrawingCanvas = false
+                                    },
+                                    isShowing: showDrawingCanvas,
+                                    mockStore: mockStore,
+                                    mockEntry: mockStore.selectedEntry
+                                )
+                                .environmentObject(tutorialCameraContext)
+                                .tutorialHighlightAnchor(.drawingCanvas)
+                            },
+                            hidden: false,
+                            onDismiss: {
+                                showDrawingCanvas = false
+                            }
+                        )
 
                         // Gesture-blocking overlay during transition (before tutorial overlay is ready)
                         // This prevents accidental taps on the grid during the scroll animation
@@ -442,37 +433,6 @@ struct InteractiveTutorialView: View {
                 highlightedItemId: highlightedId,
                 entries: mockEntriesToDayEntries()
             )
-        }
-        // Drawing canvas sheet - for devices WITHOUT Dynamic Island
-        .sheet(isPresented: hasDynamicIsland ? .constant(false) : $showDrawingCanvas) {
-            DrawingCanvasView(
-                date: mockStore.selectedDateItem?.date ?? Date(),
-                entry: nil,
-                onDismiss: {
-                    showDrawingCanvas = false
-                },
-                isShowing: showDrawingCanvas,
-                mockStore: mockStore,
-                mockEntry: mockStore.selectedEntry
-            )
-            .environmentObject(tutorialCameraContext)
-            .overlay {
-                // Tutorial overlay inside the sheet for non-Dynamic Island devices
-                // Only show when on the drawing canvas sub-step of drawAndEdit
-                if coordinator.isActive,
-                   let step = coordinator.currentStep,
-                   step.type == .drawAndEdit,
-                   step.highlightAnchor == .drawingCanvas,
-                   let tooltip = step.tooltip {
-                    SheetTutorialOverlay(tooltip: tooltip)
-                }
-            }
-            .fixedSize(horizontal: false, vertical: true)
-            .readHeight($drawingCanvasSheetHeight)
-            .presentationDetents([.height(drawingCanvasSheetHeight)])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(UIDevice.screenCornerRadius)
-            .disableLiquidGlass()
         }
         // Reminder sheet - using real view with mock store
         .sheet(isPresented: $showReminderSheet) {
@@ -971,44 +931,6 @@ struct InteractiveTutorialView: View {
                 drawingData: mockEntry.drawingData
             )
         }
-    }
-}
-
-// MARK: - Sheet Tutorial Overlay (for non-Dynamic Island devices)
-
-/// A simplified tutorial overlay for use inside sheets
-private struct SheetTutorialOverlay: View {
-    let tooltip: TutorialTooltip
-
-    private let dimOpacity: Double = 0.15
-
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // No dim overlay - keep canvas fully visible
-
-                // Tooltip at bottom of sheet, below the canvas
-                VStack {
-                    Spacer()
-
-                    // Tooltip bubble
-                    Text(tooltip.message)
-                        .font(.appSubheadline(weight: .medium))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                              .fill(Color.appAccent.opacity(0.8))
-                        )
-                        .padding(.bottom, 20)
-                }
-                .frame(maxWidth: .infinity)
-                .allowsHitTesting(false)
-            }
-        }
-        .ignoresSafeArea()
     }
 }
 
