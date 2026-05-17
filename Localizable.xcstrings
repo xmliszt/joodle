@@ -8012,6 +8012,7 @@
     },
     "Language Changed" : {
       "comment" : "Title of the alert shown after the user switches the app language, prompting them to restart.",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
@@ -11128,6 +11129,7 @@
     },
     "Please restart Joodle for the change to take full effect." : {
       "comment" : "Message of the alert shown after the user switches the app language, asking them to restart the app.",
+      "extractionState" : "stale",
       "localizations" : {
         "fr" : {
           "stringUnit" : {
