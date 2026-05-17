@@ -50,6 +50,25 @@
 	<array>
 		<string>dev.liyuxuan.joodle.backup</string>
 	</array>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>dev.liyuxuan.joodle.shortcut.today</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Today</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>pencil.tip.crop.circle</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>dev.liyuxuan.joodle.shortcut.nextAnniversary</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Next Anniversary</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>calendar.badge.clock</string>
+		</dict>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIImageName</key>

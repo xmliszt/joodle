@@ -9,6 +9,14 @@ import AppIntents
 import SwiftData
 import SwiftUI
 
+// MARK: - Shortcut Action State
+
+/// Holds a deferred "open drawing canvas" request that survives cold-launch timing,
+/// where the intent posts a notification before ContentView's observer is subscribed.
+enum ShortcutActionState {
+  @MainActor static var pendingOpenCanvas: Bool = false
+}
+
 // MARK: - Create Today's Doodle Intent
 
 /// An App Intent that opens the app to today's doodle entry
@@ -29,7 +37,56 @@ struct CreateTodaysDoodleIntent: AppIntent {
       userInfo: ["date": today]
     )
 
+    // Mark the request — ContentView reads this on appear in case it isn't yet listening
+    // for the notification (cold-launch race).
+    ShortcutActionState.pendingOpenCanvas = true
+
+    // Once the today selection has landed in ContentView, ask it to open the drawing canvas.
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+      NotificationCenter.default.post(
+        name: .openDrawingCanvasFromShortcut,
+        object: nil
+      )
+    }
+
     return .result()
+  }
+}
+
+// MARK: - Next Anniversary Finder
+
+enum NextAnniversaryFinder {
+  /// Finds the next future entry that has content (text or drawing).
+  @MainActor
+  static func nextAnniversaryDate() -> Date? {
+    let container = ModelContainerManager.shared.container
+    let context = ModelContext(container)
+
+    let todayString = CalendarDate.today().dateString
+
+    let predicate = #Predicate<DayEntry> { entry in
+      entry.dateString > todayString
+    }
+
+    let descriptor = FetchDescriptor<DayEntry>(
+      predicate: predicate,
+      sortBy: [SortDescriptor(\.dateString, order: .forward)]
+    )
+
+    do {
+      let futureEntries = try context.fetch(descriptor)
+      for entry in futureEntries {
+        let hasText = !entry.body.isEmpty
+        let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
+        if hasText || hasDrawing {
+          return entry.displayDate
+        }
+      }
+    } catch {
+      print("NextAnniversaryFinder: Failed to fetch future entries: \(error)")
+    }
+
+    return nil
   }
 }
 
@@ -45,55 +102,14 @@ struct OpenNextAnniversaryIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & OpensIntent {
-    // Find the next anniversary using SwiftData
-    if let nextAnniversaryDate = findNextAnniversary() {
+    if let nextAnniversaryDate = NextAnniversaryFinder.nextAnniversaryDate() {
       NotificationCenter.default.post(
         name: .navigateToDateFromShortcut,
         object: nil,
         userInfo: ["date": nextAnniversaryDate]
       )
     }
-    // If no anniversary found, just open the app normally
-
     return .result()
-  }
-
-  /// Finds the next future entry that has content (text or drawing)
-  @MainActor
-  private func findNextAnniversary() -> Date? {
-    let container = ModelContainerManager.shared.container
-    let context = ModelContext(container)
-
-    // Use CalendarDate for timezone-agnostic "today" determination
-    let todayString = CalendarDate.today().dateString
-
-    // Fetch all entries with dateString greater than today
-    let predicate = #Predicate<DayEntry> { entry in
-      entry.dateString > todayString
-    }
-
-    let descriptor = FetchDescriptor<DayEntry>(
-      predicate: predicate,
-      sortBy: [SortDescriptor(\.dateString, order: .forward)]
-    )
-
-    do {
-      let futureEntries = try context.fetch(descriptor)
-
-      // Find the first entry that has content (text or drawing)
-      for entry in futureEntries {
-        let hasText = !entry.body.isEmpty
-        let hasDrawing = entry.drawingData != nil && !entry.drawingData!.isEmpty
-
-        if hasText || hasDrawing {
-          return entry.displayDate
-        }
-      }
-    } catch {
-      print("AppShortcuts: Failed to fetch future entries: \(error)")
-    }
-
-    return nil
   }
 }
 

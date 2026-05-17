@@ -53,6 +53,8 @@ struct ContentView: View {
   @State private var yearGridViewSize: CGSize = .zero
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
+  /// Set when a quick action requests opening the canvas before a date selection has landed.
+  @State private var pendingOpenCanvasFromShortcut: Bool = false
   @State private var showNotePromptPopup: Bool = false
   @State private var isNoteEditing: Bool = false
   @State private var noteEditingInitialText: String = ""
@@ -497,6 +499,23 @@ struct ContentView: View {
       DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
         dataProvider.selectDateItem(dateItem)
         scrollToRelevantDate(itemId: dateItem.id, scrollProxy: scrollProxy, anchor: .center)
+
+        if pendingOpenCanvasFromShortcut || ShortcutActionState.pendingOpenCanvas {
+          pendingOpenCanvasFromShortcut = false
+          ShortcutActionState.pendingOpenCanvas = false
+          entryHadDoodleOnCanvasOpen = selectedEntry?.drawingData != nil
+          showDrawingCanvas = true
+        }
+      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .openDrawingCanvasFromShortcut)) { _ in
+      guard !isMovingDrawing else { return }
+      ShortcutActionState.pendingOpenCanvas = false
+      if dataProvider.selectedDateItem != nil {
+        entryHadDoodleOnCanvasOpen = selectedEntry?.drawingData != nil
+        showDrawingCanvas = true
+      } else {
+        pendingOpenCanvasFromShortcut = true
       }
     }
   }
