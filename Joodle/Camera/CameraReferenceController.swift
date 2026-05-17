@@ -35,6 +35,11 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   private let photoOutput = AVCapturePhotoOutput()
   private var currentInput: AVCaptureDeviceInput?
   private var didConfigure = false
+  /// Held while `setPreparedPhotoSettingsArray` preparation is in flight. AVF
+  /// internally locks the session in a config state during prep, and
+  /// `stopRunning` called during that window throws "between begin/commit".
+  /// `stop()` waits on this semaphore so prep always completes before teardown.
+  private let prewarmSemaphore = DispatchSemaphore(value: 1)
 
   private var captureContinuation: CheckedContinuation<UIImage?, Never>?
 
@@ -52,6 +57,20 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
         self.session.startRunning()
       }
       let running = self.session.isRunning
+      // Prewarm the photo pipeline so the first user-initiated capture doesn't
+      // pay the cold-start cost (buffer allocation, AE/AF convergence) — that
+      // delay shows up as the shutter staying closed for ~1s on the first
+      // capture after entering live mode.
+      if running {
+        let prewarmSettings = AVCapturePhotoSettings()
+        prewarmSettings.photoQualityPrioritization = .speed
+        self.prewarmSemaphore.wait()
+        self.photoOutput.setPreparedPhotoSettingsArray(
+          [prewarmSettings]
+        ) { [weak self] _, _ in
+          self?.prewarmSemaphore.signal()
+        }
+      }
       DispatchQueue.main.async { [weak self] in
         self?.isRunning = running
       }
@@ -61,6 +80,13 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   func stop() {
     sessionQueue.async { [weak self] in
       guard let self else { return }
+      // Block until the prewarm's setPreparedPhotoSettingsArray completion has
+      // fired. AVF locks the session in a config-like state during prep, and
+      // calling stopRunning during that window raises the "between begin/commit"
+      // assertion. The completion fires on AVF's internal queue, not
+      // sessionQueue, so this wait can't deadlock.
+      self.prewarmSemaphore.wait()
+      self.prewarmSemaphore.signal()
       if self.session.isRunning {
         self.session.stopRunning()
       }
@@ -122,6 +148,7 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
       sessionQueue.async { [weak self] in
         guard let self else { return }
         let settings = AVCapturePhotoSettings()
+        settings.photoQualityPrioritization = .speed
         self.applyCaptureMirror(for: currentPosition)
         if let angle = captureAngle {
           for connection in self.photoOutput.connections {
@@ -222,7 +249,12 @@ extension CameraReferenceController: AVCapturePhotoCaptureDelegate {
       // the visible coordinate space — otherwise front-camera (which arrives
       // with mirrored/right-rotated EXIF) gets cropped from the wrong region.
       let upright = Self.upright(raw)
-      return Self.centerCroppedSquare(upright)
+      let cropped = Self.centerCroppedSquare(upright)
+      // Downsample to roughly the canvas's pixel footprint so SwiftUI's
+      // `Image(uiImage:)` doesn't have to decode/downsample a 12-MP bitmap on
+      // the main thread the first time the backdrop appears (that decode would
+      // otherwise stutter the shutter open animation).
+      return Self.downsample(cropped, maxPixelDimension: 1024)
     }()
     let continuation = self.captureContinuation
     self.captureContinuation = nil
@@ -240,6 +272,23 @@ extension CameraReferenceController: AVCapturePhotoCaptureDelegate {
     let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
     return renderer.image { _ in
       image.draw(in: CGRect(origin: .zero, size: image.size))
+    }
+  }
+
+  /// Renders the image into a new bitmap whose larger side is at most
+  /// `maxPixelDimension` points (scale 1). Cheaper than letting SwiftUI's
+  /// Image view decode a multi-megapixel UIImage on first display.
+  private static func downsample(_ image: UIImage, maxPixelDimension: CGFloat) -> UIImage {
+    let largest = max(image.size.width, image.size.height)
+    guard largest > maxPixelDimension else { return image }
+    let scale = maxPixelDimension / largest
+    let target = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+    let format = UIGraphicsImageRendererFormat()
+    format.scale = 1
+    format.opaque = true
+    let renderer = UIGraphicsImageRenderer(size: target, format: format)
+    return renderer.image { _ in
+      image.draw(in: CGRect(origin: .zero, size: target))
     }
   }
 

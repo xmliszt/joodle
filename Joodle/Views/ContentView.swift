@@ -313,6 +313,7 @@ struct ContentView: View {
         .fixedSize(horizontal: false, vertical: true)
         .readHeight($drawingCanvasSheetHeight)
         .disabled(dataProvider.selectedDateItem == nil)
+        .interactiveDismissDisabled(cameraContext.isShutterCycling)
         .presentationDetents([.height(drawingCanvasSheetHeight)])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(UIDevice.screenCornerRadius)
@@ -417,6 +418,7 @@ struct ContentView: View {
           ShutterButton(style: .glass) {
             Task { await cameraContext.capture() }
           }
+          .disabled(cameraContext.isShutterCycling)
           .padding(.bottom, 32)
         }
         .ignoresSafeArea(.container, edges: .bottom)
@@ -931,6 +933,24 @@ struct ContentView: View {
 
   /// Handle drawing canvas dismiss - check if we should show note prompt
   private func handleDrawingCanvasDismiss() {
+    // Block dismissal while the shutter is mid-cycle (close → camera swap →
+    // open). Dismissing mid-cycle races with the camera session lifecycle —
+    // we've seen it crash (stopRunning during prep config lock) and leave the
+    // live preview surface stuck on screen after the container collapses.
+    // Once the cycle completes, the user can dismiss normally.
+    if cameraContext.isShutterCycling {
+      return
+    }
+    if cameraContext.mode == .live {
+      cameraContext.dismissLiveCamera { [self] in
+        performDrawingCanvasDismiss()
+      }
+      return
+    }
+    performDrawingCanvasDismiss()
+  }
+
+  private func performDrawingCanvasDismiss() {
     let selectedDate = dataProvider.selectedDateItem?.date
 
     // Close the drawing canvas first

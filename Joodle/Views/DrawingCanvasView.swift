@@ -167,8 +167,10 @@ struct DrawingCanvasView: View {
           liveCameraDevice: isMockMode ? nil : cameraContext.currentDevice,
           isCameraLive: isCameraLive,
           liveCameraMirrored: !isMockMode && cameraContext.isFrontFacing,
-          isCameraStartingUp: isCameraLive && !cameraContext.isSessionRunning,
-          captureFlashActive: !isMockMode && cameraContext.captureFlashActive,
+          shutterController: isMockMode ? nil : cameraContext.shutter,
+          isShutterFullyClosed: !isMockMode && cameraContext.isShutterFullyClosed,
+          isShutterCycling: !isMockMode && cameraContext.isShutterCycling,
+          suppressLivePreview: !isMockMode && cameraContext.suppressPreview,
           onCommitStroke: commitCurrentStroke
         ) {
           // Save button
@@ -203,6 +205,7 @@ struct DrawingCanvasView: View {
           ShutterButton(style: .outline) {
             Task { await cameraContext.capture() }
           }
+          .disabled(isShutterCycling)
           .padding(.top, 12)
           .padding(.bottom, 24)
           .transition(.opacity.combined(with: .scale(scale: 0.9)))
@@ -321,8 +324,16 @@ struct DrawingCanvasView: View {
       Text("Joodle needs camera access to capture reference photos for tracing. Enable it in Settings.")
     }
     .onChange(of: scenePhase) { _, newPhase in
-      if newPhase != .active, !isMockMode, cameraContext.mode == .live {
-        cameraContext.cancelLive()
+      // Background/inactive: tear the camera down synchronously. Running a
+      // shutter cycle here doesn't work — its Task gets suspended with the
+      // app, so on return the shutter shows up frozen-closed for the
+      // remainder of an animation that never advanced while backgrounded.
+      // Hard-reset instead so the canvas comes back idle.
+      // Only react to a real background transition. `.inactive` fires for
+      // transient interruptions like the home-gesture peek or Control Center,
+      // and tearing the camera down for those is too aggressive.
+      if newPhase == .background, !isMockMode, cameraContext.mode == .live {
+        cameraContext.reset()
       }
     }
     .onChange(of: albumPickerItem) { _, newItem in
@@ -436,6 +447,12 @@ struct DrawingCanvasView: View {
     )
   }
 
+  /// Camera-affecting buttons are locked out for the entire shutter cycle so a
+  /// second action can't fire while the first one is still animating.
+  private var isShutterCycling: Bool {
+    !isMockMode && cameraContext.isShutterCycling
+  }
+
   private var cameraReferenceButton: some View {
     Button {
       Haptic.play(with: .light)
@@ -444,6 +461,7 @@ struct DrawingCanvasView: View {
       Image(systemName: "camera.fill")
     }
     .circularGlassButton()
+    .disabled(isShutterCycling)
   }
 
   /// Top-right button in camera live mode — opens the system photo picker so
@@ -453,6 +471,7 @@ struct DrawingCanvasView: View {
       Image(systemName: "photo.on.rectangle")
     }
     .circularGlassButton()
+    .disabled(isShutterCycling)
   }
 
   /// Top-left button in camera live mode — exits the camera back to the
@@ -462,9 +481,10 @@ struct DrawingCanvasView: View {
       Haptic.play(with: .light)
       cameraContext.cancelLive()
     } label: {
-      Image(systemName: "scribble")
+      Image(systemName: "scribble.variable")
     }
     .circularGlassButton()
+    .disabled(isShutterCycling)
   }
 
   private var cameraFlipButton: some View {
@@ -475,6 +495,7 @@ struct DrawingCanvasView: View {
       Image(systemName: "arrow.triangle.2.circlepath.camera")
     }
     .circularGlassButton(tintColor: .white)
+    .disabled(isShutterCycling)
   }
 
   // MARK: - Inspiration Bulb Button

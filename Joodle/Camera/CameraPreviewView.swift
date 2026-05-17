@@ -47,6 +47,7 @@ struct CameraPreviewView: UIViewRepresentable {
     private var rotationObservation: NSKeyValueObservation?
     private var currentDevice: AVCaptureDevice?
     private var currentMirrored: Bool = false
+    private var pendingRebuildToken: Int = 0
 
     /// Rebind the coordinator to the current view/device/mirror state. Idempotent
     /// when nothing changed.
@@ -59,10 +60,20 @@ struct CameraPreviewView: UIViewRepresentable {
       applyMirror(to: view.videoPreviewLayer.connection)
 
       // Rotation coordinator must be rebuilt whenever the active device
-      // changes (flip).
+      // changes (flip). `AVCaptureDevice.RotationCoordinator` is main-thread
+      // bound, but its allocation/KVO setup is expensive enough that doing it
+      // synchronously here stalls the next render — which on flip is the
+      // first frame of the shutter open animation. Defer it one runloop tick
+      // so the current commit (including the animation) gets to paint first.
       if device !== currentDevice {
         currentDevice = device
-        rebuildRotationCoordinator(for: device, previewLayer: view.videoPreviewLayer)
+        pendingRebuildToken &+= 1
+        let token = pendingRebuildToken
+        let layer = view.videoPreviewLayer
+        DispatchQueue.main.async { [weak self] in
+          guard let self, token == self.pendingRebuildToken else { return }
+          self.rebuildRotationCoordinator(for: device, previewLayer: layer)
+        }
       }
     }
 

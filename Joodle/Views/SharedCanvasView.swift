@@ -77,12 +77,20 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   var liveCameraDevice: AVCaptureDevice? = nil
   var isCameraLive: Bool = false
   var liveCameraMirrored: Bool = false
-  /// When true and `isCameraLive`, the in-canvas live preview shows a
-  /// "Turning on camera..." placeholder until the session is actually running.
-  var isCameraStartingUp: Bool = false
-  /// When true, a white flash is overlaid on the live preview to mimic a
-  /// camera shutter capture.
-  var captureFlashActive: Bool = false
+  /// Drives the shutter overlay and the gating of the live preview mount.
+  /// `nil` in tutorial/mock mode where the camera feature is disabled.
+  var shutterController: CameraShutterController? = nil
+  /// Mirror of `shutterController?.isFullyClosed`, sourced from
+  /// `CameraReferenceContext` so changes actually drive a re-render here.
+  var isShutterFullyClosed: Bool = false
+  /// True for the entire close → open shutter sequence. Drives the inner
+  /// shadow so it appears the instant the shutter starts closing (well before
+  /// `isCameraLive` flips, which only happens after the shutter reopens).
+  var isShutterCycling: Bool = false
+  /// When true, forcibly unmount the live preview even if camera mode is
+  /// still active — used during a flip cycle to avoid a stale frame from the
+  /// previous device showing through.
+  var suppressLivePreview: Bool = false
 
   /// Track the maximum distance from start point during a gesture to detect dots vs strokes
   @State private var maxDistanceFromStart: CGFloat = 0
@@ -96,6 +104,10 @@ struct SharedCanvasView<TrailingHeader: View>: View {
 
   @State private var placeholderPaths: [(path: Path, isDot: Bool)] = []
   @State private var placeholderID = UUID()
+  /// Mounted only while the shutter is fully closed over the canvas, so the
+  /// live feed never appears during a transition. Latches across the open
+  /// phase so the preview stays visible once the shutter has retracted.
+  @State private var cameraPreviewMounted: Bool = false
 
   init(
     paths: Binding<[Path]>,
@@ -111,8 +123,10 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     liveCameraDevice: AVCaptureDevice? = nil,
     isCameraLive: Bool = false,
     liveCameraMirrored: Bool = false,
-    isCameraStartingUp: Bool = false,
-    captureFlashActive: Bool = false,
+    shutterController: CameraShutterController? = nil,
+    isShutterFullyClosed: Bool = false,
+    isShutterCycling: Bool = false,
+    suppressLivePreview: Bool = false,
     onCommitStroke: @escaping () -> Void,
     @ViewBuilder trailingHeader: @escaping () -> TrailingHeader
   ) {
@@ -129,8 +143,10 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.liveCameraDevice = liveCameraDevice
     self.isCameraLive = isCameraLive
     self.liveCameraMirrored = liveCameraMirrored
-    self.isCameraStartingUp = isCameraStartingUp
-    self.captureFlashActive = captureFlashActive
+    self.shutterController = shutterController
+    self.isShutterFullyClosed = isShutterFullyClosed
+    self.isShutterCycling = isShutterCycling
+    self.suppressLivePreview = suppressLivePreview
     self.onCommitStroke = onCommitStroke
     self.TrailingHeaderView = trailingHeader
   }
@@ -221,29 +237,32 @@ struct SharedCanvasView<TrailingHeader: View>: View {
       }
 
       ZStack {
-        // Canvas background — switches to black in camera mode so the white
-        // drawing surface doesn't bleed through while the live preview fades in.
-        RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous)
-          .fill(isCameraLive ? Color.black : Color.backgroundColor)
-          .stroke(.borderColor, lineWidth: 1.0)
-          .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+        // Inner content — backdrop, drawing surface, live preview, shutter and
+        // inner shadow all share a single rounded-rect clip applied at this
+        // container level. Individual layers can overscan their own frames
+        // (e.g. the shutter blades) and the container clip handles trimming —
+        // no per-layer clipShape/mask needed, and no hairline aliasing along
+        // the canvas rim.
+        ZStack {
+          // Canvas background — switches to black in camera mode so the white
+          // drawing surface doesn't bleed through while the live preview fades in.
+          Rectangle()
+            .fill(isCameraLive ? Color.black : Color.backgroundColor)
 
-        // Tracing-reference backdrop: photo at 30% opacity over a fixed white
-        // base so its appearance is identical in light/dark themes (opacity
-        // would otherwise blend with the theme-dependent canvas background).
-        if !isCameraLive, let backdrop = backdropImage {
-          ZStack {
-            Color.white
-            Image(uiImage: backdrop)
-              .resizable()
-              .scaledToFill()
-              .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-              .opacity(0.3)
+          // Tracing-reference backdrop: photo at 30% opacity over a fixed white
+          // base so its appearance is identical in light/dark themes (opacity
+          // would otherwise blend with the theme-dependent canvas background).
+          if !isCameraLive, let backdrop = backdropImage {
+            ZStack {
+              Color.white
+              Image(uiImage: backdrop)
+                .resizable()
+                .scaledToFill()
+                .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+                .opacity(0.3)
+            }
+            .allowsHitTesting(false)
           }
-          .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-          .clipShape(RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous))
-          .allowsHitTesting(false)
-        }
 
         // Drawing area
         Canvas { context, size in
@@ -308,7 +327,6 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           }
         }
         .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-        .clipShape(RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous))
         .id(placeholderID)
         .opacity(isCameraLive ? 0 : 1)
         .allowsHitTesting(!isCameraLive)
@@ -380,44 +398,78 @@ struct SharedCanvasView<TrailingHeader: View>: View {
             }
         )
 
-        // Live camera preview — rendered as a sibling of the Canvas so its
-        // visibility isn't affected by Canvas's opacity, plus a "Turning on
-        // camera…" placeholder until the session is running.
-        if isCameraLive, let session = liveCameraSession {
-          ZStack {
-            CameraPreviewView(session: session, device: liveCameraDevice, mirrored: liveCameraMirrored)
-              .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-            if isCameraStartingUp {
-              // Centered hint shown until frames start flowing.
-              HStack(spacing: 8) {
-                ProgressView().tint(.white)
-                Text("Turning on camera…")
-                  .font(.appSubheadline())
-                  .foregroundStyle(.white)
-              }
-              .padding(.horizontal, 12)
-              .padding(.vertical, 8)
-              .background(.black.opacity(0.5), in: Capsule())
-            }
-            // Shutter flash — full-bleed white briefly on capture.
-            if captureFlashActive {
-              Color.white
-                .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-                .allowsHitTesting(false)
-            }
-          }
-          .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
-          .clipShape(RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous))
-          .allowsHitTesting(false)
-          .transition(.opacity)
+        // Live camera preview — only mounted while the shutter is fully closed
+        // over the canvas, then latched across the open phase so the feed stays
+        // visible once the blades retract.
+        if cameraPreviewMounted, !suppressLivePreview, let session = liveCameraSession {
+          CameraPreviewView(session: session, device: liveCameraDevice, mirrored: liveCameraMirrored)
+            .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+            .allowsHitTesting(false)
         }
+
+        // Camera shutter — overlays the canvas area regardless of mode so it can
+        // close over either the live preview (entry) or the drawing canvas (exit).
+        // Overscans past the canvas; the container clip below trims it.
+        if let shutterController {
+          let shutterOverscan: CGFloat = 2
+          CameraShutterView(controller: shutterController)
+            .frame(width: CANVAS_SIZE + shutterOverscan * 2, height: CANVAS_SIZE + shutterOverscan * 2)
+            .allowsHitTesting(false)
+        }
+
+        // Inner shadow hugging the canvas cutout — drawn last so it overlays
+        // the shutter blades, giving the rounded-rect rim depth even while
+        // the shutter is fully closed. Stroke is drawn at 2× the desired
+        // shadow depth so its centerline (peak intensity) lands on the rect
+        // edge; the container clip below removes the outer half, leaving a
+        // one-directional gradient that fades purely inward.
+        RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous)
+          .stroke(Color.black.opacity(0.7), lineWidth: 8)
+          .blur(radius: 4)
+          .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+          .opacity((isCameraLive || isShutterCycling) ? 1 : 0)
+          .animation(.easeInOut(duration: 0.15), value: isCameraLive || isShutterCycling)
+          .allowsHitTesting(false)
+        }
+        .compositingGroup()
+        .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+        .mask(
+          RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous)
+            .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+        )
+
+        // Border drawn on top of the clipped container so it remains visible
+        // above the shutter / preview / inner shadow.
+        RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous)
+          .strokeBorder(.borderColor, lineWidth: 1.0)
+          .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+          .allowsHitTesting(false)
       }
     }
     .onAppear {
       decodePlaceholder()
+      cameraPreviewMounted = isCameraLive
     }
     .onChange(of: placeholderData) { _, _ in
       decodePlaceholder()
+    }
+    .onChange(of: isShutterFullyClosed) { _, closed in
+      // Latch the preview to the live-mode state on each edge of the shutter
+      // being fully closed — that's exactly when the swap behind the blades
+      // happens, so mounting/unmounting is invisible.
+      if closed {
+        cameraPreviewMounted = isCameraLive
+      }
+    }
+    .onChange(of: isCameraLive) { _, live in
+      if !live {
+        // Always tear the preview down the moment we leave live mode — covers
+        // both the in-cycle exit (shutter is closed over it) and out-of-band
+        // teardowns like `reset()` triggered by a sheet dismiss.
+        cameraPreviewMounted = false
+      } else if isShutterFullyClosed {
+        cameraPreviewMounted = true
+      }
     }
   }
 
