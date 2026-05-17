@@ -4,6 +4,7 @@
 //
 
 import AVFoundation
+import ImageIO
 import SwiftUI
 import UIKit
 
@@ -35,13 +36,35 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   private let photoOutput = AVCapturePhotoOutput()
   private var currentInput: AVCaptureDeviceInput?
   private var didConfigure = false
-  /// Held while `setPreparedPhotoSettingsArray` preparation is in flight. AVF
-  /// internally locks the session in a config state during prep, and
-  /// `stopRunning` called during that window throws "between begin/commit".
-  /// `stop()` waits on this semaphore so prep always completes before teardown.
-  private let prewarmSemaphore = DispatchSemaphore(value: 1)
+  private var didRegisterRunningObservers = false
 
   private var captureContinuation: CheckedContinuation<UIImage?, Never>?
+
+  /// Bridge AVCaptureSession's running notifications to `isRunning`. Reading
+  /// `session.isRunning` synchronously right after `startRunning()` can return
+  /// `false` while the session is still finishing interruption recovery (e.g.
+  /// after iOS auto-paused it for a background transition) — that one-shot
+  /// read would otherwise leave `isRunning` stuck at `false` forever, hanging
+  /// `waitUntilSessionRunning` on the next live-mode entry.
+  private func registerRunningObserversIfNeeded() {
+    guard !didRegisterRunningObservers else { return }
+    didRegisterRunningObservers = true
+    let center = NotificationCenter.default
+    center.addObserver(
+      forName: .AVCaptureSessionDidStartRunning,
+      object: session,
+      queue: .main
+    ) { [weak self] _ in
+      self?.isRunning = true
+    }
+    center.addObserver(
+      forName: .AVCaptureSessionDidStopRunning,
+      object: session,
+      queue: .main
+    ) { [weak self] _ in
+      self?.isRunning = false
+    }
+  }
 
   @MainActor
   func start() async {
@@ -50,49 +73,26 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
     // Kick off session config + startRunning on the dedicated queue but do NOT
     // block here — the UI flips to camera mode immediately, and CameraPreviewView
     // retries connection setup until the session is running.
+    registerRunningObserversIfNeeded()
     sessionQueue.async { [weak self] in
       guard let self else { return }
       self.configureSessionIfNeeded()
       if !self.session.isRunning {
         self.session.startRunning()
       }
-      let running = self.session.isRunning
-      // Prewarm the photo pipeline so the first user-initiated capture doesn't
-      // pay the cold-start cost (buffer allocation, AE/AF convergence) — that
-      // delay shows up as the shutter staying closed for ~1s on the first
-      // capture after entering live mode.
-      if running {
-        let prewarmSettings = AVCapturePhotoSettings()
-        prewarmSettings.photoQualityPrioritization = .speed
-        self.prewarmSemaphore.wait()
-        self.photoOutput.setPreparedPhotoSettingsArray(
-          [prewarmSettings]
-        ) { [weak self] _, _ in
-          self?.prewarmSemaphore.signal()
-        }
-      }
-      DispatchQueue.main.async { [weak self] in
-        self?.isRunning = running
-      }
+      // `isRunning` is published by the didStartRunning notification observer;
+      // don't write it here — `session.isRunning` can read false right after
+      // `startRunning()` returns during interruption recovery.
     }
   }
 
   func stop() {
     sessionQueue.async { [weak self] in
       guard let self else { return }
-      // Block until the prewarm's setPreparedPhotoSettingsArray completion has
-      // fired. AVF locks the session in a config-like state during prep, and
-      // calling stopRunning during that window raises the "between begin/commit"
-      // assertion. The completion fires on AVF's internal queue, not
-      // sessionQueue, so this wait can't deadlock.
-      self.prewarmSemaphore.wait()
-      self.prewarmSemaphore.signal()
       if self.session.isRunning {
         self.session.stopRunning()
       }
-      DispatchQueue.main.async { [weak self] in
-        self?.isRunning = false
-      }
+      // `isRunning` is published by the didStopRunning notification observer.
     }
   }
 
@@ -149,24 +149,31 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
         guard let self else { return }
         let settings = AVCapturePhotoSettings()
         settings.photoQualityPrioritization = .speed
-        self.applyCaptureMirror(for: currentPosition)
-        if let angle = captureAngle {
-          for connection in self.photoOutput.connections {
-            if connection.isVideoRotationAngleSupported(angle) {
-              connection.videoRotationAngle = angle
+        // Batch all connection mutations into a single reconfigure. Without
+        // begin/commitConfiguration each property write to a running session
+        // can trigger its own XPC round-trip to mediaserverd, which on slow
+        // configurations surfaces as `FigCaptureSourceRemote err=-17281` log
+        // spam. We also skip writes that match the current value to avoid
+        // touching the configuration at all when flip/init already set it.
+        let wantMirrored = (currentPosition == .front)
+        self.session.beginConfiguration()
+        for connection in self.photoOutput.connections {
+          if connection.isVideoMirroringSupported {
+            if connection.automaticallyAdjustsVideoMirroring {
+              connection.automaticallyAdjustsVideoMirroring = false
+            }
+            if connection.isVideoMirrored != wantMirrored {
+              connection.isVideoMirrored = wantMirrored
             }
           }
+          if let angle = captureAngle,
+             connection.videoRotationAngle != angle,
+             connection.isVideoRotationAngleSupported(angle) {
+            connection.videoRotationAngle = angle
+          }
         }
+        self.session.commitConfiguration()
         self.photoOutput.capturePhoto(with: settings, delegate: self)
-      }
-    }
-  }
-
-  private func applyCaptureMirror(for position: AVCaptureDevice.Position) {
-    for connection in photoOutput.connections {
-      if connection.isVideoMirroringSupported {
-        connection.automaticallyAdjustsVideoMirroring = false
-        connection.isVideoMirrored = (position == .front)
       }
     }
   }
@@ -242,66 +249,49 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
 
 extension CameraReferenceController: AVCapturePhotoCaptureDelegate {
   func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+    if let error {
+      // AVFoundation occasionally fails a capture under thermal pressure or
+      // mid-reconfigure (often co-occurring with the FigCaptureSourceRemote
+      // err=-17281 console spam). We surface it to the log instead of
+      // swallowing silently, but still resume the continuation with nil so
+      // the caller falls back to idle mode cleanly.
+      print("[CameraReferenceController] photo capture failed: \(error)")
+    }
     let data = photo.fileDataRepresentation()
-    let image: UIImage? = {
-      guard let data, let raw = UIImage(data: data) else { return nil }
-      // Bake imageOrientation into pixels first so subsequent cropping works in
-      // the visible coordinate space — otherwise front-camera (which arrives
-      // with mirrored/right-rotated EXIF) gets cropped from the wrong region.
-      let upright = Self.upright(raw)
-      let cropped = Self.centerCroppedSquare(upright)
-      // Downsample to roughly the canvas's pixel footprint so SwiftUI's
-      // `Image(uiImage:)` doesn't have to decode/downsample a 12-MP bitmap on
-      // the main thread the first time the backdrop appears (that decode would
-      // otherwise stutter the shutter open animation).
-      return Self.downsample(cropped, maxPixelDimension: 1024)
-    }()
+    // Image processing path used to be: UIImage(data:) → full-size upright
+    // render → full-size square crop → downsample render. Three full bitmap
+    // renders of a 12-MP photo on the photo-output delegate queue, which on
+    // intermittent CPU pressure ballooned to ~800ms and starved the main
+    // thread of frames during the fully-closed-to-open shutter transition.
+    // ImageIO decodes once, downsamples in-decoder, and bakes the EXIF
+    // orientation in a single pass — typically 30–60ms total.
+    let image: UIImage? = data.flatMap { Self.makeBackdrop(from: $0, maxPixelDimension: 1024) }
     let continuation = self.captureContinuation
     self.captureContinuation = nil
     continuation?.resume(returning: image)
   }
 
-  /// Renders the image into a new bitmap with `imageOrientation == .up`,
-  /// preserving the visible content exactly as the user saw it in the preview
-  /// (including any mirroring applied by the capture connection).
-  private static func upright(_ image: UIImage) -> UIImage {
-    if image.imageOrientation == .up { return image }
-    let format = UIGraphicsImageRendererFormat()
-    format.scale = image.scale
-    format.opaque = true
-    let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
-    return renderer.image { _ in
-      image.draw(in: CGRect(origin: .zero, size: image.size))
+  /// Decodes JPEG `data` into a square, orientation-baked, downsampled
+  /// `UIImage` suitable for use as the canvas backdrop. Uses ImageIO so the
+  /// 12-MP source is never materialized as a full bitmap.
+  private static func makeBackdrop(from data: Data, maxPixelDimension: CGFloat) -> UIImage? {
+    guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+    let options: [CFString: Any] = [
+      kCGImageSourceCreateThumbnailFromImageAlways: true,
+      kCGImageSourceCreateThumbnailWithTransform: true,
+      kCGImageSourceShouldCacheImmediately: true,
+      // Oversample slightly so the post-thumbnail square crop still meets the
+      // target pixel dimension on its shortest side.
+      kCGImageSourceThumbnailMaxPixelSize: Int(maxPixelDimension * 1.5),
+    ]
+    guard let thumb = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+      return nil
     }
-  }
-
-  /// Renders the image into a new bitmap whose larger side is at most
-  /// `maxPixelDimension` points (scale 1). Cheaper than letting SwiftUI's
-  /// Image view decode a multi-megapixel UIImage on first display.
-  private static func downsample(_ image: UIImage, maxPixelDimension: CGFloat) -> UIImage {
-    let largest = max(image.size.width, image.size.height)
-    guard largest > maxPixelDimension else { return image }
-    let scale = maxPixelDimension / largest
-    let target = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-    let format = UIGraphicsImageRendererFormat()
-    format.scale = 1
-    format.opaque = true
-    let renderer = UIGraphicsImageRenderer(size: target, format: format)
-    return renderer.image { _ in
-      image.draw(in: CGRect(origin: .zero, size: target))
-    }
-  }
-
-  private static func centerCroppedSquare(_ image: UIImage) -> UIImage {
-    let s: CGFloat = min(image.size.width, image.size.height)
-    let format = UIGraphicsImageRendererFormat()
-    format.scale = image.scale
-    format.opaque = true
-    let renderer = UIGraphicsImageRenderer(size: CGSize(width: s, height: s), format: format)
-    return renderer.image { _ in
-      let xOff = (image.size.width - s) / 2
-      let yOff = (image.size.height - s) / 2
-      image.draw(at: CGPoint(x: -xOff, y: -yOff))
-    }
+    let w = CGFloat(thumb.width)
+    let h = CGFloat(thumb.height)
+    let side = min(w, h)
+    let cropRect = CGRect(x: (w - side) / 2, y: (h - side) / 2, width: side, height: side)
+    let cropped = thumb.cropping(to: cropRect) ?? thumb
+    return UIImage(cgImage: cropped, scale: 1, orientation: .up)
   }
 }

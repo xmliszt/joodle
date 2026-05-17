@@ -177,7 +177,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
             }
             if !config.canClear || config.hideStrokeButtons, let leading = config.leadingExtra {
               leading
-                .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
+                .transition(.opacity.combined(with: .scale))
             }
           }
 
@@ -219,10 +219,10 @@ struct SharedCanvasView<TrailingHeader: View>: View {
                 .opacity(config.canRedo ? 1.0 : 0.3)
               }
             }
-            .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
+            .transition(.opacity.combined(with: .scale))
           } else if let centerContent = config.centerContent {
             centerContent
-              .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
+              .transition(.opacity.combined(with: .scale))
           }
         }
         // Reserve enough height for a circular glass button (40pt + 2pt padding on
@@ -231,6 +231,13 @@ struct SharedCanvasView<TrailingHeader: View>: View {
         // is shown. Avoids a layout shift on entering/leaving camera mode.
         .frame(maxWidth: .infinity, minHeight: 44)
         .padding(.horizontal, 12)
+        // Drive the leading/center/trailing transitions with a springy curve.
+        // Kept as an implicit `.animation(value:)` rather than baked into the
+        // transitions themselves so a `disablesAnimations=true` transaction
+        // (e.g. `CameraReferenceContext.reset()` during backgrounding) can
+        // override it — baked-in transition animations otherwise leave the
+        // glass buttons stranded mid-transition when the app snapshots.
+        .animation(.springFkingSatifying, value: isCameraLive)
         // Elevate buttons row above the canvas in z-order so overlays
         // (e.g. TorchlightGlowView on the bulb button) render on top of the canvas.
         .zIndex(1)

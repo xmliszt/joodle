@@ -8,7 +8,7 @@
 //  overlay rendered outside the drawing container).
 //
 
-import AVFoundation
+@preconcurrency import AVFoundation
 import Combine
 import SwiftUI
 import UIKit
@@ -39,8 +39,11 @@ final class CameraReferenceContext: ObservableObject {
   @Published private(set) var isShutterCycling: Bool = false
   /// When true, parents should unmount the live preview entirely. Used during
   /// a flip cycle to prevent the old device's last frame from lingering on
-  /// the shared preview layer while the session swaps inputs.
-  @Published private(set) var suppressPreview: Bool = false
+  /// the shared preview layer while the session swaps inputs, and during
+  /// `.inactive` scene-phase transitions so the iOS snapshot doesn't capture
+  /// a live AVCaptureVideoPreviewLayer (which then takes a long time to
+  /// reconcile on return to foreground).
+  @Published var suppressPreview: Bool = false
 
   let controller: CameraReferenceController
   /// Drives the shutter overlay; every camera-mode transition is bracketed by
@@ -93,8 +96,14 @@ final class CameraReferenceContext: ObservableObject {
       // crashes into the tail of the close and the last few blade frames
       // stutter.
       try? await Task.sleep(nanoseconds: 120_000_000)
+      // `reset()` (e.g. canvas dismissed mid-cycle) cancels the cycle's Task.
+      // `try?` swallows the cancellation, so without this guard we'd fall
+      // through and flip `mode` back to `.live` after `reset()` set it to
+      // `.idle`, wedging the next canvas-open in camera UI.
+      if Task.isCancelled { return }
       withAnimation(.easeInOut(duration: 0.2)) { self.mode = .live }
       await self.controller.start()
+      if Task.isCancelled { return }
       // Block the open until the session has actually started producing frames,
       // otherwise the shutter would reveal a black preview surface.
       if !self.isSessionRunning {
@@ -117,31 +126,67 @@ final class CameraReferenceContext: ObservableObject {
       // last frame isn't held on the layer while the session swaps inputs.
       self.suppressPreview = true
       try? await Task.sleep(nanoseconds: 16_000_000)
+      if Task.isCancelled { return }
+      // Arm the notification observer BEFORE asking the controller to flip,
+      // so we don't miss the post on fast reconfigures.
+      let configChanged = self.awaitNextSessionConfigurationChange()
       self.controller.flip()
-      // Let the session swap inputs and start producing frames from the new
-      // device before we remount the preview.
-      try? await Task.sleep(nanoseconds: 250_000_000)
+      // Wait for the controller's commitConfiguration to post
+      // cameraSessionConfigurationDidChange — exact signal that the new device
+      // is bound to the session — rather than a fixed sleep that's too short
+      // on cold front-camera spin-up and wastefully long otherwise. The helper
+      // caps the wait at 600ms so a missed notification can't hang the cycle.
+      await configChanged.value
+      if Task.isCancelled { return }
       self.suppressPreview = false
-      // Tiny extra dwell so the remounted layer has actually drawn a new
+      // Tiny dwell so the remounted preview layer has actually drawn a new
       // frame before the shutter starts opening.
-      try? await Task.sleep(nanoseconds: 150_000_000)
+      try? await Task.sleep(nanoseconds: 80_000_000)
     }
   }
 
   func capture() async {
     guard mode == .live else { return }
-    // Give SwiftUI a beat to finish the close animation before we kick off
-    // the heavy mode-flip + session-start work — otherwise that work
-    // crashes into the tail of the close and the last few blade frames
-    // stutter.
-    try? await Task.sleep(nanoseconds: 120_000_000)
     shutter.cycle(fastClose: true) {
+      // Give SwiftUI a frame after the close animation finishes before we
+      // submit the heavy capture work, so the fully-closed state has
+      // actually painted before image-processing CPU pressure ramps up.
+      try? await Task.sleep(nanoseconds: 32_000_000)
+      if Task.isCancelled { return }
       let image = await self.controller.capturePhoto()
+      if Task.isCancelled { return }
       if let image {
         self.backdropImage = image
       }
+      // stop() dispatches onto the controller's session queue and returns
+      // immediately, so it doesn't gate the shutter open.
       self.controller.stop()
       withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
+    }
+  }
+
+  /// Returns a Task that completes the next time the camera controller posts
+  /// `cameraSessionConfigurationDidChange`, or after a 600ms safety cap if
+  /// the notification is missed.
+  private func awaitNextSessionConfigurationChange() -> Task<Void, Never> {
+    Task {
+      await withTaskGroup(of: Void.self) { group in
+        group.addTask {
+          // Filter by name only — AVCaptureSession isn't Sendable, so passing
+          // it as the `object` filter into a detached Task is a concurrency
+          // warning. The camera controller is the sole poster of this
+          // notification, so a name-only filter is unambiguous.
+          let stream = NotificationCenter.default.notifications(
+            named: .cameraSessionConfigurationDidChange
+          )
+          for await _ in stream { return }
+        }
+        group.addTask {
+          try? await Task.sleep(nanoseconds: 600_000_000)
+        }
+        _ = await group.next()
+        group.cancelAll()
+      }
     }
   }
 

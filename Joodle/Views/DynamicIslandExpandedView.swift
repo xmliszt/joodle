@@ -48,6 +48,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
 
           // The content
           content
+            .frame(width: UIScreen.main.bounds.width - (UIDevice.dynamicIslandFrame.origin.y * 2))
             .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius - UIDevice.dynamicIslandFrame.origin.y - 8, style: .continuous))
             .opacity(isExpanded ? 1 : 0)
             .blur(radius: isExpanded ? 0 : 50)

@@ -324,16 +324,23 @@ struct DrawingCanvasView: View {
       Text("Joodle needs camera access to capture reference photos for tracing. Enable it in Settings.")
     }
     .onChange(of: scenePhase) { _, newPhase in
-      // Background/inactive: tear the camera down synchronously. Running a
-      // shutter cycle here doesn't work — its Task gets suspended with the
-      // app, so on return the shutter shows up frozen-closed for the
-      // remainder of an animation that never advanced while backgrounded.
-      // Hard-reset instead so the canvas comes back idle.
-      // Only react to a real background transition. `.inactive` fires for
-      // transient interruptions like the home-gesture peek or Control Center,
-      // and tearing the camera down for those is too aggressive.
-      if newPhase == .background, !isMockMode, cameraContext.mode == .live {
+      guard !isMockMode, cameraContext.mode == .live else { return }
+      switch newPhase {
+      case .inactive:
+        // iOS snapshots the UI during the `.inactive` transition for the app
+        // switcher / home-peek. If the AVCaptureVideoPreviewLayer is captured
+        // mid-frame, return-to-foreground takes a long time to reconcile and
+        // the screen appears frozen. Unmount the preview here so the snapshot
+        // captures a plain black canvas instead — cheap to restore.
+        cameraContext.suppressPreview = true
+      case .active:
+        // Returning from peek / app-switcher: re-mount the live preview.
+        cameraContext.suppressPreview = false
+      case .background:
+        // Real background transition: tear the camera all the way down.
         cameraContext.reset()
+      @unknown default:
+        break
       }
     }
     .onChange(of: albumPickerItem) { _, newItem in
