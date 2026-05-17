@@ -75,7 +75,6 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         // Map splitPosition 1.0->0.5 to opacity 0.0->1.0
         Color.appAccent
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          .opacity(effectiveSplit >= 1.0 ? 0.0 : min(1.0, (1.0 - effectiveSplit) * 2))
 
         VStack(spacing: 0) {
           // Top View - YearGridView
