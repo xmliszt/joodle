@@ -230,8 +230,8 @@ extension View {
                 title: "Join Our Community! 🫶",
                 message: "Connect with others, share doodles and stories!",
                 primaryButton: RemoteAlert.AlertButton(
-                    text: "Join WhatsApp Community",
-                    url: "https://chat.whatsapp.com/FF2rMEiSOwe9hsRapSyvdY"
+                    text: "Join Community",
+                    url: nil
                 ),
                 secondaryButton: RemoteAlert.AlertButton(
                     text: "Maybe Later",
@@ -279,8 +279,8 @@ extension View {
               title: "Join Our Community! 🎮",
               message: "Connect with others, share doodles and stories!",
               primaryButton: RemoteAlert.AlertButton(
-                  text: "Join WhatsApp Community",
-                  url: "https://chat.whatsapp.com/FF2rMEiSOwe9hsRapSyvdY"
+                  text: "Join Community",
+                  url: nil
               ),
               secondaryButton: RemoteAlert.AlertButton(
                   text: "Maybe Later",

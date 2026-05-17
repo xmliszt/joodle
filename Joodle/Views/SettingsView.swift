@@ -947,26 +947,6 @@ ID: \(deviceIdentifier)
   private var getInvolvedSection: some View {
     Section {
       Button {
-        AnalyticsManager.shared.trackExternalLinkOpened(url: "whatsapp_community", type: "social")
-        openURL(URL(string: "https://chat.whatsapp.com/FF2rMEiSOwe9hsRapSyvdY")!)
-      } label: {
-        HStack {
-          Image("Social/whatsapp")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 28, height: 28)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-          Text("Join WhatsApp Community")
-            .foregroundColor(.primary)
-          Spacer()
-          Image(systemName: "arrow.up.right")
-            .font(.appCaption())
-            .foregroundColor(.secondary)
-        }
-        .contentShape(Rectangle())
-      }
-
-      Button {
         AnalyticsManager.shared.trackExternalLinkOpened(url: "x.com/xmliszt", type: "social")
         openURL(URL(string: "https://x.com/xmliszt")!)
       } label: {
