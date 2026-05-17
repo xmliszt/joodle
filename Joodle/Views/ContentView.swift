@@ -67,6 +67,11 @@ struct ContentView: View {
   @State private var navigateToNotePromptSetting = false
   @State private var hideDynamicIslandView = false
   @State private var showGraceExpiredPaywall = false
+
+  /// Shared camera-reference state. Consumed by DrawingCanvasView for the in-canvas
+  /// preview / top-row controls / non-DI in-sheet shutter, and by this view for the
+  /// fullscreen blurred backdrop and the bottom shutter overlay on DI devices.
+  @StateObject private var cameraContext = CameraReferenceContext()
   private let headerHeight: CGFloat = 100.0
 
   // Hit testing optimization (O(1) lookup)
@@ -304,13 +309,23 @@ struct ContentView: View {
           },
           isShowing: showDrawingCanvas && !UIDevice.hasDynamicIsland
         )
+        .environmentObject(cameraContext)
         .fixedSize(horizontal: false, vertical: true)
         .readHeight($drawingCanvasSheetHeight)
         .disabled(dataProvider.selectedDateItem == nil)
         .presentationDetents([.height(drawingCanvasSheetHeight)])
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(UIDevice.screenCornerRadius)
-        .disableLiquidGlass()
+        .presentationBackground {
+          // darkens for focus.
+          if cameraContext.mode == .live {
+            Color.black
+            .ignoresSafeArea()
+            .transition(.opacity)
+          } else {
+            Color.appBackground.ignoresSafeArea()
+          }
+        }
       }
       // Navigate to setting view
       .navigationDestination(isPresented: $navigateToSettings) {
@@ -344,6 +359,7 @@ struct ContentView: View {
               },
               isShowing: showDrawingCanvas
             )
+            .environmentObject(cameraContext)
           },
           // Hide dynamic island view when navigate to setting
           hidden: hideDynamicIslandView,
@@ -391,6 +407,20 @@ struct ContentView: View {
           .allowsHitTesting(false)
           .zIndex(50)
           .transition(.opacity)
+      }
+
+      // Camera reference mode — bottom shutter overlay (DI devices).
+      // Non-DI devices render the shutter inside the bottom sheet instead.
+      if UIDevice.hasDynamicIsland && cameraContext.mode == .live {
+        VStack {
+          Spacer()
+          ShutterButton(style: .glass) {
+            Task { await cameraContext.capture() }
+          }
+          .padding(.bottom, 32)
+        }
+        .ignoresSafeArea(.container, edges: .bottom)
+        .transition(.opacity)
       }
 
       // Move drawing mode — floating instruction bar (interactive)

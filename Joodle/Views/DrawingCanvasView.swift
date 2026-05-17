@@ -5,6 +5,7 @@
 //  Created by Li Yuxuan on 10/8/25.
 //
 
+import PhotosUI
 import SwiftData
 import SwiftUI
 import UIKit
@@ -71,6 +72,14 @@ struct DrawingCanvasView: View {
   @State private var promptID = UUID()
   @State private var isIlluminated = false
 
+  // Camera reference state — shared with ContentView via environment object.
+  // Optional (absent in tutorial/mock mode) so the feature is fully disabled there.
+  @EnvironmentObject private var cameraContext: CameraReferenceContext
+
+  /// Album picker selection — selected item is consumed asynchronously to load
+  /// the image data, then center-cropped and installed as the camera backdrop.
+  @State private var albumPickerItem: PhotosPickerItem?
+
   /// Whether we're in mock/tutorial mode
   private var isMockMode: Bool {
     mockStore != nil
@@ -112,6 +121,18 @@ struct DrawingCanvasView: View {
     }
   }
 
+  /// Whether the camera reference button (top-left) should be visible.
+  /// Mirrors the bulb button visibility logic — hidden once any stroke exists
+  /// and hidden while the camera live mode is active (the top row is empty
+  /// except for the flip-camera button at the center).
+  private var canShowCameraButton: Bool {
+    !isMockMode && paths.isEmpty && currentPath.isEmpty && !isCameraLive
+  }
+
+  private var isCameraLive: Bool {
+    !isMockMode && cameraContext.mode == .live
+  }
+
   var body: some View {
     ZStack(alignment: .top) {
       VStack(spacing: 12) {
@@ -129,9 +150,25 @@ struct DrawingCanvasView: View {
             canUndo: !undoStack.isEmpty,
             canRedo: !redoStack.isEmpty,
             showClearConfirmation: $showClearConfirmation,
-            centerContent: isMockMode ? nil : AnyView(inspirationBulbButton)
+            centerContent: isCameraLive
+              ? AnyView(cameraFlipButton)
+              : (isMockMode ? nil : AnyView(inspirationBulbButton)),
+            leadingExtra: {
+              if isCameraLive { return AnyView(exitCameraButton) }
+              if canShowCameraButton { return AnyView(cameraReferenceButton) }
+              return nil
+            }(),
+            trailingExtra: isCameraLive ? AnyView(albumPickerButton) : nil,
+            hideStrokeButtons: isCameraLive
           ),
           canvasCornerRadius: canvasCornerRadius,
+          backdropImage: isMockMode ? nil : cameraContext.backdropImage,
+          liveCameraSession: isMockMode ? nil : cameraContext.session,
+          liveCameraDevice: isMockMode ? nil : cameraContext.currentDevice,
+          isCameraLive: isCameraLive,
+          liveCameraMirrored: !isMockMode && cameraContext.isFrontFacing,
+          isCameraStartingUp: isCameraLive && !cameraContext.isSessionRunning,
+          captureFlashActive: !isMockMode && cameraContext.captureFlashActive,
           onCommitStroke: commitCurrentStroke
         ) {
           // Save button
@@ -151,20 +188,39 @@ struct DrawingCanvasView: View {
         .fixedSize(horizontal: false, vertical: true)
         
         // Inspiration prompt text — centered, below the canvas (hidden in tutorial mode)
-        if !isMockMode, let prompt = currentPrompt {
+        if !isMockMode, let prompt = currentPrompt, !isCameraLive {
           InspirationPromptView(prompt: prompt)
             .id(promptID)
             .transition(.opacity.combined(with: .scale(scale: 0.95)))
             .padding(.horizontal, 20)
             .padding(.bottom, 4)
         }
+
+        // In-sheet shutter button for non-Dynamic-Island devices.
+        // Extending the VStack here causes `readHeight` in ContentView to grow
+        // the sheet's presentation detent, pushing the canvas up automatically.
+        if isCameraLive, !UIDevice.hasDynamicIsland {
+          ShutterButton(style: .outline) {
+            Task { await cameraContext.capture() }
+          }
+          .padding(.top, 12)
+          .padding(.bottom, 24)
+          .transition(.opacity.combined(with: .scale(scale: 0.9)))
+        }
       }
       .animation(.springFkingSatifying, value: currentPrompt == nil)
       .animation(.springFkingSatifying, value: promptID)
+      // Non-overshooting curve for camera-mode transitions to prevent the DI
+      // container momentarily exceeding its final height (which would briefly
+      // reveal the white surface behind it).
+      .animation(.easeInOut(duration: 0.2), value: isCameraLive)
     }
     .padding(8)
     .padding(.top, 16)
     .padding(.bottom, 10)
+    // Keep any transient reveal during the camera-mode layout transition dark
+    // instead of letting the underlying white surface show through.
+    .background(Color.black)
     .onDisappear {
       // Safety net for non-DI devices: when the sheet is swiped away, SwiftUI may
       // tear down the view without propagating the isShowing binding change, so
@@ -221,6 +277,12 @@ struct DrawingCanvasView: View {
         undoStack.removeAll()
         redoStack.removeAll()
         drawingStateLoaded = false
+
+        // Tear down camera state so the LED turns off and the transient
+        // tracing photo doesn't leak into the next entry.
+        if !isMockMode {
+          cameraContext.reset()
+        }
       }
     }
     .onChange(of: subscriptionManager.hasPremiumAccess) { _, _ in
@@ -247,6 +309,35 @@ struct DrawingCanvasView: View {
     }
     .sheet(isPresented: $showPaywall) {
       StandalonePaywallView(source: "entry_limit")
+    }
+    .alert("Camera Access Needed", isPresented: cameraPermissionAlertBinding) {
+      Button("Cancel", role: .cancel) {}
+      Button("Open Settings") {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+          UIApplication.shared.open(url)
+        }
+      }
+    } message: {
+      Text("Joodle needs camera access to capture reference photos for tracing. Enable it in Settings.")
+    }
+    .onChange(of: scenePhase) { _, newPhase in
+      if newPhase != .active, !isMockMode, cameraContext.mode == .live {
+        cameraContext.cancelLive()
+      }
+    }
+    .onChange(of: albumPickerItem) { _, newItem in
+      guard let newItem else { return }
+      Task {
+        if let data = try? await newItem.loadTransferable(type: Data.self),
+           let raw = UIImage(data: data) {
+          let cropped = centerCroppedSquare(raw)
+          await MainActor.run {
+            cameraContext.backdropImage = cropped
+            cameraContext.cancelLive()
+          }
+        }
+        await MainActor.run { albumPickerItem = nil }
+      }
     }
     .preferredColorScheme(.dark)
     .postHogScreenView("Drawing Canvas")
@@ -304,6 +395,86 @@ struct DrawingCanvasView: View {
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(.ultraThinMaterial.quaternary)
     .clipShape(RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous))
+  }
+
+  // MARK: - Camera Reference
+
+  /// Render the picked image upright, then center-crop to a square so the
+  /// backdrop matches the canvas aspect.
+  private func centerCroppedSquare(_ image: UIImage) -> UIImage {
+    let upright: UIImage = {
+      if image.imageOrientation == .up { return image }
+      let format = UIGraphicsImageRendererFormat()
+      format.scale = image.scale
+      format.opaque = true
+      let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
+      return renderer.image { _ in
+        image.draw(in: CGRect(origin: .zero, size: image.size))
+      }
+    }()
+    let s = min(upright.size.width, upright.size.height)
+    let format = UIGraphicsImageRendererFormat()
+    format.scale = upright.scale
+    format.opaque = true
+    let renderer = UIGraphicsImageRenderer(size: CGSize(width: s, height: s), format: format)
+    return renderer.image { _ in
+      let xOff = (upright.size.width - s) / 2
+      let yOff = (upright.size.height - s) / 2
+      upright.draw(at: CGPoint(x: -xOff, y: -yOff))
+    }
+  }
+
+
+  private var cameraPermissionAlertBinding: Binding<Bool> {
+    Binding(
+      get: { !isMockMode && cameraContext.showPermissionDeniedAlert },
+      set: { newValue in
+        if !isMockMode {
+          cameraContext.showPermissionDeniedAlert = newValue
+        }
+      }
+    )
+  }
+
+  private var cameraReferenceButton: some View {
+    Button {
+      Haptic.play(with: .light)
+      Task { await cameraContext.enterLive() }
+    } label: {
+      Image(systemName: "camera.fill")
+    }
+    .circularGlassButton()
+  }
+
+  /// Top-right button in camera live mode — opens the system photo picker so
+  /// the user can import a photo from their album as the tracing backdrop.
+  private var albumPickerButton: some View {
+    PhotosPicker(selection: $albumPickerItem, matching: .images, photoLibrary: .shared()) {
+      Image(systemName: "photo.on.rectangle")
+    }
+    .circularGlassButton()
+  }
+
+  /// Top-left button in camera live mode — exits the camera back to the
+  /// drawing canvas without capturing.
+  private var exitCameraButton: some View {
+    Button {
+      Haptic.play(with: .light)
+      cameraContext.cancelLive()
+    } label: {
+      Image(systemName: "scribble")
+    }
+    .circularGlassButton()
+  }
+
+  private var cameraFlipButton: some View {
+    Button {
+      Haptic.play(with: .light)
+      cameraContext.flip()
+    } label: {
+      Image(systemName: "arrow.triangle.2.circlepath.camera")
+    }
+    .circularGlassButton(tintColor: .white)
   }
 
   // MARK: - Inspiration Bulb Button
@@ -744,8 +915,9 @@ struct DrawingCanvasView: View {
       onDismiss: {},
       isShowing: true
     )
+    .environmentObject(CameraReferenceContext())
   }
- 
+
 }
 
 #Preview("Mock Mode - Tutorial") {
@@ -761,6 +933,7 @@ struct DrawingCanvasView: View {
         mockStore: mockStore,
         mockEntry: nil
       )
+      .environmentObject(CameraReferenceContext())
     }
   }
   return MockPreview()

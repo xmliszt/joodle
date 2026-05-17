@@ -5,6 +5,7 @@
 //  Created by Li Yuxuan on 10/8/25.
 //
 
+import AVFoundation
 import SwiftUI
 
 /// Configuration for the canvas action buttons
@@ -18,6 +19,14 @@ struct CanvasButtonsConfig {
   let showClearConfirmation: Binding<Bool>?
   /// Optional view shown in the center slot when undo/redo buttons are hidden
   let centerContent: AnyView?
+  /// Optional view shown overlapping the clear-button slot (top-left).
+  /// Used for the camera/reference button which only appears when canClear is false.
+  let leadingExtra: AnyView?
+  /// Optional view shown in the trailing slot when stroke buttons are hidden
+  /// (e.g. camera live mode). Replaces the normal trailing save button.
+  let trailingExtra: AnyView?
+  /// When true, hide clear/undo/redo entirely (camera mode)
+  let hideStrokeButtons: Bool
 
   init(
     onClear: @escaping () -> Void,
@@ -27,7 +36,10 @@ struct CanvasButtonsConfig {
     canUndo: Bool = false,
     canRedo: Bool = false,
     showClearConfirmation: Binding<Bool>? = nil,
-    centerContent: AnyView? = nil
+    centerContent: AnyView? = nil,
+    leadingExtra: AnyView? = nil,
+    trailingExtra: AnyView? = nil,
+    hideStrokeButtons: Bool = false
   ) {
     self.onClear = onClear
     self.onUndo = onUndo
@@ -37,6 +49,9 @@ struct CanvasButtonsConfig {
     self.canRedo = canRedo
     self.showClearConfirmation = showClearConfirmation
     self.centerContent = centerContent
+    self.leadingExtra = leadingExtra
+    self.trailingExtra = trailingExtra
+    self.hideStrokeButtons = hideStrokeButtons
   }
 }
 
@@ -52,6 +67,22 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   var placeholderData: Data? = nil
   var buttonsConfig: CanvasButtonsConfig? = nil
   var canvasCornerRadius: CGFloat = 32
+
+  /// Optional tracing-reference image rendered as a 30% backdrop inside the canvas.
+  var backdropImage: UIImage? = nil
+  /// When set and `isCameraLive` is true, shows a live camera preview filling the canvas.
+  var liveCameraSession: AVCaptureSession? = nil
+  /// Active capture device — drives the preview's rotation coordinator so
+  /// orientation tracks correctly across camera flips.
+  var liveCameraDevice: AVCaptureDevice? = nil
+  var isCameraLive: Bool = false
+  var liveCameraMirrored: Bool = false
+  /// When true and `isCameraLive`, the in-canvas live preview shows a
+  /// "Turning on camera..." placeholder until the session is actually running.
+  var isCameraStartingUp: Bool = false
+  /// When true, a white flash is overlaid on the live preview to mimic a
+  /// camera shutter capture.
+  var captureFlashActive: Bool = false
 
   /// Track the maximum distance from start point during a gesture to detect dots vs strokes
   @State private var maxDistanceFromStart: CGFloat = 0
@@ -75,6 +106,13 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     placeholderData: Data? = nil,
     buttonsConfig: CanvasButtonsConfig? = nil,
     canvasCornerRadius: CGFloat = 32,
+    backdropImage: UIImage? = nil,
+    liveCameraSession: AVCaptureSession? = nil,
+    liveCameraDevice: AVCaptureDevice? = nil,
+    isCameraLive: Bool = false,
+    liveCameraMirrored: Bool = false,
+    isCameraStartingUp: Bool = false,
+    captureFlashActive: Bool = false,
     onCommitStroke: @escaping () -> Void,
     @ViewBuilder trailingHeader: @escaping () -> TrailingHeader
   ) {
@@ -86,6 +124,13 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.placeholderData = placeholderData
     self.buttonsConfig = buttonsConfig
     self.canvasCornerRadius = canvasCornerRadius
+    self.backdropImage = backdropImage
+    self.liveCameraSession = liveCameraSession
+    self.liveCameraDevice = liveCameraDevice
+    self.isCameraLive = isCameraLive
+    self.liveCameraMirrored = liveCameraMirrored
+    self.isCameraStartingUp = isCameraStartingUp
+    self.captureFlashActive = captureFlashActive
     self.onCommitStroke = onCommitStroke
     self.TrailingHeaderView = trailingHeader
   }
@@ -95,32 +140,48 @@ struct SharedCanvasView<TrailingHeader: View>: View {
       // Action Buttons Row
       if let config = buttonsConfig {
         HStack() {
-          // Clear button — use opacity to reserve space and prevent layout shift
-          Button(action: {
-            if let showConfirmation = config.showClearConfirmation {
-              showConfirmation.wrappedValue = true
-            } else {
-              config.onClear()
+          // Clear button — use opacity to reserve space and prevent layout shift.
+          // Hidden entirely in camera mode (hideStrokeButtons).
+          // `leadingExtra` (e.g. camera button) overlays the same slot when canClear is false.
+          ZStack {
+            if !config.hideStrokeButtons {
+              Button(action: {
+                if let showConfirmation = config.showClearConfirmation {
+                  showConfirmation.wrappedValue = true
+                } else {
+                  config.onClear()
+                }
+              }) {
+                Image(systemName: "trash")
+              }
+              .circularGlassButton(tintColor: .red)
+              .opacity(config.canClear ? 1.0 : 0.0)
+              .disabled(!config.canClear)
+              .allowsHitTesting(config.canClear)
             }
-          }) {
-            Image(systemName: "trash")
+            if !config.canClear || config.hideStrokeButtons, let leading = config.leadingExtra {
+              leading
+                .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
+            }
           }
-          .circularGlassButton(tintColor: .red)
-          .opacity(config.canClear ? 1.0 : 0.0)
-          .disabled(!config.canClear)
-          .allowsHitTesting(config.canClear)
 
           Spacer()
 
-          // Trailing content (e.g. Save button)
-          if !(TrailingHeaderView() is EmptyView) {
+          // Trailing content: in camera mode, prefer a `trailingExtra` override
+          // (e.g. album picker button); otherwise show the normal trailing
+          // (e.g. Save button).
+          if config.hideStrokeButtons {
+            if let trailing = config.trailingExtra {
+              trailing
+            }
+          } else if !(TrailingHeaderView() is EmptyView) {
             TrailingHeaderView()
           }
 
         }
         .overlay {
           // Center content absolutely centered, ignoring left/right widths
-          if config.canUndo || config.canRedo {
+          if !config.hideStrokeButtons, config.canUndo || config.canRedo {
             HStack(spacing: 8) {
               // Undo button
               if let onUndo = config.onUndo {
@@ -148,7 +209,11 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               .transition(.opacity.combined(with: .scale).animation(.springFkingSatifying))
           }
         }
-        .frame(maxWidth: .infinity, minHeight: 32)
+        // Reserve enough height for a circular glass button (40pt + 2pt padding on
+        // iOS 26+) so the row keeps the same height whether the leading/trailing
+        // glass buttons are visible or only the center content (e.g. camera flip)
+        // is shown. Avoids a layout shift on entering/leaving camera mode.
+        .frame(maxWidth: .infinity, minHeight: 44)
         .padding(.horizontal, 12)
         // Elevate buttons row above the canvas in z-order so overlays
         // (e.g. TorchlightGlowView on the bulb button) render on top of the canvas.
@@ -156,11 +221,29 @@ struct SharedCanvasView<TrailingHeader: View>: View {
       }
 
       ZStack {
-        // Canvas background
+        // Canvas background — switches to black in camera mode so the white
+        // drawing surface doesn't bleed through while the live preview fades in.
         RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous)
-          .fill(.backgroundColor)
+          .fill(isCameraLive ? Color.black : Color.backgroundColor)
           .stroke(.borderColor, lineWidth: 1.0)
           .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+
+        // Tracing-reference backdrop: photo at 30% opacity over a fixed white
+        // base so its appearance is identical in light/dark themes (opacity
+        // would otherwise blend with the theme-dependent canvas background).
+        if !isCameraLive, let backdrop = backdropImage {
+          ZStack {
+            Color.white
+            Image(uiImage: backdrop)
+              .resizable()
+              .scaledToFill()
+              .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+              .opacity(0.3)
+          }
+          .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+          .clipShape(RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous))
+          .allowsHitTesting(false)
+        }
 
         // Drawing area
         Canvas { context, size in
@@ -227,6 +310,8 @@ struct SharedCanvasView<TrailingHeader: View>: View {
         .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
         .clipShape(RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous))
         .id(placeholderID)
+        .opacity(isCameraLive ? 0 : 1)
+        .allowsHitTesting(!isCameraLive)
         .gesture(
           DragGesture(minimumDistance: 0)
             .onChanged { value in
@@ -294,6 +379,38 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               maxDistanceFromStart = 0
             }
         )
+
+        // Live camera preview — rendered as a sibling of the Canvas so its
+        // visibility isn't affected by Canvas's opacity, plus a "Turning on
+        // camera…" placeholder until the session is running.
+        if isCameraLive, let session = liveCameraSession {
+          ZStack {
+            CameraPreviewView(session: session, device: liveCameraDevice, mirrored: liveCameraMirrored)
+              .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+            if isCameraStartingUp {
+              // Centered hint shown until frames start flowing.
+              HStack(spacing: 8) {
+                ProgressView().tint(.white)
+                Text("Turning on camera…")
+                  .font(.appSubheadline())
+                  .foregroundStyle(.white)
+              }
+              .padding(.horizontal, 12)
+              .padding(.vertical, 8)
+              .background(.black.opacity(0.5), in: Capsule())
+            }
+            // Shutter flash — full-bleed white briefly on capture.
+            if captureFlashActive {
+              Color.white
+                .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+                .allowsHitTesting(false)
+            }
+          }
+          .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+          .clipShape(RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous))
+          .allowsHitTesting(false)
+          .transition(.opacity)
+        }
       }
     }
     .onAppear {

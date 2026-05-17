@@ -9,6 +9,7 @@ import SwiftUI
 
 struct DynamicIslandExpandedView<Content: View>: View {
 
+  @Environment(\.colorScheme) private var colorScheme
   @Binding var isExpanded: Bool
   let content: Content
   let hidden: Bool
@@ -30,10 +31,10 @@ struct DynamicIslandExpandedView<Content: View>: View {
 
   var body: some View {
     ZStack {
-      // Backdrop that creates the blur effect when expanded
+      // Backdrop that creates the blur effect when expanded, plus an optional
+      // black tint stacked on top so consumers can darken for focus modes.
       if isExpanded {
-        Rectangle()
-          .fill(.ultraThinMaterial)
+        Rectangle().fill(.ultraThinMaterial)
       }
 
       // Invisible container

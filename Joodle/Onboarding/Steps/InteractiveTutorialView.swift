@@ -28,6 +28,8 @@ struct InteractiveTutorialView: View {
     @State private var showReminderSheet = false
     /// Tracks the natural content height of the drawing canvas sheet (non-DI devices) for adaptive detent
     @State private var drawingCanvasSheetHeight: CGFloat = 460
+    /// Stub camera context — feature is fully gated behind isMockMode and never activates here.
+    @StateObject private var tutorialCameraContext = CameraReferenceContext()
     @State private var isScrubbing = false
     @State private var highlightedId: String?
 
@@ -161,6 +163,7 @@ struct InteractiveTutorialView: View {
                                         mockStore: mockStore,
                                         mockEntry: mockStore.selectedEntry
                                     )
+                                    .environmentObject(tutorialCameraContext)
                                     .tutorialHighlightAnchor(.drawingCanvas)
                                 },
                                 hidden: false,
@@ -452,6 +455,7 @@ struct InteractiveTutorialView: View {
                 mockStore: mockStore,
                 mockEntry: mockStore.selectedEntry
             )
+            .environmentObject(tutorialCameraContext)
             .overlay {
                 // Tutorial overlay inside the sheet for non-Dynamic Island devices
                 // Only show when on the drawing canvas sub-step of drawAndEdit
