@@ -12654,6 +12654,62 @@
         }
       }
     },
+    "Save photos to album" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer les photos dans l'album"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真をアルバムに保存"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진을 앨범에 저장"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将照片保存到相册"
+          }
+        }
+      }
+    },
+    "Save reference photos you capture for tracing to your Photos album" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer les photos de référence capturées pour le décalquage dans votre album Photos"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "トレース用に撮影した参考写真を写真アルバムに保存します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "따라 그리기용으로 촬영한 참고 사진을 사진 앨범에 저장합니다"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将你为描摹拍摄的参考照片保存到“照片”相册"
+          }
+        }
+      }
+    },
     "Screen or feature" : {
       "comment" : "Label in translation feedback email body asking where the issue appears.",
       "localizations" : {

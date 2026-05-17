@@ -1,5 +1,6 @@
 import CoreHaptics
 import Observation
+import Photos
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
@@ -1525,6 +1526,33 @@ struct CustomizationSettingsView: View {
     )
   }
   
+  private var saveCapturedPhotoToAlbumBinding: Binding<Bool> {
+    Binding(
+      get: { userPreferences.saveCapturedPhotoToAlbum },
+      set: { newValue in
+        let previousValue = userPreferences.saveCapturedPhotoToAlbum
+        userPreferences.saveCapturedPhotoToAlbum = newValue
+        if newValue != previousValue {
+          AnalyticsManager.shared.trackSettingChanged(
+            name: "save_captured_photo_to_album",
+            value: newValue,
+            previousValue: previousValue
+          )
+        }
+        // Request Photos add-only authorization up front so the first capture
+        // doesn't stall behind the system permission sheet while the shutter
+        // is closed. Only prompts when the user just turned the toggle ON and
+        // hasn't been asked before — subsequent toggles are a no-op.
+        if newValue {
+          let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+          if status == .notDetermined {
+            PHPhotoLibrary.requestAuthorization(for: .addOnly) { _ in }
+          }
+        }
+      }
+    )
+  }
+
   private var shareCardWatermarkBinding: Binding<Bool> {
     Binding(
       get: { userPreferences.shareCardWatermarkEnabled },
@@ -1722,6 +1750,16 @@ struct CustomizationSettingsView: View {
           }
           .tint(.appAccent)
           .id("watermarkSharingToggle")
+
+          Toggle(isOn: saveCapturedPhotoToAlbumBinding) {
+            VStack(alignment: .leading, spacing: 4) {
+              Text("Save photos to album")
+              Text("Save reference photos you capture for tracing to your Photos album")
+                .font(.appCaption())
+                .foregroundStyle(.secondary)
+            }
+          }
+          .tint(.appAccent)
         }
       }
       .onAppear {

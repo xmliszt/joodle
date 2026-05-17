@@ -153,7 +153,8 @@ final class CameraReferenceContext: ObservableObject {
       // actually painted before image-processing CPU pressure ramps up.
       try? await Task.sleep(nanoseconds: 32_000_000)
       if Task.isCancelled { return }
-      let image = await self.controller.capturePhoto()
+      let saveToAlbum = UserPreferences.shared.saveCapturedPhotoToAlbum
+      let image = await self.controller.capturePhoto(saveToAlbum: saveToAlbum)
       if Task.isCancelled { return }
       if let image {
         self.backdropImage = image

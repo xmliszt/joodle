@@ -5,6 +5,7 @@
 
 import AVFoundation
 import ImageIO
+import Photos
 import SwiftUI
 import UIKit
 
@@ -39,6 +40,10 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   private var didRegisterRunningObservers = false
 
   private var captureContinuation: CheckedContinuation<UIImage?, Never>?
+  /// Whether the next finished capture should be persisted to the user's
+  /// Photos album. Set on the main actor immediately before invoking
+  /// `photoOutput.capturePhoto` and read by the delegate callback.
+  private var saveNextCaptureToAlbum: Bool = false
 
   /// Bridge AVCaptureSession's running notifications to `isRunning`. Reading
   /// `session.isRunning` synchronously right after `startRunning()` can return
@@ -131,9 +136,10 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   private var positionAtCapture: AVCaptureDevice.Position = .back
 
   @MainActor
-  func capturePhoto() async -> UIImage? {
+  func capturePhoto(saveToAlbum: Bool = false) async -> UIImage? {
     guard isRunning else { return nil }
     let currentPosition = position
+    self.saveNextCaptureToAlbum = saveToAlbum
     // Compute the correct capture rotation angle for the active device using
     // Apple's rotation coordinator (per-device, accounts for front-camera's
     // mirrored/flipped sensor orientation).
@@ -266,9 +272,32 @@ extension CameraReferenceController: AVCapturePhotoCaptureDelegate {
     // ImageIO decodes once, downsamples in-decoder, and bakes the EXIF
     // orientation in a single pass — typically 30–60ms total.
     let image: UIImage? = data.flatMap { Self.makeBackdrop(from: $0, maxPixelDimension: 1024) }
+    let shouldSave = saveNextCaptureToAlbum
+    saveNextCaptureToAlbum = false
+    if shouldSave, let data {
+      Self.saveJPEGToPhotosAlbum(data: data)
+    }
     let continuation = self.captureContinuation
     self.captureContinuation = nil
     continuation?.resume(returning: image)
+  }
+
+  /// Persist the full-resolution JPEG to the user's Photos album. Requests
+  /// add-only authorization on first use; silently no-ops if the user denies.
+  private static func saveJPEGToPhotosAlbum(data: Data) {
+    PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+      guard status == .authorized || status == .limited else { return }
+      PHPhotoLibrary.shared().performChanges {
+        let request = PHAssetCreationRequest.forAsset()
+        request.addResource(with: .photo, data: data, options: nil)
+      } completionHandler: { success, error in
+        if let error {
+          print("[CameraReferenceController] save to album failed: \(error)")
+        } else if !success {
+          print("[CameraReferenceController] save to album returned !success")
+        }
+      }
+    }
   }
 
   /// Decodes JPEG `data` into a square, orientation-baked, downsampled

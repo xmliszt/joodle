@@ -37,6 +37,9 @@ enum Pref {
   // Share card watermark preference
   static let shareCardWatermarkEnabled = Key(key: "share_card_watermark_enabled", default: true)
 
+  // Save captured reference photo to the user's Photos album
+  static let saveCapturedPhotoToAlbum = Key(key: "save_captured_photo_to_album", default: false)
+
   // App language override (empty string = system default)
   static let appLanguage = Key(key: "app_language", default: "")
 
@@ -71,6 +74,7 @@ enum Pref {
     announcementTipsEnabled.key,
     promptForNotesAfterDoodling.key,
     shareCardWatermarkEnabled.key,
+    saveCapturedPhotoToAlbum.key,
     appLanguage.key,
   ]
 }
@@ -178,6 +182,13 @@ final class UserPreferences {
   var shareCardWatermarkEnabled: Bool = Pref.shareCardWatermarkEnabled.defaultValue {
     didSet {
       _shareCardWatermarkEnabledWatcher = shareCardWatermarkEnabled
+    }
+  }
+
+  // Save captured reference photo to Photos album
+  var saveCapturedPhotoToAlbum: Bool = Pref.saveCapturedPhotoToAlbum.defaultValue {
+    didSet {
+      _saveCapturedPhotoToAlbumWatcher = saveCapturedPhotoToAlbum
     }
   }
 
@@ -320,6 +331,11 @@ final class UserPreferences {
     set { set(Pref.shareCardWatermarkEnabled, newValue) }
   }
 
+  private var _saveCapturedPhotoToAlbumWatcher: Bool {
+    get { get(Pref.saveCapturedPhotoToAlbum) }
+    set { set(Pref.saveCapturedPhotoToAlbum, newValue) }
+  }
+
   private var _appLanguageWatcher: String {
     get {
       defaults.string(forKey: Pref.appLanguage.key) ?? Pref.appLanguage.defaultValue
@@ -352,6 +368,7 @@ final class UserPreferences {
     announcementTipsEnabled = _announcementTipsEnabledWatcher
     promptForNotesAfterDoodling = _promptForNotesAfterDoodlingWatcher
     shareCardWatermarkEnabled = _shareCardWatermarkEnabledWatcher
+    saveCapturedPhotoToAlbum = _saveCapturedPhotoToAlbumWatcher
     appLanguage = _appLanguageWatcher
 
     // Allow subsequent appLanguage changes to sync AppleLanguages normally.
@@ -401,6 +418,7 @@ final class UserPreferences {
     announcementTipsEnabled = Pref.announcementTipsEnabled.defaultValue
     promptForNotesAfterDoodling = Pref.promptForNotesAfterDoodling.defaultValue
     shareCardWatermarkEnabled = Pref.shareCardWatermarkEnabled.defaultValue
+    saveCapturedPhotoToAlbum = Pref.saveCapturedPhotoToAlbum.defaultValue
     appLanguage = Pref.appLanguage.defaultValue
     // Clear AppleLanguages override on reset
     UserDefaults.standard.removeObject(forKey: "AppleLanguages")
