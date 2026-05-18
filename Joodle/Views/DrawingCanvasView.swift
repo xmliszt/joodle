@@ -165,6 +165,7 @@ struct DrawingCanvasView: View {
           isShutterFullyClosed: !isMockMode && cameraContext.isShutterFullyClosed,
           isShutterCycling: !isMockMode && cameraContext.isShutterCycling,
           suppressLivePreview: !isMockMode && cameraContext.suppressPreview,
+          captureFlashID: isMockMode ? nil : cameraContext.captureFlashID,
           onCommitStroke: commitCurrentStroke
         ) {
           // Save button

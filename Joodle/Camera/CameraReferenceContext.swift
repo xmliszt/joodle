@@ -44,6 +44,10 @@ final class CameraReferenceContext: ObservableObject {
   /// a live AVCaptureVideoPreviewLayer (which then takes a long time to
   /// reconcile on return to foreground).
   @Published var suppressPreview: Bool = false
+  /// Bumped on every photo capture. Consumers observe this to trigger a brief
+  /// black-flash overlay — fakes a "shutter snap" so the capture feels
+  /// instantaneous, without the latency cost of an actual shutter animation.
+  @Published var captureFlashID: UUID? = nil
 
   let controller: CameraReferenceController
   /// Drives the shutter overlay; every camera-mode transition is bracketed by
@@ -147,23 +151,14 @@ final class CameraReferenceContext: ObservableObject {
 
   func capture() async {
     guard mode == .live else { return }
-    shutter.cycle(fastClose: true) {
-      // Give SwiftUI a frame after the close animation finishes before we
-      // submit the heavy capture work, so the fully-closed state has
-      // actually painted before image-processing CPU pressure ramps up.
-      try? await Task.sleep(nanoseconds: 32_000_000)
-      if Task.isCancelled { return }
-      let saveToAlbum = UserPreferences.shared.saveCapturedPhotoToAlbum
-      let image = await self.controller.capturePhoto(saveToAlbum: saveToAlbum)
-      if Task.isCancelled { return }
-      if let image {
-        self.backdropImage = image
-      }
-      // stop() dispatches onto the controller's session queue and returns
-      // immediately, so it doesn't gate the shutter open.
-      self.controller.stop()
-      withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
+    captureFlashID = UUID()
+    let saveToAlbum = UserPreferences.shared.saveCapturedPhotoToAlbum
+    let image = await self.controller.capturePhoto(saveToAlbum: saveToAlbum)
+    if let image {
+      self.backdropImage = image
     }
+    self.controller.stop()
+    withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
   }
 
   /// Returns a Task that completes the next time the camera controller posts

@@ -91,6 +91,8 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   /// still active — used during a flip cycle to avoid a stale frame from the
   /// previous device showing through.
   var suppressLivePreview: Bool = false
+  /// Bumped on every photo capture to trigger the black flash overlay.
+  var captureFlashID: UUID? = nil
 
   /// Track the maximum distance from start point during a gesture to detect dots vs strokes
   @State private var maxDistanceFromStart: CGFloat = 0
@@ -108,6 +110,9 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   /// live feed never appears during a transition. Latches across the open
   /// phase so the preview stays visible once the shutter has retracted.
   @State private var cameraPreviewMounted: Bool = false
+  /// Opacity of the black capture-flash overlay. Pulsed 0 → 1 → 0 on each
+  /// `captureFlashID` change to fake a shutter snap.
+  @State private var captureFlashOpacity: Double = 0
 
   init(
     paths: Binding<[Path]>,
@@ -127,6 +132,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     isShutterFullyClosed: Bool = false,
     isShutterCycling: Bool = false,
     suppressLivePreview: Bool = false,
+    captureFlashID: UUID? = nil,
     onCommitStroke: @escaping () -> Void,
     @ViewBuilder trailingHeader: @escaping () -> TrailingHeader
   ) {
@@ -147,6 +153,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.isShutterFullyClosed = isShutterFullyClosed
     self.isShutterCycling = isShutterCycling
     self.suppressLivePreview = suppressLivePreview
+    self.captureFlashID = captureFlashID
     self.onCommitStroke = onCommitStroke
     self.TrailingHeaderView = trailingHeader
   }
@@ -424,6 +431,13 @@ struct SharedCanvasView<TrailingHeader: View>: View {
             .allowsHitTesting(false)
         }
 
+        // Black capture-flash overlay — pulsed 0 → 1 → 0 on each capture so
+        // the snap feels instantaneous without any actual shutter animation.
+        Color.black
+          .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+          .opacity(captureFlashOpacity)
+          .allowsHitTesting(false)
+
         // Inner shadow hugging the canvas cutout — drawn last so it overlays
         // the shutter blades, giving the rounded-rect rim depth even while
         // the shutter is fully closed. Stroke is drawn at 2× the desired
@@ -459,6 +473,18 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     }
     .onChange(of: placeholderData) { _, _ in
       decodePlaceholder()
+    }
+    .onChange(of: captureFlashID) { _, newID in
+      guard newID != nil else { return }
+      withAnimation(.linear(duration: 0.04)) {
+        captureFlashOpacity = 1
+      }
+      Task { @MainActor in
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        withAnimation(.easeOut(duration: 0.22)) {
+          captureFlashOpacity = 0
+        }
+      }
     }
     .onChange(of: isShutterFullyClosed) { _, closed in
       // Latch the preview to the live-mode state on each edge of the shutter

@@ -155,14 +155,13 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
         guard let self else { return }
         let settings = AVCapturePhotoSettings()
         settings.photoQualityPrioritization = .speed
-        // Batch all connection mutations into a single reconfigure. Without
-        // begin/commitConfiguration each property write to a running session
-        // can trigger its own XPC round-trip to mediaserverd, which on slow
-        // configurations surfaces as `FigCaptureSourceRemote err=-17281` log
-        // spam. We also skip writes that match the current value to avoid
-        // touching the configuration at all when flip/init already set it.
+        // Write connection properties live — they do NOT require
+        // begin/commitConfiguration on a running session, and wrapping them
+        // in one forces an XPC reconfigure with mediaserverd per shot that
+        // adds tens of ms before AVFoundation even starts the capture.
+        // Guard each write so we only touch the connection when the desired
+        // value actually differs.
         let wantMirrored = (currentPosition == .front)
-        self.session.beginConfiguration()
         for connection in self.photoOutput.connections {
           if connection.isVideoMirroringSupported {
             if connection.automaticallyAdjustsVideoMirroring {
@@ -178,7 +177,6 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
             connection.videoRotationAngle = angle
           }
         }
-        self.session.commitConfiguration()
         self.photoOutput.capturePhoto(with: settings, delegate: self)
       }
     }

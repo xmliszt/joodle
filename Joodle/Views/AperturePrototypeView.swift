@@ -29,31 +29,7 @@ struct AperturePrototypeView: View {
       )
       .ignoresSafeArea()
 
-      GeometryReader { geo in
-        let progress: Double = isOpen ? 0 : 1  // 1 = fully closed
-        ZStack {
-          ForEach(0..<bladeCount, id: \.self) { i in
-            ZStack {
-              // 1. Base fill — flat dark gray. Blades tile, so each blade
-              //    paints its own area with no overlap.
-              CurvedBlade(progress: progress, bladeIndex: i, bladeCount: bladeCount)
-                .fill(Color(white: 0.18))
-
-              // 2. Faked cast-shadow: blurred dark stroke along the leading
-              //    side edge only, masked to the blade interior. Reads as a
-              //    soft shadow at the seam.
-              BladeLeadingEdge(progress: progress, bladeIndex: i, bladeCount: bladeCount)
-                .stroke(Color.black.opacity(0.9), lineWidth: 12)
-                .blur(radius: 6)
-                .mask {
-                  CurvedBlade(progress: progress, bladeIndex: i, bladeCount: bladeCount)
-                    .fill(Color.white)
-                }
-            }
-          }
-        }
-        .frame(width: geo.size.width, height: geo.size.height)
-      }
+      ApertureBlades(progress: isOpen ? 0 : 1, bladeCount: bladeCount)
     }
     .contentShape(Rectangle())
     .onTapGesture {
@@ -65,12 +41,47 @@ struct AperturePrototypeView: View {
   }
 }
 
+// MARK: - Reusable aperture view
+
+/// Tiled aperture blades with the faked cast-shadow built in. `progress` is
+/// 0 (fully open) → 1 (fully closed).
+struct ApertureBlades: View {
+  var progress: Double
+  var bladeCount: Int
+  var fill: Color = Color(white: 0.18)
+  var shadowOpacity: Double = 0.9
+  var shadowLineWidth: Double = 6
+  var shadowBlur: Double = 3
+
+  var body: some View {
+    GeometryReader { geo in
+      ZStack {
+        ForEach(0..<bladeCount, id: \.self) { i in
+          ZStack {
+            CurvedBlade(progress: progress, bladeIndex: i, bladeCount: bladeCount)
+              .fill(fill)
+
+            BladeLeadingEdge(progress: progress, bladeIndex: i, bladeCount: bladeCount)
+              .stroke(Color.black.opacity(shadowOpacity), lineWidth: shadowLineWidth)
+              .blur(radius: shadowBlur)
+              .mask {
+                CurvedBlade(progress: progress, bladeIndex: i, bladeCount: bladeCount)
+                  .fill(Color.white)
+              }
+          }
+        }
+      }
+      .frame(width: geo.size.width, height: geo.size.height)
+    }
+  }
+}
+
 // MARK: - Shared blade geometry
 
 /// Geometry parameters for one blade at the given progress. Both shapes
 /// below derive their paths from the same anchors so the leading-edge
 /// shadow tracks the blade's actual side curve through the animation.
-private struct BladeGeometry {
+struct BladeGeometry {
   let center: CGPoint
   let outerA: CGPoint
   let innerA: CGPoint
@@ -87,9 +98,9 @@ private struct BladeGeometry {
     let c = CGPoint(x: rect.midX, y: rect.midY)
     let diagonal = sqrt(rect.width * rect.width + rect.height * rect.height)
     let oR = diagonal * 0.85
-    let openApertureR = diagonal * 0.6
+    let openApertureR = diagonal * 0.78
     let aR = openApertureR * (1.0 - progress)
-    let maxTwist: Double = .pi / 4
+    let maxTwist: Double = .pi / 2
     let tw = maxTwist * progress
     let step = 2 * .pi / Double(bladeCount)
     let tA = Double(bladeIndex) * step - .pi / 2
@@ -101,7 +112,7 @@ private struct BladeGeometry {
     outerR = oR
     apertureR = aR
     twist = tw
-    curvature = 0.85
+    curvature = 0.34
     thetaA = tA
     thetaB = tB
     outerA = pt(oR, tA)
@@ -113,33 +124,32 @@ private struct BladeGeometry {
   /// Append a cubic-Bezier "side edge" between two points lying at known
   /// angles and radii around the aperture center.
   ///
-  /// Control points sit 1/3 and 2/3 along the chord, each offset
-  /// perpendicular to the chord in the `+θ` direction by `curvature *
-  /// (endpoint's radius from center)`. Two important properties:
+  /// Both control points are offset perpendicular to the chord in the same
+  /// `+θ` direction (the outer endpoint's tangent), scaled by `curvature *
+  /// outerR`. Using one shared direction (rather than each endpoint's own
+  /// tangent) keeps the curve a single-direction bow — no S-curve — and
+  /// distributes the bend along the whole edge so the blade reads as a
+  /// crescent sliver instead of bending only at one tip.
   ///
-  /// - **Tile invariance**: both control offsets use `+tangent` (symmetric
-  ///   sign). The formula depends only on endpoint position/angle/radius,
-  ///   not traversal direction. Adjacent blades produce identical shared
-  ///   edges → no gaps at seams.
-  /// - **No center overshoot**: the offset at each control point scales
-  ///   with that endpoint's own radius. When closed (`apertureR=0`) the
-  ///   inner offset is 0, so the curve cleanly collapses to the center
-  ///   instead of swirling past it.
+  /// Tile invariance is preserved because the offset direction and
+  /// magnitude depend only on the outer endpoint (which both neighboring
+  /// blades share with identical angle/radius).
   func appendSideCurve(
     path: inout Path,
     from: CGPoint, fromAngle: Double, fromRadius: Double,
     to: CGPoint, toAngle: Double, toRadius: Double
   ) {
-    let tFrom = CGPoint(x: -sin(fromAngle), y: cos(fromAngle))
-    let tTo = CGPoint(x: -sin(toAngle), y: cos(toAngle))
-    let offsetFrom = curvature * fromRadius
-    let offsetTo = curvature * toRadius
+    let fromIsOuter = fromRadius >= toRadius
+    let outerAngle = fromIsOuter ? fromAngle : toAngle
+    let outerRadius = fromIsOuter ? fromRadius : toRadius
+    let tOuter = CGPoint(x: -sin(outerAngle), y: cos(outerAngle))
+    let offset = curvature * outerRadius
     let dx = to.x - from.x
     let dy = to.y - from.y
     let mid1 = CGPoint(x: from.x + dx / 3, y: from.y + dy / 3)
     let mid2 = CGPoint(x: from.x + 2 * dx / 3, y: from.y + 2 * dy / 3)
-    let c1 = CGPoint(x: mid1.x + tFrom.x * offsetFrom, y: mid1.y + tFrom.y * offsetFrom)
-    let c2 = CGPoint(x: mid2.x + tTo.x * offsetTo, y: mid2.y + tTo.y * offsetTo)
+    let c1 = CGPoint(x: mid1.x + tOuter.x * offset, y: mid1.y + tOuter.y * offset)
+    let c2 = CGPoint(x: mid2.x + tOuter.x * offset, y: mid2.y + tOuter.y * offset)
     path.addCurve(to: to, control1: c1, control2: c2)
   }
 }
@@ -148,7 +158,7 @@ private struct BladeGeometry {
 
 /// Full curved aperture blade. Closed path bounded by two arcs (outer and
 /// inner aperture) and two cubic-Bezier side edges.
-private struct CurvedBlade: Shape {
+struct CurvedBlade: Shape {
   var progress: Double
   var bladeIndex: Int
   var bladeCount: Int
@@ -193,7 +203,7 @@ private struct CurvedBlade: Shape {
 /// Open path tracing ONLY the leading side edge of the blade (side A:
 /// outerA → innerA). Used for the cast-shadow stroke — strokes an open
 /// path so the shadow appears only along one edge, not the full outline.
-private struct BladeLeadingEdge: Shape {
+struct BladeLeadingEdge: Shape {
   var progress: Double
   var bladeIndex: Int
   var bladeCount: Int
