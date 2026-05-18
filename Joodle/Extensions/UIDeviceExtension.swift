@@ -29,7 +29,7 @@ extension UIDevice {
     guard hasDynamicIsland else { return .zero }
     // These values are consistent across all Dynamic Island devices
     // Minor variations exist (±3pt) but 126×37 works well for alignment
-    return CGSize(width: 126, height: 37)
+    return CGSize(width: 126, height: 36.67)
   }
 
   /// Returns the Dynamic Island frame (position and size)
@@ -40,13 +40,21 @@ extension UIDevice {
     let size = dynamicIslandSize
     let screenWidth = UIScreen.main.bounds.width
     let x = (screenWidth - size.width) / 2
-    var y = (UIDevice.topSafeAreaInset - size.height) / 2 + 1 // Consistent across all Dynamic Island devices
+    var y = 11.0 // Consistent across all older Dynamic Island devices
     let width = size.width
     let height = size.height
+    
+    // iPhone 17 series
+    if UIDevice.modelName == "iPhone 17" || UIDevice.modelName == "Simulator iPhone 17" ||
+       UIDevice.modelName == "iPhone 17 Pro" || UIDevice.modelName == "Simulator iPhone 17 Pro" ||
+       UIDevice.modelName == "iPhone 17 Pro Max" || UIDevice.modelName == "Simulator iPhone 17 Pro Max"
+    {
+      y += 3
+    }
 
     // iPhone Air - lower position
     if UIDevice.modelName == "iPhone Air" || UIDevice.modelName == "Simulator iPhone Air" {
-      y += 3
+      y += 9
     }
 
     return CGRect(x: x, y: y, width: width, height: height)
