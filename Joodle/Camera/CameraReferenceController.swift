@@ -139,20 +139,22 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   func capturePhoto(saveToAlbum: Bool = false) async -> UIImage? {
     guard isRunning else { return nil }
     let currentPosition = position
+    let device = currentDevice
     self.saveNextCaptureToAlbum = saveToAlbum
-    // Compute the correct capture rotation angle for the active device using
-    // Apple's rotation coordinator (per-device, accounts for front-camera's
-    // mirrored/flipped sensor orientation).
-    let captureAngle: CGFloat? = {
-      guard let device = currentDevice else { return nil }
-      let coord = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: nil)
-      return coord.videoRotationAngleForHorizonLevelCapture
-    }()
     return await withCheckedContinuation { (continuation: CheckedContinuation<UIImage?, Never>) in
       self.captureContinuation = continuation
       self.positionAtCapture = currentPosition
       sessionQueue.async { [weak self] in
         guard let self else { return }
+        // Compute the rotation angle on the session queue, not main — the
+        // RotationCoordinator initializer touches device internals and on
+        // the front camera that's a noticeable synchronous cost. Doing it
+        // here keeps main free to start the capture-flash animation
+        // immediately after the user's tap.
+        let captureAngle: CGFloat? = device.map { d in
+          AVCaptureDevice.RotationCoordinator(device: d, previewLayer: nil)
+            .videoRotationAngleForHorizonLevelCapture
+        }
         let settings = AVCapturePhotoSettings()
         settings.photoQualityPrioritization = .speed
         // Write connection properties live — they do NOT require
@@ -219,6 +221,19 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
     }
     if session.canAddOutput(photoOutput) {
       session.addOutput(photoOutput)
+      // Cap the photo pipeline at .speed so AVFoundation pre-allocates the
+      // lightweight processing path. Without this the output prepares for
+      // .balanced (the default cap) and per-shot .speed can't fully claw
+      // back the latency. Must be set after the output is added.
+      photoOutput.maxPhotoQualityPrioritization = .speed
+      // Front-camera capture defaults to applying content-aware distortion
+      // correction on TrueDepth devices, which adds ~50–150ms of post-
+      // processing per shot. We're using the photo as a small backdrop
+      // reference (downsampled to 1024px), not a hero portrait — the
+      // correction isn't perceptible at that size.
+      if photoOutput.isContentAwareDistortionCorrectionSupported {
+        photoOutput.isContentAwareDistortionCorrectionEnabled = false
+      }
     }
     applyMirroring(for: initialPosition)
     session.commitConfiguration()
