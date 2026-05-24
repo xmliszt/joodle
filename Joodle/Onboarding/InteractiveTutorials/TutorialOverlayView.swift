@@ -14,7 +14,9 @@ struct TutorialOverlayView: View {
 
     private let dimOpacity: Double = 0.5
     private let highlightPadding: CGFloat = 8
-    private let highlightCornerRadius: CGFloat = 32
+    /// Fallback radius for anchors that don't declare their own via the
+    /// `cornerRadius:` parameter on `tutorialHighlightAnchor(...)`.
+    private let defaultHighlightCornerRadius: CGFloat = 32
 
     /// Whether the current step is the scrubbing step (needs pass-through for grid interaction)
     private var isScrubbingStep: Bool {
@@ -24,6 +26,7 @@ struct TutorialOverlayView: View {
     var body: some View {
         ZStack {
             overlayContent
+                .opacity(coordinator.isCompleting ? 0 : 1)
 
             // Tutorial completion overlay
             if coordinator.showingCompletion {
@@ -46,6 +49,11 @@ struct TutorialOverlayView: View {
                                 dx: -highlightPadding,
                                 dy: -highlightPadding
                             )
+                            // Anchors that declared a radius hug the underlying
+                            // shape (e.g. 22pt for a 44pt circular button);
+                            // others fall back to the default squircle.
+                            let declaredRadius = coordinator.getHighlightCornerRadius(for: step.highlightAnchor)
+                            let highlightCornerRadius = (declaredRadius.map { $0 + highlightPadding }) ?? defaultHighlightCornerRadius
 
                             // When user is actively scrubbing, hide the overlay entirely
                             // so they can freely browse the grid
@@ -84,11 +92,17 @@ struct TutorialOverlayView: View {
                                 }
                             }
                         } else {
-                            // Frame not yet available - show loading state
-                            // But if scrubbing, don't show anything
+                            // Frame not yet available — show a loading-state dim
+                            // overlay that ALSO blocks taps. Letting taps through
+                            // here allowed the user to interact with arbitrary UI
+                            // during cross-step transitions (e.g. between opening
+                            // the canvas and the camera button's frame landing).
+                            // For the scrubbing step we still pass through so the
+                            // user can freely browse during the step's own intro.
                             if !(isScrubbingStep && coordinator.isUserScrubbing) {
                                 Color.black.opacity(dimOpacity * 0.5)
-                                    .allowsHitTesting(false)
+                                    .allowsHitTesting(!isScrubbingStep)
+                                    .contentShape(Rectangle())
                             }
                         }
 

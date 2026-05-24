@@ -26,8 +26,16 @@ class TutorialCoordinator: ObservableObject {
     @Published var currentStepIndex: Int = 0
     @Published var isActive: Bool = true
     @Published private(set) var highlightFrames: [String: CGRect] = [:]
+    @Published private(set) var highlightCornerRadii: [String: CGFloat] = [:]
     @Published var showGestureHint: Bool = false
     @Published var showingCompletion: Bool = false
+
+    /// True between the final step's end-condition firing and the completion
+    /// screen taking over. While this is set, the overlay fades its highlight
+    /// + tooltip out so the user doesn't see the cutout chase a stale anchor
+    /// frame (e.g. after the drawing canvas dismounts) while text from the
+    /// last step lingers underneath the completion animation.
+    @Published var isCompleting: Bool = false
     @Published var isUserScrubbing: Bool = false  // Hide highlight overlay when user is scrubbing
 
     // MARK: - Configuration
@@ -87,6 +95,11 @@ class TutorialCoordinator: ObservableObject {
         // In singleStepMode, we still play through all steps in the array before completing
         // This allows multi-step tutorials (like drawAndEdit with 2 steps) to work correctly
         if isLastStep {
+            // Fade out the highlight + tooltip immediately so the user doesn't
+            // see them chase a stale anchor while the completion screen ramps up.
+            withAnimation(.easeOut(duration: 0.25)) {
+                isCompleting = true
+            }
             // Add a short delay before completing to let the user see the result of their final action
             // (e.g., animations finishing after their interaction)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
@@ -179,20 +192,44 @@ class TutorialCoordinator: ObservableObject {
     /// Remove a registered frame
     func unregisterHighlightFrame(id: String) {
         highlightFrames.removeValue(forKey: id)
+        highlightCornerRadii.removeValue(forKey: id)
+    }
+
+    /// Register the corner radius declared by an anchor. Anchors that don't
+    /// declare a radius leave this empty and the overlay falls back to its
+    /// default rounding.
+    func registerHighlightCornerRadius(id: String, cornerRadius: CGFloat) {
+        if highlightCornerRadii[id] != cornerRadius {
+            highlightCornerRadii[id] = cornerRadius
+        }
     }
 
     /// Get the highlight frame for a specific anchor
     func getHighlightFrame(for anchor: TutorialHighlightAnchor) -> CGRect? {
+        if let key = highlightKey(for: anchor) {
+            return highlightFrames[key]
+        }
+        return nil
+    }
+
+    /// Get the declared corner radius for a specific anchor, if any.
+    func getHighlightCornerRadius(for anchor: TutorialHighlightAnchor) -> CGFloat? {
+        if let key = highlightKey(for: anchor) {
+            return highlightCornerRadii[key]
+        }
+        return nil
+    }
+
+    private func highlightKey(for anchor: TutorialHighlightAnchor) -> String? {
         switch anchor {
         case .button(let buttonId):
-            return highlightFrames[buttonId.rawValue]
+            return buttonId.rawValue
         case .gridEntry(let dateOffset):
-            let key = "gridEntry.\(dateOffset)"
-            return highlightFrames[key]
+            return "gridEntry.\(dateOffset)"
         case .drawingCanvas:
-            return highlightFrames["drawingCanvas"]
+            return "drawingCanvas"
         case .entryDrawing:
-            return highlightFrames["entryDrawing"]
+            return "entryDrawing"
         case .gesture, .none:
             return nil
         }
@@ -236,6 +273,12 @@ class TutorialCoordinator: ObservableObject {
         case (.moveContextMenuOptionTapped, .moveContextMenuOptionTapped):
             shouldAdvance = true
 
+        case (.cameraLiveEntered, .cameraLiveEntered):
+            shouldAdvance = true
+
+        case (.cameraReferenceCaptured, .cameraReferenceCaptured):
+            shouldAdvance = true
+
         default:
             shouldAdvance = false
         }
@@ -275,6 +318,8 @@ enum TutorialEvent: Equatable {
     case doubleTapCompleted
     case drawingMoved
     case moveContextMenuOptionTapped
+    case cameraLiveEntered
+    case cameraReferenceCaptured
 }
 
 // MARK: - Preview Extensions

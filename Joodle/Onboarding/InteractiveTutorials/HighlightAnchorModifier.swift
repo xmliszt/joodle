@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// MARK: - Preference Key
+// MARK: - Preference Keys
 
 /// Preference key for collecting highlight frame positions
 struct HighlightFramePreferenceKey: PreferenceKey {
@@ -18,13 +18,28 @@ struct HighlightFramePreferenceKey: PreferenceKey {
     }
 }
 
+/// Per-anchor corner radius for the cutout/highlight ring. Anchors that don't
+/// declare a radius fall back to the overlay's default — keeps existing call
+/// sites working unchanged while letting circular/pill buttons opt into a
+/// tighter wrap (e.g. 22pt for the 44pt circularGlassButton).
+struct HighlightCornerRadiusPreferenceKey: PreferenceKey {
+    static var defaultValue: [String: CGFloat] = [:]
+
+    static func reduce(value: inout [String: CGFloat], nextValue: () -> [String: CGFloat]) {
+        value.merge(nextValue(), uniquingKeysWith: { $1 })
+    }
+}
+
 // MARK: - View Extension
 
 extension View {
-    /// Mark this view as a tutorial highlight anchor with a string ID
+    /// Mark this view as a tutorial highlight anchor with a string ID.
+    /// Optionally declare the underlying view's corner radius so the cutout
+    /// hugs it exactly (e.g. pass 22 for a 44pt circular button).
     func tutorialHighlightAnchor(
         _ id: String,
-        coordinateSpace: CoordinateSpace = .global
+        coordinateSpace: CoordinateSpace = .global,
+        cornerRadius: CGFloat? = nil
     ) -> some View {
         self.background(
             GeometryReader { geo in
@@ -33,6 +48,10 @@ extension View {
                         key: HighlightFramePreferenceKey.self,
                         value: [id: geo.frame(in: coordinateSpace)]
                     )
+                    .preference(
+                        key: HighlightCornerRadiusPreferenceKey.self,
+                        value: cornerRadius.map { [id: $0] } ?? [:]
+                    )
             }
         )
     }
@@ -40,33 +59,36 @@ extension View {
     /// Mark this view as a tutorial highlight anchor with a TutorialButtonId
     func tutorialHighlightAnchor(
         _ buttonId: TutorialButtonId,
-        coordinateSpace: CoordinateSpace = .global
+        coordinateSpace: CoordinateSpace = .global,
+        cornerRadius: CGFloat? = nil
     ) -> some View {
-        tutorialHighlightAnchor(buttonId.rawValue, coordinateSpace: coordinateSpace)
+        tutorialHighlightAnchor(buttonId.rawValue, coordinateSpace: coordinateSpace, cornerRadius: cornerRadius)
     }
 
     /// Mark this view as a tutorial highlight anchor for a grid entry
     func tutorialHighlightAnchor(
         gridEntryOffset: Int,
-        coordinateSpace: CoordinateSpace = .global
+        coordinateSpace: CoordinateSpace = .global,
+        cornerRadius: CGFloat? = nil
     ) -> some View {
-        tutorialHighlightAnchor("gridEntry.\(gridEntryOffset)", coordinateSpace: coordinateSpace)
+        tutorialHighlightAnchor("gridEntry.\(gridEntryOffset)", coordinateSpace: coordinateSpace, cornerRadius: cornerRadius)
     }
 
     /// Mark this view as a tutorial highlight anchor for the drawing canvas
     func tutorialHighlightAnchor(
         _ anchor: TutorialHighlightAnchor,
-        coordinateSpace: CoordinateSpace = .global
+        coordinateSpace: CoordinateSpace = .global,
+        cornerRadius: CGFloat? = nil
     ) -> some View {
         switch anchor {
         case .drawingCanvas:
-            return AnyView(tutorialHighlightAnchor("drawingCanvas", coordinateSpace: coordinateSpace))
+            return AnyView(tutorialHighlightAnchor("drawingCanvas", coordinateSpace: coordinateSpace, cornerRadius: cornerRadius))
         case .entryDrawing:
-            return AnyView(tutorialHighlightAnchor("entryDrawing", coordinateSpace: coordinateSpace))
+            return AnyView(tutorialHighlightAnchor("entryDrawing", coordinateSpace: coordinateSpace, cornerRadius: cornerRadius))
         case .button(let id):
-            return AnyView(tutorialHighlightAnchor(id, coordinateSpace: coordinateSpace))
+            return AnyView(tutorialHighlightAnchor(id, coordinateSpace: coordinateSpace, cornerRadius: cornerRadius))
         case .gridEntry(let offset):
-            return AnyView(tutorialHighlightAnchor(gridEntryOffset: offset, coordinateSpace: coordinateSpace))
+            return AnyView(tutorialHighlightAnchor(gridEntryOffset: offset, coordinateSpace: coordinateSpace, cornerRadius: cornerRadius))
         case .gesture, .none:
             return AnyView(self)
         }
@@ -81,10 +103,11 @@ extension View {
     func tutorialHighlightAnchor(
         _ id: String,
         isEnabled: Bool,
-        coordinateSpace: CoordinateSpace = .global
+        coordinateSpace: CoordinateSpace = .global,
+        cornerRadius: CGFloat? = nil
     ) -> some View {
         if isEnabled {
-            self.tutorialHighlightAnchor(id, coordinateSpace: coordinateSpace)
+            self.tutorialHighlightAnchor(id, coordinateSpace: coordinateSpace, cornerRadius: cornerRadius)
         } else {
             self
         }
@@ -95,10 +118,11 @@ extension View {
     func tutorialHighlightAnchor(
         _ buttonId: TutorialButtonId,
         isEnabled: Bool,
-        coordinateSpace: CoordinateSpace = .global
+        coordinateSpace: CoordinateSpace = .global,
+        cornerRadius: CGFloat? = nil
     ) -> some View {
         if isEnabled {
-            self.tutorialHighlightAnchor(buttonId, coordinateSpace: coordinateSpace)
+            self.tutorialHighlightAnchor(buttonId, coordinateSpace: coordinateSpace, cornerRadius: cornerRadius)
         } else {
             self
         }

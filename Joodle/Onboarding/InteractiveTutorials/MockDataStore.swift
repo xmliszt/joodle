@@ -99,6 +99,11 @@ class MockDataStore: ObservableObject {
     /// The dateString of the entry whose drawing is being moved
     @Published var moveSourceDateString: String? = nil
 
+    /// True only during the camera-reference interactive tutorial.
+    /// Opts the canvas back into showing camera UI in mock mode so the user
+    /// can learn the feature; everything else stays sandboxed.
+    @Published var cameraTutorialEnabled: Bool = false
+
     // MARK: - Init
 
     init(initialYear: Int = Calendar.current.component(.year, from: Date())) {
@@ -281,6 +286,7 @@ class MockDataStore: ObservableObject {
         showReminderSheet = false
         isInMoveMode = false
         moveSourceDateString = nil
+        cameraTutorialEnabled = false
         selectedYear = Calendar.current.component(.year, from: Date())
     }
 

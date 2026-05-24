@@ -349,6 +349,10 @@ struct TutorialDebugOverlay: View {
           return "doodleMoved"
         case .moveContextMenuOptionTapped:
           return "moveContextMenuOptionTap"
+        case .cameraLiveEntered:
+          return "cameraLive"
+        case .cameraReferenceCaptured:
+          return "cameraCaptured"
         }
     }
 
@@ -366,6 +370,8 @@ struct TutorialDebugOverlay: View {
             return "navToday"
         case .prepareForMoveDrawing:
             return "prepareForMove"
+        case .prepareForCameraReference:
+            return "prepareForCamera"
         }
     }
 }

@@ -505,6 +505,8 @@ private func endDescription(_ condition: TutorialEndCondition) -> String {
     case .doubleTapCompleted: return "Double Tap"
     case .drawingMoved: return "Doodle Moved"
     case .moveContextMenuOptionTapped: return "Move Context Menu Option Tapped"
+    case .cameraLiveEntered: return "Camera Live"
+    case .cameraReferenceCaptured: return "Reference Captured"
     }
 }
 

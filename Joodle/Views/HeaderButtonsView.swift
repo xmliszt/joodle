@@ -53,7 +53,7 @@ struct HeaderButtonsView: View {
             .circularGlassButton()
             .glassEffectID("view-mode", in: namespace)
             .applyIf(tutorialMode) { view in
-              view.tutorialHighlightAnchor(.viewModeButton)
+              view.tutorialHighlightAnchor(.viewModeButton, cornerRadius: 22)
             }
           }
         }
@@ -88,7 +88,7 @@ struct HeaderButtonsView: View {
           }
           .circularGlassButton()
           .applyIf(tutorialMode) { view in
-            view.tutorialHighlightAnchor(.viewModeButton)
+            view.tutorialHighlightAnchor(.viewModeButton, cornerRadius: 22)
           }
         }
       }

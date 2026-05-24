@@ -503,7 +503,7 @@ struct EntryEditingView: View {
                     .applyIf(tutorialMode && isFuture) { view in
                       // Only register bellIcon anchor for future dates (addReminder tutorial needs this)
                       // This prevents capturing wrong frames during transitions from non-future entries
-                      view.tutorialHighlightAnchor(.bellIcon)
+                      view.tutorialHighlightAnchor(.bellIcon, cornerRadius: 22)
                     }
                     .transition(.opacity)
                   }
@@ -559,7 +559,7 @@ struct EntryEditingView: View {
                   .applyIf(tutorialMode && isFuture) { view in
                     // Only register bellIcon anchor for future dates (addReminder tutorial needs this)
                     // This prevents capturing wrong frames during transitions from non-future entries
-                    view.tutorialHighlightAnchor(.bellIcon)
+                    view.tutorialHighlightAnchor(.bellIcon, cornerRadius: 22)
                   }
                   .transition(.opacity)
                 }
@@ -617,7 +617,7 @@ struct EntryEditingView: View {
                   }
                   .circularGlassButton()
                   .applyIf(tutorialMode) { view in
-                    view.tutorialHighlightAnchor(.paintButton)
+                    view.tutorialHighlightAnchor(.paintButton, cornerRadius: 22)
                   }
                   .transition(.opacity)
                 }
@@ -648,7 +648,7 @@ struct EntryEditingView: View {
                 }
                 .circularGlassButton()
                 .applyIf(tutorialMode) { view in
-                  view.tutorialHighlightAnchor(.paintButton)
+                  view.tutorialHighlightAnchor(.paintButton, cornerRadius: 22)
                 }
                 .transition(.opacity)
               }

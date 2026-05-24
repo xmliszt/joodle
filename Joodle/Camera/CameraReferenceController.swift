@@ -3,7 +3,7 @@
 //  Joodle
 //
 
-import AVFoundation
+@preconcurrency import AVFoundation
 import ImageIO
 import Photos
 import SwiftUI

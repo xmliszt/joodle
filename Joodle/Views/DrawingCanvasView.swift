@@ -85,6 +85,15 @@ struct DrawingCanvasView: View {
     mockStore != nil
   }
 
+  /// Whether the camera-reference feature should be active. True for the real
+  /// app, and also true in mock mode when the camera-reference interactive
+  /// tutorial has opted the feature back in. Lets the camera tutorial reach
+  /// the live preview / shutter / capture flow without removing the broader
+  /// `isMockMode` sandboxing of saved data.
+  private var isCameraFeatureActive: Bool {
+    !isMockMode || mockStore?.cameraTutorialEnabled == true
+  }
+
   // MARK: - Concentric Corner Radius
 
   /// Canvas corner radius computed to be concentric with the floating
@@ -120,11 +129,21 @@ struct DrawingCanvasView: View {
   /// and hidden while the camera live mode is active (the top row is empty
   /// except for the flip-camera button at the center).
   private var canShowCameraButton: Bool {
-    !isMockMode && paths.isEmpty && currentPath.isEmpty && !isCameraLive
+    guard isCameraFeatureActive, paths.isEmpty, currentPath.isEmpty, !isCameraLive else {
+      return false
+    }
+    // In the camera tutorial, hide the button once a reference has been
+    // captured — step D highlights the whole canvas so taps would otherwise
+    // be free to re-enter live mode, which would then strand the user behind
+    // a dim overlay with no shutter cutout.
+    if isMockMode, cameraContext.backdropImage != nil {
+      return false
+    }
+    return true
   }
 
   private var isCameraLive: Bool {
-    !isMockMode && cameraContext.mode == .live
+    isCameraFeatureActive && cameraContext.mode == .live
   }
 
   var body: some View {
@@ -156,16 +175,16 @@ struct DrawingCanvasView: View {
             hideStrokeButtons: isCameraLive
           ),
           canvasCornerRadius: canvasCornerRadius,
-          backdropImage: isMockMode ? nil : cameraContext.backdropImage,
-          liveCameraSession: isMockMode ? nil : cameraContext.session,
-          liveCameraDevice: isMockMode ? nil : cameraContext.currentDevice,
+          backdropImage: isCameraFeatureActive ? cameraContext.backdropImage : nil,
+          liveCameraSession: isCameraFeatureActive ? cameraContext.session : nil,
+          liveCameraDevice: isCameraFeatureActive ? cameraContext.currentDevice : nil,
           isCameraLive: isCameraLive,
-          liveCameraMirrored: !isMockMode && cameraContext.isFrontFacing,
-          shutterController: isMockMode ? nil : cameraContext.shutter,
-          isShutterFullyClosed: !isMockMode && cameraContext.isShutterFullyClosed,
-          isShutterCycling: !isMockMode && cameraContext.isShutterCycling,
-          suppressLivePreview: !isMockMode && cameraContext.suppressPreview,
-          captureFlashID: isMockMode ? nil : cameraContext.captureFlashID,
+          liveCameraMirrored: isCameraFeatureActive && cameraContext.isFrontFacing,
+          shutterController: isCameraFeatureActive ? cameraContext.shutter : nil,
+          isShutterFullyClosed: isCameraFeatureActive && cameraContext.isShutterFullyClosed,
+          isShutterCycling: isCameraFeatureActive && cameraContext.isShutterCycling,
+          suppressLivePreview: isCameraFeatureActive && cameraContext.suppressPreview,
+          captureFlashID: isCameraFeatureActive ? cameraContext.captureFlashID : nil,
           onCommitStroke: commitCurrentStroke
         ) {
           // Save button
@@ -173,6 +192,7 @@ struct DrawingCanvasView: View {
             Image(systemName: "checkmark")
           }
           .circularGlassButton()
+          .tutorialHighlightAnchor(.button(id: .canvasSaveButton), cornerRadius: 22)
         }
         .disabled(!canEditOrCreate)
         .background(Color.clear)
@@ -216,9 +236,11 @@ struct DrawingCanvasView: View {
         saveMockDrawing()
       } else {
         saveDrawingToStore()
-        // Mirror the teardown that onChange(of: isShowing) would have done,
-        // otherwise the camera session / LED can stay alive after the
-        // floating container is removed.
+      }
+      // Mirror the teardown that onChange(of: isShowing) would have done,
+      // otherwise the camera session / LED can stay alive after the
+      // floating container is removed.
+      if isCameraFeatureActive {
         cameraContext.reset()
       }
     }
@@ -270,7 +292,7 @@ struct DrawingCanvasView: View {
 
         // Tear down camera state so the LED turns off and the transient
         // tracing photo doesn't leak into the next entry.
-        if !isMockMode {
+        if isCameraFeatureActive {
           cameraContext.reset()
         }
       }
@@ -311,7 +333,7 @@ struct DrawingCanvasView: View {
       Text("Joodle needs camera access to capture reference photos for tracing. Enable it in Settings.")
     }
     .onChange(of: scenePhase) { _, newPhase in
-      guard !isMockMode, cameraContext.mode == .live else { return }
+      guard isCameraFeatureActive, cameraContext.mode == .live else { return }
       switch newPhase {
       case .inactive:
         // iOS snapshots the UI during the `.inactive` transition for the app
@@ -432,9 +454,9 @@ struct DrawingCanvasView: View {
 
   private var cameraPermissionAlertBinding: Binding<Bool> {
     Binding(
-      get: { !isMockMode && cameraContext.showPermissionDeniedAlert },
+      get: { isCameraFeatureActive && cameraContext.showPermissionDeniedAlert },
       set: { newValue in
-        if !isMockMode {
+        if isCameraFeatureActive {
           cameraContext.showPermissionDeniedAlert = newValue
         }
       }
@@ -444,7 +466,7 @@ struct DrawingCanvasView: View {
   /// Camera-affecting buttons are locked out for the entire shutter cycle so a
   /// second action can't fire while the first one is still animating.
   private var isShutterCycling: Bool {
-    !isMockMode && cameraContext.isShutterCycling
+    isCameraFeatureActive && cameraContext.isShutterCycling
   }
 
   private var cameraReferenceButton: some View {
@@ -456,6 +478,7 @@ struct DrawingCanvasView: View {
     }
     .circularGlassButton()
     .disabled(isShutterCycling)
+    .tutorialHighlightAnchor(.button(id: .cameraButton), cornerRadius: 22)
   }
 
   /// Top-right button in camera live mode — opens the system photo picker so

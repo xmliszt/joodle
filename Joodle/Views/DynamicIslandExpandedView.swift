@@ -14,6 +14,11 @@ struct DynamicIslandExpandedView<Content: View>: View {
   let content: Content
   let hidden: Bool
   let onDismiss: (() -> Void)?
+  /// When non-nil, the visible rounded container registers itself as a
+  /// tutorial highlight anchor under this ID, with its own concentric corner
+  /// radius. Lets the tutorial overlay cutout hug the floating container
+  /// exactly rather than the parent view's full-screen frame.
+  let tutorialAnchorID: String?
 
   private let SHADOW_RADIUS: CGFloat = 16
 
@@ -21,12 +26,14 @@ struct DynamicIslandExpandedView<Content: View>: View {
     isExpanded: Binding<Bool>,
     @ViewBuilder content: () -> Content,
     hidden: Bool = false,
-    onDismiss: (() -> Void)? = nil
+    onDismiss: (() -> Void)? = nil,
+    tutorialAnchorID: String? = nil
   ) {
     self._isExpanded = isExpanded
     self.content = content()
     self.hidden = hidden
     self.onDismiss = onDismiss
+    self.tutorialAnchorID = tutorialAnchorID
   }
 
   // MARK: - Layout adaptation
@@ -121,6 +128,11 @@ struct DynamicIslandExpandedView<Content: View>: View {
         .background(.black)
         // Corner radius matches border of the device
         .clipShape(RoundedRectangle(cornerRadius: containerCornerRadius, style: .continuous))
+        .tutorialHighlightAnchor(
+          tutorialAnchorID ?? "",
+          isEnabled: tutorialAnchorID != nil,
+          cornerRadius: containerCornerRadius
+        )
         // Subtle shadow to make it hovered
         .shadow(color: isExpanded ? .black.opacity(0.1) : .clear, radius: SHADOW_RADIUS, y: 10)
         // Animation: when collapse, no spring as that will not fully conceal it in the dynamic island area as it is bouncy

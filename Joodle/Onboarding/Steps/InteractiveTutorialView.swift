@@ -156,12 +156,12 @@ struct InteractiveTutorialView: View {
                                     mockEntry: mockStore.selectedEntry
                                 )
                                 .environmentObject(tutorialCameraContext)
-                                .tutorialHighlightAnchor(.drawingCanvas)
                             },
                             hidden: false,
                             onDismiss: {
                                 showDrawingCanvas = false
-                            }
+                            },
+                            tutorialAnchorID: "drawingCanvas"
                         )
 
                         // Gesture-blocking overlay during transition (before tutorial overlay is ready)
@@ -204,6 +204,23 @@ struct InteractiveTutorialView: View {
 
                         }
 
+                        // Camera-reference tutorial: floating shutter while live.
+                        // Mirrors the real app's ContentView shutter placement so
+                        // the user can capture without leaving the tutorial.
+                        if tutorialCameraContext.mode == .live {
+                            VStack {
+                                Spacer()
+                                ShutterButton(style: .glass) {
+                                    Task { await tutorialCameraContext.capture() }
+                                }
+                                .disabled(tutorialCameraContext.isShutterCycling)
+                                .tutorialHighlightAnchor(.button(id: .shutterButton), cornerRadius: 36)
+                                .padding(.bottom, 32)
+                            }
+                            .ignoresSafeArea(.container, edges: .bottom)
+                            .transition(.opacity)
+                        }
+
                         // Tutorial overlay (dimmed with cutout + tooltip)
                         // Hidden while in move mode — move mode UI provides instructions
                         if coordinator.isActive && hasAnimatedIn && !mockStore.isInMoveMode {
@@ -232,6 +249,11 @@ struct InteractiveTutorialView: View {
 
                         frames.forEach { key, frame in
                             coordinator.registerHighlightFrame(id: key, frame: frame)
+                        }
+                    }
+                    .onPreferenceChange(HighlightCornerRadiusPreferenceKey.self) { radii in
+                        radii.forEach { key, radius in
+                            coordinator.registerHighlightCornerRadius(id: key, cornerRadius: radius)
                         }
                     }
                 }
@@ -275,6 +297,17 @@ struct InteractiveTutorialView: View {
         }
         .onChange(of: isScrubbing) { oldValue, newValue in
             handleScrubbingChange(from: oldValue, to: newValue)
+        }
+        .onChange(of: tutorialCameraContext.mode) { _, newValue in
+            if newValue == .live {
+                _ = coordinator.checkEndCondition(.cameraLiveEntered)
+            }
+        }
+        .onChange(of: tutorialCameraContext.captureFlashID) { oldValue, newValue in
+            // captureFlashID is bumped exactly once per shutter capture.
+            if oldValue != newValue, newValue != nil {
+                _ = coordinator.checkEndCondition(.cameraReferenceCaptured)
+            }
         }
         // Safety: If bottom view appears during scrubbing step transition, dismiss it and re-scroll
         .onChange(of: mockStore.selectedDateItem) { oldValue, newValue in
@@ -539,6 +572,14 @@ struct InteractiveTutorialView: View {
                 // Need EntryEditingView open so user can see drawing and access context menu
                 mockStore.selectDate(Date())
 
+            case .cameraReference:
+                // Need an empty entry for today so the canvas opens without an
+                // existing drawing (camera button only shows on an empty canvas).
+                // Also opt the sandboxed canvas back into the camera feature.
+                mockStore.entries.removeAll()
+                mockStore.cameraTutorialEnabled = true
+                mockStore.selectDate(Date())
+
             case .none:
                 break
             }
@@ -642,6 +683,16 @@ struct InteractiveTutorialView: View {
             scrollToTodayEntry()
             // Small delay to let scroll complete, then select today
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                mockStore.selectDate(Date())
+            }
+
+        case .prepareForCameraReference:
+            // Wipe any seeded drawing and reselect today so the canvas opens
+            // on an empty entry (camera button is gated on `paths.isEmpty`).
+            mockStore.entries.removeAll()
+            mockStore.cameraTutorialEnabled = true
+            mockStore.clearSelection()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 mockStore.selectDate(Date())
             }
 
@@ -1050,7 +1101,7 @@ private struct TutorialHeaderView: View {
                               : "arrow.up.left.and.arrow.down.right")
                     }
                     .circularGlassButton()
-                    .tutorialHighlightAnchor(.viewModeButton)
+                    .tutorialHighlightAnchor(.viewModeButton, cornerRadius: 22)
                 }
             }
             .padding(.horizontal, 20)

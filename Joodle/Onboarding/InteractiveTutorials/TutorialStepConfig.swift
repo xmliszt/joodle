@@ -14,6 +14,7 @@ enum TutorialStepType: String, CaseIterable, Identifiable {
     case scrubbing
     case quickSwitchToday  // Double-tap center handle to navigate to today
     case drawAndEdit       // Combined: open canvas + draw/edit (replaces openCanvas + drawOnCanvas)
+    case cameraReference   // Use camera as a tracing reference
     case switchViewMode
     case switchYear
     case addReminder
@@ -26,6 +27,7 @@ enum TutorialStepType: String, CaseIterable, Identifiable {
         case .scrubbing: return "Browse Your Joodles"
         case .quickSwitchToday: return "Quick Travel to Today"
         case .drawAndEdit: return "Draw and Edit Joodle"
+        case .cameraReference: return "Trace Doodle From Camera"
         case .switchViewMode: return "Change View Mode"
         case .switchYear: return "Navigate Years"
         case .addReminder: return "Set an Anniversary Alarm"
@@ -38,6 +40,7 @@ enum TutorialStepType: String, CaseIterable, Identifiable {
         case .scrubbing: return "hand.draw"
         case .quickSwitchToday: return "hand.tap"
         case .drawAndEdit: return "paintbrush.pointed"
+        case .cameraReference: return "camera"
         case .switchViewMode: return "rectangle.compress.vertical"
         case .switchYear: return "calendar"
         case .addReminder: return "alarm"
@@ -91,6 +94,9 @@ enum TutorialButtonId: String {
     case yearSelector = "tutorial.yearSelector"
     case bellIcon = "tutorial.bellIcon"
     case centerHandle = "tutorial.centerHandle"
+    case cameraButton = "tutorial.cameraButton"
+    case shutterButton = "tutorial.shutterButton"
+    case canvasSaveButton = "tutorial.canvasSaveButton"
 }
 
 // MARK: - End Condition
@@ -107,6 +113,8 @@ enum TutorialEndCondition: Equatable {
     case doubleTapCompleted                   // When double-tap gesture completes
     case drawingMoved                         // When user completes a drawing move in tutorial
     case moveContextMenuOptionTapped          // When user taps "Move to Another Date" in context menu
+    case cameraLiveEntered                    // When camera live mode becomes active
+    case cameraReferenceCaptured              // When the user captures a reference photo with the shutter
 }
 
 // MARK: - Prerequisite
@@ -119,6 +127,7 @@ enum TutorialPrerequisite {
     case clearSelectionAndScroll  // Deselect entry and scroll grid
     case navigateToToday          // Scroll to today and select it (simulates double-tap effect)
     case prepareForMoveDrawing    // Return to current year with today's drawing, then enter move mode
+    case prepareForCameraReference // Select today's empty entry so canvas opens without an existing drawing
 }
 
 // MARK: - Tooltip Configuration

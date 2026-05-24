@@ -97,7 +97,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
               RoundedRectangle(cornerRadius: 2)
                 .fill(.appSurface.opacity(0.7))
                 .frame(width: 60, height: 4)
-                .tutorialHighlightAnchor(.centerHandle)
+                .tutorialHighlightAnchor(.centerHandle, cornerRadius: 2)
             )
           // Double-tap to navigate to today's date entry
             .onTapGesture(count: 2) {

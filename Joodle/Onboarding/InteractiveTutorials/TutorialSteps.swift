@@ -125,12 +125,74 @@ struct TutorialSteps {
         )
     ]
 
+    // MARK: - Standalone-Only Tutorials
+    //
+    // These tutorial sequences are accessible only from Settings; they are not
+    // part of the onboarding flow.
+
+    /// Camera reference tracing — open canvas → tap camera → capture → save & exit.
+    /// (Tracing in between is optional; the user can save without drawing anything.)
+    static let cameraReferenceSteps: [TutorialStepConfig] = [
+        // Step A: Open the canvas via the paint button on the entry editing view.
+        TutorialStepConfig(
+            type: .cameraReference,
+            highlightAnchor: .button(id: .paintButton),
+            tooltip: TutorialTooltip(
+                message: "Tap to open the canvas",
+                position: .above
+            ),
+            endCondition: .buttonTapped(id: .paintButton),
+            prerequisiteSetup: .prepareForCameraReference
+        ),
+
+        // Step B: On the open canvas, highlight the camera reference button.
+        TutorialStepConfig(
+            type: .cameraReference,
+            highlightAnchor: .button(id: .cameraButton),
+            tooltip: TutorialTooltip(
+                message: "Tap to use your camera as a tracing reference",
+                position: .below
+            ),
+            endCondition: .cameraLiveEntered
+        ),
+
+        // Step C: In live camera mode, highlight the shutter to capture a reference.
+        TutorialStepConfig(
+            type: .cameraReference,
+            highlightAnchor: .button(id: .shutterButton),
+            tooltip: TutorialTooltip(
+                message: "Frame your subject, then tap the shutter to capture",
+                position: .above
+            ),
+            endCondition: .cameraReferenceCaptured
+        ),
+
+        // Step D: Back on the canvas with the captured backdrop. Highlight the
+        // whole canvas (not just the save button) so the user can actually
+        // draw on top of the reference; the save button sits inside the cutout
+        // so it remains tappable to end the step.
+        TutorialStepConfig(
+            type: .cameraReference,
+            highlightAnchor: .drawingCanvas,
+            tooltip: TutorialTooltip(
+                message: "Trace over your reference if you like, then tap ✓ to save",
+                position: .below
+            ),
+            endCondition: .viewDismissed(viewId: "drawingCanvas")
+        )
+    ]
+
     // MARK: - Single Step Access
 
     /// Get tutorial configs for a single step type (for Settings tutorials)
     /// Note: Some step types like switchViewMode have multiple configs
     static func singleStep(_ type: TutorialStepType) -> [TutorialStepConfig] {
-        onboarding.filter { $0.type == type }
+        switch type {
+        case .cameraReference:
+            return cameraReferenceSteps
+        default:
+            return onboarding.filter { $0.type == type }
+        }
     }
 
     /// Get the starting index for a specific step type in the onboarding array
