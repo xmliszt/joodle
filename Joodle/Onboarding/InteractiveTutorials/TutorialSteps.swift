@@ -10,10 +10,14 @@ import Foundation
 
 struct TutorialSteps {
 
-    // MARK: - Full Onboarding Sequence
+    // MARK: - Onboarding Segments
+    //
+    // Onboarding is composed by concatenating segments in order. Splitting it
+    // up keeps individual tutorials (like the camera sequence) reusable as a
+    // single source of truth for both onboarding and Settings entry points.
 
-    /// All tutorial steps shown during onboarding flow
-    static let onboarding: [TutorialStepConfig] = [
+    /// Steps that come before the camera-reference tutorial inside onboarding.
+    private static let preCameraOnboardingSteps: [TutorialStepConfig] = [
         // Step 1: Scrubbing - highlight only today's entry (user's doodle)
         TutorialStepConfig(
             type: .scrubbing,
@@ -57,8 +61,11 @@ struct TutorialSteps {
                 position: .below
             ),
             endCondition: .viewDismissed(viewId: "drawingCanvas")
-        ),
+        )
+    ]
 
+    /// Steps that come after the camera-reference tutorial inside onboarding.
+    private static let postCameraOnboardingSteps: [TutorialStepConfig] = [
         // Step 4a: Switch View Mode (button tap)
         TutorialStepConfig(
             type: .switchViewMode,
@@ -103,9 +110,17 @@ struct TutorialSteps {
             ),
             endCondition: .sheetDismissed,
             prerequisiteSetup: .populateAnniversaryEntry
-        ),
+        )
+    ]
 
-        // Step 7a: Move Drawing - long-press drawing to open context menu
+    // MARK: - Reusable Tutorial Sequences
+
+    /// Move doodle to another date — Settings-only standalone tutorial.
+    /// Deliberately left out of the onboarding flow; it's discoverable in the
+    /// Learn Core Features list for users who want to learn it.
+    static let moveDrawingSteps: [TutorialStepConfig] = [
+        // Step A: long-press the doodle to open the context menu, then tap
+        // "Move to Another Date".
         TutorialStepConfig(
             type: .moveDrawing,
             highlightAnchor: .entryDrawing,
@@ -117,7 +132,8 @@ struct TutorialSteps {
             prerequisiteSetup: .prepareForMoveDrawing
         ),
 
-        // Step 7b: Move Drawing - pick a target date (move mode active, custom top-center instruction shown)
+        // Step B: pick a target date (move mode active, custom top-center
+        // instruction shown).
         TutorialStepConfig(
             type: .moveDrawing,
             highlightAnchor: .none,
@@ -125,20 +141,17 @@ struct TutorialSteps {
         )
     ]
 
-    // MARK: - Standalone-Only Tutorials
-    //
-    // These tutorial sequences are accessible only from Settings; they are not
-    // part of the onboarding flow.
-
     /// Camera reference tracing — open canvas → tap camera → capture → save & exit.
     /// (Tracing in between is optional; the user can save without drawing anything.)
+    /// Reused both inside `onboarding` (right after drawAndEdit) and as a
+    /// Settings-launched single tutorial.
     static let cameraReferenceSteps: [TutorialStepConfig] = [
         // Step A: Open the canvas via the paint button on the entry editing view.
         TutorialStepConfig(
             type: .cameraReference,
             highlightAnchor: .button(id: .paintButton),
             tooltip: TutorialTooltip(
-                message: "Tap to open the canvas",
+                message: "Let's show you a camera trick — tap to open the canvas",
                 position: .above
             ),
             endCondition: .buttonTapped(id: .paintButton),
@@ -182,14 +195,23 @@ struct TutorialSteps {
         )
     ]
 
+    // MARK: - Full Onboarding Sequence
+
+    /// All tutorial steps shown during onboarding flow.
+    /// Composed from segments so reusable sequences (e.g. cameraReferenceSteps)
+    /// stay a single source of truth between onboarding and Settings.
+    static let onboarding: [TutorialStepConfig] =
+        preCameraOnboardingSteps + cameraReferenceSteps + postCameraOnboardingSteps
+
     // MARK: - Single Step Access
 
-    /// Get tutorial configs for a single step type (for Settings tutorials)
-    /// Note: Some step types like switchViewMode have multiple configs
+    /// Get tutorial configs for a single step type (for Settings tutorials).
+    /// Step types that aren't part of the onboarding flow (e.g. moveDrawing)
+    /// are special-cased so Settings can still launch them standalone.
     static func singleStep(_ type: TutorialStepType) -> [TutorialStepConfig] {
         switch type {
-        case .cameraReference:
-            return cameraReferenceSteps
+        case .moveDrawing:
+            return moveDrawingSteps
         default:
             return onboarding.filter { $0.type == type }
         }

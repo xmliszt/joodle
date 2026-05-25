@@ -224,14 +224,11 @@ struct InteractiveTutorialView: View {
                         // Tutorial overlay (dimmed with cutout + tooltip)
                         // Hidden while in move mode — move mode UI provides instructions
                         if coordinator.isActive && hasAnimatedIn && !mockStore.isInMoveMode {
-                            TutorialOverlayView(coordinator: coordinator)
-                                .opacity(overlayOpacity)
-                        }
-
-                        // Exit/Skip tutorial button (hide when showing completion)
-                        if !coordinator.showingCompletion {
-                            exitTutorialButton
-                                .opacity(overlayOpacity)
+                            TutorialOverlayView(
+                                coordinator: coordinator,
+                                onSkip: { skipCurrentStep() }
+                            )
+                            .opacity(overlayOpacity)
                         }
 
                         #if DEBUG
@@ -326,59 +323,113 @@ struct InteractiveTutorialView: View {
         }
     }
 
-    // MARK: - Exit Tutorial Button
+    // MARK: - Step Skipping
 
-    private var exitTutorialButton: some View {
-        VStack {
-            Spacer()
-            HStack {
-                Spacer()
-              if #available(iOS 26.0, *) {
-                Button {
-                  exitTutorial()
-                } label: {
-                  HStack(spacing: 6) {
-                    Image(systemName: "xmark.circle.fill")
-                      .font(.appBody())
-                    Text(isOnboarding ? "Skip tutorial" : "Exit tutorial")
-                      .font(.appSubheadline(weight: .medium))
-                  }
-                  .foregroundColor(.primary)
-                  .padding(.horizontal, 16)
-                  .padding(.vertical, 10)
-                  .clipShape(Capsule())
-                }
-                .glassEffect(.regular.interactive())
-              } else {
-                // Fallback on earlier versions
-                Button {
-                  exitTutorial()
-                } label: {
-                  HStack(spacing: 6) {
-                    Image(systemName: "xmark.circle.fill")
-                      .font(.appBody())
-                    Text(isOnboarding ? "Skip tutorial" : "Exit tutorial")
-                      .font(.appSubheadline(weight: .medium))
-                  }
-                  .foregroundColor(.white.opacity(0.9))
-                  .padding(.horizontal, 16)
-                  .padding(.vertical, 10)
-                  .background(Color.black.opacity(0.6))
-                  .clipShape(Capsule())
-                }
-              }
-                Spacer()
-            }
-            .padding(.bottom, 40)
+    /// Called when the user taps "Next" on a tooltip. Performs the state
+    /// mutation the step's interaction would normally produce, so the next
+    /// step's anchor has a real target and the existing end-condition
+    /// observers can fire `advance()` naturally. Falls through to a plain
+    /// `coordinator.advance()` for steps that don't need state changes.
+    private func skipCurrentStep() {
+        guard let step = coordinator.currentStep else {
+            coordinator.advance()
+            return
         }
-    }
 
-    private func exitTutorial() {
-        // skipAll() handles navigation via its onComplete callback
-        // For onboarding: onComplete calls viewModel.completeStep(.yearGridDemo)
-        // For standalone: onComplete calls onDismiss
-        // Do NOT call completeStep here to avoid double navigation which can corrupt the navigation path
-        coordinator.skipAll()
+        switch step.endCondition {
+        case .scrubEnded:
+            // Selecting today triggers the same selection state a real scrub
+            // ends with; handleScrubbingChange advances when isScrubbing goes
+            // back to false, so call advance directly here.
+            mockStore.selectDate(Date())
+            coordinator.advance()
+
+        case .buttonTapped(let id):
+            switch id {
+            case .paintButton:
+                // Open the canvas — handlePaintButtonTapped advances itself.
+                handlePaintButtonTapped()
+            case .cameraButton:
+                // Entering live mode fires the `.cameraLiveEntered` observer.
+                Task { await tutorialCameraContext.enterLive() }
+            case .shutterButton, .canvasSaveButton, .centerHandle, .viewModeButton, .yearSelector, .bellIcon:
+                // No straightforward simulation for these button taps — just
+                // advance. (None of them are currently used with the
+                // .buttonTapped end condition except .paintButton.)
+                coordinator.advance()
+            }
+
+        case .viewDismissed(let viewId):
+            if viewId == "drawingCanvas" {
+                // Closing the canvas fires handleDrawingCanvasChange which
+                // advances on the .viewDismissed end condition.
+                showDrawingCanvas = false
+            } else {
+                coordinator.advance()
+            }
+
+        case .viewModeChanged(let mode):
+            // handleViewModeChange advances when the mode lands on `mode`.
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                mockStore.viewMode = mode
+            }
+
+        case .pinchGestureCompleted:
+            // Pinch-out completes by going from .year → .now. The same handler
+            // also covers this transition.
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                mockStore.viewMode = .now
+            }
+
+        case .yearChanged:
+            // handleYearChange advances on any selectedYear delta.
+            let currentYear = Calendar.current.component(.year, from: Date())
+            withAnimation {
+                mockStore.selectedYear = currentYear + 1
+            }
+
+        case .sheetDismissed:
+            // handleReminderSheetChange advances when the sheet closes.
+            showReminderSheet = false
+            // If the sheet wasn't open (user skipped before opening it),
+            // there's nothing to dismiss — advance directly.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                if coordinator.currentStep?.endCondition == .sheetDismissed {
+                    coordinator.advance()
+                }
+            }
+
+        case .doubleTapCompleted:
+            // Nothing to simulate visually — just advance.
+            coordinator.advance()
+
+        case .drawingMoved:
+            // The user is in move-mode (no anchor). Exit move-mode cleanly and
+            // advance; this is the last step, so advance kicks off completion.
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                mockStore.exitMoveMode()
+            }
+            coordinator.advance()
+
+        case .moveContextMenuOptionTapped:
+            // Same path as a real "Move to Another Date" tap.
+            handleMoveDrawingRequested()
+
+        case .cameraLiveEntered:
+            // Mirrors what tapping the camera button does.
+            Task { await tutorialCameraContext.enterLive() }
+
+        case .cameraReferenceCaptured:
+            // Fake a capture so step D's "canvas with backdrop" is reachable.
+            // If the live session is actually running, capture for real;
+            // otherwise just bump the flash ID + reset mode so the observer
+            // fires and the canvas comes back.
+            if tutorialCameraContext.mode == .live {
+                Task { await tutorialCameraContext.capture() }
+            } else {
+                tutorialCameraContext.captureFlashID = UUID()
+            }
+        }
     }
 
     // MARK: - Tutorial Content

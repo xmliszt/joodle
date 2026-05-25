@@ -11,6 +11,12 @@ import SwiftUI
 
 struct TutorialOverlayView: View {
     @ObservedObject var coordinator: TutorialCoordinator
+    /// Fired when the user taps the "Next" pill on a tooltip. Hosts are
+    /// expected to perform the step's expected state transition (e.g. open
+    /// the canvas, enter camera mode) so the next step's anchor has a real
+    /// target to land on — then advance the coordinator (or let the existing
+    /// end-condition observer advance it for them).
+    var onSkip: (() -> Void)? = nil
 
     private let dimOpacity: Double = 0.5
     private let highlightPadding: CGFloat = 8
@@ -87,7 +93,8 @@ struct TutorialOverlayView: View {
                                     TutorialTooltipView(
                                         tooltip: tooltip,
                                         highlightFrame: frame,
-                                        screenSize: geometry.size
+                                        screenSize: geometry.size,
+                                        onSkip: { (onSkip ?? { coordinator.advance() })() }
                                     )
                                 }
                             }
@@ -123,12 +130,13 @@ struct TutorialOverlayView: View {
                             TutorialTooltipView(
                                 tooltip: tooltip,
                                 highlightFrame: nil,
-                                screenSize: geometry.size
+                                screenSize: geometry.size,
+                                onSkip: { (onSkip ?? { coordinator.advance() })() }
                             )
                             .offset(y: -64)
                         }
                       }
-                      
+
 
                     case .none:
                         // Just dimmed overlay with tooltip
@@ -139,8 +147,17 @@ struct TutorialOverlayView: View {
                             TutorialTooltipView(
                                 tooltip: tooltip,
                                 highlightFrame: nil,
-                                screenSize: geometry.size
+                                screenSize: geometry.size,
+                                onSkip: { (onSkip ?? { coordinator.advance() })() }
                             )
+                        } else {
+                            // No tooltip on this step — surface a standalone Next
+                            // button so the user can still advance.
+                            VStack {
+                                Spacer()
+                                TooltipSkipButton { (onSkip ?? { coordinator.advance() })() }
+                                    .padding(.bottom, 40)
+                            }
                         }
                     }
                 }

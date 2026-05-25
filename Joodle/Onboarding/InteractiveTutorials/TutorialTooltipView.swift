@@ -13,6 +13,11 @@ struct TutorialTooltipView: View {
     let tooltip: TutorialTooltip
     let highlightFrame: CGRect?
     let screenSize: CGSize
+    /// When set, the tooltip renders a small "Next" pill beside the bubble.
+    /// Tapping it lets the user skip the current step without performing the
+    /// real interaction — replaces the old bottom-of-screen "Skip tutorial"
+    /// button which used to block underlying UI.
+    var onSkip: (() -> Void)? = nil
 
     @State private var tooltipSize: CGSize = .zero
 
@@ -88,11 +93,18 @@ struct TutorialTooltipView: View {
     // MARK: - Body
 
     var body: some View {
-        TooltipBubble(
-            message: tooltip.message,
-            arrowDirection: arrowDirection,
-            maxWidth: tooltip.maxWidth
-        )
+        HStack(alignment: .center, spacing: 8) {
+            TooltipBubble(
+                message: tooltip.message,
+                arrowDirection: arrowDirection,
+                maxWidth: tooltip.maxWidth
+            )
+            .layoutPriority(1)
+
+            if let onSkip {
+                TooltipSkipButton(action: onSkip)
+            }
+        }
         .background(
             GeometryReader { geo in
                 Color.clear
@@ -106,6 +118,32 @@ struct TutorialTooltipView: View {
         )
         .position(x: tooltipX, y: tooltipY + tooltipSize.height / 2)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: highlightFrame)
+    }
+}
+
+// MARK: - Tooltip Skip Button
+
+/// Small pill button rendered beside the tooltip bubble. Lets the user advance
+/// past the current step without performing the real interaction.
+struct TooltipSkipButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Text("Next")
+                    .font(.appSubheadline(weight: .semibold))
+                Image(systemName: "chevron.right")
+                    .font(.appCaption(weight: .bold))
+            }
+            .foregroundColor(.appAccentContrast)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                Capsule().fill(Color.appAccent.opacity(0.85))
+            )
+        }
+        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 2)
     }
 }
 
