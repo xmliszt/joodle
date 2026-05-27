@@ -528,6 +528,10 @@ struct DrawingCanvasView: View {
     .circularGlassButton()
     .disabled(isShutterCycling)
     .tutorialHighlightAnchor(.button(id: .cameraButton), cornerRadius: 22)
+    // Only surface the tooltip when the canvas is actually open; the canvas
+    // stays in the tree (tucked) when collapsed, which would otherwise point
+    // the tip at a stale off-screen frame.
+    .featureTip(FeatureTipDefinitions.AnchorID.cameraReference, isEnabled: isShowing)
   }
 
   /// Top-right button in camera live mode — opens the system photo picker so

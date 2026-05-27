@@ -140,6 +140,16 @@ class OnboardingViewModel: ObservableObject {
 
         // Save flags to UserDefaults to hide onboarding on next launch
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+
+        // Suppress feature-discovery tooltips for genuine new installs — the
+        // onboarding tutorial already taught these features. Skip when this is
+        // a "Revisit Onboarding" run from Settings so existing users don't lose
+        // pending new-feature tips. (Checked before the flag is cleared below.)
+        let isRevisitFromSettings = UserDefaults.standard.bool(forKey: "isRevisitFromSettings")
+        if !isRevisitFromSettings {
+            FeatureTipManager.shared.markAllCurrentTipsAsSeen()
+        }
+
         // Clear the revisit from settings flag
         UserDefaults.standard.removeObject(forKey: "isRevisitFromSettings")
 

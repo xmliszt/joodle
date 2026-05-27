@@ -241,7 +241,9 @@ struct SettingsView: View {
   @State private var showExperimentalFeatures = false
   @State private var showCustomization = false
   @State private var scrollToNotePromptSetting = false
-  
+  @State private var showSimulateFirstLaunchAlert = false
+  @State private var userConditionStatusMessage: String?
+
   // Language change state
   @State private var showLanguageRestartAlert = false
   @State private var selectedLanguage: AppLanguage = {
@@ -459,6 +461,14 @@ struct SettingsView: View {
       }
     } message: {
       Text(languageRestartAlertMessage)
+    }
+    .alert("Simulate First-Time User?", isPresented: $showSimulateFirstLaunchAlert) {
+      Button("Reset & Restart", role: .destructive) {
+        simulateFirstTimeUser()
+      }
+      Button("Cancel", role: .cancel) { }
+    } message: {
+      Text("This resets onboarding and feature-tooltip state and quits the app. Reopen it to go through onboarding as a brand-new user.")
     }
     .offerCodeRedemption(isPresented: $showRedeemCode) { _ in
       Task {
@@ -1149,6 +1159,46 @@ ID: \(deviceIdentifier)
     AppEnvironment.isSimulatingProduction
   }
   
+  /// Debug buttons to put the app into a specific user condition for testing
+  /// onboarding and feature-discovery tooltips.
+  @ViewBuilder
+  private var simulateUserConditionButtons: some View {
+    Button("Simulate First-Time User (restart)") {
+      showSimulateFirstLaunchAlert = true
+    }
+
+    Button("Simulate Existing User w/ Unseen Feature") {
+      // Already onboarded, but feature tips have never been seen — so the
+      // next time the target screen appears, the tooltip shows.
+      UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+      UserDefaults.standard.removeObject(forKey: "isRevisitFromSettings")
+      FeatureTipManager.shared.resetSeenState()
+      userConditionStatusMessage = "Existing user simulated — feature tooltips reset. Open a drawing to see them."
+      print("DEBUG: Simulated existing user with unseen feature tooltips")
+    }
+
+    if let userConditionStatusMessage {
+      Text(userConditionStatusMessage)
+        .font(.footnote)
+        .foregroundColor(.secondary)
+    }
+  }
+
+  /// Reset all persisted state so the next launch behaves like a brand-new
+  /// install going through onboarding for the first time.
+  private func simulateFirstTimeUser() {
+    // Trigger onboarding as a genuine first run (not a Settings revisit).
+    UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+    UserDefaults.standard.removeObject(forKey: "isRevisitFromSettings")
+    // Clear feature-tip seen state so onboarding completion re-suppresses them
+    // exactly as it would for a real new install.
+    FeatureTipManager.shared.resetSeenState()
+    print("DEBUG: Simulated first-time user — restarting to apply")
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+      exit(0)
+    }
+  }
+
   @ViewBuilder
   private var developerOptionsSection: some View {
     if AppEnvironment.isDebug && !simulateProductionEnvironment {
@@ -1176,7 +1226,9 @@ ID: \(deviceIdentifier)
           ChangelogManager.shared.resetChangelogState()
           print("DEBUG: Changelog state reset - will show on next launch")
         }
-        
+
+        simulateUserConditionButtons
+
 #if DEBUG
         Button("Show Test Remote Alert") {
           RemoteAlertService.shared.showTestAlert()

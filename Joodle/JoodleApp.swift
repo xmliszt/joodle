@@ -570,6 +570,11 @@ struct JoodleApp: App {
                 checkPendingRestartAfterOnboarding()
               }
           }
+          // Non-blocking feature-discovery tooltips for already-onboarded
+          // users. Lives only in this branch so it never covers onboarding.
+          .overlay {
+            FeatureTipOverlayView()
+          }
         }
 
         if showLaunchScreen {

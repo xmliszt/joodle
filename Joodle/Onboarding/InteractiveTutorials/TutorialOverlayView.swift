@@ -307,31 +307,12 @@ struct HighlightRing: View {
     let frame: CGRect
     let cornerRadius: CGFloat
 
-    @State private var isPulsing = false
-
     var body: some View {
-        ZStack {
-            // Outer pulsing ring
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .stroke(Color.appAccent.opacity(0.5), lineWidth: 3)
-                .frame(width: frame.width, height: frame.height)
-                .scaleEffect(isPulsing ? 1.1 : 1.0)
-                .opacity(isPulsing ? 0.0 : 0.8)
-
-            // Inner steady ring
-            RoundedRectangle(cornerRadius: cornerRadius - 2)
-                .stroke(Color.appAccent, lineWidth: 2)
-                .frame(width: frame.width - 4, height: frame.height - 4)
-        }
-        .position(x: frame.midX, y: frame.midY)
-        .onAppear {
-            withAnimation(
-                .easeOut(duration: 1.2)
-                .repeatForever(autoreverses: false)
-            ) {
-                isPulsing = true
-            }
-        }
+        // Steady ring — no pulsing, which was distracting.
+        RoundedRectangle(cornerRadius: cornerRadius - 2)
+            .stroke(Color.appAccent, lineWidth: 2)
+            .frame(width: frame.width - 4, height: frame.height - 4)
+            .position(x: frame.midX, y: frame.midY)
     }
 }
 
