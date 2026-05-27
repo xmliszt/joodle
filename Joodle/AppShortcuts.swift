@@ -15,6 +15,37 @@ import SwiftUI
 /// where the intent posts a notification before ContentView's observer is subscribed.
 enum ShortcutActionState {
   @MainActor static var pendingOpenCanvas: Bool = false
+
+  /// Navigate to the given date and open the drawing canvas once the selection lands.
+  ///
+  /// Shared by the "Create Today's Doodle" Siri shortcut, the daily reminder
+  /// notification tap, and the home-screen quick action so all three drop the user
+  /// straight onto the canvas. Setting `pendingOpenCanvas` covers the cold-launch
+  /// race where ContentView isn't yet observing the notification; the delayed post
+  /// handles the warm path once the date selection has landed.
+  /// - Parameter source: optional tag forwarded in the navigation notification
+  ///   (e.g. `"quick_action"`) for downstream handling/analytics.
+  @MainActor
+  static func navigateAndOpenCanvas(date: Date, source: String? = nil) {
+    var userInfo: [AnyHashable: Any] = ["date": date]
+    if let source {
+      userInfo["source"] = source
+    }
+    NotificationCenter.default.post(
+      name: .navigateToDateFromShortcut,
+      object: nil,
+      userInfo: userInfo
+    )
+
+    pendingOpenCanvas = true
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+      NotificationCenter.default.post(
+        name: .openDrawingCanvasFromShortcut,
+        object: nil
+      )
+    }
+  }
 }
 
 // MARK: - Create Today's Doodle Intent
@@ -29,26 +60,8 @@ struct CreateTodaysDoodleIntent: AppIntent {
 
   @MainActor
   func perform() async throws -> some IntentResult & OpensIntent {
-    // Post notification to navigate to today's date when app opens
-    let today = Date()
-    NotificationCenter.default.post(
-      name: .navigateToDateFromShortcut,
-      object: nil,
-      userInfo: ["date": today]
-    )
-
-    // Mark the request — ContentView reads this on appear in case it isn't yet listening
-    // for the notification (cold-launch race).
-    ShortcutActionState.pendingOpenCanvas = true
-
-    // Once the today selection has landed in ContentView, ask it to open the drawing canvas.
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-      NotificationCenter.default.post(
-        name: .openDrawingCanvasFromShortcut,
-        object: nil
-      )
-    }
-
+    // Navigate to today's date and open the canvas when the app opens.
+    ShortcutActionState.navigateAndOpenCanvas(date: Date())
     return .result()
   }
 }

@@ -50,20 +50,7 @@ final class SceneDelegate: NSObject, UIWindowSceneDelegate {
 
     switch type {
     case .today:
-      NotificationCenter.default.post(
-        name: .navigateToDateFromShortcut,
-        object: nil,
-        userInfo: ["date": Date(), "source": "quick_action"]
-      )
-      // Once the today selection has landed in ContentView, ask it to open the drawing canvas.
-      // NavigationHelper dismisses then waits 0.1s to set the binding, ContentView waits another
-      // 0.1s before calling selectDateItem — 0.6s leaves comfortable headroom.
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-        NotificationCenter.default.post(
-          name: .openDrawingCanvasFromShortcut,
-          object: nil
-        )
-      }
+      ShortcutActionState.navigateAndOpenCanvas(date: Date(), source: "quick_action")
     case .nextAnniversary:
       let date = NextAnniversaryFinder.nextAnniversaryDate() ?? Date()
       NotificationCenter.default.post(

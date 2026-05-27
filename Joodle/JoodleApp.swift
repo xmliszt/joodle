@@ -85,13 +85,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
       // Track navigation from daily reminder notification
       AnalyticsManager.shared.trackNavigatedFromNotification(notificationType: "daily_reminder")
 
-      // Navigate to today's entry
-      print("📬 [AppDelegate] Daily reminder tapped - navigating to today")
-      NotificationCenter.default.post(
-        name: .navigateToDateFromShortcut,
-        object: nil,
-        userInfo: ["date": Date()]
-      )
+      // Navigate to today's entry, then open the drawing canvas directly so the
+      // user can capture today's moment without an extra tap.
+      print("📬 [AppDelegate] Daily reminder tapped - navigating to today and opening canvas")
+      Task { @MainActor in
+        ShortcutActionState.navigateAndOpenCanvas(date: Date())
+      }
 
     } else if let date = DayEntry.stringToLocalDate(identifier) {
       // Track navigation from anniversary reminder notification
