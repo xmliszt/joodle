@@ -53,6 +53,9 @@ struct ContentView: View {
   @State private var yearGridViewSize: CGSize = .zero
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
+  /// Flipped true to ask `DrawingCanvasView` to run its save flow (saving-state
+  /// UI → persist) before collapsing. The canvas resets it once it begins.
+  @State private var canvasSaveDismissTrigger: Bool = false
   /// Set when a quick action requests opening the canvas before a date selection has landed.
   @State private var pendingOpenCanvasFromShortcut: Bool = false
   @State private var showNotePromptPopup: Bool = false
@@ -318,17 +321,22 @@ struct ContentView: View {
             DrawingCanvasView(
               date: dataProvider.selectedDateItem!.date,
               entry: selectedEntry,
+              // Called by the canvas only after its save flow completes, so the
+              // collapse animation runs against an already-persisted entry.
               onDismiss: {
-                handleDrawingCanvasDismiss()
+                performDrawingCanvasDismiss()
               },
-              isShowing: showDrawingCanvas
+              isShowing: showDrawingCanvas,
+              saveDismissTrigger: $canvasSaveDismissTrigger
             )
             .environmentObject(cameraContext)
           },
           // Hide floating canvas view when navigating to settings
           hidden: hideDynamicIslandView,
+          // Tapping outside requests a save + dismiss; the canvas shows its
+          // saving state, persists, then drives the collapse via onDismiss.
           onDismiss: {
-            handleDrawingCanvasDismiss()
+            requestCanvasSaveAndDismiss()
           }
         )
         .id("DynamicIslandExpandedView-\(dataProvider.selectedDateItem?.id ?? "none")")
@@ -910,8 +918,11 @@ struct ContentView: View {
     return date.formatted(date: .abbreviated, time: .omitted)
   }
 
-  /// Handle drawing canvas dismiss - check if we should show note prompt
-  private func handleDrawingCanvasDismiss() {
+  /// Ask the drawing canvas to run its save flow (saving state UI → persist),
+  /// after which it drives the actual collapse via its `onDismiss`. This keeps
+  /// the synchronous CloudKit save from freezing the collapse animation — the
+  /// canvas shows an explicit saving state instead, then dismisses smoothly.
+  private func requestCanvasSaveAndDismiss() {
     // Block dismissal while the shutter is mid-cycle (close → camera swap →
     // open). Dismissing mid-cycle races with the camera session lifecycle —
     // we've seen it crash (stopRunning during prep config lock) and leave the
@@ -922,11 +933,11 @@ struct ContentView: View {
     }
     if cameraContext.mode == .live {
       cameraContext.dismissLiveCamera { [self] in
-        performDrawingCanvasDismiss()
+        canvasSaveDismissTrigger = true
       }
       return
     }
-    performDrawingCanvasDismiss()
+    canvasSaveDismissTrigger = true
   }
 
   private func performDrawingCanvasDismiss() {

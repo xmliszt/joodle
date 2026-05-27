@@ -116,7 +116,6 @@ struct DynamicIslandExpandedView<Content: View>: View {
             .frame(width: expandedContentWidth)
             .clipShape(RoundedRectangle(cornerRadius: contentCornerRadius, style: .continuous))
             .opacity(isExpanded ? 1 : 0)
-            .blur(radius: isExpanded ? 0 : 50)
             .scaleEffect(isExpanded ? 1 : 0)
             .animation(.springFkingSatifying, value: isExpanded)
         }

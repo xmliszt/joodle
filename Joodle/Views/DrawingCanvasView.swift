@@ -33,6 +33,11 @@ struct DrawingCanvasView: View {
   /// But that doesn't make it visible yet as controlled by DynamicIslandExpandedView
   let isShowing: Bool
 
+  /// Set true by the parent (e.g. tap-outside) to request a save + dismiss.
+  /// The canvas runs its saving-state flow, persists, then calls `onDismiss`
+  /// to drive the collapse. Reset to false by the canvas once the flow starts.
+  var saveDismissTrigger: Binding<Bool> = .constant(false)
+
   /// Optional mock store for tutorial mode - when provided, uses mock data instead of real database
   var mockStore: MockDataStore?
 
@@ -59,13 +64,33 @@ struct DrawingCanvasView: View {
   @State private var backgroundSaveTaskId: UIBackgroundTaskIdentifier = .invalid
 
   /// Tracks whether the drawing was already persisted during this dismiss cycle.
-  /// Prevents `.onDisappear` from double-saving after `onChange(of: isShowing)` or `saveDrawing()` already saved.
+  /// Prevents `.onDisappear` from double-saving after `onChange(of: isShowing)` or `runSaveFlow()` already saved.
   @State private var didSaveOnDismiss = false
 
   /// Whether `loadExistingDrawing()` has run for the current session.
   /// Guards save operations so a hidden canvas that was never loaded
   /// (e.g. DI device entry-switch) cannot overwrite another entry's doodle data.
   @State private var drawingStateLoaded = false
+
+  /// Monotonic token used to defer the post-dismiss in-memory state reset until
+  /// after the collapse animation finishes. Bumped on every show/hide transition
+  /// so a pending deferred reset is invalidated if the canvas reopens first.
+  @State private var dismissResetGeneration = 0
+
+  /// True while the dismiss save flow is running: the checkmark becomes a
+  /// spinner, the top-row buttons dim/disable, and the canvas dims — an
+  /// intentional "saving" state that makes the brief synchronous CloudKit save
+  /// read as deliberate rather than as a janky frozen collapse.
+  @State private var isSaving = false
+
+  /// Guards `runSaveFlow()` against re-entry (e.g. a tap-outside arriving while
+  /// the Save button's flow is already in flight).
+  @State private var isDismissing = false
+
+  /// Token for the deferred (post-collapse) persistence scheduled by
+  /// `runSaveFlow()`. Bumped whenever the canvas reopens so a pending save is
+  /// cancelled rather than firing against a fresh session.
+  @State private var saveFlowGeneration = 0
 
   // Inspiration prompt state
   @State private var currentPrompt: String? = nil
@@ -185,13 +210,22 @@ struct DrawingCanvasView: View {
           isShutterCycling: isCameraFeatureActive && cameraContext.isShutterCycling,
           suppressLivePreview: isCameraFeatureActive && cameraContext.suppressPreview,
           captureFlashID: isCameraFeatureActive ? cameraContext.captureFlashID : nil,
+          isSaving: isSaving,
           onCommitStroke: commitCurrentStroke
         ) {
-          // Save button
-          Button(action: saveDrawing) {
-            Image(systemName: "checkmark")
+          // Save button — becomes a rotating spinner while the drawing persists.
+          Button(action: runSaveFlow) {
+            if isSaving {
+              ProgressView()
+                .progressViewStyle(.circular)
+                .controlSize(.small)
+                .tint(.primary)
+            } else {
+              Image(systemName: "checkmark")
+            }
           }
           .circularGlassButton()
+          .disabled(isSaving)
           .tutorialHighlightAnchor(.button(id: .canvasSaveButton), cornerRadius: 22)
         }
         .disabled(!canEditOrCreate)
@@ -259,16 +293,38 @@ struct DrawingCanvasView: View {
       loadExistingDrawing()
     }
     .onChange(of: isShowing) { oldValue, newValue in
+      // Invalidate any pending deferred reset from a previous dismiss.
+      dismissResetGeneration += 1
+
       if newValue {
         // Canvas becoming visible — load data and check access
         didSaveOnDismiss = false
+        isSaving = false
+        isDismissing = false
+        // Invalidate any post-collapse save still pending from a prior dismiss.
+        saveFlowGeneration += 1
         if !isMockMode {
           checkAccessState()
         }
         loadExistingDrawing()
       } else {
-        // Canvas being dismissed — persist drawing before state is torn down.
-        // This covers DynamicIsland tap-outside and any isShowing-driven dismiss.
+        // Tear down camera state so the LED turns off and the transient
+        // tracing photo doesn't leak into the next entry.
+        if isCameraFeatureActive {
+          cameraContext.reset()
+        }
+
+        // The normal dismiss route (`runSaveFlow`) owns persistence: it defers
+        // the save + in-memory clear until after the collapse so the main
+        // thread stays free for the animation. Skip both here in that case.
+        guard !didSaveOnDismiss else { return }
+
+        // Out-of-band dismiss (e.g. selection cleared while showing) that
+        // bypassed the save flow — persist now and defer only the in-memory
+        // clear past the collapse (so the top-row buttons don't flip mid-
+        // dismiss). The scenePhase background save (guarded by isShowing) and
+        // the onDisappear save (guarded by didSaveOnDismiss) are inert during
+        // this window, so no stale-paths re-save can fire.
         if isMockMode {
           saveMockDrawing()
         } else {
@@ -276,25 +332,18 @@ struct DrawingCanvasView: View {
         }
         didSaveOnDismiss = true
 
-        // Clear in-memory drawing state after saving. Without this, stale paths
-        // linger while the canvas is hidden — if the entry is then deleted via
-        // EntryEditingView and the app backgrounds, the scenePhase handler would
-        // see non-empty paths and call saveDrawingToStore(), which re-creates
-        // the deleted entry via findOrCreate.
-        paths.removeAll()
-        pathMetadata.removeAll()
-        currentPath = Path()
-        isDrawing = false
-        currentPathIsDot = false
-        undoStack.removeAll()
-        redoStack.removeAll()
-        drawingStateLoaded = false
-
-        // Tear down camera state so the LED turns off and the transient
-        // tracing photo doesn't leak into the next entry.
-        if isCameraFeatureActive {
-          cameraContext.reset()
+        let generation = dismissResetGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+          // Skip if the canvas reopened (or dismissed again) in the meantime.
+          guard dismissResetGeneration == generation else { return }
+          clearInMemoryDrawingState()
         }
+      }
+    }
+    .onChange(of: saveDismissTrigger.wrappedValue) { _, requested in
+      // Parent (e.g. tap-outside) asked us to save and dismiss.
+      if requested {
+        runSaveFlow()
       }
     }
     .onChange(of: subscriptionManager.hasPremiumAccess) { _, _ in
@@ -626,7 +675,7 @@ struct DrawingCanvasView: View {
     redoStack.removeAll()
 
     // Drawing data lives in the in-memory `paths` array.
-    // We only persist to SwiftData when the canvas is dismissed (saveDrawing)
+    // We only persist to SwiftData when the canvas is dismissed (runSaveFlow)
     // to avoid any I/O lag during active drawing.
 
     // Reset drawing state
@@ -771,14 +820,78 @@ struct DrawingCanvasView: View {
     }
   }
 
-  private func saveDrawing() {
-    if isMockMode {
-      saveMockDrawing()
-    } else {
-      saveDrawingToStore()
+  /// Drive the dismiss so persistence never stutters the collapse animation:
+  ///   1. show the saving state (spinner + dim),
+  ///   2. persist the drawing data — the brief synchronous write is masked by
+  ///      the saving state, and the note prompt can read the saved data,
+  ///   3. start the collapse with the main thread otherwise free; the heavier
+  ///      thumbnail write is held until after the animation, and the in-memory
+  ///      clear is deferred past it too.
+  /// Used by both the Save button and the tap-outside trigger.
+  private func runSaveFlow() {
+    guard !isDismissing else { return }
+    isDismissing = true
+
+    // Surface the saving state only when there's a drawing whose save actually
+    // costs something — the synchronous CloudKit write in the real app. An
+    // empty / cleared canvas, or the in-memory mock store (tutorial), dismisses
+    // with no spinner flash.
+    let showSavingState = !paths.isEmpty && !isMockMode
+    if showSavingState {
+      withAnimation(.easeInOut(duration: 0.2)) {
+        isSaving = true
+      }
     }
+
+    // Reset the parent trigger immediately so a future dismiss can re-fire it.
+    saveDismissTrigger.wrappedValue = false
+
+    // We own persistence — keep the onChange(isShowing)/onDisappear safety-net
+    // saves from also firing (which would run synchronously during collapse).
     didSaveOnDismiss = true
-    onDismiss()
+
+    // Token for the deferred in-memory clear; invalidated if the canvas reopens.
+    saveFlowGeneration += 1
+    let token = saveFlowGeneration
+
+    // Let the saving-state frame render before the (brief) blocking save.
+    let saveDelay = showSavingState ? 0.08 : 0.0
+    DispatchQueue.main.asyncAfter(deadline: .now() + saveDelay) {
+      if isMockMode {
+        saveMockDrawing()
+      } else {
+        // Persist drawing data now (masked by the saving state); hold the
+        // thumbnail write until after the collapse so it can't stutter it.
+        saveDrawingToStore(thumbnailSaveDelay: 0.5)
+      }
+
+      // Collapse now — the note prompt sees the freshly-saved drawing data,
+      // and the main thread is free for the animation.
+      onDismiss()
+
+      // Clear in-memory state once the collapse has settled.
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        guard saveFlowGeneration == token else { return }
+        clearInMemoryDrawingState()
+      }
+    }
+  }
+
+  /// Reset the in-memory drawing state after a dismiss has been persisted.
+  /// Deferred until the collapse finishes so the top-row buttons don't flip
+  /// (undo/redo/trash → camera/inspiration) and the saving dim/spinner persist
+  /// smoothly through the animation.
+  private func clearInMemoryDrawingState() {
+    paths.removeAll()
+    pathMetadata.removeAll()
+    currentPath = Path()
+    isDrawing = false
+    currentPathIsDot = false
+    undoStack.removeAll()
+    redoStack.removeAll()
+    drawingStateLoaded = false
+    isSaving = false
+    isDismissing = false
   }
 
   private func saveMockDrawing() {
@@ -819,7 +932,15 @@ struct DrawingCanvasView: View {
     }
   }
 
-  private func saveDrawingToStore(generateThumbnails: Bool = true, scheduleWidgetSync: Bool = true) {
+  /// - Parameter thumbnailSaveDelay: seconds to hold the thumbnail's
+  ///   main-thread write after generation. Used on dismiss to push that save
+  ///   past the collapse animation so it doesn't stutter the transition; the
+  ///   drawing-data save itself stays synchronous so the note prompt sees it.
+  private func saveDrawingToStore(
+    generateThumbnails: Bool = true,
+    scheduleWidgetSync: Bool = true,
+    thumbnailSaveDelay: TimeInterval = 0
+  ) {
     // If the canvas was never loaded (e.g. hidden DI canvas torn down on
     // entry switch), skip saving to avoid overwriting another entry's doodle
     // with empty paths.
@@ -877,12 +998,19 @@ struct DrawingCanvasView: View {
       try? modelContext.save()
 
       if generateThumbnails {
-        // Generate thumbnails asynchronously — runs right after dismiss,
-        // no artificial delay since this only fires once on canvas close.
+        // Generate thumbnails asynchronously. Rendering is off-main (safe even
+        // during a collapse), but the final SwiftData write is held for
+        // `thumbnailSaveDelay` so it lands after the dismiss animation rather
+        // than competing with it on the main thread.
         thumbnailTask?.cancel()
         thumbnailTask = Task {
           let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(from: data)
           guard !Task.isCancelled else { return }
+
+          if thumbnailSaveDelay > 0 {
+            try? await Task.sleep(nanoseconds: UInt64(thumbnailSaveDelay * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+          }
 
           await MainActor.run {
             entryToSave.drawingThumbnail20 = thumbnails.0
@@ -938,7 +1066,7 @@ struct DrawingCanvasView: View {
     redoStack.removeAll()
 
     // Don't persist the clear immediately — let the dismiss logic
-    // (onChange(of: isShowing) / onDisappear / saveDrawing) handle saving
+    // (onChange(of: isShowing) / onDisappear / runSaveFlow) handle saving
     // the empty-paths state to the store when the canvas is closed.
   }
 

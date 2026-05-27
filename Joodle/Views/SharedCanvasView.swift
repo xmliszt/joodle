@@ -94,6 +94,11 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   /// Bumped on every photo capture to trigger the black flash overlay.
   var captureFlashID: UUID? = nil
 
+  /// While true, the canvas is persisting on dismiss: the top-row action
+  /// buttons dim + disable and the drawing surface dims, communicating a
+  /// deliberate "saving" state during the brief synchronous save.
+  var isSaving: Bool = false
+
   /// Track the maximum distance from start point during a gesture to detect dots vs strokes
   @State private var maxDistanceFromStart: CGFloat = 0
   @State private var gestureStartPoint: CGPoint = .zero
@@ -133,6 +138,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     isShutterCycling: Bool = false,
     suppressLivePreview: Bool = false,
     captureFlashID: UUID? = nil,
+    isSaving: Bool = false,
     onCommitStroke: @escaping () -> Void,
     @ViewBuilder trailingHeader: @escaping () -> TrailingHeader
   ) {
@@ -154,6 +160,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.isShutterCycling = isShutterCycling
     self.suppressLivePreview = suppressLivePreview
     self.captureFlashID = captureFlashID
+    self.isSaving = isSaving
     self.onCommitStroke = onCommitStroke
     self.TrailingHeaderView = trailingHeader
   }
@@ -187,6 +194,10 @@ struct SharedCanvasView<TrailingHeader: View>: View {
                 .transition(.opacity.combined(with: .scale))
             }
           }
+          // Dim + disable while saving (the trailing Save button stays active
+          // as the spinner indicator).
+          .opacity(isSaving ? 0.35 : 1.0)
+          .disabled(isSaving)
 
           Spacer()
 
@@ -203,34 +214,40 @@ struct SharedCanvasView<TrailingHeader: View>: View {
 
         }
         .overlay {
-          // Center content absolutely centered, ignoring left/right widths
-          if !config.hideStrokeButtons, config.canUndo || config.canRedo {
-            HStack(spacing: 8) {
-              // Undo button
-              if let onUndo = config.onUndo {
-                Button(action: onUndo) {
-                  Image(systemName: "arrow.uturn.backward")
+          // Center content absolutely centered, ignoring left/right widths.
+          // Dimmed + disabled while saving, matching the leading slot (the
+          // trailing Save button stays active as the spinner indicator).
+          Group {
+            if !config.hideStrokeButtons, config.canUndo || config.canRedo {
+              HStack(spacing: 8) {
+                // Undo button
+                if let onUndo = config.onUndo {
+                  Button(action: onUndo) {
+                    Image(systemName: "arrow.uturn.backward")
+                  }
+                  .circularGlassButton(tintColor: .appTextSecondary)
+                  .disabled(!config.canUndo)
+                  .opacity(config.canUndo ? 1.0 : 0.3)
                 }
-                .circularGlassButton(tintColor: .appTextSecondary)
-                .disabled(!config.canUndo)
-                .opacity(config.canUndo ? 1.0 : 0.3)
-              }
-              
-              // Redo button
-              if let onRedo = config.onRedo {
-                Button(action: onRedo) {
-                  Image(systemName: "arrow.uturn.forward")
+
+                // Redo button
+                if let onRedo = config.onRedo {
+                  Button(action: onRedo) {
+                    Image(systemName: "arrow.uturn.forward")
+                  }
+                  .circularGlassButton(tintColor: .appTextSecondary)
+                  .disabled(!config.canRedo)
+                  .opacity(config.canRedo ? 1.0 : 0.3)
                 }
-                .circularGlassButton(tintColor: .appTextSecondary)
-                .disabled(!config.canRedo)
-                .opacity(config.canRedo ? 1.0 : 0.3)
               }
-            }
-            .transition(.opacity.combined(with: .scale))
-          } else if let centerContent = config.centerContent {
-            centerContent
               .transition(.opacity.combined(with: .scale))
+            } else if let centerContent = config.centerContent {
+              centerContent
+                .transition(.opacity.combined(with: .scale))
+            }
           }
+          .opacity(isSaving ? 0.35 : 1.0)
+          .disabled(isSaving)
         }
         // Reserve enough height for a circular glass button (40pt + 2pt padding on
         // iOS 26+) so the row keeps the same height whether the leading/trailing
@@ -437,6 +454,13 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
           .opacity(captureFlashOpacity)
           .allowsHitTesting(false)
+
+        // Block input while the dismiss save runs so no stray stroke lands
+        // after the save has been kicked off (kept invisible — no dim).
+        Color.clear
+          .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+          .contentShape(Rectangle())
+          .allowsHitTesting(isSaving)
 
         // Inner shadow hugging the canvas cutout — drawn last so it overlays
         // the shutter blades, giving the rounded-rect rim depth even while
