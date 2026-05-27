@@ -130,17 +130,14 @@ struct TooltipSkipButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 4) {
-                Text("Next")
-                    .font(.appSubheadline(weight: .semibold))
-                Image(systemName: "chevron.right")
+            HStack {
+                Image(systemName: "chevron.right.dotted.chevron.right")
                     .font(.appCaption(weight: .bold))
             }
             .foregroundColor(.appAccentContrast)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding()
             .background(
-                Capsule().fill(Color.appAccent.opacity(0.85))
+                Circle().fill(Color.appAccent)
             )
         }
         .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 2)
@@ -303,6 +300,15 @@ struct TooltipBubble: View {
     VStack(spacing: 40) {
         TooltipBubble(message: "Simple tooltip bubble", arrowDirection: .up, maxWidth: 200)
         TooltipBubble(message: "Another tooltip message", arrowDirection: .down, maxWidth: 250)
+    }
+    .padding()
+}
+
+#Preview("Tooltip Skip Button") {
+    VStack(spacing: 40) {
+      TooltipSkipButton {
+        // Do nothing
+      }
     }
     .padding()
 }
