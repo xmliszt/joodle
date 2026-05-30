@@ -236,6 +236,10 @@ struct SettingsView: View {
   
   // Debug: Simulate production environment - bound to AppEnvironment
   @State private var simulateProductionEnvironment = AppEnvironment.simulateProductionEnvironment
+#if DEBUG
+  // Debug: Simulate the user denying camera permission - bound to CameraReferenceContext
+  @State private var simulateCameraDenied = CameraReferenceContext.debugSimulateCameraDenied
+#endif
   
   // Navigation state for sub-pages
   @State private var showExperimentalFeatures = false
@@ -1252,7 +1256,17 @@ ID: \(deviceIdentifier)
             simulateProductionEnvironment = newValue
           }
         ))
-        
+
+#if DEBUG
+        Toggle("Simulate Camera Permission Denied", isOn: Binding(
+          get: { CameraReferenceContext.debugSimulateCameraDenied },
+          set: { newValue in
+            CameraReferenceContext.debugSimulateCameraDenied = newValue
+            simulateCameraDenied = newValue
+          }
+        ))
+#endif
+
       } header: {
         Text("Developer Options")
       } footer: {

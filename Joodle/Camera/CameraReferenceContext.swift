@@ -49,6 +49,17 @@ final class CameraReferenceContext: ObservableObject {
   /// instantaneous, without the latency cost of an actual shutter animation.
   @Published var captureFlashID: UUID? = nil
 
+  #if DEBUG
+  /// Debug-only override: when true, the camera behaves as if the user denied
+  /// permission — `enterLive()` surfaces the permission-denied alert and
+  /// `isCameraAccessBlocked` reports true. Lets us exercise the denial / skip
+  /// paths even on the simulator (where the camera is otherwise faked) or on a
+  /// device without re-denying in system Settings. In-memory only (resets on
+  /// launch), mirroring `AppEnvironment.simulateProductionEnvironment`.
+  /// Toggled from Settings → Developer Options.
+  static var debugSimulateCameraDenied = false
+  #endif
+
   let controller: CameraReferenceController
   /// Drives the shutter overlay; every camera-mode transition is bracketed by
   /// a shutter cycle so the swap happens behind closed blades.
@@ -80,6 +91,9 @@ final class CameraReferenceContext: ObservableObject {
   /// avoid re-invoking `enterLive()` — which would just re-trigger the
   /// permission-denied alert — and route around the camera flow instead.
   var isCameraAccessBlocked: Bool {
+    #if DEBUG
+    if Self.debugSimulateCameraDenied { return true }
+    #endif
     #if targetEnvironment(simulator)
     // The simulator has no camera, but we fake a live session (see
     // `enterLive()`), so the flow is never actually blocked there.
@@ -95,6 +109,14 @@ final class CameraReferenceContext: ObservableObject {
   }
 
   func enterLive() async {
+    #if DEBUG
+    // Debug switch to exercise the permission-denied path on demand. Checked
+    // before the real/simulator branches so it works in either build.
+    if Self.debugSimulateCameraDenied {
+      showPermissionDeniedAlert = true
+      return
+    }
+    #endif
     #if targetEnvironment(simulator)
     // The simulator has no camera hardware: starting a real session would never
     // produce frames and `waitUntilSessionRunning()` would hang forever. Fake a
