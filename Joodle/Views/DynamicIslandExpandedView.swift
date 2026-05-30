@@ -157,12 +157,16 @@ struct DynamicIslandExpandedView<Content: View>: View {
     .ignoresSafeArea(.all, edges: .vertical)
     // Define hit zone
     .contentShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
-    // Only receive hit test when expanded, and only when backdrop-tap dismiss
-    // is enabled — otherwise the backdrop must stay transparent to touches so
-    // it can't swallow taps or trigger an out-of-band dismiss.
-    .allowsHitTesting(isExpanded && dismissOnTapOutside)
+    // Only receive hit test when expanded. This must stay enabled even when
+    // backdrop-tap dismiss is off: the container still needs to absorb taps in
+    // the backdrop region (so they don't fall through to the view behind) and
+    // to keep its own content — the canvas and its buttons — interactive.
+    .allowsHitTesting(isExpanded)
     .animation(.springFkingSatifying, value: isExpanded)
     .onTapGesture {
+      // The tutorial drives canvas dismissal explicitly per step, so a stray
+      // backdrop tap must not close the canvas — but the tap is still absorbed
+      // here (no fall-through to the grid behind).
       guard dismissOnTapOutside else { return }
       onDismiss?()
     }
