@@ -360,11 +360,15 @@ struct InteractiveTutorialView: View {
             }
 
         case .viewDismissed(let viewId):
-            if viewId == "drawingCanvas" {
+            if viewId == "drawingCanvas", showDrawingCanvas {
                 // Closing the canvas fires handleDrawingCanvasChange which
                 // advances on the .viewDismissed end condition.
                 showDrawingCanvas = false
             } else {
+                // The canvas is already closed (e.g. it was dismissed out of
+                // band during the camera-reference flow), so assigning
+                // `showDrawingCanvas = false` again would be a no-op and fire
+                // no onChange — leaving the tutorial wedged. Advance directly.
                 coordinator.advance()
             }
 
