@@ -75,6 +75,19 @@ final class CameraReferenceContext: ObservableObject {
   var session: AVCaptureSession { controller.session }
   var isFrontFacing: Bool { controller.position == .front }
 
+  /// True when camera access has been explicitly denied or restricted, so
+  /// entering live mode is impossible. Callers (e.g. the tutorial) use this to
+  /// avoid re-invoking `enterLive()` — which would just re-trigger the
+  /// permission-denied alert — and route around the camera flow instead.
+  var isCameraAccessBlocked: Bool {
+    switch AVCaptureDevice.authorizationStatus(for: .video) {
+    case .denied, .restricted:
+      return true
+    default:
+      return false
+    }
+  }
+
   func enterLive() async {
     let granted: Bool = await {
       switch AVCaptureDevice.authorizationStatus(for: .video) {

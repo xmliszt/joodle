@@ -427,8 +427,16 @@ struct InteractiveTutorialView: View {
             handleMoveDrawingRequested()
 
         case .cameraLiveEntered:
-            // Mirrors what tapping the camera button does.
-            Task { await tutorialCameraContext.enterLive() }
+            // Mirrors what tapping the camera button does — but only when the
+            // camera is actually usable. If access was denied/restricted,
+            // entering live is impossible and re-invoking it would just
+            // re-trigger the permission-denied alert in a loop, trapping the
+            // user. Skip the whole camera-reference segment instead.
+            if tutorialCameraContext.isCameraAccessBlocked {
+                skipCameraReferenceSegment()
+            } else {
+                Task { await tutorialCameraContext.enterLive() }
+            }
 
         case .cameraReferenceCaptured:
             // Fake a capture so step D's "canvas with backdrop" is reachable.
@@ -440,6 +448,24 @@ struct InteractiveTutorialView: View {
             } else {
                 tutorialCameraContext.captureFlashID = UUID()
             }
+        }
+    }
+
+    /// Advance past every remaining consecutive `.cameraReference` step. Used
+    /// when camera access is unavailable so the user isn't trapped on a step
+    /// whose (camera-dependent) end condition can never be satisfied.
+    private func skipCameraReferenceSegment() {
+        // Close the canvas if the segment left it open, so the next step starts
+        // from a clean state.
+        if showDrawingCanvas {
+            showDrawingCanvas = false
+        }
+        while coordinator.currentStep?.type == .cameraReference {
+            let wasLastStep = coordinator.isLastStep
+            coordinator.advance()
+            // advance() on the last step kicks off the completion sequence
+            // without moving currentStepIndex, so stop looping to avoid a hang.
+            if wasLastStep { break }
         }
     }
 
