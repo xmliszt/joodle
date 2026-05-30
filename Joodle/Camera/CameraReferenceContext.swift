@@ -94,41 +94,30 @@ final class CameraReferenceContext: ObservableObject {
     #if DEBUG
     if Self.debugSimulateCameraDenied { return true }
     #endif
-    #if targetEnvironment(simulator)
-    // The simulator has no camera, but we fake a live session (see
-    // `enterLive()`), so the flow is never actually blocked there.
-    return false
-    #else
+    // Real authorization status — valid on the simulator too, which tracks
+    // camera permission even though it has no hardware.
     switch AVCaptureDevice.authorizationStatus(for: .video) {
     case .denied, .restricted:
       return true
     default:
       return false
     }
-    #endif
   }
 
   func enterLive() async {
     #if DEBUG
     // Debug switch to exercise the permission-denied path on demand. Checked
-    // before the real/simulator branches so it works in either build.
+    // before the real flow so it works in either build.
     if Self.debugSimulateCameraDenied {
       showPermissionDeniedAlert = true
       return
     }
     #endif
-    #if targetEnvironment(simulator)
-    // The simulator has no camera hardware: starting a real session would never
-    // produce frames and `waitUntilSessionRunning()` would hang forever. Fake a
-    // live session so the camera-reference UI and onboarding tutorial stay
-    // testable; SharedCanvasView shows a placeholder in place of the live feed.
-    shutter.cycle {
-      try? await Task.sleep(nanoseconds: 120_000_000)
-      if Task.isCancelled { return }
-      withAnimation(.easeInOut(duration: 0.2)) { self.mode = .live }
-    }
-    return
-    #else
+
+    // Real camera permission request. This runs on the simulator too — it
+    // tracks camera authorization (and shows the system prompt) even without
+    // hardware — so the grant/deny flow is testable everywhere. Only the
+    // session *start* below has to be faked on the simulator.
     let granted: Bool = await {
       switch AVCaptureDevice.authorizationStatus(for: .video) {
       case .authorized:
@@ -147,6 +136,18 @@ final class CameraReferenceContext: ObservableObject {
       showPermissionDeniedAlert = true
       return
     }
+
+    #if targetEnvironment(simulator)
+    // The simulator has no camera hardware: starting a real session would never
+    // produce frames and `waitUntilSessionRunning()` would hang forever. Fake a
+    // live session so the camera-reference UI and onboarding tutorial stay
+    // testable; SharedCanvasView shows a placeholder in place of the live feed.
+    shutter.cycle {
+      try? await Task.sleep(nanoseconds: 120_000_000)
+      if Task.isCancelled { return }
+      withAnimation(.easeInOut(duration: 0.2)) { self.mode = .live }
+    }
+    #else
     shutter.cycle {
       // Give SwiftUI a beat to finish the close animation before we kick off
       // the heavy mode-flip + session-start work — otherwise that work
