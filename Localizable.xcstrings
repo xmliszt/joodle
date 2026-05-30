@@ -7717,7 +7717,32 @@
       }
     },
     "Joodle needs permission to add photos to your library. Enable Photos access in Settings to save captured reference photos." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle a besoin d'une autorisation pour ajouter des photos à votre photothèque. Activez l'accès aux photos dans les Réglages pour enregistrer les photos de référence capturées."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle が写真をライブラリに追加するには許可が必要です。撮影した参考写真を保存するには、設定で写真へのアクセスを有効にしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle에서 사진을 보관함에 추가하려면 권한이 필요합니다. 촬영한 참고 사진을 저장하려면 설정에서 사진 접근 권한을 활성화해 주세요."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle 需要权限才能将照片添加到你的照片图库。请在“设置”中开启照片访问权限，以保存拍摄的参考照片。"
+          }
+        }
+      }
     },
     "Joodle Pro" : {
       "comment" : "The title of the premium subscription.",
@@ -10983,7 +11008,32 @@
       }
     },
     "Photos Access Needed" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès aux photos requis"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "写真へのアクセスが必要です"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진 접근 권한 필요"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要照片访问权限"
+          }
+        }
+      }
     },
     "Pinch outward to zoom back to normal view" : {
       "comment" : "Tooltip message for switching view mode using a pinch gesture.",
