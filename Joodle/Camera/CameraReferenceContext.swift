@@ -80,15 +80,33 @@ final class CameraReferenceContext: ObservableObject {
   /// avoid re-invoking `enterLive()` — which would just re-trigger the
   /// permission-denied alert — and route around the camera flow instead.
   var isCameraAccessBlocked: Bool {
+    #if targetEnvironment(simulator)
+    // The simulator has no camera, but we fake a live session (see
+    // `enterLive()`), so the flow is never actually blocked there.
+    return false
+    #else
     switch AVCaptureDevice.authorizationStatus(for: .video) {
     case .denied, .restricted:
       return true
     default:
       return false
     }
+    #endif
   }
 
   func enterLive() async {
+    #if targetEnvironment(simulator)
+    // The simulator has no camera hardware: starting a real session would never
+    // produce frames and `waitUntilSessionRunning()` would hang forever. Fake a
+    // live session so the camera-reference UI and onboarding tutorial stay
+    // testable; SharedCanvasView shows a placeholder in place of the live feed.
+    shutter.cycle {
+      try? await Task.sleep(nanoseconds: 120_000_000)
+      if Task.isCancelled { return }
+      withAnimation(.easeInOut(duration: 0.2)) { self.mode = .live }
+    }
+    return
+    #else
     let granted: Bool = await {
       switch AVCaptureDevice.authorizationStatus(for: .video) {
       case .authorized:
@@ -127,6 +145,7 @@ final class CameraReferenceContext: ObservableObject {
         await self.waitUntilSessionRunning()
       }
     }
+    #endif
   }
 
   func cancelLive() {
@@ -165,6 +184,12 @@ final class CameraReferenceContext: ObservableObject {
   func capture() async {
     guard mode == .live else { return }
     captureFlashID = UUID()
+    #if targetEnvironment(simulator)
+    // No camera to capture from — synthesize a placeholder reference photo so
+    // the "trace over your reference" step is reachable on the simulator.
+    self.backdropImage = Self.makeSimulatorPlaceholderImage()
+    withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
+    #else
     let saveToAlbum = UserPreferences.shared.saveCapturedPhotoToAlbum
     let image = await self.controller.capturePhoto(saveToAlbum: saveToAlbum)
     if let image {
@@ -172,7 +197,43 @@ final class CameraReferenceContext: ObservableObject {
     }
     self.controller.stop()
     withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
+    #endif
   }
+
+  #if targetEnvironment(simulator)
+  /// A static stand-in "reference photo" used on the simulator, which has no
+  /// camera. Rendered once on demand so the captured-backdrop / trace step
+  /// shows something recognizable instead of an empty frame.
+  static func makeSimulatorPlaceholderImage() -> UIImage {
+    let size = CGSize(width: 1024, height: 1024)
+    let renderer = UIGraphicsImageRenderer(size: size)
+    return renderer.image { context in
+      let cgContext = context.cgContext
+      let colors = [UIColor.systemIndigo.cgColor, UIColor.systemPurple.cgColor]
+      if let gradient = CGGradient(
+        colorsSpace: CGColorSpaceCreateDeviceRGB(),
+        colors: colors as CFArray,
+        locations: [0, 1]
+      ) {
+        cgContext.drawLinearGradient(
+          gradient,
+          start: .zero,
+          end: CGPoint(x: size.width, y: size.height),
+          options: []
+        )
+      }
+      let config = UIImage.SymbolConfiguration(pointSize: 280, weight: .regular)
+      if let symbol = UIImage(systemName: "camera.viewfinder", withConfiguration: config)?
+        .withTintColor(.white.withAlphaComponent(0.85), renderingMode: .alwaysOriginal) {
+        let origin = CGPoint(
+          x: (size.width - symbol.size.width) / 2,
+          y: (size.height - symbol.size.height) / 2
+        )
+        symbol.draw(at: origin)
+      }
+    }
+  }
+  #endif
 
   /// Returns a Task that completes the next time the camera controller posts
   /// `cameraSessionConfigurationDidChange`, or after a 600ms safety cap if

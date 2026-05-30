@@ -432,11 +432,22 @@ struct SharedCanvasView<TrailingHeader: View>: View {
         // Live camera preview — only mounted while the shutter is fully closed
         // over the canvas, then latched across the open phase so the feed stays
         // visible once the blades retract.
+        #if targetEnvironment(simulator)
+        // The simulator has no camera hardware, so the real feed would render
+        // black. Show a placeholder while live so the camera-reference flow and
+        // onboarding tutorial stay testable.
+        if isCameraLive {
+          SimulatorCameraPlaceholder()
+            .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+            .allowsHitTesting(false)
+        }
+        #else
         if cameraPreviewMounted, !suppressLivePreview, let session = liveCameraSession {
           CameraPreviewView(session: session, device: liveCameraDevice, mirrored: liveCameraMirrored)
             .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
             .allowsHitTesting(false)
         }
+        #endif
 
         // Camera shutter — overlays the canvas area regardless of mode so it can
         // close over either the live preview (entry) or the drawing canvas (exit).
@@ -918,3 +929,28 @@ private struct StatefulPreviewWrapperWithUndo<Content: View>: View {
     content($paths, $pathMetadata, $currentPath, $currentPathIsDot, $isDrawing, $undoStack, $redoStack)
   }
 }
+
+#if targetEnvironment(simulator)
+/// Stand-in for the live camera feed on the simulator, which has no camera
+/// hardware. Keeps the camera-reference flow and onboarding tutorial testable
+/// without rendering a black frame.
+private struct SimulatorCameraPlaceholder: View {
+  var body: some View {
+    ZStack {
+      LinearGradient(
+        colors: [Color(.systemIndigo).opacity(0.55), Color(.systemPurple).opacity(0.45)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+      )
+
+      VStack(spacing: 12) {
+        Image(systemName: "camera.viewfinder")
+          .font(.system(size: 56, weight: .regular))
+        Text("Simulator camera")
+          .font(.footnote.weight(.medium))
+      }
+      .foregroundStyle(.white.opacity(0.85))
+    }
+  }
+}
+#endif
