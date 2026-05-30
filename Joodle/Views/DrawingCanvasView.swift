@@ -382,7 +382,7 @@ struct DrawingCanvasView: View {
       Text("Joodle needs camera access to capture reference photos for tracing. Enable it in Settings.")
     }
     .onChange(of: scenePhase) { _, newPhase in
-      guard isCameraFeatureActive, cameraContext.mode == .live else { return }
+      guard isCameraFeatureActive else { return }
       switch newPhase {
       case .inactive:
         // iOS snapshots the UI during the `.inactive` transition for the app
@@ -390,13 +390,21 @@ struct DrawingCanvasView: View {
         // mid-frame, return-to-foreground takes a long time to reconcile and
         // the screen appears frozen. Unmount the preview here so the snapshot
         // captures a plain black canvas instead — cheap to restore.
-        cameraContext.suppressPreview = true
+        if cameraContext.mode == .live {
+          cameraContext.suppressPreview = true
+        }
       case .active:
         // Returning from peek / app-switcher: re-mount the live preview.
+        // Always clear, even if `mode` flipped to `.idle` while we were
+        // inactive (e.g. a capture completed behind the album-save permission
+        // dialog) — otherwise `suppressPreview` would stay stuck `true` and the
+        // next live session would come up black.
         cameraContext.suppressPreview = false
       case .background:
         // Real background transition: tear the camera all the way down.
-        cameraContext.reset()
+        if cameraContext.mode == .live {
+          cameraContext.reset()
+        }
       @unknown default:
         break
       }
