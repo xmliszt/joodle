@@ -1546,7 +1546,11 @@ struct CustomizationSettingsView: View {
   
   /// When true, scrolls to the "Prompt for notes after doodling" toggle on appear
   var scrollToNotePromptSetting: Bool = false
-  
+
+  // Shown when the user enables "Save photos to album" but Photos add-only
+  // access is denied/restricted (iOS won't re-prompt — point them to Settings).
+  @State private var showPhotoAccessDeniedAlert = false
+
   init(showPaywall: Binding<Bool>, paywallSource: Binding<String>, pendingThemeColor: Binding<ThemeColor?>, showThemeOverlay: Binding<Bool>, scrollToNotePromptSetting: Bool = false) {
     self._showPaywall = showPaywall
     self._paywallSource = paywallSource
@@ -1596,26 +1600,56 @@ struct CustomizationSettingsView: View {
     Binding(
       get: { userPreferences.saveCapturedPhotoToAlbum },
       set: { newValue in
-        let previousValue = userPreferences.saveCapturedPhotoToAlbum
-        userPreferences.saveCapturedPhotoToAlbum = newValue
-        if newValue != previousValue {
-          AnalyticsManager.shared.trackSettingChanged(
-            name: "save_captured_photo_to_album",
-            value: newValue,
-            previousValue: previousValue
-          )
+        // Turning OFF never needs permission.
+        guard newValue else {
+          commitSaveCapturedPhotoToAlbum(false)
+          return
         }
-        // Request Photos add-only authorization up front so the first capture
-        // doesn't stall behind the system permission sheet while the shutter
-        // is closed. Only prompts when the user just turned the toggle ON and
-        // hasn't been asked before — subsequent toggles are a no-op.
-        if newValue {
-          let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-          if status == .notDetermined {
-            PHPhotoLibrary.requestAuthorization(for: .addOnly) { _ in }
+
+        // Turning ON requires Photos add-only authorization. Requesting it up
+        // front also means the first capture doesn't stall behind the system
+        // sheet while the shutter is closed. Critically, the toggle's final
+        // state must reflect the *actual* permission outcome — otherwise it
+        // sticks ON even when the user denied access (and saving would
+        // silently fail).
+        switch PHPhotoLibrary.authorizationStatus(for: .addOnly) {
+        case .authorized, .limited:
+          commitSaveCapturedPhotoToAlbum(true)
+        case .notDetermined:
+          // Reflect ON immediately so the switch animates, then confirm or
+          // revert once the user responds to the system prompt.
+          commitSaveCapturedPhotoToAlbum(true)
+          PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            DispatchQueue.main.async {
+              let granted = status == .authorized || status == .limited
+              if !granted {
+                commitSaveCapturedPhotoToAlbum(false)
+              }
+            }
           }
+        case .denied, .restricted:
+          // iOS won't show the prompt again — keep the toggle OFF and direct
+          // the user to Settings to grant access.
+          commitSaveCapturedPhotoToAlbum(false)
+          showPhotoAccessDeniedAlert = true
+        @unknown default:
+          commitSaveCapturedPhotoToAlbum(false)
         }
       }
+    )
+  }
+
+  /// Commits the "save photos to album" preference and tracks the change only
+  /// when the value actually flips. Safe to call from the permission
+  /// completion handler (revert on denial).
+  private func commitSaveCapturedPhotoToAlbum(_ value: Bool) {
+    let previousValue = userPreferences.saveCapturedPhotoToAlbum
+    guard value != previousValue else { return }
+    userPreferences.saveCapturedPhotoToAlbum = value
+    AnalyticsManager.shared.trackSettingChanged(
+      name: "save_captured_photo_to_album",
+      value: value,
+      previousValue: previousValue
     )
   }
 
@@ -1826,6 +1860,16 @@ struct CustomizationSettingsView: View {
             }
           }
           .tint(.appAccent)
+          .alert("Photos Access Needed", isPresented: $showPhotoAccessDeniedAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Open Settings") {
+              if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+              }
+            }
+          } message: {
+            Text("Joodle needs permission to add photos to your library. Enable Photos access in Settings to save captured reference photos.")
+          }
         }
       }
       .onAppear {
