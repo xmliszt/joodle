@@ -306,6 +306,9 @@ struct InteractiveTutorialView: View {
                 _ = coordinator.checkEndCondition(.cameraReferenceCaptured)
             }
         }
+        .onChange(of: coordinator.currentStepIndex) { _, _ in
+            handleStepChange()
+        }
         // Safety: If bottom view appears during scrubbing step transition, dismiss it and re-scroll
         .onChange(of: mockStore.selectedDateItem) { oldValue, newValue in
             handleSelectionChangeDuringTransition(from: oldValue, to: newValue)
@@ -811,6 +814,25 @@ struct InteractiveTutorialView: View {
             if newValue != oldValue {
                 coordinator.advance()
             }
+        }
+    }
+
+    /// Runs whenever the coordinator moves to a new step. Re-asserts any UI
+    /// state the incoming step depends on but doesn't set up itself.
+    private func handleStepChange() {
+        guard let step = coordinator.currentStep else { return }
+
+        // The camera-reference "trace over your reference" step (Step D)
+        // highlights the whole drawing canvas and advances when the canvas is
+        // dismissed. Its anchor only resolves to a real frame while the canvas
+        // is open; if anything closed it out of band during the capture -> trace
+        // transition, the highlight would collapse to the (zero-size on
+        // non-Dynamic-Island devices) container and the step would be
+        // unrecoverable. Re-open the canvas so the highlight lands correctly.
+        if step.type == .cameraReference,
+           step.highlightAnchor == .drawingCanvas,
+           !showDrawingCanvas {
+            showDrawingCanvas = true
         }
     }
 
