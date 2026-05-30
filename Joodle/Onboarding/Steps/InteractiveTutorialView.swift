@@ -161,7 +161,11 @@ struct InteractiveTutorialView: View {
                             onDismiss: {
                                 showDrawingCanvas = false
                             },
-                            tutorialAnchorID: "drawingCanvas"
+                            tutorialAnchorID: "drawingCanvas",
+                            // The tutorial drives canvas dismissal explicitly
+                            // per step; a stray backdrop tap must not close the
+                            // canvas out of band and wedge the flow.
+                            dismissOnTapOutside: false
                         )
 
                         // Gesture-blocking overlay during transition (before tutorial overlay is ready)

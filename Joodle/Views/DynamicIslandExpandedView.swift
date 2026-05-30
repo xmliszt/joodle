@@ -19,6 +19,12 @@ struct DynamicIslandExpandedView<Content: View>: View {
   /// radius. Lets the tutorial overlay cutout hug the floating container
   /// exactly rather than the parent view's full-screen frame.
   let tutorialAnchorID: String?
+  /// Whether tapping the backdrop outside the visible container fires
+  /// `onDismiss`. Defaults to `true` (the daily "tap outside to save & close"
+  /// affordance). The interactive tutorial disables it because dismissal is
+  /// driven explicitly per step — an accidental backdrop tap there would close
+  /// the canvas out of band and wedge the tutorial flow.
+  let dismissOnTapOutside: Bool
 
   private let SHADOW_RADIUS: CGFloat = 16
 
@@ -27,13 +33,15 @@ struct DynamicIslandExpandedView<Content: View>: View {
     @ViewBuilder content: () -> Content,
     hidden: Bool = false,
     onDismiss: (() -> Void)? = nil,
-    tutorialAnchorID: String? = nil
+    tutorialAnchorID: String? = nil,
+    dismissOnTapOutside: Bool = true
   ) {
     self._isExpanded = isExpanded
     self.content = content()
     self.hidden = hidden
     self.onDismiss = onDismiss
     self.tutorialAnchorID = tutorialAnchorID
+    self.dismissOnTapOutside = dismissOnTapOutside
   }
 
   // MARK: - Layout adaptation
@@ -149,10 +157,13 @@ struct DynamicIslandExpandedView<Content: View>: View {
     .ignoresSafeArea(.all, edges: .vertical)
     // Define hit zone
     .contentShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
-    // Only receive hit test when expanded
-    .allowsHitTesting(isExpanded)
+    // Only receive hit test when expanded, and only when backdrop-tap dismiss
+    // is enabled — otherwise the backdrop must stay transparent to touches so
+    // it can't swallow taps or trigger an out-of-band dismiss.
+    .allowsHitTesting(isExpanded && dismissOnTapOutside)
     .animation(.springFkingSatifying, value: isExpanded)
     .onTapGesture {
+      guard dismissOnTapOutside else { return }
       onDismiss?()
     }
     // Hide status bar when expanded
