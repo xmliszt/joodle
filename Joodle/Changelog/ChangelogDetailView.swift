@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UIKit
+import AVFoundation
 import MarkdownUI
 
 /// Detail view for a single changelog entry, used in Settings navigation
@@ -97,15 +98,35 @@ struct HeaderImageCarouselView: View {
     /// Drives the active page's pill fill — a linear ramp over the interval.
     @State private var pageProgress: Double = 0
 
+    /// Horizontal inset on each page so neighbouring items keep a gap instead of
+    /// sitting edge-to-edge as the carousel pages.
+    private let itemPadding: CGFloat = 16
+
+    /// Fixed corner radius for every carousel item.
+    private let itemCornerRadius: CGFloat = 32
+
+    /// True when the URL points at a video container we play with AVPlayer
+    /// rather than render as a (possibly animated) image.
+    private func isVideo(_ url: URL) -> Bool {
+        ["mp4", "mov", "m4v"].contains(url.pathExtension.lowercased())
+    }
+
+    /// Whether the page currently on screen is a video — when it is, the video
+    /// owns both the progress fill and the advance, so the image timer stays off.
+    private var currentIsVideo: Bool {
+        urls.indices.contains(currentIndex) && isVideo(urls[currentIndex])
+    }
+
     var body: some View {
         if urls.count == 1, let url = urls.first {
-            imageView(url: url)
+            singleMediaView(url: url)
                 .frame(maxWidth: .infinity)
         } else {
             VStack(spacing: 12) {
                 TabView(selection: $currentIndex) {
                     ForEach(Array(urls.enumerated()), id: \.offset) { index, url in
-                        imageView(url: url)
+                        mediaView(url: url, isActive: index == currentIndex)
+                            .padding(.horizontal, itemPadding)
                             .tag(index)
                     }
                 }
@@ -128,28 +149,96 @@ struct HeaderImageCarouselView: View {
 
     private func loadAspectRatio() async {
         guard aspectRatio == nil, let firstURL = urls.first else { return }
+        if isVideo(firstURL) {
+            await loadVideoAspectRatio(firstURL)
+        } else {
+            do {
+                let (data, _) = try await URLSession.shared.data(from: firstURL)
+                guard let image = UIImage(data: data), image.size.height > 0 else { return }
+                let ratio = image.size.width / image.size.height
+                await MainActor.run { aspectRatio = ratio }
+            } catch {
+                // keep default
+            }
+        }
+    }
+
+    private func loadVideoAspectRatio(_ url: URL) async {
+        let asset = AVURLAsset(url: url)
         do {
-            let (data, _) = try await URLSession.shared.data(from: firstURL)
-            guard let image = UIImage(data: data), image.size.height > 0 else { return }
-            let ratio = image.size.width / image.size.height
-            await MainActor.run { aspectRatio = ratio }
+            guard let track = try await asset.loadTracks(withMediaType: .video).first else { return }
+            let naturalSize = try await track.load(.naturalSize)
+            let transform = try await track.load(.preferredTransform)
+            let resolved = naturalSize.applying(transform)
+            let width = abs(resolved.width)
+            let height = abs(resolved.height)
+            guard height > 0 else { return }
+            await MainActor.run { aspectRatio = width / height }
         } catch {
             // keep default
         }
     }
 
+    /// Media for the single-item case (no pager / no auto-advance). A lone video
+    /// loops; a lone image renders as before.
+    @ViewBuilder
+    private func singleMediaView(url: URL) -> some View {
+        if isVideo(url) {
+            CarouselVideoView(
+                url: url,
+                isActive: true,
+                loops: true,
+                cornerRadius: itemCornerRadius,
+                progress: .constant(0),
+                onEnded: {}
+            )
+            .aspectRatio(aspectRatio ?? (9.0 / 19.5), contentMode: .fit)
+            .task { await loadAspectRatio() }
+        } else {
+            imageView(url: url)
+        }
+    }
+
+    /// A single paged item: a playing video (which drives `pageProgress` and
+    /// advances on end) or an image.
+    @ViewBuilder
+    private func mediaView(url: URL, isActive: Bool) -> some View {
+        if isVideo(url) {
+            CarouselVideoView(
+                url: url,
+                isActive: isActive,
+                loops: false,
+                cornerRadius: itemCornerRadius,
+                progress: $pageProgress,
+                onEnded: { advance() }
+            )
+        } else {
+            imageView(url: url)
+        }
+    }
+
     private func imageView(url: URL) -> some View {
         AnimatedImageView(url: url)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: itemCornerRadius, style: .continuous))
     }
 
     private func startAutoScroll() {
-        guard urls.count > 1, autoScrollInterval > 0 else { return }
+        guard urls.count > 1 else { return }
+        // Reset the fill so a fresh page always starts empty.
+        pageProgress = 0
+        // A video page reports its own playback position and advances itself
+        // when it ends — leave the image timer off so the two don't fight.
+        guard !currentIsVideo else { return }
+        guard autoScrollInterval > 0 else { return }
         animatePageProgress()
-        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: autoScrollInterval, repeats: true) { _ in
-            withAnimation(.easeInOut(duration: 0.3)) {
-                currentIndex = (currentIndex + 1) % urls.count
-            }
+        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: autoScrollInterval, repeats: false) { _ in
+            advance()
+        }
+    }
+
+    private func advance() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            currentIndex = (currentIndex + 1) % urls.count
         }
     }
 
@@ -172,6 +261,152 @@ struct HeaderImageCarouselView: View {
     private func restartAutoScroll() {
         stopAutoScroll()
         startAutoScroll()
+    }
+}
+
+// MARK: - Carousel Video
+
+/// Owns the `AVPlayer` for one carousel video page and publishes its normalized
+/// playback position (0...1). Playback is muted — these are silent UI demos and
+/// must not duck the user's audio. The view bridges `progress`/`isFinished` up
+/// to the carousel only while its page is the active one.
+private final class CarouselVideoModel: ObservableObject {
+    let player = AVPlayer()
+    @Published var progress: Double = 0
+    @Published var isFinished = false
+
+    private var timeObserver: Any?
+    private var endObserver: NSObjectProtocol?
+    private var isConfigured = false
+
+    func configure(url: URL) {
+        guard !isConfigured else { return }
+        isConfigured = true
+
+        let item = AVPlayerItem(url: url)
+        player.replaceCurrentItem(with: item)
+        player.isMuted = true
+
+        let interval = CMTime(seconds: 0.05, preferredTimescale: 600)
+        timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+            guard let self,
+                  let duration = self.player.currentItem?.duration.seconds,
+                  duration.isFinite, duration > 0 else { return }
+            self.progress = min(1, max(0, time.seconds / duration))
+        }
+
+        endObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: item,
+            queue: .main
+        ) { [weak self] _ in
+            self?.progress = 1
+            self?.isFinished = true
+        }
+    }
+
+    func pause() { player.pause() }
+
+    /// Rewind to the start and play — used both on first activation and to loop
+    /// a lone video. Waits for the seek to land before starting playback so
+    /// AVPlayerItemDidPlayToEndTime fires reliably on every cycle.
+    func restart() {
+        isFinished = false
+        progress = 0
+        player.seek(to: .zero) { [weak self] _ in
+            self?.player.play()
+        }
+    }
+
+    deinit {
+        if let timeObserver {
+            player.removeTimeObserver(timeObserver)
+        }
+        if let endObserver {
+            NotificationCenter.default.removeObserver(endObserver)
+        }
+        player.pause()
+    }
+}
+
+/// Plays a single carousel video. Only the active page plays; others pause so we
+/// never run multiple decoders at once. While active, it feeds playback position
+/// into `progress` and, on end, either loops (`loops`) or calls `onEnded` so the
+/// carousel can advance.
+private struct CarouselVideoView: View {
+    let url: URL
+    let isActive: Bool
+    var loops: Bool = false
+    var cornerRadius: CGFloat = 0
+    @Binding var progress: Double
+    var onEnded: () -> Void
+
+    @StateObject private var model = CarouselVideoModel()
+
+    var body: some View {
+        VideoPlayerLayerView(player: model.player)
+            .compositingGroup()
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .onAppear {
+                model.configure(url: url)
+                if isActive { model.restart() }
+            }
+            .onChange(of: isActive) { _, active in
+                if active { model.restart() } else { model.pause() }
+            }
+            .onReceive(model.$progress) { value in
+                if isActive { progress = value }
+            }
+            .onChange(of: model.isFinished) { _, finished in
+                guard finished else { return }
+                if loops {
+                    model.restart()
+                } else if isActive {
+                    onEnded()
+                }
+            }
+            .onDisappear { model.pause() }
+    }
+}
+
+/// Chromeless video surface (no transport controls), letterboxed to fit so
+/// tutorial UI is never cropped. Corner rounding is applied at the SwiftUI
+/// level via `.compositingGroup()` + `.clipShape()`.
+private struct VideoPlayerLayerView: UIViewRepresentable {
+    let player: AVPlayer
+
+    func makeUIView(context: Context) -> PlayerLayerUIView {
+        PlayerLayerUIView(player: player)
+    }
+
+    func updateUIView(_ uiView: PlayerLayerUIView, context: Context) {
+        uiView.player = player
+    }
+
+    final class PlayerLayerUIView: UIView {
+        private let playerLayer = AVPlayerLayer()
+
+        var player: AVPlayer? {
+            get { playerLayer.player }
+            set { playerLayer.player = newValue }
+        }
+
+        init(player: AVPlayer) {
+            super.init(frame: .zero)
+            playerLayer.player = player
+            playerLayer.videoGravity = .resizeAspect
+            layer.addSublayer(playerLayer)
+            backgroundColor = .clear
+        }
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            playerLayer.frame = bounds
+        }
     }
 }
 
@@ -230,4 +465,52 @@ struct HeaderImageCarouselView: View {
             )
         )
     }
+}
+
+/// Mirrors the real "What's New" presentation in `JoodleApp` — the changelog in
+/// a bottom sheet (medium/large detents) — so we can see the carousel auto-play
+/// the two demo videos and drive the page indicator from real playback position.
+#Preview ("Bottom Sheet · Video Carousel") {
+    struct BottomSheetPreviewHost: View {
+        @State private var entry: ChangelogEntry? = ChangelogEntry(
+            version: "2.0",
+            major: 2,
+            minor: 0,
+            build: 0,
+            date: Date(),
+            headerImageURLs: [
+                URL(string: "https://joodle.liyuxuan.dev/changelogs/2.0_1.mp4")!,
+                URL(string: "https://joodle.liyuxuan.dev/changelogs/2.0_2.mp4")!,
+                URL(string: "https://joodle.liyuxuan.dev/changelogs/1.17.png")!,
+                URL(string: "https://joodle.liyuxuan.dev/changelogs/1.17.png")!
+            ],
+            markdownContent: """
+            ## ✨ What's New in 2.0
+
+            - **Video walkthroughs**: See new features in motion right here
+            - **Smarter sync**: Faster and more reliable across devices
+
+            ## 🐛 Bug Fixes
+
+            - Squashed a handful of layout glitches
+            - Improved performance
+            """
+        )
+
+        var body: some View {
+            Color(uiColor: .systemGroupedBackground)
+                .ignoresSafeArea()
+                .sheet(item: $entry) { entry in
+                    NavigationStack {
+                        ChangelogDetailView(entry: entry)
+                            .navigationTitle("What's New")
+                            .navigationBarTitleDisplayMode(.large)
+                    }
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                }
+        }
+    }
+
+    return BottomSheetPreviewHost()
 }
