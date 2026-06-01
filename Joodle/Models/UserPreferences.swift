@@ -37,8 +37,9 @@ enum Pref {
   // Share card watermark preference
   static let shareCardWatermarkEnabled = Key(key: "share_card_watermark_enabled", default: true)
 
-  // Save captured reference photo to the user's Photos album
-  static let saveCapturedPhotoToAlbum = Key(key: "save_captured_photo_to_album", default: false)
+  // Save captured reference photo to the user's Photos album (on by default;
+  // the add-only Photos permission is requested lazily on first capture)
+  static let saveCapturedPhotoToAlbum = Key(key: "save_captured_photo_to_album", default: true)
 
   // App language override (empty string = system default)
   static let appLanguage = Key(key: "app_language", default: "")

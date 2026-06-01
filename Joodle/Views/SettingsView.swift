@@ -1639,6 +1639,25 @@ struct CustomizationSettingsView: View {
     )
   }
 
+  /// Reconciles the toggle with the real Photos authorization state. The
+  /// preference defaults to ON, so a user can arrive here with the toggle
+  /// showing ON while access was never granted (e.g. they denied the prompt
+  /// at capture time, or revoked it in iOS Settings). In those cases saving
+  /// silently fails, so flip the toggle back OFF to reflect reality.
+  ///
+  /// `.notDetermined` is intentionally left alone: that's the valid
+  /// default-ON state where permission hasn't been requested yet and will be
+  /// at the first capture.
+  private func reconcileSaveCapturedPhotoToAlbumPermission() {
+    guard userPreferences.saveCapturedPhotoToAlbum else { return }
+    switch PHPhotoLibrary.authorizationStatus(for: .addOnly) {
+    case .denied, .restricted:
+      commitSaveCapturedPhotoToAlbum(false)
+    default:
+      break
+    }
+  }
+
   /// Commits the "save photos to album" preference and tracks the change only
   /// when the value actually flips. Safe to call from the permission
   /// completion handler (revert on denial).
@@ -1873,6 +1892,7 @@ struct CustomizationSettingsView: View {
         }
       }
       .onAppear {
+        reconcileSaveCapturedPhotoToAlbumPermission()
         if scrollToNotePromptSetting {
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             withAnimation {
