@@ -94,7 +94,6 @@ struct HeaderImageCarouselView: View {
 
     @State private var currentIndex = 0
     @State private var autoScrollTimer: Timer?
-    @State private var aspectRatio: CGFloat?
     /// Drives the active page's pill fill — a linear ramp over the interval.
     @State private var pageProgress: Double = 0
 
@@ -104,6 +103,11 @@ struct HeaderImageCarouselView: View {
 
     /// Fixed corner radius for every carousel item.
     private let itemCornerRadius: CGFloat = 32
+
+    /// Fixed container shape for every item. Media that doesn't match it
+    /// letterboxes inside, with the corner-sampled fill keeping the rounded
+    /// corners visible (see `CarouselVideoModel.backgroundColor`).
+    private let itemAspectRatio: CGFloat = 3.0 / 5.0
 
     /// True when the URL points at a video container we play with AVPlayer
     /// rather than render as a (possibly animated) image.
@@ -132,8 +136,7 @@ struct HeaderImageCarouselView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .frame(maxWidth: .infinity)
-                .aspectRatio(aspectRatio ?? (9.0 / 19.5), contentMode: .fit)
-                .task { await loadAspectRatio() }
+                .aspectRatio(itemAspectRatio, contentMode: .fit)
                 .onAppear { startAutoScroll() }
                 .onDisappear { stopAutoScroll() }
                 .onChange(of: currentIndex) { _, _ in restartAutoScroll() }
@@ -144,38 +147,6 @@ struct HeaderImageCarouselView: View {
                     progress: pageProgress
                 )
             }
-        }
-    }
-
-    private func loadAspectRatio() async {
-        guard aspectRatio == nil, let firstURL = urls.first else { return }
-        if isVideo(firstURL) {
-            await loadVideoAspectRatio(firstURL)
-        } else {
-            do {
-                let (data, _) = try await URLSession.shared.data(from: firstURL)
-                guard let image = UIImage(data: data), image.size.height > 0 else { return }
-                let ratio = image.size.width / image.size.height
-                await MainActor.run { aspectRatio = ratio }
-            } catch {
-                // keep default
-            }
-        }
-    }
-
-    private func loadVideoAspectRatio(_ url: URL) async {
-        let asset = AVURLAsset(url: url)
-        do {
-            guard let track = try await asset.loadTracks(withMediaType: .video).first else { return }
-            let naturalSize = try await track.load(.naturalSize)
-            let transform = try await track.load(.preferredTransform)
-            let resolved = naturalSize.applying(transform)
-            let width = abs(resolved.width)
-            let height = abs(resolved.height)
-            guard height > 0 else { return }
-            await MainActor.run { aspectRatio = width / height }
-        } catch {
-            // keep default
         }
     }
 
@@ -192,8 +163,7 @@ struct HeaderImageCarouselView: View {
                 progress: .constant(0),
                 onEnded: {}
             )
-            .aspectRatio(aspectRatio ?? (9.0 / 19.5), contentMode: .fit)
-            .task { await loadAspectRatio() }
+            .aspectRatio(itemAspectRatio, contentMode: .fit)
         } else {
             imageView(url: url)
         }
@@ -274,6 +244,10 @@ private final class CarouselVideoModel: ObservableObject {
     let player = AVPlayer()
     @Published var progress: Double = 0
     @Published var isFinished = false
+    /// Colour sampled from a corner of the video's first frame. We fill the
+    /// carousel item with it so the letterbox around a `.resizeAspect` video
+    /// reads as the video's own background and the rounded corners stay visible.
+    @Published var backgroundColor: Color = .clear
 
     private var timeObserver: Any?
     private var endObserver: NSObjectProtocol?
@@ -286,6 +260,7 @@ private final class CarouselVideoModel: ObservableObject {
         let item = AVPlayerItem(url: url)
         player.replaceCurrentItem(with: item)
         player.isMuted = true
+        loadBackgroundColor(url: url)
 
         let interval = CMTime(seconds: 0.05, preferredTimescale: 600)
         timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
@@ -306,6 +281,20 @@ private final class CarouselVideoModel: ObservableObject {
     }
 
     func pause() { player.pause() }
+
+    /// Grabs the first frame and samples its bottom-left pixel — for these UI
+    /// demos the frame edge is the app's solid background, which is exactly the
+    /// fill we want behind the letterboxed video.
+    private func loadBackgroundColor(url: URL) {
+        let asset = AVURLAsset(url: url)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        let time = CMTime(seconds: 0, preferredTimescale: 600)
+        generator.generateCGImagesAsynchronously(forTimes: [NSValue(time: time)]) { [weak self] _, cgImage, _, result, _ in
+            guard result == .succeeded, let color = cgImage?.cornerColor else { return }
+            DispatchQueue.main.async { self?.backgroundColor = color }
+        }
+    }
 
     /// Rewind to the start and play — used both on first activation and to loop
     /// a lone video. Waits for the seek to land before starting playback so
@@ -329,6 +318,34 @@ private final class CarouselVideoModel: ObservableObject {
     }
 }
 
+private extension CGImage {
+    /// Colour of the bottom-left pixel. Renders the image into a 1×1 context
+    /// whose origin (bottom-left) captures exactly that pixel. Returns `nil`
+    /// when the pixel is transparent so callers can fall back to no fill.
+    var cornerColor: Color? {
+        var pixel: [UInt8] = [0, 0, 0, 0]
+        guard let context = CGContext(
+            data: &pixel,
+            width: 1,
+            height: 1,
+            bitsPerComponent: 8,
+            bytesPerRow: 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        context.draw(self, in: CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height)))
+        let alpha = Double(pixel[3]) / 255
+        guard alpha > 0 else { return nil }
+        return Color(
+            .sRGB,
+            red: Double(pixel[0]) / 255,
+            green: Double(pixel[1]) / 255,
+            blue: Double(pixel[2]) / 255,
+            opacity: alpha
+        )
+    }
+}
+
 /// Plays a single carousel video. Only the active page plays; others pause so we
 /// never run multiple decoders at once. While active, it feeds playback position
 /// into `progress` and, on end, either loops (`loops`) or calls `onEnded` so the
@@ -345,6 +362,7 @@ private struct CarouselVideoView: View {
 
     var body: some View {
         VideoPlayerLayerView(player: model.player)
+            .background(model.backgroundColor)
             .compositingGroup()
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .onAppear {
