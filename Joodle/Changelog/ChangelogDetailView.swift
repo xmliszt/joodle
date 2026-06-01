@@ -89,11 +89,13 @@ struct ChangelogDetailView: View {
 /// Hides page indicators when there is only one image.
 struct HeaderImageCarouselView: View {
     let urls: [URL]
-    var autoScrollInterval: TimeInterval = 3.0
+    var autoScrollInterval: TimeInterval = 5.0
 
     @State private var currentIndex = 0
     @State private var autoScrollTimer: Timer?
     @State private var aspectRatio: CGFloat?
+    /// Drives the active page's pill fill — a linear ramp over the interval.
+    @State private var pageProgress: Double = 0
 
     var body: some View {
         if urls.count == 1, let url = urls.first {
@@ -115,7 +117,11 @@ struct HeaderImageCarouselView: View {
                 .onDisappear { stopAutoScroll() }
                 .onChange(of: currentIndex) { _, _ in restartAutoScroll() }
 
-                PageIndicatorView(totalPages: urls.count, currentPage: currentIndex)
+                PageIndicatorView(
+                    totalPages: urls.count,
+                    currentPage: currentIndex,
+                    progress: pageProgress
+                )
             }
         }
     }
@@ -139,9 +145,21 @@ struct HeaderImageCarouselView: View {
 
     private func startAutoScroll() {
         guard urls.count > 1, autoScrollInterval > 0 else { return }
+        animatePageProgress()
         autoScrollTimer = Timer.scheduledTimer(withTimeInterval: autoScrollInterval, repeats: true) { _ in
             withAnimation(.easeInOut(duration: 0.3)) {
                 currentIndex = (currentIndex + 1) % urls.count
+            }
+        }
+    }
+
+    /// Resets the pill fill to empty, then ramps it to full over the interval
+    /// (reset committed in its own transaction so the ramp animates from 0).
+    private func animatePageProgress() {
+        pageProgress = 0
+        DispatchQueue.main.async {
+            withAnimation(.linear(duration: autoScrollInterval)) {
+                pageProgress = 1
             }
         }
     }

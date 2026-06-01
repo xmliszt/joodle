@@ -14,7 +14,7 @@ struct FeatureIntroStepView: View {
     let buttonLabel: LocalizedStringResource
     let onContinue: () -> Void
     var onBack: (() -> Void)? = nil
-    var autoScrollInterval: TimeInterval = 3.0
+    var autoScrollInterval: TimeInterval = 5.0
 
     var body: some View {
         ZStack(alignment: .topLeading) {
