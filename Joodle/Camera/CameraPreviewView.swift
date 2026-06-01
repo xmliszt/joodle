@@ -36,6 +36,11 @@ struct CameraPreviewView: UIViewRepresentable {
   }
 
   static func dismantleUIView(_ uiView: PreviewUIView, coordinator: Coordinator) {
+    // Detach the session before the layer is torn down. Removing a preview
+    // layer that's still bound to a running AVCaptureSession can stall on the
+    // render server (the intermittent multi-second hang when exiting live mode
+    // via the shutter cycle). Nil'ing the session first makes teardown cheap.
+    uiView.videoPreviewLayer.session = nil
     coordinator.tearDown()
   }
 

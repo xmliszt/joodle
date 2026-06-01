@@ -923,18 +923,19 @@ struct ContentView: View {
   /// the synchronous CloudKit save from freezing the collapse animation — the
   /// canvas shows an explicit saving state instead, then dismisses smoothly.
   private func requestCanvasSaveAndDismiss() {
-    // Block dismissal while the shutter is mid-cycle (close → camera swap →
-    // open). Dismissing mid-cycle races with the camera session lifecycle —
-    // we've seen it crash (stopRunning during prep config lock) and leave the
-    // live preview surface stuck on screen after the container collapses.
-    // Once the cycle completes, the user can dismiss normally.
-    if cameraContext.isShutterCycling {
+    // Disallow dismissing the canvas while the camera reference is live. The
+    // user returns to drawing mode via the in-canvas exit-camera button
+    // (`cancelLive`) and dismisses from there. Dismissing straight from live
+    // mode raced the camera-session teardown against the container collapse —
+    // leaving the canvas stuck black — and there's already a clear way back.
+    if cameraContext.mode == .live {
       return
     }
-    if cameraContext.mode == .live {
-      cameraContext.dismissLiveCamera { [self] in
-        canvasSaveDismissTrigger = true
-      }
+    // Also block while the shutter is mid-cycle (close → camera swap → open):
+    // dismissing mid-cycle races the camera session lifecycle (we've seen it
+    // crash on `stopRunning` during the prep config lock). Once the cycle
+    // settles the user can dismiss normally.
+    if cameraContext.isShutterCycling {
       return
     }
     canvasSaveDismissTrigger = true

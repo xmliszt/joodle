@@ -4,7 +4,8 @@
 //
 
 @preconcurrency import AVFoundation
-import ImageIO
+import CoreImage
+import CoreMedia
 import Photos
 import SwiftUI
 import UIKit
@@ -34,16 +35,26 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
 
   let session = AVCaptureSession()
   private let sessionQueue = DispatchQueue(label: "dev.liyuxuan.joodle.camera.session")
-  private let photoOutput = AVCapturePhotoOutput()
+  /// Continuously fed by the live preview stream. Capturing the backdrop reads
+  /// the most-recent frame here instead of running a full photo capture — a
+  /// 12-MP `AVCapturePhotoOutput` shot (sensor read → JPEG encode → re-decode)
+  /// added ~hundreds of ms of shutter latency just to produce a downsampled,
+  /// 30%-opacity tracing reference. The saved polaroid is only ~1024px, so a
+  /// preview-resolution frame is more than enough for both uses.
+  private let videoDataOutput = AVCaptureVideoDataOutput()
+  private let frameQueue = DispatchQueue(label: "dev.liyuxuan.joodle.camera.frames")
+  private let frameLock = NSLock()
+  private var latestPixelBuffer: CVPixelBuffer?
+  /// Camera position of `latestPixelBuffer`, derived from the delivering
+  /// connection so the orientation correction matches the active camera even
+  /// across a flip. Guarded by `frameLock`.
+  private var latestFramePosition: AVCaptureDevice.Position = .back
+  private let backdropContext = CIContext(options: [
+    .workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB) as Any,
+  ])
   private var currentInput: AVCaptureDeviceInput?
   private var didConfigure = false
   private var didRegisterRunningObservers = false
-
-  private var captureContinuation: CheckedContinuation<UIImage?, Never>?
-  /// Whether the next finished capture should be persisted to the user's
-  /// Photos album. Set on the main actor immediately before invoking
-  /// `photoOutput.capturePhoto` and read by the delegate callback.
-  private var saveNextCaptureToAlbum: Bool = false
 
   /// Bridge AVCaptureSession's running notifications to `isRunning`. Reading
   /// `session.isRunning` synchronously right after `startRunning()` can return
@@ -82,6 +93,10 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
     sessionQueue.async { [weak self] in
       guard let self else { return }
       self.configureSessionIfNeeded()
+      // (Re)attach the frame delegate on each start. `stop()` detaches it so a
+      // retained frame can't stall session teardown, so it must be re-armed
+      // here rather than once at configuration time.
+      self.videoDataOutput.setSampleBufferDelegate(self, queue: self.frameQueue)
       if !self.session.isRunning {
         self.session.startRunning()
       }
@@ -94,6 +109,15 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   func stop() {
     sessionQueue.async { [weak self] in
       guard let self else { return }
+      // Detach the frame delegate and release the retained frame BEFORE
+      // stopping: `stopRunning()` blocks until every buffer vended by the
+      // video data output is returned to its pool, so a held `latestPixelBuffer`
+      // would stall the stop — which in turn stalled preview/session teardown
+      // and left the canvas black for seconds on dismiss.
+      self.videoDataOutput.setSampleBufferDelegate(nil, queue: nil)
+      self.frameLock.lock()
+      self.latestPixelBuffer = nil
+      self.frameLock.unlock()
       if self.session.isRunning {
         self.session.stopRunning()
       }
@@ -131,58 +155,58 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
     }
   }
 
-  /// Captured atomically when capturePhoto is invoked so the delegate callback
-  /// can post-process based on which camera was active at trigger time.
-  private var positionAtCapture: AVCaptureDevice.Position = .back
+  /// Freezes the most-recent live frame into a square, downsampled, upright
+  /// `UIImage` for use as the tracing backdrop. Returns instantly — no shutter,
+  /// no photo-output round trip.
+  func latestBackdrop(maxPixelDimension: CGFloat = 1024) -> UIImage? {
+    guard let cg = latestFrameSquareImage(maxPixelDimension: maxPixelDimension) else { return nil }
+    return UIImage(cgImage: cg, scale: 1, orientation: .up)
+  }
 
-  @MainActor
-  func capturePhoto(saveToAlbum: Bool = false) async -> UIImage? {
-    guard isRunning else { return nil }
-    let currentPosition = position
-    let device = currentDevice
-    self.saveNextCaptureToAlbum = saveToAlbum
-    return await withCheckedContinuation { (continuation: CheckedContinuation<UIImage?, Never>) in
-      self.captureContinuation = continuation
-      self.positionAtCapture = currentPosition
-      sessionQueue.async { [weak self] in
-        guard let self else { return }
-        // Compute the rotation angle on the session queue, not main — the
-        // RotationCoordinator initializer touches device internals and on
-        // the front camera that's a noticeable synchronous cost. Doing it
-        // here keeps main free to start the capture-flash animation
-        // immediately after the user's tap.
-        let captureAngle: CGFloat? = device.map { d in
-          AVCaptureDevice.RotationCoordinator(device: d, previewLayer: nil)
-            .videoRotationAngleForHorizonLevelCapture
-        }
-        let settings = AVCapturePhotoSettings()
-        settings.flashMode = .off
-        settings.photoQualityPrioritization = .speed
-        // Write connection properties live — they do NOT require
-        // begin/commitConfiguration on a running session, and wrapping them
-        // in one forces an XPC reconfigure with mediaserverd per shot that
-        // adds tens of ms before AVFoundation even starts the capture.
-        // Guard each write so we only touch the connection when the desired
-        // value actually differs.
-        let wantMirrored = (currentPosition == .front)
-        for connection in self.photoOutput.connections {
-          if connection.isVideoMirroringSupported {
-            if connection.automaticallyAdjustsVideoMirroring {
-              connection.automaticallyAdjustsVideoMirroring = false
-            }
-            if connection.isVideoMirrored != wantMirrored {
-              connection.isVideoMirrored = wantMirrored
-            }
-          }
-          if let angle = captureAngle,
-             connection.videoRotationAngle != angle,
-             connection.isVideoRotationAngleSupported(angle) {
-            connection.videoRotationAngle = angle
-          }
-        }
-        self.photoOutput.capturePhoto(with: settings, delegate: self)
-      }
+  /// Persists a filtered polaroid built from the latest live frame. Grabs a
+  /// *detached* square `CGImage` synchronously (so it survives the subsequent
+  /// `stop()` releasing the pool buffer), then runs the colour grade + JPEG
+  /// encode on a background queue so the heavy work never blocks the capture.
+  func saveLatestFrameToAlbum() {
+    guard let square = latestFrameSquareImage(maxPixelDimension: 2048) else { return }
+    DispatchQueue.global(qos: .utility).async {
+      guard let data = Self.makePolaroid(from: square) else { return }
+      Self.savePolaroidToPhotosAlbum(data: data)
     }
+  }
+
+  /// Orients the latest live frame upright (per camera position), center-crops
+  /// it to a square, and downsamples to `maxPixelDimension` on the short side.
+  private func latestFrameSquareImage(maxPixelDimension: CGFloat) -> CGImage? {
+    frameLock.lock()
+    let buffer = latestPixelBuffer
+    let position = latestFramePosition
+    frameLock.unlock()
+    guard let buffer else { return nil }
+
+    var ciImage = CIImage(cvPixelBuffer: buffer)
+    // Frames arrive in raw landscape sensor orientation (we leave the
+    // connection's rotation/mirroring untouched — setting them on the video
+    // data output both inverts the rotation under mirroring and can stall the
+    // front-camera connection after a flip). Rotate to upright portrait in
+    // code: back → 90° CW, front → 90° CW + horizontal mirror (selfie).
+    let orientation: CGImagePropertyOrientation = (position == .front) ? .leftMirrored : .right
+    ciImage = ciImage.oriented(orientation)
+    let extent = ciImage.extent
+    let side = min(extent.width, extent.height)
+    guard side > 0 else { return nil }
+    let cropRect = CGRect(
+      x: extent.midX - side / 2,
+      y: extent.midY - side / 2,
+      width: side,
+      height: side
+    )
+    ciImage = ciImage.cropped(to: cropRect)
+    let scale = min(1, maxPixelDimension / side)
+    if scale < 1 {
+      ciImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+    }
+    return backdropContext.createCGImage(ciImage, from: ciImage.extent)
   }
 
   // MARK: - Permission
@@ -220,21 +244,14 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
       currentInput = input
       initialDevice = input.device
     }
-    if session.canAddOutput(photoOutput) {
-      session.addOutput(photoOutput)
-      // Cap the photo pipeline at .speed so AVFoundation pre-allocates the
-      // lightweight processing path. Without this the output prepares for
-      // .balanced (the default cap) and per-shot .speed can't fully claw
-      // back the latency. Must be set after the output is added.
-      photoOutput.maxPhotoQualityPrioritization = .speed
-      // Front-camera capture defaults to applying content-aware distortion
-      // correction on TrueDepth devices, which adds ~50–150ms of post-
-      // processing per shot. We're using the photo as a small backdrop
-      // reference (downsampled to 1024px), not a hero portrait — the
-      // correction isn't perceptible at that size.
-      if photoOutput.isContentAwareDistortionCorrectionSupported {
-        photoOutput.isContentAwareDistortionCorrectionEnabled = false
-      }
+    if session.canAddOutput(videoDataOutput) {
+      videoDataOutput.alwaysDiscardsLateVideoFrames = true
+      videoDataOutput.videoSettings = [
+        kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA),
+      ]
+      // The frame delegate is attached in `start()` (and detached in `stop()`),
+      // not here — see `stop()` for why.
+      session.addOutput(videoDataOutput)
     }
     applyMirroring(for: initialPosition)
     session.commitConfiguration()
@@ -251,63 +268,52 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   }
 
   private func applyMirroring(for position: AVCaptureDevice.Position) {
-    for connection in photoOutput.connections {
-      if connection.isVideoMirroringSupported {
-        connection.automaticallyAdjustsVideoMirroring = false
-        connection.isVideoMirrored = (position == .front)
-      }
-      if #available(iOS 17.0, *) {
-        if connection.isVideoRotationAngleSupported(90) {
-          connection.videoRotationAngle = 90
-        }
-      }
+    // Deliver raw, unmirrored, unrotated frames. Orientation/mirroring is
+    // applied in code when a frame is grabbed (see `latestFrameSquareImage`),
+    // because manipulating the video-data-output connection's rotation here
+    // inverted under front-camera mirroring (−90° result) and could stall the
+    // front feed after a flip reconfigure.
+    for connection in videoDataOutput.connections where connection.isVideoMirroringSupported {
+      connection.automaticallyAdjustsVideoMirroring = false
+      connection.isVideoMirrored = false
     }
   }
 }
 
-// MARK: - AVCapturePhotoCaptureDelegate
+// MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
 
-extension CameraReferenceController: AVCapturePhotoCaptureDelegate {
-  func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-    if let error {
-      // AVFoundation occasionally fails a capture under thermal pressure or
-      // mid-reconfigure (often co-occurring with the FigCaptureSourceRemote
-      // err=-17281 console spam). We surface it to the log instead of
-      // swallowing silently, but still resume the continuation with nil so
-      // the caller falls back to idle mode cleanly.
-      print("[CameraReferenceController] photo capture failed: \(error)")
-    }
-    let data = photo.fileDataRepresentation()
-    // Image processing path used to be: UIImage(data:) → full-size upright
-    // render → full-size square crop → downsample render. Three full bitmap
-    // renders of a 12-MP photo on the photo-output delegate queue, which on
-    // intermittent CPU pressure ballooned to ~800ms and starved the main
-    // thread of frames during the fully-closed-to-open shutter transition.
-    // ImageIO decodes once, downsamples in-decoder, and bakes the EXIF
-    // orientation in a single pass — typically 30–60ms total.
-    let image: UIImage? = data.flatMap { Self.makeBackdrop(from: $0, maxPixelDimension: 1024) }
-    let shouldSave = saveNextCaptureToAlbum
-    saveNextCaptureToAlbum = false
-    let continuation = self.captureContinuation
-    self.captureContinuation = nil
-    continuation?.resume(returning: image)
-    if shouldSave, let data {
-      DispatchQueue.global(qos: .utility).async {
-        Self.savePolaroidToPhotosAlbum(data: data)
+extension CameraReferenceController: AVCaptureVideoDataOutputSampleBufferDelegate {
+  func captureOutput(
+    _ output: AVCaptureOutput,
+    didOutput sampleBuffer: CMSampleBuffer,
+    from connection: AVCaptureConnection
+  ) {
+    guard let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+    // Resolve the camera position from the delivering connection so a frame is
+    // always oriented for the camera that actually produced it.
+    var position: AVCaptureDevice.Position = .back
+    for port in connection.inputPorts {
+      if let deviceInput = port.input as? AVCaptureDeviceInput {
+        position = deviceInput.device.position
+        break
       }
     }
+    // Keep only the most-recent frame. `alwaysDiscardsLateVideoFrames` plus
+    // holding a single buffer keeps us from starving the output's pool.
+    frameLock.lock()
+    latestPixelBuffer = buffer
+    latestFramePosition = position
+    frameLock.unlock()
   }
 
-  /// Persist a polaroid-framed version of the captured photo to the user's
-  /// Photos album. The source JPEG is center-cropped to a square (matching the
-  /// canvas viewport) and given a uniform white border.
+  /// Persist a polaroid-framed, colour-graded version of a square source image
+  /// to the user's Photos album.
   private static func savePolaroidToPhotosAlbum(data: Data) {
-    guard let polaroidData = makePolaroid(from: data) else { return }
     PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
       guard status == .authorized || status == .limited else { return }
       PHPhotoLibrary.shared().performChanges {
         let request = PHAssetCreationRequest.forAsset()
-        request.addResource(with: .photo, data: polaroidData, options: nil)
+        request.addResource(with: .photo, data: data, options: nil)
       } completionHandler: { success, error in
         if let error {
           print("[CameraReferenceController] save to album failed: \(error)")
@@ -318,25 +324,14 @@ extension CameraReferenceController: AVCapturePhotoCaptureDelegate {
     }
   }
 
-  /// Center-crops the source JPEG to a square, then composites it onto a white
-  /// canvas with uniform padding — producing a polaroid-style framed image.
-  private static func makePolaroid(from data: Data) -> Data? {
-    guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
-    let options: [CFString: Any] = [
-      kCGImageSourceCreateThumbnailFromImageAlways: true,
-      kCGImageSourceCreateThumbnailWithTransform: true,
-      kCGImageSourceShouldCacheImmediately: true,
-      kCGImageSourceThumbnailMaxPixelSize: 1024,
-    ]
-    guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
-      return nil
-    }
-    let w = CGFloat(cgImage.width)
-    let h = CGFloat(cgImage.height)
-    let side = min(w, h)
-    let cropRect = CGRect(x: (w - side) / 2, y: (h - side) / 2, width: side, height: side)
-    guard let cropped = cgImage.cropping(to: cropRect) else { return nil }
-    let photo = UIImage(cgImage: cropped, scale: 1, orientation: .up)
+  /// Applies the Fujifilm grade to an already-square `CGImage`, then composites
+  /// it onto a white canvas with uniform padding — a polaroid-style framed
+  /// JPEG. Falls back to the un-graded image if the grade fails.
+  private static func makePolaroid(from squareImage: CGImage) -> Data? {
+    let graded = FujifilmFilter.apply(to: squareImage, grade: .classicNegative) ?? squareImage
+    let side = CGFloat(min(graded.width, graded.height))
+    guard side > 0 else { return nil }
+    let photo = UIImage(cgImage: graded, scale: 1, orientation: .up)
 
     let paddingFraction: CGFloat = 0.08
     let paddingPx = floor(side * paddingFraction)
@@ -344,35 +339,10 @@ extension CameraReferenceController: AVCapturePhotoCaptureDelegate {
     let format = UIGraphicsImageRendererFormat()
     format.scale = 1
     let renderer = UIGraphicsImageRenderer(size: canvasSize, format: format)
-    let polaroid = renderer.jpegData(withCompressionQuality: 0.9) { context in
+    return renderer.jpegData(withCompressionQuality: 0.9) { context in
       UIColor.white.setFill()
       context.fill(CGRect(origin: .zero, size: canvasSize))
       photo.draw(in: CGRect(x: paddingPx, y: paddingPx, width: side, height: side))
     }
-    return polaroid
-  }
-
-  /// Decodes JPEG `data` into a square, orientation-baked, downsampled
-  /// `UIImage` suitable for use as the canvas backdrop. Uses ImageIO so the
-  /// 12-MP source is never materialized as a full bitmap.
-  private static func makeBackdrop(from data: Data, maxPixelDimension: CGFloat) -> UIImage? {
-    guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
-    let options: [CFString: Any] = [
-      kCGImageSourceCreateThumbnailFromImageAlways: true,
-      kCGImageSourceCreateThumbnailWithTransform: true,
-      kCGImageSourceShouldCacheImmediately: true,
-      // Oversample slightly so the post-thumbnail square crop still meets the
-      // target pixel dimension on its shortest side.
-      kCGImageSourceThumbnailMaxPixelSize: Int(maxPixelDimension * 1.5),
-    ]
-    guard let thumb = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
-      return nil
-    }
-    let w = CGFloat(thumb.width)
-    let h = CGFloat(thumb.height)
-    let side = min(w, h)
-    let cropRect = CGRect(x: (w - side) / 2, y: (h - side) / 2, width: side, height: side)
-    let cropped = thumb.cropping(to: cropRect) ?? thumb
-    return UIImage(cgImage: cropped, scale: 1, orientation: .up)
   }
 }

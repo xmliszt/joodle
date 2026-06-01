@@ -583,7 +583,7 @@ struct DrawingCanvasView: View {
       Haptic.play(with: .light)
       cameraContext.cancelLive()
     } label: {
-      Image(systemName: "scribble.variable")
+      Image(systemName: "xmark")
     }
     .circularGlassButton()
     .disabled(isShutterCycling)

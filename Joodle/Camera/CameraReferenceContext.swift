@@ -210,20 +210,24 @@ final class CameraReferenceContext: ObservableObject {
   func capture() async {
     guard mode == .live else { return }
     captureFlashID = UUID()
-    isCapturing = true
     #if targetEnvironment(simulator)
     // No camera to capture from — synthesize a placeholder reference photo so
     // the "trace over your reference" step is reachable on the simulator.
+    isCapturing = true
     self.backdropImage = Self.makeSimulatorPlaceholderImage()
     isCapturing = false
     withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
     #else
-    let saveToAlbum = UserPreferences.shared.saveCapturedPhotoToAlbum
-    let image = await self.controller.capturePhoto(saveToAlbum: saveToAlbum)
-    if let image {
-      self.backdropImage = image
+    // Freeze the most-recent live frame as the tracing backdrop — instant, no
+    // photo-capture shutter latency, so no spinner window is needed.
+    if let frame = controller.latestBackdrop() {
+      self.backdropImage = frame
     }
-    isCapturing = false
+    // Saving a filtered polaroid to the album is a pure background job that
+    // must never gate the backdrop appearing.
+    if UserPreferences.shared.saveCapturedPhotoToAlbum {
+      controller.saveLatestFrameToAlbum()
+    }
     self.controller.stop()
     withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
     #endif
@@ -287,26 +291,6 @@ final class CameraReferenceContext: ObservableObject {
         group.cancelAll()
       }
     }
-  }
-
-  /// Used when the drawing canvas / DI view is being dismissed while the
-  /// camera is live. Detach the live preview layer and stop the session
-  /// synchronously, then hand control back so the caller can collapse its
-  /// container. We deliberately do NOT run a shutter cycle here: racing the
-  /// blade close/open against the container collapse caused the UI to appear
-  /// frozen mid-close (the preview layer kept updating during the collapse
-  /// and the cycle's open phase fought with `reset()` tearing it down).
-  /// Keeping `mode == .live` preserves the dark canvas background, so the
-  /// preview unmount reveals black (not white) while the container animates
-  /// away.
-  func dismissLiveCamera(completion: @escaping @MainActor () -> Void) {
-    guard mode == .live else {
-      completion()
-      return
-    }
-    suppressPreview = true
-    controller.stop()
-    completion()
   }
 
   /// Fully reset — called when drawing canvas dismisses or the app backgrounds.

@@ -1211,6 +1211,13 @@ ID: \(deviceIdentifier)
           showAppStats = true
         }
 #if DEBUG
+        // TEMPORARY: filter-tuning workbench. Remove once the Fujifilm grade
+        // is dialed in and the chosen preset is committed to FujifilmFilter.
+        NavigationLink("Joodle Photo Filter Lab") {
+          FujifilmFilterLab()
+            .navigationTitle("Joodle Photo Filter Lab")
+            .navigationBarTitleDisplayMode(.inline)
+        }
         Button("Data Seeder") {
           showDataSeeder = true
         }
