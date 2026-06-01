@@ -171,7 +171,40 @@ struct DrawingCanvasView: View {
     isCameraFeatureActive && cameraContext.mode == .live
   }
 
-  var body: some View {
+  private var cameraBackdropImage: UIImage? { isCameraFeatureActive ? cameraContext.backdropImage : nil }
+  private var cameraSession: AVCaptureSession? { isCameraFeatureActive ? cameraContext.session : nil }
+  private var cameraDevice: AVCaptureDevice? { isCameraFeatureActive ? cameraContext.currentDevice : nil }
+  private var cameraMirrored: Bool { isCameraFeatureActive && cameraContext.isFrontFacing }
+  private var cameraShutterController: CameraShutterController? { isCameraFeatureActive ? cameraContext.shutter : nil }
+  private var cameraShutterFullyClosed: Bool { isCameraFeatureActive && cameraContext.isShutterFullyClosed }
+  private var cameraShutterCycling: Bool { isCameraFeatureActive && cameraContext.isShutterCycling }
+  private var cameraSuppressPreview: Bool { isCameraFeatureActive && cameraContext.suppressPreview }
+  private var cameraCaptureFlashID: UUID? { isCameraFeatureActive ? cameraContext.captureFlashID : nil }
+  private var cameraIsCapturing: Bool { isCameraFeatureActive && cameraContext.isCapturing }
+
+  private var canvasButtonsConfig: CanvasButtonsConfig {
+    CanvasButtonsConfig(
+      onClear: clearDrawing,
+      onUndo: undoLastStroke,
+      onRedo: redoLastStroke,
+      canClear: !paths.isEmpty || !currentPath.isEmpty,
+      canUndo: !undoStack.isEmpty,
+      canRedo: !redoStack.isEmpty,
+      showClearConfirmation: $showClearConfirmation,
+      centerContent: isCameraLive
+        ? AnyView(cameraFlipButton)
+        : (isMockMode ? nil : AnyView(inspirationBulbButton)),
+      leadingExtra: {
+        if isCameraLive { return AnyView(exitCameraButton) }
+        if canShowCameraButton { return AnyView(cameraReferenceButton) }
+        return nil
+      }(),
+      trailingExtra: isCameraLive ? AnyView(albumPickerButton) : nil,
+      hideStrokeButtons: isCameraLive
+    )
+  }
+
+  private var canvasStack: some View {
     ZStack(alignment: .top) {
       VStack(spacing: 12) {
         SharedCanvasView(
@@ -180,36 +213,19 @@ struct DrawingCanvasView: View {
           currentPath: $currentPath,
           currentPathIsDot: $currentPathIsDot,
           isDrawing: $isDrawing,
-          buttonsConfig: CanvasButtonsConfig(
-            onClear: clearDrawing,
-            onUndo: undoLastStroke,
-            onRedo: redoLastStroke,
-            canClear: !paths.isEmpty || !currentPath.isEmpty,
-            canUndo: !undoStack.isEmpty,
-            canRedo: !redoStack.isEmpty,
-            showClearConfirmation: $showClearConfirmation,
-            centerContent: isCameraLive
-              ? AnyView(cameraFlipButton)
-              : (isMockMode ? nil : AnyView(inspirationBulbButton)),
-            leadingExtra: {
-              if isCameraLive { return AnyView(exitCameraButton) }
-              if canShowCameraButton { return AnyView(cameraReferenceButton) }
-              return nil
-            }(),
-            trailingExtra: isCameraLive ? AnyView(albumPickerButton) : nil,
-            hideStrokeButtons: isCameraLive
-          ),
+          buttonsConfig: canvasButtonsConfig,
           canvasCornerRadius: canvasCornerRadius,
-          backdropImage: isCameraFeatureActive ? cameraContext.backdropImage : nil,
-          liveCameraSession: isCameraFeatureActive ? cameraContext.session : nil,
-          liveCameraDevice: isCameraFeatureActive ? cameraContext.currentDevice : nil,
+          backdropImage: cameraBackdropImage,
+          liveCameraSession: cameraSession,
+          liveCameraDevice: cameraDevice,
           isCameraLive: isCameraLive,
-          liveCameraMirrored: isCameraFeatureActive && cameraContext.isFrontFacing,
-          shutterController: isCameraFeatureActive ? cameraContext.shutter : nil,
-          isShutterFullyClosed: isCameraFeatureActive && cameraContext.isShutterFullyClosed,
-          isShutterCycling: isCameraFeatureActive && cameraContext.isShutterCycling,
-          suppressLivePreview: isCameraFeatureActive && cameraContext.suppressPreview,
-          captureFlashID: isCameraFeatureActive ? cameraContext.captureFlashID : nil,
+          liveCameraMirrored: cameraMirrored,
+          shutterController: cameraShutterController,
+          isShutterFullyClosed: cameraShutterFullyClosed,
+          isShutterCycling: cameraShutterCycling,
+          suppressLivePreview: cameraSuppressPreview,
+          captureFlashID: cameraCaptureFlashID,
+          isCapturing: cameraIsCapturing,
           isSaving: isSaving,
           onCommitStroke: commitCurrentStroke
         ) {
@@ -255,7 +271,11 @@ struct DrawingCanvasView: View {
       // reveal the white surface behind it).
       .animation(.easeInOut(duration: 0.2), value: isCameraLive)
     }
-    .padding(8)
+  }
+
+  private var decoratedCanvas: some View {
+    canvasStack
+      .padding(8)
     .padding(.top, 16)
     .padding(.bottom, 10)
     // Keep any transient reveal during the camera-mode layout transition dark
@@ -362,7 +382,11 @@ struct DrawingCanvasView: View {
         endBackgroundSaveTaskIfNeeded()
       }
     }
-    .confirmationDialog("Clear Drawing", isPresented: $showClearConfirmation) {
+  }
+
+  var body: some View {
+    decoratedCanvas
+      .confirmationDialog("Clear Drawing", isPresented: $showClearConfirmation) {
       Button("Clear", role: .destructive, action: clearDrawing).circularGlassButton()
       Button("Cancel", role: .cancel, action: {})
     } message: {

@@ -48,6 +48,9 @@ final class CameraReferenceContext: ObservableObject {
   /// black-flash overlay — fakes a "shutter snap" so the capture feels
   /// instantaneous, without the latency cost of an actual shutter animation.
   @Published var captureFlashID: UUID? = nil
+  /// True from the moment the shutter is tapped until the backdrop image is
+  /// ready. Views show a spinner during this window.
+  @Published var isCapturing: Bool = false
 
   #if DEBUG
   /// Debug-only override: when true, the camera behaves as if the user denied
@@ -207,10 +210,12 @@ final class CameraReferenceContext: ObservableObject {
   func capture() async {
     guard mode == .live else { return }
     captureFlashID = UUID()
+    isCapturing = true
     #if targetEnvironment(simulator)
     // No camera to capture from — synthesize a placeholder reference photo so
     // the "trace over your reference" step is reachable on the simulator.
     self.backdropImage = Self.makeSimulatorPlaceholderImage()
+    isCapturing = false
     withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
     #else
     let saveToAlbum = UserPreferences.shared.saveCapturedPhotoToAlbum
@@ -218,6 +223,7 @@ final class CameraReferenceContext: ObservableObject {
     if let image {
       self.backdropImage = image
     }
+    isCapturing = false
     self.controller.stop()
     withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
     #endif
@@ -317,6 +323,7 @@ final class CameraReferenceContext: ObservableObject {
       mode = .idle
       backdropImage = nil
       suppressPreview = false
+      isCapturing = false
     }
     shutter.forceReset()
   }

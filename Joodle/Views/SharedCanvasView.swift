@@ -93,6 +93,8 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   var suppressLivePreview: Bool = false
   /// Bumped on every photo capture to trigger the black flash overlay.
   var captureFlashID: UUID? = nil
+  /// True while waiting for the camera to finish processing the captured photo.
+  var isCapturing: Bool = false
 
   /// While true, the canvas is persisting on dismiss: the top-row action
   /// buttons dim + disable and the drawing surface dims, communicating a
@@ -138,6 +140,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     isShutterCycling: Bool = false,
     suppressLivePreview: Bool = false,
     captureFlashID: UUID? = nil,
+    isCapturing: Bool = false,
     isSaving: Bool = false,
     onCommitStroke: @escaping () -> Void,
     @ViewBuilder trailingHeader: @escaping () -> TrailingHeader
@@ -160,6 +163,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.isShutterCycling = isShutterCycling
     self.suppressLivePreview = suppressLivePreview
     self.captureFlashID = captureFlashID
+    self.isCapturing = isCapturing
     self.isSaving = isSaving
     self.onCommitStroke = onCommitStroke
     self.TrailingHeaderView = trailingHeader
@@ -465,6 +469,13 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
           .opacity(captureFlashOpacity)
           .allowsHitTesting(false)
+
+        if isCapturing {
+          ProgressView()
+            .tint(.white)
+            .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+            .allowsHitTesting(false)
+        }
 
         // Block input while the dismiss save runs so no stray stroke lands
         // after the save has been kicked off (kept invisible — no dim).

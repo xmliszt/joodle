@@ -156,6 +156,7 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
             .videoRotationAngleForHorizonLevelCapture
         }
         let settings = AVCapturePhotoSettings()
+        settings.flashMode = .off
         settings.photoQualityPrioritization = .speed
         // Write connection properties live — they do NOT require
         // begin/commitConfiguration on a running session, and wrapping them
@@ -287,22 +288,26 @@ extension CameraReferenceController: AVCapturePhotoCaptureDelegate {
     let image: UIImage? = data.flatMap { Self.makeBackdrop(from: $0, maxPixelDimension: 1024) }
     let shouldSave = saveNextCaptureToAlbum
     saveNextCaptureToAlbum = false
-    if shouldSave, let data {
-      Self.saveJPEGToPhotosAlbum(data: data)
-    }
     let continuation = self.captureContinuation
     self.captureContinuation = nil
     continuation?.resume(returning: image)
+    if shouldSave, let data {
+      DispatchQueue.global(qos: .utility).async {
+        Self.savePolaroidToPhotosAlbum(data: data)
+      }
+    }
   }
 
-  /// Persist the full-resolution JPEG to the user's Photos album. Requests
-  /// add-only authorization on first use; silently no-ops if the user denies.
-  private static func saveJPEGToPhotosAlbum(data: Data) {
+  /// Persist a polaroid-framed version of the captured photo to the user's
+  /// Photos album. The source JPEG is center-cropped to a square (matching the
+  /// canvas viewport) and given a uniform white border.
+  private static func savePolaroidToPhotosAlbum(data: Data) {
+    guard let polaroidData = makePolaroid(from: data) else { return }
     PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
       guard status == .authorized || status == .limited else { return }
       PHPhotoLibrary.shared().performChanges {
         let request = PHAssetCreationRequest.forAsset()
-        request.addResource(with: .photo, data: data, options: nil)
+        request.addResource(with: .photo, data: polaroidData, options: nil)
       } completionHandler: { success, error in
         if let error {
           print("[CameraReferenceController] save to album failed: \(error)")
@@ -311,6 +316,40 @@ extension CameraReferenceController: AVCapturePhotoCaptureDelegate {
         }
       }
     }
+  }
+
+  /// Center-crops the source JPEG to a square, then composites it onto a white
+  /// canvas with uniform padding — producing a polaroid-style framed image.
+  private static func makePolaroid(from data: Data) -> Data? {
+    guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+    let options: [CFString: Any] = [
+      kCGImageSourceCreateThumbnailFromImageAlways: true,
+      kCGImageSourceCreateThumbnailWithTransform: true,
+      kCGImageSourceShouldCacheImmediately: true,
+      kCGImageSourceThumbnailMaxPixelSize: 1024,
+    ]
+    guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+      return nil
+    }
+    let w = CGFloat(cgImage.width)
+    let h = CGFloat(cgImage.height)
+    let side = min(w, h)
+    let cropRect = CGRect(x: (w - side) / 2, y: (h - side) / 2, width: side, height: side)
+    guard let cropped = cgImage.cropping(to: cropRect) else { return nil }
+    let photo = UIImage(cgImage: cropped, scale: 1, orientation: .up)
+
+    let paddingFraction: CGFloat = 0.08
+    let paddingPx = floor(side * paddingFraction)
+    let canvasSize = CGSize(width: side + paddingPx * 2, height: side + paddingPx * 2)
+    let format = UIGraphicsImageRendererFormat()
+    format.scale = 1
+    let renderer = UIGraphicsImageRenderer(size: canvasSize, format: format)
+    let polaroid = renderer.jpegData(withCompressionQuality: 0.9) { context in
+      UIColor.white.setFill()
+      context.fill(CGRect(origin: .zero, size: canvasSize))
+      photo.draw(in: CGRect(x: paddingPx, y: paddingPx, width: side, height: side))
+    }
+    return polaroid
   }
 
   /// Decodes JPEG `data` into a square, orientation-baked, downsampled
