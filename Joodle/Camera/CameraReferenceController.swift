@@ -172,9 +172,18 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   /// access is denied/restricted — the save is silently impossible, so callers
   /// surface guidance for re-enabling it rather than failing quietly.
   func saveLatestFrameToAlbum(onPermissionDenied: (@Sendable () -> Void)? = nil) {
-    guard let square = latestFrameSquareImage(maxPixelDimension: 2048) else { return }
+    // Detached square grabbed synchronously so it survives the caller's stop()
+    // releasing the capture-pool buffer. May be nil if the video-data-output
+    // delegate hasn't delivered a frame yet (e.g. an immediate shutter tap right
+    // after the camera session starts) — the preview layer can already be live
+    // while `latestPixelBuffer` is still empty.
+    let square = latestFrameSquareImage(maxPixelDimension: 2048)
     DispatchQueue.global(qos: .utility).async {
-      guard let data = Self.makePolaroid(from: square) else { return }
+      let data = square.flatMap(Self.makePolaroid)
+      // Resolve add-only access regardless of whether we have a frame to save,
+      // so the one-time system prompt reliably appears the first time the user
+      // captures with save-to-album on. (Gating the request on a ready frame
+      // meant a not-yet-delivered frame silently skipped the prompt entirely.)
       Self.savePolaroidToPhotosAlbum(data: data, onPermissionDenied: onPermissionDenied)
     }
   }
@@ -310,14 +319,18 @@ extension CameraReferenceController: AVCaptureVideoDataOutputSampleBufferDelegat
     frameLock.unlock()
   }
 
-  /// Persist a polaroid-framed, colour-graded version of a square source image
-  /// to the user's Photos album.
-  private static func savePolaroidToPhotosAlbum(data: Data, onPermissionDenied: (@Sendable () -> Void)? = nil) {
+  /// Resolves Photos add-only access — surfacing the one-time system prompt when
+  /// the status is undetermined — then persists a polaroid-framed, colour-graded
+  /// image to the user's album. The authorization request is intentionally NOT
+  /// gated on `data`: a missing frame must still trigger the prompt so the user
+  /// can grant access, rather than the save silently no-op'ing.
+  private static func savePolaroidToPhotosAlbum(data: Data?, onPermissionDenied: (@Sendable () -> Void)? = nil) {
     PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
       guard status == .authorized || status == .limited else {
         onPermissionDenied?()
         return
       }
+      guard let data else { return }
       PHPhotoLibrary.shared().performChanges {
         let request = PHAssetCreationRequest.forAsset()
         request.addResource(with: .photo, data: data, options: nil)

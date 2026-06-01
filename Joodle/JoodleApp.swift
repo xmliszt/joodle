@@ -196,7 +196,6 @@ final class ModelContainerManager {
 @main
 struct JoodleApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-  @Environment(\.scenePhase) private var scenePhase
   @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
   @State private var colorScheme: ColorScheme? = UserPreferences.shared.preferredColorScheme
   @State private var accentColor: ThemeColor = UserPreferences.shared.accentColor
@@ -593,18 +592,11 @@ struct JoodleApp: App {
       .preferredColorScheme(colorScheme)
       .tint(accentColor.color)
       .environment(\.locale, appLocale)
-      // Re-evaluate the save-to-album toggle against the live Photos permission
-      // on launch and whenever the app returns to the foreground. If the user
-      // granted access in iOS Settings (which relaunches the app), a toggle that
-      // was only suspended due to a prior denial is auto-restored. Deliberate
-      // OFFs are untouched. See UserPreferences.reconcileSaveToAlbumPermission().
+      // One-time per build: force save-to-album ON for everyone. The Photos
+      // add-only permission is resolved lazily at the next capture (not here),
+      // so brand-new users aren't prompted out of context on launch.
       .onAppear {
-        UserPreferences.shared.reconcileSaveToAlbumPermission()
-      }
-      .onChange(of: scenePhase) { _, newPhase in
-        if newPhase == .active {
-          UserPreferences.shared.reconcileSaveToAlbumPermission()
-        }
+        UserPreferences.shared.forceSaveToAlbumOnIfNeeded()
       }
       .remoteAlertOverlay(service: remoteAlertService)
       .sheet(item: $changelogEntry, onDismiss: {

@@ -7,7 +7,6 @@
 
 import Foundation
 import Observation
-import Photos
 import SwiftUI
 
 enum Pref {
@@ -38,17 +37,18 @@ enum Pref {
   // Share card watermark preference
   static let shareCardWatermarkEnabled = Key(key: "share_card_watermark_enabled", default: true)
 
-  // Save captured reference photo to the user's Photos album (on by default;
-  // the add-only Photos permission is requested lazily on first capture)
+  // Save captured reference photo to the user's Photos album. The single source
+  // of truth for the feature: ON means "the user wants saving — ensure Photos
+  // add-only access (prompt lazily on the next capture if undetermined)"; OFF
+  // means "the user does not want saving" (a deliberate choice, including a
+  // denied permission prompt). The add-only permission is resolved at capture
+  // time, never proactively. Default ON.
   static let saveCapturedPhotoToAlbum = Key(key: "save_captured_photo_to_album", default: true)
 
-  // Records that the user *wants* save-to-album on, but it was forced OFF only
-  // because Photos add-only access was denied. When access later becomes
-  // available (e.g. the user enables it in iOS Settings and the app relaunches)
-  // the toggle is auto-restored. A *deliberate* OFF clears this, so an
-  // intentional choice is never overridden. Device-local (not synced) — Photos
-  // permission is per-device.
-  static let saveCapturedPhotoToAlbumPendingPermission = Key(key: "save_captured_photo_to_album_pending_permission", default: false)
+  // One-time marker: this build force-enabled save-to-album for everyone (see
+  // `forceSaveToAlbumOnIfNeeded()`). Guards the force-on so it runs exactly once
+  // and never overrides a choice the user makes afterwards.
+  static let didForceSaveToAlbumOn = Key(key: "did_force_save_to_album_on", default: false)
 
   // App language override (empty string = system default)
   static let appLanguage = Key(key: "app_language", default: "")
@@ -85,7 +85,7 @@ enum Pref {
     promptForNotesAfterDoodling.key,
     shareCardWatermarkEnabled.key,
     saveCapturedPhotoToAlbum.key,
-    saveCapturedPhotoToAlbumPendingPermission.key,
+    didForceSaveToAlbumOn.key,
     appLanguage.key,
   ]
 }
@@ -200,13 +200,6 @@ final class UserPreferences {
   var saveCapturedPhotoToAlbum: Bool = Pref.saveCapturedPhotoToAlbum.defaultValue {
     didSet {
       _saveCapturedPhotoToAlbumWatcher = saveCapturedPhotoToAlbum
-    }
-  }
-
-  // Pending re-enable flag for save-to-album (see Pref doc above).
-  var saveCapturedPhotoToAlbumPendingPermission: Bool = Pref.saveCapturedPhotoToAlbumPendingPermission.defaultValue {
-    didSet {
-      _saveCapturedPhotoToAlbumPendingPermissionWatcher = saveCapturedPhotoToAlbumPendingPermission
     }
   }
 
@@ -354,11 +347,6 @@ final class UserPreferences {
     set { set(Pref.saveCapturedPhotoToAlbum, newValue) }
   }
 
-  private var _saveCapturedPhotoToAlbumPendingPermissionWatcher: Bool {
-    get { get(Pref.saveCapturedPhotoToAlbumPendingPermission) }
-    set { set(Pref.saveCapturedPhotoToAlbumPendingPermission, newValue) }
-  }
-
   private var _appLanguageWatcher: String {
     get {
       defaults.string(forKey: Pref.appLanguage.key) ?? Pref.appLanguage.defaultValue
@@ -392,7 +380,6 @@ final class UserPreferences {
     promptForNotesAfterDoodling = _promptForNotesAfterDoodlingWatcher
     shareCardWatermarkEnabled = _shareCardWatermarkEnabledWatcher
     saveCapturedPhotoToAlbum = _saveCapturedPhotoToAlbumWatcher
-    saveCapturedPhotoToAlbumPendingPermission = _saveCapturedPhotoToAlbumPendingPermissionWatcher
     appLanguage = _appLanguageWatcher
 
     // Allow subsequent appLanguage changes to sync AppleLanguages normally.
@@ -420,48 +407,18 @@ final class UserPreferences {
     }
   }
 
-  // MARK: - Save-to-album intent
+  // MARK: - Save-to-album
 
-  /// Save-to-album is on and Photos access is available.
-  func confirmSaveToAlbumEnabled() {
+  /// Force-enables save-to-album exactly once for this build, for everyone —
+  /// regardless of their previous toggle value or Photos permission. The
+  /// permission itself is NOT requested here; it's resolved at the next capture
+  /// (ON + undetermined → prompt). Runs once (guarded by `didForceSaveToAlbumOn`)
+  /// so any choice the user makes afterwards (including a denied prompt flipping
+  /// the toggle back OFF) is never overridden on a later launch. Call on launch.
+  func forceSaveToAlbumOnIfNeeded() {
+    guard !get(Pref.didForceSaveToAlbumOn) else { return }
+    set(Pref.didForceSaveToAlbumOn, true)
     saveCapturedPhotoToAlbum = true
-    saveCapturedPhotoToAlbumPendingPermission = false
-  }
-
-  /// Save-to-album was forced OFF because Photos add-only access is
-  /// unavailable, but the user wants it on. Records the intent so the toggle
-  /// auto-restores once access is granted (see `reconcileSaveToAlbumPermission`).
-  func suspendSaveToAlbumForDeniedPermission() {
-    saveCapturedPhotoToAlbum = false
-    saveCapturedPhotoToAlbumPendingPermission = true
-  }
-
-  /// Reconciles the save-to-album toggle with the live Photos add-only
-  /// authorization while honoring deliberate user intent. Safe to call on every
-  /// launch / foreground — it's idempotent and only mutates state when needed.
-  ///
-  /// - Access available: restores the toggle to ON *only* if it was suspended
-  ///   due to a prior denial (`saveCapturedPhotoToAlbumPendingPermission`). A
-  ///   deliberate OFF cleared that flag, so it is never resurrected here.
-  /// - Access unavailable: suspends the toggle (OFF) but records the intent so
-  ///   it auto-restores once access returns.
-  /// - Not yet determined: left untouched — permission is requested lazily at
-  ///   first capture.
-  func reconcileSaveToAlbumPermission() {
-    switch PHPhotoLibrary.authorizationStatus(for: .addOnly) {
-    case .authorized, .limited:
-      if saveCapturedPhotoToAlbumPendingPermission {
-        confirmSaveToAlbumEnabled()
-      }
-    case .denied, .restricted:
-      if saveCapturedPhotoToAlbum {
-        suspendSaveToAlbumForDeniedPermission()
-      }
-    case .notDetermined:
-      break
-    @unknown default:
-      break
-    }
   }
 
   // MARK: - Reset Method (automatically uses all registered keys!)
@@ -487,7 +444,6 @@ final class UserPreferences {
     promptForNotesAfterDoodling = Pref.promptForNotesAfterDoodling.defaultValue
     shareCardWatermarkEnabled = Pref.shareCardWatermarkEnabled.defaultValue
     saveCapturedPhotoToAlbum = Pref.saveCapturedPhotoToAlbum.defaultValue
-    saveCapturedPhotoToAlbumPendingPermission = Pref.saveCapturedPhotoToAlbumPendingPermission.defaultValue
     appLanguage = Pref.appLanguage.defaultValue
     // Clear AppleLanguages override on reset
     UserDefaults.standard.removeObject(forKey: "AppleLanguages")

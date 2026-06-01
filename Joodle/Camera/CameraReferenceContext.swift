@@ -228,17 +228,16 @@ final class CameraReferenceContext: ObservableObject {
       self.backdropImage = frame
     }
     // Saving a filtered polaroid to the album is a pure background job that
-    // must never gate the backdrop appearing. If Photos access is denied at
-    // this point (e.g. the user dismissed the first add-only prompt), the save
-    // is impossible — flip the preference off to reflect reality and surface a
-    // one-shot message pointing them to the in-app toggle to turn it back on.
+    // must never gate the backdrop appearing. The toggle is the single source
+    // of truth: ON means "ensure access" — so the save path requests add-only
+    // permission, prompting the first time. If access is denied, the save is
+    // impossible, so flip the toggle OFF to record the user's deliberate choice
+    // (no future prompts) and surface a one-shot message.
     if UserPreferences.shared.saveCapturedPhotoToAlbum {
       controller.saveLatestFrameToAlbum { [weak self] in
         Task { @MainActor in
           guard let self else { return }
-          // Forced off because access was denied — but remember the intent so
-          // it auto-restores once the user grants access (and the app relaunches).
-          UserPreferences.shared.suspendSaveToAlbumForDeniedPermission()
+          UserPreferences.shared.saveCapturedPhotoToAlbum = false
           self.showSaveToAlbumDeniedMessage = true
         }
       }
