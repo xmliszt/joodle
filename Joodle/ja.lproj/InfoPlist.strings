@@ -1,2 +1,4 @@
 "Today" = "今日";
 "Next Anniversary" = "次の記念日";
+"NSCameraUsageDescription" = "Joodle はドゥードルをトレースするための参考写真をすばやく撮影するためにカメラを使用します。撮影した写真は初期設定でフォトライブラリにも保存されます。設定でオフにできます。";
+"NSPhotoLibraryAddUsageDescription" = "Joodle はトレース用に撮影した参考写真をフォトライブラリに保存します。設定でオフにできます。";

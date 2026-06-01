@@ -1,2 +1,4 @@
 "Today" = "今天";
 "Next Anniversary" = "下一个纪念日";
+"NSCameraUsageDescription" = "Joodle 使用相机快速拍摄用于描摹涂鸦的参考照片。默认情况下，拍摄的照片也会保存到你的照片图库；你可以在“设置”中关闭此功能。";
+"NSPhotoLibraryAddUsageDescription" = "Joodle 会将你为描摹拍摄的参考照片保存到照片图库。你可以在“设置”中关闭此功能。";

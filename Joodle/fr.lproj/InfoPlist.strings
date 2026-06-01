@@ -1,2 +1,4 @@
 "Today" = "Aujourd'hui";
 "Next Anniversary" = "Prochain anniversaire";
+"NSCameraUsageDescription" = "Joodle utilise l'appareil photo pour capturer rapidement des photos de référence à décalquer. Par défaut, les photos capturées sont aussi enregistrées dans votre photothèque ; vous pouvez désactiver cela dans les Réglages.";
+"NSPhotoLibraryAddUsageDescription" = "Joodle enregistre dans votre photothèque les photos de référence que vous capturez pour le décalquage. Vous pouvez désactiver cela dans les Réglages.";

@@ -167,11 +167,15 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   /// *detached* square `CGImage` synchronously (so it survives the subsequent
   /// `stop()` releasing the pool buffer), then runs the colour grade + JPEG
   /// encode on a background queue so the heavy work never blocks the capture.
-  func saveLatestFrameToAlbum() {
+  ///
+  /// `onPermissionDenied` fires (on an arbitrary queue) when Photos add-only
+  /// access is denied/restricted — the save is silently impossible, so callers
+  /// surface guidance for re-enabling it rather than failing quietly.
+  func saveLatestFrameToAlbum(onPermissionDenied: (@Sendable () -> Void)? = nil) {
     guard let square = latestFrameSquareImage(maxPixelDimension: 2048) else { return }
     DispatchQueue.global(qos: .utility).async {
       guard let data = Self.makePolaroid(from: square) else { return }
-      Self.savePolaroidToPhotosAlbum(data: data)
+      Self.savePolaroidToPhotosAlbum(data: data, onPermissionDenied: onPermissionDenied)
     }
   }
 
@@ -308,9 +312,12 @@ extension CameraReferenceController: AVCaptureVideoDataOutputSampleBufferDelegat
 
   /// Persist a polaroid-framed, colour-graded version of a square source image
   /// to the user's Photos album.
-  private static func savePolaroidToPhotosAlbum(data: Data) {
+  private static func savePolaroidToPhotosAlbum(data: Data, onPermissionDenied: (@Sendable () -> Void)? = nil) {
     PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
-      guard status == .authorized || status == .limited else { return }
+      guard status == .authorized || status == .limited else {
+        onPermissionDenied?()
+        return
+      }
       PHPhotoLibrary.shared().performChanges {
         let request = PHAssetCreationRequest.forAsset()
         request.addResource(with: .photo, data: data, options: nil)

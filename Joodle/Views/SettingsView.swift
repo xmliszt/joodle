@@ -1607,9 +1607,11 @@ struct CustomizationSettingsView: View {
     Binding(
       get: { userPreferences.saveCapturedPhotoToAlbum },
       set: { newValue in
-        // Turning OFF never needs permission.
+        // Turning OFF never needs permission. A deliberate OFF also clears any
+        // pending re-enable, so the choice survives even if access is granted.
         guard newValue else {
           commitSaveCapturedPhotoToAlbum(false)
+          userPreferences.saveCapturedPhotoToAlbumPendingPermission = false
           return
         }
 
@@ -1622,47 +1624,32 @@ struct CustomizationSettingsView: View {
         switch PHPhotoLibrary.authorizationStatus(for: .addOnly) {
         case .authorized, .limited:
           commitSaveCapturedPhotoToAlbum(true)
+          userPreferences.saveCapturedPhotoToAlbumPendingPermission = false
         case .notDetermined:
           // Reflect ON immediately so the switch animates, then confirm or
           // revert once the user responds to the system prompt.
           commitSaveCapturedPhotoToAlbum(true)
+          userPreferences.saveCapturedPhotoToAlbumPendingPermission = false
           PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
             DispatchQueue.main.async {
               let granted = status == .authorized || status == .limited
               if !granted {
-                commitSaveCapturedPhotoToAlbum(false)
+                // Denied the prompt — keep the intent so it auto-restores if
+                // they grant access in Settings later.
+                userPreferences.suspendSaveToAlbumForDeniedPermission()
               }
             }
           }
         case .denied, .restricted:
-          // iOS won't show the prompt again — keep the toggle OFF and direct
-          // the user to Settings to grant access.
-          commitSaveCapturedPhotoToAlbum(false)
+          // iOS won't show the prompt again — keep the toggle OFF, remember the
+          // intent, and direct the user to Settings to grant access.
+          userPreferences.suspendSaveToAlbumForDeniedPermission()
           showPhotoAccessDeniedAlert = true
         @unknown default:
           commitSaveCapturedPhotoToAlbum(false)
         }
       }
     )
-  }
-
-  /// Reconciles the toggle with the real Photos authorization state. The
-  /// preference defaults to ON, so a user can arrive here with the toggle
-  /// showing ON while access was never granted (e.g. they denied the prompt
-  /// at capture time, or revoked it in iOS Settings). In those cases saving
-  /// silently fails, so flip the toggle back OFF to reflect reality.
-  ///
-  /// `.notDetermined` is intentionally left alone: that's the valid
-  /// default-ON state where permission hasn't been requested yet and will be
-  /// at the first capture.
-  private func reconcileSaveCapturedPhotoToAlbumPermission() {
-    guard userPreferences.saveCapturedPhotoToAlbum else { return }
-    switch PHPhotoLibrary.authorizationStatus(for: .addOnly) {
-    case .denied, .restricted:
-      commitSaveCapturedPhotoToAlbum(false)
-    default:
-      break
-    }
   }
 
   /// Commits the "save photos to album" preference and tracks the change only
@@ -1899,7 +1886,7 @@ struct CustomizationSettingsView: View {
         }
       }
       .onAppear {
-        reconcileSaveCapturedPhotoToAlbumPermission()
+        userPreferences.reconcileSaveToAlbumPermission()
         if scrollToNotePromptSetting {
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             withAnimation {

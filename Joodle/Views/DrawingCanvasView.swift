@@ -421,6 +421,11 @@ struct DrawingCanvasView: View {
     } message: {
       Text("Joodle needs camera access to capture reference photos for tracing. Enable it in Settings.")
     }
+    .alert("Photo Not Saved", isPresented: saveToAlbumDeniedAlertBinding) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text("Joodle couldn't save this reference photo to your album. To turn saving back on, go to Settings > General > Customization > Save photos to album.")
+    }
     .onChange(of: scenePhase) { _, newPhase in
       guard isCameraFeatureActive else { return }
       switch newPhase {
@@ -555,6 +560,17 @@ struct DrawingCanvasView: View {
       set: { newValue in
         if isCameraFeatureActive {
           cameraContext.showPermissionDeniedAlert = newValue
+        }
+      }
+    )
+  }
+
+  private var saveToAlbumDeniedAlertBinding: Binding<Bool> {
+    Binding(
+      get: { isCameraFeatureActive && cameraContext.showSaveToAlbumDeniedMessage },
+      set: { newValue in
+        if isCameraFeatureActive {
+          cameraContext.showSaveToAlbumDeniedMessage = newValue
         }
       }
     )

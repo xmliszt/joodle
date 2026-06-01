@@ -1,2 +1,4 @@
 "Today" = "Today";
 "Next Anniversary" = "Next Anniversary";
+"NSCameraUsageDescription" = "Joodle uses the camera to capture quick reference photos for tracing your doodle. Captured photos are also saved to your Photos album by default; you can turn this off in Settings.";
+"NSPhotoLibraryAddUsageDescription" = "Joodle saves the reference photos you capture for tracing to your Photos album. You can turn this off in Settings.";

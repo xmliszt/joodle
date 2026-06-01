@@ -23,6 +23,10 @@ final class CameraReferenceContext: ObservableObject {
   @Published var mode: CameraReferenceMode = .idle
   @Published var backdropImage: UIImage? = nil
   @Published var showPermissionDeniedAlert: Bool = false
+  /// Set when a capture couldn't be saved to the album because Photos add-only
+  /// access was denied. Views observing the context surface a one-shot message
+  /// pointing the user to the in-app toggle to re-enable saving.
+  @Published var showSaveToAlbumDeniedMessage: Bool = false
   /// Mirrors the controller's session-running state so views observing this
   /// context can show a "Turning on camera..." placeholder while the session
   /// is still spinning up.
@@ -224,9 +228,20 @@ final class CameraReferenceContext: ObservableObject {
       self.backdropImage = frame
     }
     // Saving a filtered polaroid to the album is a pure background job that
-    // must never gate the backdrop appearing.
+    // must never gate the backdrop appearing. If Photos access is denied at
+    // this point (e.g. the user dismissed the first add-only prompt), the save
+    // is impossible — flip the preference off to reflect reality and surface a
+    // one-shot message pointing them to the in-app toggle to turn it back on.
     if UserPreferences.shared.saveCapturedPhotoToAlbum {
-      controller.saveLatestFrameToAlbum()
+      controller.saveLatestFrameToAlbum { [weak self] in
+        Task { @MainActor in
+          guard let self else { return }
+          // Forced off because access was denied — but remember the intent so
+          // it auto-restores once the user grants access (and the app relaunches).
+          UserPreferences.shared.suspendSaveToAlbumForDeniedPermission()
+          self.showSaveToAlbumDeniedMessage = true
+        }
+      }
     }
     self.controller.stop()
     withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
