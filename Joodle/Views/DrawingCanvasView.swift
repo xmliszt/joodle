@@ -136,6 +136,20 @@ struct DrawingCanvasView: View {
     )
   }
 
+  /// The left/right gap between the fixed-size canvas square and the floating
+  /// container edge. Because the canvas is a fixed `CANVAS_SIZE` square centered
+  /// in the container's inner width, the horizontal gap is the leftover
+  /// centering slack — `(containerInnerWidth - CANVAS_SIZE) / 2` — and varies
+  /// per device. We reuse it as the bottom inset so the canvas sits with equal
+  /// left/right/bottom padding inside the container on every device.
+  private var canvasSideInset: CGFloat {
+    let containerInset: CGFloat = UIDevice.hasDynamicIsland
+      ? UIDevice.dynamicIslandFrame.origin.y
+      : 10
+    let containerInnerWidth = UIScreen.main.bounds.width - containerInset * 2
+    return max((containerInnerWidth - CANVAS_SIZE) / 2, 0)
+  }
+
   /// Whether editing is allowed based on subscription status
   private var canEditOrCreate: Bool {
     // Always allow in mock mode
@@ -275,9 +289,11 @@ struct DrawingCanvasView: View {
 
   private var decoratedCanvas: some View {
     canvasStack
-      .padding(8)
-    .padding(.top, 16)
-    .padding(.bottom, 10)
+      .padding(.horizontal, 8)
+      .padding(.top, 24)
+      // Match the bottom gap to the canvas's left/right centering slack so the
+      // canvas sits with equal L/R/bottom padding inside the floating container.
+      .padding(.bottom, canvasSideInset)
     // Keep any transient reveal during the camera-mode layout transition dark
     // instead of letting the underlying white surface show through.
     .background(Color.black)

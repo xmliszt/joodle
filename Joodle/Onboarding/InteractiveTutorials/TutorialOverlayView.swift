@@ -36,6 +36,14 @@ struct TutorialOverlayView: View {
 
             // Tutorial completion overlay
             if coordinator.showingCompletion {
+                // Dimmed backdrop fades in with opacity only (no scale) so it
+                // covers the full screen — including the bottom safe area — for
+                // the entire animation. Scaling the fill (as the content does)
+                // shrinks it inward and momentarily exposes the bottom inset.
+                Color.black.opacity(0.9)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+
                 TutorialCompletionView(isOnboarding: !coordinator.singleStepMode)
                     .transition(.opacity.combined(with: .scale(scale: 0.9)))
             }
@@ -185,11 +193,9 @@ struct TutorialCompletionView: View {
     }
 
     var body: some View {
+        // The dimmed backdrop is rendered by the presentation site so it can
+        // fade in without scaling; this view holds only the content that scales.
         ZStack {
-            // Dimmed background
-            Color.black.opacity(0.9)
-                .ignoresSafeArea()
-
             VStack(spacing: 24) {
                 // Animated checkmark with ring
                 ZStack {
