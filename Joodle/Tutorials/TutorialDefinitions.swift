@@ -18,14 +18,14 @@ enum TutorialDefinitions {
     icon: "square.grid.2x2",
     shortDescription: "Add Joodle to your home screen",
     screenshots: [
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget1.png", dots: [TapDot(x: 122, y: 64)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget2.png", dots: [TapDot(x: 197, y: 147)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget3.png", dots: [TapDot(x: 298, y: 268)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget4.png", dots: [TapDot(x: 240, y: 366)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget5.png"),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget6.png", dots: [TapDot(x: 300, y: 1107)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget7.png", dots: [TapDot(x: 263, y: 496)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Widget8.png")
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Widget1.png", dots: [TapDot(x: 122, y: 64)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Widget2.png", dots: [TapDot(x: 197, y: 147)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Widget3.png", dots: [TapDot(x: 298, y: 268)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Widget4.png", dots: [TapDot(x: 240, y: 366)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Widget5.png"),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Widget6.png", dots: [TapDot(x: 300, y: 1107)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Widget7.png", dots: [TapDot(x: 263, y: 496)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Widget8.png")
     ],
     description: "Long press on your home screen, tap the + button, search for \"Joodle\", and add a widget. Some widgets are configurable. Tap the widget while in edit mode to configure.",
     isPremiumFeature: true
@@ -38,13 +38,13 @@ enum TutorialDefinitions {
     icon: "square.grid.2x2",
     shortDescription: "Add Joodle to your lock screen",
     screenshots: [
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen1.png", dots: [TapDot(x: 306, y: 625)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen2.png", dots: [TapDot(x: 298, y: 1140)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen3.png", dots: [TapDot(x: 298, y: 962)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen4.png"),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen5.png", dots: [TapDot(x: 239, y: 823)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen6.png", dots: [TapDot(x: 299, y: 910)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Lockscreen7.png", dots: [TapDot(x: 478, y: 65)])
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Lockscreen1.png", dots: [TapDot(x: 306, y: 625)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Lockscreen2.png", dots: [TapDot(x: 298, y: 1140)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Lockscreen3.png", dots: [TapDot(x: 298, y: 962)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Lockscreen4.png"),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Lockscreen5.png", dots: [TapDot(x: 239, y: 823)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Lockscreen6.png", dots: [TapDot(x: 299, y: 910)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Lockscreen7.png", dots: [TapDot(x: 478, y: 65)])
     ],
     description: "Long press on your lock screen, tap \"Customize\", then \"ADD WIDGETS\", find \"Joodle\", and tap or drag the widget onto the lock screen.",
     isPremiumFeature: true
@@ -57,12 +57,12 @@ enum TutorialDefinitions {
     icon: "square.grid.2x2",
     shortDescription: "Add Joodle to your StandBy screen",
     screenshots: [
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby1.png", dots: [TapDot(x: 802, y: 304)], orientation: .landscape),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby2.png", dots: [TapDot(x: 118, y: 67)], orientation: .landscape),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby3.png", dots: [TapDot(x: 314, y: 306)], orientation: .landscape),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby4.png", dots: [TapDot(x: 823, y: 481)], orientation: .landscape),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby5.png", dots: [TapDot(x: 621, y: 296)], orientation: .landscape),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/Standby6.png", orientation: .landscape)
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Standby1.png", dots: [TapDot(x: 802, y: 304)], orientation: .landscape),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Standby2.png", dots: [TapDot(x: 118, y: 67)], orientation: .landscape),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Standby3.png", dots: [TapDot(x: 314, y: 306)], orientation: .landscape),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Standby4.png", dots: [TapDot(x: 823, y: 481)], orientation: .landscape),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Standby5.png", dots: [TapDot(x: 621, y: 296)], orientation: .landscape),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Standby6.png", orientation: .landscape)
     ],
     description: "Long press, tap the + button, search for \"Joodle\", and add a widget. Some widgets are configurable. Tap the widget while in edit mode to configure.",
     isPremiumFeature: true
@@ -75,9 +75,9 @@ enum TutorialDefinitions {
     icon: "magnifyingglass",
     shortDescription: "Quickly jump to today or upcoming anniversary via Siri Shortcuts",
     screenshots: [
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/SiriShortcut1.png", dots: [TapDot(x: 306, y: 758)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/SiriShortcut2.png", dots: [TapDot(x: 237, y: 215)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/SiriShortcut3.png")
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/SiriShortcut1.png", dots: [TapDot(x: 306, y: 758)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/SiriShortcut2.png", dots: [TapDot(x: 237, y: 215)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/SiriShortcut3.png")
     ],
     description: "Open Spotlight Search by swiping down on home screen. Search for \"Joodle\". Tap on any quick action.",
     isPremiumFeature: false
@@ -90,9 +90,9 @@ enum TutorialDefinitions {
     icon: "flask",
     shortDescription: "Get early access to experimental features",
     screenshots: [
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature1.png", dots: [TapDot(x: 376, y: 163)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature2.png", dots: [TapDot(x: 395, y: 603)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature3.png", dots: [TapDot(x: 488, y: 709)])
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/ExperimentalFeature1.png", dots: [TapDot(x: 376, y: 163)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/ExperimentalFeature2.png", dots: [TapDot(x: 395, y: 603)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/ExperimentalFeature3.png", dots: [TapDot(x: 488, y: 709)])
     ],
     description: "In \"Settings\", go to \"Labs\" section, then tap on \"Experimental Features\".",
     isPremiumFeature: false
@@ -105,12 +105,12 @@ enum TutorialDefinitions {
     icon: "w.square",
     shortDescription: "Learn how to get a quick peek at the weekday labels in \"Normal\" view mode",
     screenshots: [
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel1.png", dots: [TapDot(x: 520, y: 163)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel2.png"),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel3.png"),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel4.png", dots: [TapDot(x: 376, y: 163)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel5.png", dots: [TapDot(x: 408, y: 613)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/QuickPeekWeekdayLabel6.png", dots: [TapDot(x: 405, y: 697)])
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/QuickPeekWeekdayLabel1.png", dots: [TapDot(x: 520, y: 163)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/QuickPeekWeekdayLabel2.png"),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/QuickPeekWeekdayLabel3.png"),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/QuickPeekWeekdayLabel4.png", dots: [TapDot(x: 376, y: 163)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/QuickPeekWeekdayLabel5.png", dots: [TapDot(x: 408, y: 613)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/QuickPeekWeekdayLabel6.png", dots: [TapDot(x: 405, y: 697)])
     ],
     description: "Swtich to \"Normal\" view mode, then scroll to the top of the grid, continue to scroll and you should see the weekday labels. To change the Start of Week, go to \"Settings\" > \"General\" > \"Customization\" > \"Start of Week\"."
   )
@@ -122,12 +122,12 @@ enum TutorialDefinitions {
     icon: "barcode",
     shortDescription: "Learn how to get a promo code as an early tester",
     screenshots: [
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code1.png"),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code2.png", dots: [TapDot(x: 522, y: 134)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code3.png", dots: [TapDot(x: 397, y: 144)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code4.png", dots: [TapDot(x: 81, y: 405)]),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code5.png"),
-      ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Others/Redeem%20Promo%20Code6.png", dots: [TapDot(x: 207, y: 626)])
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Redeem%20Promo%20Code1.png"),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Redeem%20Promo%20Code2.png", dots: [TapDot(x: 522, y: 134)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Redeem%20Promo%20Code3.png", dots: [TapDot(x: 397, y: 144)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Redeem%20Promo%20Code4.png", dots: [TapDot(x: 81, y: 405)]),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Redeem%20Promo%20Code5.png"),
+      ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/Redeem%20Promo%20Code6.png", dots: [TapDot(x: 207, y: 626)])
     ],
     description: "Make sure you are on TestFlight. Take a screenshot, then tap \"Share Beta Feedback...\". Write \"I want promo code\" in the feedback section. And most importantly, include your email address in \"Share Your Email\" section so that we can send the code to you!"
   )

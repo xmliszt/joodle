@@ -185,7 +185,7 @@ struct HeaderImageCarouselView: View {
                 build: 54,
                 date: Date(),
                 headerImageURLs: [
-                    URL(string: "https://raw.githubusercontent.com/xmliszt/resources/refs/heads/main/joodle/1.17.png")!
+                    URL(string: "https://joodle.liyuxuan.dev/changelogs/1.17.png")!
                 ],
                 markdownContent: """
                 ## ✨ What's New
@@ -213,8 +213,8 @@ struct HeaderImageCarouselView: View {
                 build: 54,
                 date: Date(),
                 headerImageURLs: [
-                    URL(string: "https://raw.githubusercontent.com/xmliszt/resources/refs/heads/main/joodle/1.17.png")!,
-                    URL(string: "https://raw.githubusercontent.com/xmliszt/resources/refs/heads/main/joodle/1.16.png")!
+                    URL(string: "https://joodle.liyuxuan.dev/changelogs/1.17.png")!,
+                    URL(string: "https://joodle.liyuxuan.dev/changelogs/1.16.png")!
                 ],
                 markdownContent: """
                 ## ✨ What's New

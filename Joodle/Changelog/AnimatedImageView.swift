@@ -115,7 +115,7 @@ private struct GIFImageView: UIViewRepresentable {
 
 #Preview {
     AnimatedImageView(
-        url: URL(string: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Changelogs/1.0.61.gif")!
+        url: URL(string: "https://joodle.liyuxuan.dev/changelogs/1.0.61.gif")!
     )
     .frame(maxWidth: 300)
 }

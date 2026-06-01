@@ -304,9 +304,9 @@ struct DotPositionTweakerView: View {
 #Preview("🎯 Dot Tweaker - Widget Screenshots") {
     NavigationStack {
         DotPositionTweakerView(screenshots: [
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature1.png", dots: [TapDot(x: 376, y: 163)]),
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature2.png", dots: [TapDot(x: 395, y: 603)]),
-          ScreenshotItem(urlString: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Help/ExperimentalFeature3.png", dots: [TapDot(x: 488, y: 709)])
+          ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/ExperimentalFeature1.png", dots: [TapDot(x: 376, y: 163)]),
+          ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/ExperimentalFeature2.png", dots: [TapDot(x: 395, y: 603)]),
+          ScreenshotItem(urlString: "https://joodle.liyuxuan.dev/tutorials/ExperimentalFeature3.png", dots: [TapDot(x: 488, y: 709)])
         ])
     }
 }

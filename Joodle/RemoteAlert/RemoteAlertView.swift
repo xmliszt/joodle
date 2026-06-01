@@ -286,7 +286,7 @@ extension View {
                   text: "Maybe Later",
                   url: nil
               ),
-              imageURL: "https://aikluwlsjdrayohixism.supabase.co/storage/v1/object/public/joodle/Discord%20Community%20Banner.png",
+              imageURL: "https://joodle.liyuxuan.dev/socials/Discord%20Community%20Banner.png",
               type: .community
             ),
             onPrimaryAction: {},
