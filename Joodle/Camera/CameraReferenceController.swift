@@ -155,48 +155,74 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
     }
   }
 
-  /// Freezes the most-recent live frame into a square, downsampled, upright
-  /// `UIImage` for use as the tracing backdrop. Returns instantly — no shutter,
-  /// no photo-output round trip.
-  func latestBackdrop(maxPixelDimension: CGFloat = 1024) -> UIImage? {
-    guard let cg = latestFrameSquareImage(maxPixelDimension: maxPixelDimension) else { return nil }
-    return UIImage(cgImage: cg, scale: 1, orientation: .up)
+  /// Renders the most-recent live frame *once* into an upright, square,
+  /// downsampled image — off the main thread — and returns it both as a
+  /// ready-to-display `UIImage` (the tracing backdrop) and the underlying
+  /// `CGImage` (handed to `savePolaroid` for the optional album save, so a
+  /// frame is run through Core Image only once). The frame buffer is grabbed
+  /// synchronously (a cheap retain), but the orient/crop/downsample
+  /// `createCGImage` — a GPU upload + readback that stalled the main thread for
+  /// hundreds of ms on full-resolution back-camera frames (~48 MB at the
+  /// `.photo` preset) — runs off-main. Returns nil if no frame has been
+  /// delivered yet.
+  func latestSquareFrame(maxPixelDimension: CGFloat) async -> (backdrop: UIImage, square: CGImage)? {
+    guard let frame = grabLatestFrame() else { return nil }
+    return await withCheckedContinuation { [weak self] continuation in
+      DispatchQueue.global(qos: .userInitiated).async {
+        guard let self,
+              let cg = Self.squareImage(
+                from: frame.buffer,
+                position: frame.position,
+                context: self.backdropContext,
+                maxPixelDimension: maxPixelDimension
+              ) else {
+          continuation.resume(returning: nil)
+          return
+        }
+        continuation.resume(returning: (UIImage(cgImage: cg, scale: 1, orientation: .up), cg))
+      }
+    }
   }
 
-  /// Persists a filtered polaroid built from the latest live frame. Grabs a
-  /// *detached* square `CGImage` synchronously (so it survives the subsequent
-  /// `stop()` releasing the pool buffer), then runs the colour grade + JPEG
-  /// encode on a background queue so the heavy work never blocks the capture.
+  /// Grades, polaroid-frames, JPEG-encodes, and saves an already-rendered square
+  /// `CGImage` (the `square` from `latestSquareFrame`) to the album — all on a
+  /// background queue, so a frame is never run through Core Image a second time.
+  /// A nil `square` (no frame was ready) still requests add-only access so the
+  /// one-time system prompt fires the first time the user captures with
+  /// save-to-album on, rather than the request silently skipping.
   ///
   /// `onPermissionDenied` fires (on an arbitrary queue) when Photos add-only
   /// access is denied/restricted — the save is silently impossible, so callers
   /// surface guidance for re-enabling it rather than failing quietly.
-  func saveLatestFrameToAlbum(onPermissionDenied: (@Sendable () -> Void)? = nil) {
-    // Detached square grabbed synchronously so it survives the caller's stop()
-    // releasing the capture-pool buffer. May be nil if the video-data-output
-    // delegate hasn't delivered a frame yet (e.g. an immediate shutter tap right
-    // after the camera session starts) — the preview layer can already be live
-    // while `latestPixelBuffer` is still empty.
-    let square = latestFrameSquareImage(maxPixelDimension: 2048)
+  func savePolaroid(from square: CGImage?, onPermissionDenied: (@Sendable () -> Void)? = nil) {
     DispatchQueue.global(qos: .utility).async {
       let data = square.flatMap(Self.makePolaroid)
-      // Resolve add-only access regardless of whether we have a frame to save,
-      // so the one-time system prompt reliably appears the first time the user
-      // captures with save-to-album on. (Gating the request on a ready frame
-      // meant a not-yet-delivered frame silently skipped the prompt entirely.)
       Self.savePolaroidToPhotosAlbum(data: data, onPermissionDenied: onPermissionDenied)
     }
   }
 
-  /// Orients the latest live frame upright (per camera position), center-crops
-  /// it to a square, and downsamples to `maxPixelDimension` on the short side.
-  private func latestFrameSquareImage(maxPixelDimension: CGFloat) -> CGImage? {
+  /// Snapshots the most-recent frame — pixel buffer plus the camera that
+  /// produced it — under the frame lock. Cheap (just a retain), so it's safe to
+  /// call on the main thread; the retained buffer survives a concurrent `stop()`
+  /// clearing `latestPixelBuffer`, letting the expensive render run afterwards
+  /// off-main.
+  private func grabLatestFrame() -> (buffer: CVPixelBuffer, position: AVCaptureDevice.Position)? {
     frameLock.lock()
-    let buffer = latestPixelBuffer
-    let position = latestFramePosition
-    frameLock.unlock()
-    guard let buffer else { return nil }
+    defer { frameLock.unlock() }
+    guard let buffer = latestPixelBuffer else { return nil }
+    return (buffer, latestFramePosition)
+  }
 
+  /// Orients a frame buffer upright (per camera position), center-crops it to a
+  /// square, and downsamples to `maxPixelDimension` on the short side. Stateless
+  /// so it can run on any queue — call it OFF the main thread, since the closing
+  /// `createCGImage` is a synchronous GPU render + readback.
+  private static func squareImage(
+    from buffer: CVPixelBuffer,
+    position: AVCaptureDevice.Position,
+    context: CIContext,
+    maxPixelDimension: CGFloat
+  ) -> CGImage? {
     var ciImage = CIImage(cvPixelBuffer: buffer)
     // Frames arrive in raw landscape sensor orientation (we leave the
     // connection's rotation/mirroring untouched — setting them on the video
@@ -219,7 +245,16 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
     if scale < 1 {
       ciImage = ciImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
     }
-    return backdropContext.createCGImage(ciImage, from: ciImage.extent)
+    let cgImage = context.createCGImage(ciImage, from: ciImage.extent)
+    // Drop the cached input CIImage (which pins the source `CVPixelBuffer`) and
+    // any GPU intermediates immediately. `backdropContext` lives for the whole
+    // app session, and a CIContext caches its inputs — so without this each
+    // shot leaves its pool-backed frame buffer pinned, progressively starving
+    // the AVCaptureVideoDataOutput's small buffer pool until every subsequent
+    // capture renders (and the live feed delivers frames) slower than the last.
+    // Captures are infrequent, so there's nothing to gain from keeping the cache.
+    context.clearCaches()
+    return cgImage
   }
 
   // MARK: - Permission
@@ -282,7 +317,7 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
 
   private func applyMirroring(for position: AVCaptureDevice.Position) {
     // Deliver raw, unmirrored, unrotated frames. Orientation/mirroring is
-    // applied in code when a frame is grabbed (see `latestFrameSquareImage`),
+    // applied in code when a frame is grabbed (see `squareImage`),
     // because manipulating the video-data-output connection's rotation here
     // inverted under front-camera mirroring (−90° result) and could stall the
     // front feed after a flip reconfigure.
