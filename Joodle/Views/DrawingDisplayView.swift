@@ -297,6 +297,12 @@ struct DrawingDisplayView: View {
     let effectiveProgress = animateDrawing ? currentProgress : 1.0
     let currentElapsedTime = effectiveProgress * CGFloat(totalDuration)
 
+    // Apply the experimental wiggle to the animating strokes too, so the draw-in
+    // replay boils as it draws rather than animating a perfectly straight line.
+    let boilFrame: Int? = (wiggleEnabled && wiggleSources.count == pathsWithMetadata.count)
+      ? WigglyStroke.frameIndex(at: timelineDate.timeIntervalSinceReferenceDate)
+      : nil
+
     for (index, pathWithMetadata) in pathsWithMetadata.enumerated() {
       // Determine start time for this stroke
       let strokeStartTime: CGFloat = index == 0 ? 0 : CGFloat(cumulativeEndTimes[index - 1])
@@ -305,7 +311,11 @@ struct DrawingDisplayView: View {
       // Skip paths that haven't started yet
       guard currentElapsedTime > strokeStartTime || !animateDrawing else { continue }
 
-      let path = pathWithMetadata.path
+      // Jitter the stroke for this boil frame when wiggling; the trim below then
+      // reveals the wiggled path as it "draws".
+      let path: Path = boilFrame.map {
+        WigglyStroke.path(points: wiggleSources[index].points, isDot: wiggleSources[index].isDot, frame: $0)
+      } ?? pathWithMetadata.path
 
       // Calculate trim for the current path being drawn
       let pathProgress: CGFloat

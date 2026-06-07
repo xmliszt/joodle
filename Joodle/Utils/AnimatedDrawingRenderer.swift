@@ -18,13 +18,17 @@ class AnimatedDrawingRenderer {
   ///   - size: Output image size in pixels
   ///   - foregroundColor: Color for the strokes
   ///   - config: Animation configuration
+  ///   - wiggleFrame: When non-nil, jitter every stroke for this boil frame so
+  ///     exported video matches the in-app wigglypaint effect. Pass nil to draw
+  ///     the strokes straight.
   /// - Returns: Rendered frame as UIImage
   func renderDrawingFrame(
     pathsWithMetadata: [PathWithMetadata],
     progress: CGFloat,
     size: CGSize,
     foregroundColor: UIColor,
-    config: DrawingAnimationConfig
+    config: DrawingAnimationConfig,
+    wiggleFrame: Int? = nil
   ) -> UIImage? {
     guard !pathsWithMetadata.isEmpty else { return nil }
 
@@ -78,26 +82,24 @@ class AnimatedDrawingRenderer {
           pathProgress = 1.0
         }
 
+        // Resolve the path to draw — jittered for this boil frame when wiggling,
+        // otherwise the original cached path (a dot is a pre-built ellipse, so
+        // filling it matches the previous bounding-rect ellipse exactly).
+        let isDot = pathWithMetadata.metadata.isDot
+        let basePath: Path = wiggleFrame.map {
+          WigglyStroke.path(points: pathWithMetadata.path.extractPoints(), isDot: isDot, frame: $0)
+        } ?? pathWithMetadata.path
+
         // Render based on metadata
-        if pathWithMetadata.metadata.isDot {
+        if isDot {
           // For dots, fade in based on progress (appear when > 50%)
           if pathProgress > 0.5 {
-            // Extract dot center from the path's bounding rect
-            let bounds = pathWithMetadata.path.boundingRect
-            let center = CGPoint(x: bounds.midX, y: bounds.midY)
-            let dotRadius = DRAWING_LINE_WIDTH / 2
-
-            let rect = CGRect(
-              x: center.x - dotRadius,
-              y: center.y - dotRadius,
-              width: dotRadius * 2,
-              height: dotRadius * 2
-            )
-            cgContext.fillEllipse(in: rect)
+            cgContext.addPath(basePath.cgPath)
+            cgContext.fillPath()
           }
         } else {
           // For strokes, use trim effect
-          let trimmedPath = pathWithMetadata.path.trimmedPath(from: 0, to: pathProgress)
+          let trimmedPath = basePath.trimmedPath(from: 0, to: pathProgress)
           cgContext.addPath(trimmedPath.cgPath)
           cgContext.strokePath()
         }
@@ -249,6 +251,10 @@ class AnimatedDrawingRenderer {
       drawingSize = 800 * scale
     }
 
+    // Carry the experimental wiggle into the exported video when enabled, so the
+    // animated card boils just like the in-app drawing.
+    let wiggleOn = UserPreferences.shared.enableWigglyStrokes
+
     var frames: [UIImage] = []
     frames.reserveCapacity(frameCount)
 
@@ -259,6 +265,12 @@ class AnimatedDrawingRenderer {
       // Apply easeOut curve
       let easedProgress = DrawingAnimationConfig.applyEaseOut(linearProgress)
 
+      // Advance the boil over real elapsed time (frame index / frame rate) so
+      // the wiggle steps at its own ~7fps cadence regardless of export fps.
+      let wiggleFrame: Int? = wiggleOn
+        ? WigglyStroke.frameIndex(at: Double(i) / Double(config.frameRate))
+        : nil
+
       // Render drawing frame at appropriate size - dispatch to main thread
       let drawingFrame = await MainActor.run {
         self.renderDrawingFrame(
@@ -266,7 +278,8 @@ class AnimatedDrawingRenderer {
           progress: easedProgress,
           size: CGSize(width: drawingSize, height: drawingSize),
           foregroundColor: strokeColor,
-          config: config
+          config: config,
+          wiggleFrame: wiggleFrame
         )
       }
       
