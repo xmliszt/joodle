@@ -82,7 +82,7 @@ struct ExperimentalFeaturesView: View {
           }
         }
       } footer: {
-        Text("Makes your doodles come alive with a shaky, hand-drawn wiggle that never sits still. Inspired by wigglypaint.")
+        Text("Makes your doodles come alive with a shaky wiggle that never sits still.")
       }
 
       // MARK: - About Section

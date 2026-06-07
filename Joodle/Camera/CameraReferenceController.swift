@@ -167,15 +167,21 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   /// delivered yet.
   func latestSquareFrame(maxPixelDimension: CGFloat) async -> (backdrop: UIImage, square: CGImage)? {
     guard let frame = grabLatestFrame() else { return nil }
-    return await withCheckedContinuation { [weak self] continuation in
+    // Avoid capturing non-Sendable values (like CVPixelBuffer and CIContext) in a @Sendable closure.
+    // Copy the pieces we need into local constants marked nonisolated(unsafe),
+    // then reference those inside the dispatched work item.
+    nonisolated(unsafe) let buffer = frame.buffer
+    let position = frame.position
+    let context = self.backdropContext
+
+    return await withCheckedContinuation { continuation in
       DispatchQueue.global(qos: .userInitiated).async {
-        guard let self,
-              let cg = Self.squareImage(
-                from: frame.buffer,
-                position: frame.position,
-                context: self.backdropContext,
-                maxPixelDimension: maxPixelDimension
-              ) else {
+        guard let cg = Self.squareImage(
+          from: buffer,
+          position: position,
+          context: context,
+          maxPixelDimension: maxPixelDimension
+        ) else {
           continuation.resume(returning: nil)
           return
         }
@@ -401,3 +407,4 @@ extension CameraReferenceController: AVCaptureVideoDataOutputSampleBufferDelegat
     }
   }
 }
+
