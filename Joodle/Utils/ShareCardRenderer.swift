@@ -339,6 +339,12 @@ class ShareCardRenderer {
     let scale: CGFloat = 1.0
     let drawingSize: CGFloat = style.includesExcerpt ? 600 * scale : 800 * scale
 
+    // Match the in-app wiggle when enabled; map progress onto the boil's clock
+    // so a scrubbed preview frame still shows a jittered line.
+    let wiggleFrame: Int? = UserPreferences.shared.enableWigglyStrokes
+      ? WigglyStroke.frameIndex(at: Double(progress) * config.maxDuration)
+      : nil
+
     // Render drawing frame at current progress - dispatch to main thread
     let drawingFrame = await MainActor.run {
       frameRenderer.renderDrawingFrame(
@@ -346,7 +352,8 @@ class ShareCardRenderer {
         progress: progress,
         size: CGSize(width: drawingSize, height: drawingSize),
         foregroundColor: strokeColor,
-        config: config
+        config: config,
+        wiggleFrame: wiggleFrame
       )
     }
     

@@ -64,6 +64,8 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   @Binding var currentPathIsDot: Bool
   @Binding var isDrawing: Bool
 
+  @Environment(\.userPreferences) private var userPreferences
+
   var placeholderData: Data? = nil
   var buttonsConfig: CanvasButtonsConfig? = nil
   var canvasCornerRadius: CGFloat = 32
@@ -113,6 +115,11 @@ struct SharedCanvasView<TrailingHeader: View>: View {
 
   @State private var placeholderPaths: [(path: Path, isDot: Bool)] = []
   @State private var placeholderID = UUID()
+  /// Per-stroke points for committed `paths`, precomputed so the experimental
+  /// wiggle boil doesn't re-extract them every frame. Index-aligned with `paths`.
+  @State private var wiggleSources: [[CGPoint]] = []
+  /// Stable anchor for the wiggle's periodic clock.
+  @State private var wiggleEpoch = Date()
   /// Mounted only while the shutter is fully closed over the canvas, so the
   /// live feed never appears during a transition. Latches across the open
   /// phase so the preview stays visible once the shutter has retracted.
@@ -167,6 +174,13 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.isSaving = isSaving
     self.onCommitStroke = onCommitStroke
     self.TrailingHeaderView = trailingHeader
+  }
+
+  /// Whether committed strokes should boil with the experimental wiggle.
+  /// Suppressed in camera-live mode (the drawing surface is hidden) and while a
+  /// placeholder is showing (no real strokes yet).
+  private var wiggleEnabled: Bool {
+    userPreferences.enableWigglyStrokes && !isCameraLive && !paths.isEmpty
   }
 
   var body: some View {
@@ -299,65 +313,25 @@ struct SharedCanvasView<TrailingHeader: View>: View {
             .allowsHitTesting(false)
           }
 
-        // Drawing area
-        Canvas { context, size in
-          // Draw placeholder if empty
-          if paths.isEmpty && currentPath.isEmpty && !placeholderPaths.isEmpty {
-            for (path, isDot) in placeholderPaths {
-              if isDot {
-                context.fill(path, with: .color(.gray.opacity(0.2)))
-              } else {
-                context.stroke(
-                  path,
-                  with: .color(.gray.opacity(0.2)),
-                  style: StrokeStyle(
-                    lineWidth: DRAWING_LINE_WIDTH,
-                    lineCap: .round,
-                    lineJoin: .round
-                  )
+        // Drawing area. When the experimental wiggle is on, a TimelineView
+        // drives a low-fps boil over the committed strokes; otherwise it's a
+        // plain static Canvas. The stroke-input gesture is attached to the
+        // container below so it works identically in either mode.
+        Group {
+          if wiggleEnabled {
+            // Periodic clock at the boil rate (~7fps) — the effect only changes
+            // state that often, so there's no need to redraw at 60fps.
+            TimelineView(.periodic(from: wiggleEpoch, by: WigglyStroke.boilInterval)) { timeline in
+              Canvas { context, size in
+                renderCanvasContents(
+                  context: &context,
+                  wiggleFrame: WigglyStroke.frameIndex(at: timeline.date.timeIntervalSinceReferenceDate)
                 )
               }
             }
-          }
-
-          // Draw all completed paths
-          for (index, path) in paths.enumerated() {
-            // Use stored metadata to determine rendering
-            let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
-
-            if isDot {
-              // Fill ellipse paths (dots)
-              context.fill(path, with: .color(.appAccent))
-            } else {
-              // Stroke line paths
-              context.stroke(
-                path,
-                with: .color(.appAccent),
-                style: StrokeStyle(
-                  lineWidth: DRAWING_LINE_WIDTH,
-                  lineCap: .round,
-                  lineJoin: .round
-                )
-              )
-            }
-          }
-
-          // Draw current path being drawn
-          if !currentPath.isEmpty {
-            if currentPathIsDot {
-              // Fill ellipse paths (dots)
-              context.fill(currentPath, with: .color(.appAccent))
-            } else {
-              // Stroke line paths
-              context.stroke(
-                currentPath,
-                with: .color(.appAccent),
-                style: StrokeStyle(
-                  lineWidth: DRAWING_LINE_WIDTH,
-                  lineCap: .round,
-                  lineJoin: .round
-                )
-              )
+          } else {
+            Canvas { context, size in
+              renderCanvasContents(context: &context, wiggleFrame: nil)
             }
           }
         }
@@ -515,10 +489,18 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     }
     .onAppear {
       decodePlaceholder()
+      rebuildWiggleSources()
       cameraPreviewMounted = isCameraLive
     }
     .onChange(of: placeholderData) { _, _ in
       decodePlaceholder()
+    }
+    .onChange(of: paths.count) { _, _ in
+      // Keep the wiggle point cache in lockstep with the committed strokes.
+      // Strokes are only ever added/removed wholesale (commit/undo/redo/clear/
+      // load), so the count is a sufficient — and far cheaper to diff — trigger
+      // than deep-comparing the whole `[Path]` array every render.
+      rebuildWiggleSources()
     }
     .onChange(of: captureFlashID) { _, newID in
       guard newID != nil else { return }
@@ -550,6 +532,66 @@ struct SharedCanvasView<TrailingHeader: View>: View {
         cameraPreviewMounted = true
       }
     }
+  }
+
+  /// Draw the canvas contents into `context`. When `wiggleFrame` is non-nil the
+  /// committed strokes are jittered for that boil frame; the placeholder and the
+  /// in-progress `currentPath` (still under the finger) are always drawn crisp.
+  private func renderCanvasContents(context: inout GraphicsContext, wiggleFrame: Int?) {
+    // Draw placeholder if empty
+    if paths.isEmpty && currentPath.isEmpty && !placeholderPaths.isEmpty {
+      for (path, isDot) in placeholderPaths {
+        if isDot {
+          context.fill(path, with: .color(.gray.opacity(0.2)))
+        } else {
+          context.stroke(
+            path,
+            with: .color(.gray.opacity(0.2)),
+            style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
+          )
+        }
+      }
+    }
+
+    // Draw all completed paths. Use the precomputed wiggle points only when the
+    // boil is active AND the cache is in sync with `paths` (a freshly committed
+    // stroke draws straight for the one frame before `wiggleSources` catches up).
+    let boilFrame = (wiggleSources.count == paths.count) ? wiggleFrame : nil
+    for (index, path) in paths.enumerated() {
+      let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
+      let drawPath: Path = boilFrame.map {
+        WigglyStroke.path(points: wiggleSources[index], isDot: isDot, frame: $0)
+      } ?? path
+
+      if isDot {
+        context.fill(drawPath, with: .color(.appAccent))
+      } else {
+        context.stroke(
+          drawPath,
+          with: .color(.appAccent),
+          style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
+        )
+      }
+    }
+
+    // Draw current path being drawn — never wiggled so it tracks the finger.
+    if !currentPath.isEmpty {
+      if currentPathIsDot {
+        context.fill(currentPath, with: .color(.appAccent))
+      } else {
+        context.stroke(
+          currentPath,
+          with: .color(.appAccent),
+          style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
+        )
+      }
+    }
+  }
+
+  /// Recompute the wiggle point cache from the committed `paths`. Cheap and only
+  /// runs when the stroke set changes (commit/undo/redo/clear/load).
+  private func rebuildWiggleSources() {
+    wiggleSources = paths.map { $0.extractPoints() }
   }
 
   private func decodePlaceholder() {

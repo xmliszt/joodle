@@ -25,9 +25,17 @@ struct DrawingDisplayView: View {
   private static let durationPerPixel: Double = 0.2 / 50.0  // 0.2 seconds per 20 pixels
   private static let minStrokeDuration: Double = 0.05  // Minimum duration for very short strokes/dots
 
+  @Environment(\.userPreferences) private var userPreferences
+
   @State private var pathsWithMetadata: [PathWithMetadata] = []
+  /// Per-stroke polyline points used to drive the experimental wiggle effect.
+  /// Precomputed alongside `pathsWithMetadata` so the boil doesn't re-extract
+  /// points every frame.
+  @State private var wiggleSources: [(points: [CGPoint], isDot: Bool)] = []
   @State private var isVisible = false
   @State private var thumbnailImage: UIImage?
+  /// Stable anchor for the wiggle's periodic clock.
+  @State private var wiggleEpoch = Date()
 
   // Animation state for drawing replay
   @State private var drawingProgress: CGFloat = 0.0
@@ -115,6 +123,15 @@ struct DrawingDisplayView: View {
     }
   }
 
+  /// Whether the experimental wigglypaint boil should drive this drawing.
+  /// Off for thumbnail cells (the boil is imperceptible at that size and not
+  /// worth the cost) and when there are no vector strokes to jitter. The draw-in
+  /// replay takes precedence via the `isAnimatingDrawing` branch in `body`, so
+  /// it is intentionally not gated here.
+  private var wiggleEnabled: Bool {
+    userPreferences.enableWigglyStrokes && !useThumbnail && !wiggleSources.isEmpty
+  }
+
   private var foregroundColor: Color {
     if highlighted { return .appSecondary }
     if accent { return .appAccent }
@@ -165,6 +182,19 @@ struct DrawingDisplayView: View {
               lastCalculatedProgress = progress
             }
           }
+        } else if wiggleEnabled {
+          // Experimental wigglypaint boil — redraw the completed strokes with a
+          // per-vertex jitter so the doodle never sits still. Driven by a
+          // periodic clock at the boil rate (~7fps) rather than the 60fps display
+          // refresh, since the effect only changes state that often.
+          TimelineView(.periodic(from: wiggleEpoch, by: WigglyStroke.boilInterval)) { timeline in
+            Canvas { context, size in
+              renderWiggleFrame(context: &context, size: size, timelineDate: timeline.date)
+            }
+          }
+          .frame(width: displaySize * scale, height: displaySize * scale)
+          .scaleEffect(isVisible ? 1.0 : 0.9)
+          .blur(radius: isVisible ? 0 : 5)
         } else {
           // Static canvas when not animating - no TimelineView updates
           Canvas { context, size in
@@ -267,6 +297,12 @@ struct DrawingDisplayView: View {
     let effectiveProgress = animateDrawing ? currentProgress : 1.0
     let currentElapsedTime = effectiveProgress * CGFloat(totalDuration)
 
+    // Apply the experimental wiggle to the animating strokes too, so the draw-in
+    // replay boils as it draws rather than animating a perfectly straight line.
+    let boilFrame: Int? = (wiggleEnabled && wiggleSources.count == pathsWithMetadata.count)
+      ? WigglyStroke.frameIndex(at: timelineDate.timeIntervalSinceReferenceDate)
+      : nil
+
     for (index, pathWithMetadata) in pathsWithMetadata.enumerated() {
       // Determine start time for this stroke
       let strokeStartTime: CGFloat = index == 0 ? 0 : CGFloat(cumulativeEndTimes[index - 1])
@@ -275,7 +311,11 @@ struct DrawingDisplayView: View {
       // Skip paths that haven't started yet
       guard currentElapsedTime > strokeStartTime || !animateDrawing else { continue }
 
-      let path = pathWithMetadata.path
+      // Jitter the stroke for this boil frame when wiggling; the trim below then
+      // reveals the wiggled path as it "draws".
+      let path: Path = boilFrame.map {
+        WigglyStroke.path(points: wiggleSources[index].points, isDot: wiggleSources[index].isDot, frame: $0)
+      } ?? pathWithMetadata.path
 
       // Calculate trim for the current path being drawn
       let pathProgress: CGFloat
@@ -424,6 +464,32 @@ struct DrawingDisplayView: View {
     }
   }
 
+  /// Render a single boil frame of the experimental wiggle effect. Strokes are
+  /// fully drawn (no trim) and jittered per the current time-derived frame.
+  private func renderWiggleFrame(context: inout GraphicsContext, size: CGSize, timelineDate: Date) {
+    let canvasScale = (displaySize * scale) / CANVAS_SIZE
+    context.scaleBy(x: canvasScale, y: canvasScale)
+
+    let frame = WigglyStroke.frameIndex(at: timelineDate.timeIntervalSinceReferenceDate)
+
+    for source in wiggleSources {
+      let path = WigglyStroke.path(points: source.points, isDot: source.isDot, frame: frame)
+      if source.isDot {
+        context.fill(path, with: .color(foregroundColor))
+      } else {
+        context.stroke(
+          path,
+          with: .color(foregroundColor),
+          style: StrokeStyle(
+            lineWidth: DRAWING_LINE_WIDTH * strokeMultiplier,
+            lineCap: .round,
+            lineJoin: .round
+          )
+        )
+      }
+    }
+  }
+
   /// Render static drawing without TimelineView updates
   private func renderStaticDrawing(context: inout GraphicsContext, size: CGSize) {
     // Calculate scale from canvas size (300x300) to display size
@@ -455,6 +521,7 @@ struct DrawingDisplayView: View {
   private func loadDrawingData() {
     guard let drawingData = entry?.drawingData else {
       pathsWithMetadata = []
+      wiggleSources = []
       thumbnailImage = nil
       return
     }
@@ -478,6 +545,14 @@ struct DrawingDisplayView: View {
       // Use cached paths with metadata to avoid repeated JSON decoding
       pathsWithMetadata = pathCache.getPathsWithMetadata(for: drawingData)
     }
+
+    rebuildWiggleSources()
+  }
+
+  /// Precompute the per-stroke points the wiggle effect jitters, so the boil
+  /// loop doesn't re-extract them every frame.
+  private func rebuildWiggleSources() {
+    wiggleSources = pathsWithMetadata.map { ($0.path.extractPoints(), $0.metadata.isDot) }
   }
 }
 

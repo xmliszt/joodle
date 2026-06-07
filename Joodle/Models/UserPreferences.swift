@@ -24,6 +24,7 @@ enum Pref {
 
   // Experimental features
   static let enableTimeBackdrop = Key(key: "enable_time_backdrop", default: false)
+  static let enableWigglyStrokes = Key(key: "enable_wiggly_strokes", default: false)
 
   // Announcements
   static let announcementsEnabled = Key(key: "announcements_enabled", default: true)
@@ -78,6 +79,7 @@ enum Pref {
     dailyReminderTimeSeconds.key,
     startOfWeek.key,
     enableTimeBackdrop.key,
+    enableWigglyStrokes.key,
     announcementsEnabled.key,
     announcementPromoEnabled.key,
     announcementCommunityEnabled.key,
@@ -157,6 +159,11 @@ final class UserPreferences {
   var enableTimeBackdrop: Bool = Pref.enableTimeBackdrop.defaultValue {
     didSet {
       _enableTimeBackdropWatcher = enableTimeBackdrop
+    }
+  }
+  var enableWigglyStrokes: Bool = Pref.enableWigglyStrokes.defaultValue {
+    didSet {
+      _enableWigglyStrokesWatcher = enableWigglyStrokes
     }
   }
 
@@ -312,6 +319,11 @@ final class UserPreferences {
     set { set(Pref.enableTimeBackdrop, newValue) }
   }
 
+  private var _enableWigglyStrokesWatcher: Bool {
+    get { get(Pref.enableWigglyStrokes) }
+    set { set(Pref.enableWigglyStrokes, newValue) }
+  }
+
   private var _announcementsEnabledWatcher: Bool {
     get { get(Pref.announcementsEnabled) }
     set { set(Pref.announcementsEnabled, newValue) }
@@ -373,6 +385,7 @@ final class UserPreferences {
     dailyReminderTimeSeconds = _dailyReminderTimeSecondsWatcher
     startOfWeek = _startOfWeekWatcher
     enableTimeBackdrop = _enableTimeBackdropWatcher
+    enableWigglyStrokes = _enableWigglyStrokesWatcher
     announcementsEnabled = _announcementsEnabledWatcher
     announcementPromoEnabled = _announcementPromoEnabledWatcher
     announcementCommunityEnabled = _announcementCommunityEnabledWatcher
@@ -437,6 +450,7 @@ final class UserPreferences {
     dailyReminderTimeSeconds = Pref.dailyReminderTimeSeconds.defaultValue
     startOfWeek = Pref.startOfWeek.defaultValue
     enableTimeBackdrop = Pref.enableTimeBackdrop.defaultValue
+    enableWigglyStrokes = Pref.enableWigglyStrokes.defaultValue
     announcementsEnabled = Pref.announcementsEnabled.defaultValue
     announcementPromoEnabled = Pref.announcementPromoEnabled.defaultValue
     announcementCommunityEnabled = Pref.announcementCommunityEnabled.defaultValue
