@@ -714,6 +714,9 @@ struct ShareCardSelectorView: View {
 
   @ViewBuilder
   private func staticCardPreview(style: ShareCardStyle) -> some View {
+    // Static styles export a still image, so the wigglypaint boil must not
+    // animate here — a wiggling preview would misrepresent the exported PNG.
+    // (Animated styles render via animatedCardPreview, which keeps the boil.)
     cardPreviewContainer(style: style) {
       switch mode {
       case .entry(let entry, let date):
@@ -769,6 +772,7 @@ struct ShareCardSelectorView: View {
         }
       }
     }
+    .environment(\.allowsWiggleAnimation, false)
   }
 
   @ViewBuilder

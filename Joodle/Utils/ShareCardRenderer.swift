@@ -48,6 +48,10 @@ class ShareCardRenderer {
     .frame(width: renderSize.width, height: renderSize.height)
     .ignoresSafeArea()
     .environment(\.colorScheme, colorScheme)
+    // Static export: render the doodle clean, never a frozen wiggle frame, so the
+    // exported image matches its non-wiggling preview. Animated video export uses
+    // AnimatedDrawingRenderer (which keeps the boil), not this path.
+    .environment(\.allowsWiggleAnimation, false)
 
     // Render to high-res image
     let controller = UIHostingController(rootView: drawingView)
