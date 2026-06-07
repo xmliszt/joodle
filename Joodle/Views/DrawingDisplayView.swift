@@ -7,6 +7,17 @@
 
 import SwiftUI
 
+// MARK: - Environment
+
+extension EnvironmentValues {
+  /// Whether the experimental wigglypaint boil may *animate* in this context.
+  ///
+  /// Defaults to `true` so doodles boil everywhere they do today. The share
+  /// sheet sets it `false` for static (non-animated) export styles: a still
+  /// image can't wiggle, so animating the preview misrepresents the export.
+  @Entry var allowsWiggleAnimation: Bool = true
+}
+
 struct DrawingDisplayView: View {
   let entry: DayEntry?
   let displaySize: CGFloat
@@ -26,6 +37,7 @@ struct DrawingDisplayView: View {
   private static let minStrokeDuration: Double = 0.05  // Minimum duration for very short strokes/dots
 
   @Environment(\.userPreferences) private var userPreferences
+  @Environment(\.allowsWiggleAnimation) private var allowsWiggleAnimation
 
   @State private var pathsWithMetadata: [PathWithMetadata] = []
   /// Per-stroke polyline points used to drive the experimental wiggle effect.
@@ -127,9 +139,11 @@ struct DrawingDisplayView: View {
   /// Off for thumbnail cells (the boil is imperceptible at that size and not
   /// worth the cost) and when there are no vector strokes to jitter. The draw-in
   /// replay takes precedence via the `isAnimatingDrawing` branch in `body`, so
-  /// it is intentionally not gated here.
+  /// it is intentionally not gated here. Also off when the surrounding context
+  /// opts out via `allowsWiggleAnimation` (e.g. a static share-card preview/export,
+  /// where a wiggling preview would misrepresent the still that gets shared).
   private var wiggleEnabled: Bool {
-    userPreferences.enableWigglyStrokes && !useThumbnail && !wiggleSources.isEmpty
+    allowsWiggleAnimation && userPreferences.enableWigglyStrokes && !useThumbnail && !wiggleSources.isEmpty
   }
 
   private var foregroundColor: Color {
