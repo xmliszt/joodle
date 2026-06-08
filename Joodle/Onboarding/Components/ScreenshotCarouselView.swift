@@ -151,6 +151,10 @@ struct PageIndicatorView: View {
     let currentPage: Int
     /// Fill progress of the active page's pill, clamped to 0...1.
     var progress: Double = 0
+    /// When true, the active page morphs into a progress pill. When false, it
+    /// stays a dot (accent-filled) — for items with no duration to visualize,
+    /// e.g. static-image share card styles.
+    var activeShowsProgress: Bool = true
 
     private let dotSize: CGFloat = 6
     private let pillWidth: CGFloat = 22
@@ -159,26 +163,38 @@ struct PageIndicatorView: View {
         HStack(spacing: 8) {
             ForEach(0..<totalPages, id: \.self) { index in
                 let isActive = index == currentPage
+                let showsPill = isActive && activeShowsProgress
                 Capsule()
-                    .fill(Color.secondary.opacity(0.3))
-                    .frame(width: isActive ? pillWidth : dotSize, height: dotSize)
+                    // Active-but-no-progress reads as a solid accent dot; everything
+                    // else is the muted track (with the pill's accent fill on top).
+                    .fill(isActive && !showsPill ? Color.appAccent : Color.secondary.opacity(0.3))
+                    .frame(width: showsPill ? pillWidth : dotSize, height: dotSize)
                     .overlay(alignment: .leading) {
                         // Accent fill only on the active pill. Starts at a full
                         // dot so the morph reads as the dot sweeping rightward.
-                        if isActive {
+                        if showsPill {
+                            // Grow from a full dot to the full pill so the accent
+                            // advances immediately — interpolating the *range*
+                            // [dotSize, pillWidth] avoids the dead zone you'd get
+                            // from flooring `pillWidth * progress` at `dotSize`.
                             Capsule()
                                 .fill(Color.appAccent)
                                 .frame(
-                                    width: min(pillWidth, max(dotSize, pillWidth * progress)),
+                                    width: dotSize + (pillWidth - dotSize) * min(1, max(0, progress)),
                                     height: dotSize
                                 )
                         }
                     }
                     .clipShape(Capsule())
-                    .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isActive)
             }
         }
         .padding(.vertical, 12)
+        // Animate at the container level so the morphing pill *and* the resulting
+        // displacement of the sibling dots slide together. Keyed to the active
+        // page (and whether it shows a pill) — never to `progress`, so the fill
+        // ramp stays driven by its own clock without springing.
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: currentPage)
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: activeShowsProgress)
     }
 }
 

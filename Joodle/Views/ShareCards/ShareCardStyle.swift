@@ -95,9 +95,9 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     case .animatedExcerptVideo:
       return "Animated doodle & note snippet"
     case .animatedWigglyMinimalVideo:
-      return "Wiggly animated doodle"
+      return "Wiggly doodle"
     case .animatedWigglyExcerptVideo:
-      return "Wiggly animated doodle & note snippet"
+      return "Wiggly doodle & note snippet"
     }
   }
 

@@ -54,6 +54,10 @@ struct ShareCardSelectorView: View {
   @State private var exportProgress: Double = 0.0
   @State private var isExportingAnimated: Bool = false
 
+  // Anchor for the page-indicator pill clock. Reset whenever the active style
+  // changes so the pill restarts in step with the preview's looping playback.
+  @State private var pageProgressEpoch: Date = Date()
+
   // Instagram share state
   @State private var isSharingToInstagram: Bool = false
 
@@ -185,7 +189,10 @@ struct ShareCardSelectorView: View {
             } else if newStyle.isMonthStyle && monthEntries.isEmpty {
               loadMonthData(for: currentModeYear, month: selectedMonth)
             }
+            // Restart the indicator pill clock in step with the new preview.
+            pageProgressEpoch = Date()
           }
+          .onAppear { pageProgressEpoch = Date() }
 
           VStack(spacing: 24) {
             // Style info
@@ -202,14 +209,18 @@ struct ShareCardSelectorView: View {
             }
             .animation(.springFkingSatifying, value: selectedStyle)
 
-            // Style indicator dots
-            HStack(spacing: 12) {
-              ForEach(availableStyles) { style in
-                Circle()
-                  .fill(selectedStyle == style ? Color.appAccent : Color.secondaryTextColor.opacity(0.3))
-                  .frame(width: 8, height: 8)
-                  .animation(.springFkingSatifying, value: selectedStyle)
-              }
+            // Style indicator. Video styles morph the active page into a progress
+            // pill whose fill tracks the exported video's playback; static-image
+            // styles keep the active page as a plain accent dot. Driven off a
+            // TimelineView clock (rather than a timer + withAnimation) so the fill
+            // matches playback time without drift or lag.
+            TimelineView(.animation) { timeline in
+              PageIndicatorView(
+                totalPages: availableStyles.count,
+                currentPage: availableStyles.firstIndex(of: selectedStyle) ?? 0,
+                progress: pageIndicatorProgress(at: timeline.date),
+                activeShowsProgress: selectedStyle.isVideoStyle
+              )
             }
 
             // Week/Month/Year navigation arrows
@@ -837,6 +848,34 @@ struct ShareCardSelectorView: View {
       // Animated styles not available for year grid
       EmptyView()
     }
+  }
+
+  // MARK: - Page Indicator Progress
+
+  /// Duration of the exported video for the current entry, derived from the same
+  /// stroke-timing the renderer uses (capped at `maxDuration`). 0 when there is
+  /// no drawing to animate.
+  private var entryVideoDuration: TimeInterval {
+    guard case .entry(let entry, _) = mode,
+          let drawingData = entry?.drawingData, !drawingData.isEmpty else {
+      return 0
+    }
+    let paths = DrawingPathCache.shared.getPathsWithMetadata(for: drawingData)
+    guard !paths.isEmpty else { return 0 }
+    return DrawingAnimationConfig.video.calculateStrokeTiming(for: paths).totalDuration
+  }
+
+  /// Pill fill (0...1) for the active page at a given clock time. Loops over the
+  /// video duration. Draw-in styles ease to match the preview's easeOut replay;
+  /// wiggly styles have no draw-in, so their boil video reads as linear time. 0
+  /// for static-image styles (the indicator renders them as a dot).
+  private func pageIndicatorProgress(at date: Date) -> Double {
+    guard selectedStyle.isVideoStyle else { return 0 }
+    let duration = entryVideoDuration
+    guard duration > 0 else { return 0 }
+    let t = date.timeIntervalSince(pageProgressEpoch).truncatingRemainder(dividingBy: duration) / duration
+    // easeOut: 1 - (1 - t)^2 — mirrors DrawingDisplayView's draw-in curve.
+    return selectedStyle.forcesWiggle ? t : 1 - pow(1 - t, 2)
   }
 
   private func renderCardToImage(style: ShareCardStyle, watermarkSetting: Bool) -> UIImage? {
