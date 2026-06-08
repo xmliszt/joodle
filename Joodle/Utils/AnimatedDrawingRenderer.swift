@@ -252,8 +252,9 @@ class AnimatedDrawingRenderer {
     }
 
     // Carry the experimental wiggle into the exported video when enabled, so the
-    // animated card boils just like the in-app drawing.
-    let wiggleOn = UserPreferences.shared.enableWigglyStrokes
+    // animated card boils just like the in-app drawing. The dedicated wiggly
+    // styles always boil regardless of the preference.
+    let wiggleOn = style.forcesWiggle || UserPreferences.shared.enableWigglyStrokes
 
     var frames: [UIImage] = []
     frames.reserveCapacity(frameCount)
@@ -262,8 +263,9 @@ class AnimatedDrawingRenderer {
       // Calculate linear progress
       let linearProgress = CGFloat(i) / CGFloat(max(1, frameCount - 1))
 
-      // Apply easeOut curve
-      let easedProgress = DrawingAnimationConfig.applyEaseOut(linearProgress)
+      // Apply easeOut curve. Wiggly styles skip the draw-in replay entirely —
+      // every frame shows the fully-drawn doodle, only the boil advances.
+      let easedProgress = style.forcesWiggle ? 1.0 : DrawingAnimationConfig.applyEaseOut(linearProgress)
 
       // Advance the boil over real elapsed time (frame index / frame rate) so
       // the wiggle steps at its own ~7fps cadence regardless of export fps.

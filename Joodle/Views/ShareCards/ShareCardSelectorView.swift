@@ -803,6 +803,33 @@ struct ShareCardSelectorView: View {
           )
           .preferredColorScheme(previewColorScheme)
         }
+      case .animatedWigglyMinimalVideo:
+        cardPreviewContainer(style: style) {
+          // Wiggly styles boil a fully-drawn doodle — no draw-in replay.
+          AnimatedMinimalCardView(
+            entry: entry,
+            drawingImage: nil,
+            cardSize: style.cardSize,
+            showWatermark: false, animateDrawing: false,
+            looping: false
+          )
+          .environment(\.forcesWiggleAnimation, true)
+          .preferredColorScheme(previewColorScheme)
+        }
+      case .animatedWigglyExcerptVideo:
+        cardPreviewContainer(style: style) {
+          // Wiggly styles boil a fully-drawn doodle — no draw-in replay.
+          AnimatedExcerptCardView(
+            entry: entry,
+            date: date,
+            drawingImage: nil,
+            cardSize: style.cardSize,
+            showWatermark: false, animateDrawing: false,
+            looping: false
+          )
+          .environment(\.forcesWiggleAnimation, true)
+          .preferredColorScheme(previewColorScheme)
+        }
       default:
         EmptyView()
       }

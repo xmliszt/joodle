@@ -16,6 +16,11 @@ extension EnvironmentValues {
   /// sheet sets it `false` for static (non-animated) export styles: a still
   /// image can't wiggle, so animating the preview misrepresents the export.
   @Entry var allowsWiggleAnimation: Bool = true
+
+  /// Whether to boil the strokes regardless of the experimental `enableWigglyStrokes`
+  /// preference. Set by the dedicated wiggly share-card styles so their preview boils
+  /// even when the user hasn't turned the experimental feature on.
+  @Entry var forcesWiggleAnimation: Bool = false
 }
 
 struct DrawingDisplayView: View {
@@ -38,6 +43,7 @@ struct DrawingDisplayView: View {
 
   @Environment(\.userPreferences) private var userPreferences
   @Environment(\.allowsWiggleAnimation) private var allowsWiggleAnimation
+  @Environment(\.forcesWiggleAnimation) private var forcesWiggleAnimation
 
   @State private var pathsWithMetadata: [PathWithMetadata] = []
   /// Per-stroke polyline points used to drive the experimental wiggle effect.
@@ -143,7 +149,7 @@ struct DrawingDisplayView: View {
   /// opts out via `allowsWiggleAnimation` (e.g. a static share-card preview/export,
   /// where a wiggling preview would misrepresent the still that gets shared).
   private var wiggleEnabled: Bool {
-    allowsWiggleAnimation && userPreferences.enableWigglyStrokes && !useThumbnail && !wiggleSources.isEmpty
+    allowsWiggleAnimation && (forcesWiggleAnimation || userPreferences.enableWigglyStrokes) && !useThumbnail && !wiggleSources.isEmpty
   }
 
   private var foregroundColor: Color {

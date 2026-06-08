@@ -21,6 +21,9 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   // Animated styles
   case animatedMinimalVideo = "Minimal Video"
   case animatedExcerptVideo = "Excerpt Video"
+  // Wiggly animated styles — always boil, regardless of the experimental preference
+  case animatedWigglyMinimalVideo = "Wiggly Minimal"
+  case animatedWigglyExcerptVideo = "Wiggly Excerpt"
 
   var id: String { rawValue }
 
@@ -31,7 +34,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return "photo.on.rectangle"
     case .weekGrid, .monthGrid, .yearGridDots, .yearGridJoodles, .yearGridJoodlesOnly:
       return "calendar"
-    case .animatedMinimalVideo, .animatedExcerptVideo:
+    case .animatedMinimalVideo, .animatedExcerptVideo, .animatedWigglyMinimalVideo, .animatedWigglyExcerptVideo:
       return "video.fill"
     }
   }
@@ -60,6 +63,10 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return "Minimal Video"
     case .animatedExcerptVideo:
       return "Excerpt Video"
+    case .animatedWigglyMinimalVideo:
+      return "Wiggly Minimal"
+    case .animatedWigglyExcerptVideo:
+      return "Wiggly Excerpt"
     }
   }
 
@@ -87,6 +94,10 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
       return "Animated doodle"
     case .animatedExcerptVideo:
       return "Animated doodle & note snippet"
+    case .animatedWigglyMinimalVideo:
+      return "Wiggly animated doodle"
+    case .animatedWigglyExcerptVideo:
+      return "Wiggly animated doodle & note snippet"
     }
   }
 
@@ -113,7 +124,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Whether this style is an animated export (GIF or Video)
   var isAnimatedStyle: Bool {
     switch self {
-    case .animatedMinimalVideo, .animatedExcerptVideo:
+    case .animatedMinimalVideo, .animatedExcerptVideo, .animatedWigglyMinimalVideo, .animatedWigglyExcerptVideo:
       return true
     default:
       return false
@@ -123,7 +134,19 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Whether this style exports as Video
   var isVideoStyle: Bool {
     switch self {
-    case .animatedMinimalVideo, .animatedExcerptVideo:
+    case .animatedMinimalVideo, .animatedExcerptVideo, .animatedWigglyMinimalVideo, .animatedWigglyExcerptVideo:
+      return true
+    default:
+      return false
+    }
+  }
+
+  /// Whether this style always boils the strokes, regardless of the experimental
+  /// `enableWigglyStrokes` preference. The dedicated wiggly video styles do; the
+  /// plain video styles only wiggle when the preference is on.
+  var forcesWiggle: Bool {
+    switch self {
+    case .animatedWigglyMinimalVideo, .animatedWigglyExcerptVideo:
       return true
     default:
       return false
@@ -133,7 +156,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Whether this style includes excerpt text
   var includesExcerpt: Bool {
     switch self {
-    case .excerpt, .detailed, .animatedExcerptVideo:
+    case .excerpt, .detailed, .animatedExcerptVideo, .animatedWigglyExcerptVideo:
       return true
     default:
       return false
@@ -167,7 +190,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
 
   /// Animated styles for entry sharing
   static var animatedStyles: [ShareCardStyle] {
-    [.animatedMinimalVideo, .animatedExcerptVideo]
+    [.animatedMinimalVideo, .animatedExcerptVideo, .animatedWigglyMinimalVideo, .animatedWigglyExcerptVideo]
   }
 
   /// All entry styles including animated (static + animated)
@@ -180,7 +203,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
     switch self {
     case .weekGrid:
       return CGSize(width: 1080, height: 540)
-    case .animatedMinimalVideo, .animatedExcerptVideo:
+    case .animatedMinimalVideo, .animatedExcerptVideo, .animatedWigglyMinimalVideo, .animatedWigglyExcerptVideo:
       return CGSize(width: 1080, height: 1080)
     default:
       return CGSize(width: 1080, height: 1080)
@@ -200,7 +223,7 @@ enum ShareCardStyle: String, CaseIterable, Identifiable {
   /// Animation configuration for this style
   var animationConfig: DrawingAnimationConfig {
     switch self {
-    case .animatedMinimalVideo, .animatedExcerptVideo:
+    case .animatedMinimalVideo, .animatedExcerptVideo, .animatedWigglyMinimalVideo, .animatedWigglyExcerptVideo:
       return .video
     default:
       return .default

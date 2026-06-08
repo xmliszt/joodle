@@ -243,7 +243,7 @@ class ShareCardRenderer {
     case .weekGrid, .monthGrid:
       // Week/month grid styles should use renderWeekGridCard/renderMonthGridCard instead
       EmptyView()
-    case .animatedMinimalVideo, .animatedExcerptVideo:
+    case .animatedMinimalVideo, .animatedExcerptVideo, .animatedWigglyMinimalVideo, .animatedWigglyExcerptVideo:
       // Animated styles should use renderAnimatedVideo instead
       EmptyView()
     }
@@ -345,7 +345,7 @@ class ShareCardRenderer {
 
     // Match the in-app wiggle when enabled; map progress onto the boil's clock
     // so a scrubbed preview frame still shows a jittered line.
-    let wiggleFrame: Int? = UserPreferences.shared.enableWigglyStrokes
+    let wiggleFrame: Int? = (style.forcesWiggle || UserPreferences.shared.enableWigglyStrokes)
       ? WigglyStroke.frameIndex(at: Double(progress) * config.maxDuration)
       : nil
 
