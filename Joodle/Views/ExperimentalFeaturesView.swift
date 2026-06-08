@@ -54,7 +54,7 @@ struct ExperimentalFeaturesView: View {
       Section {
         VStack(spacing: 24) {
           // Live demo of the boiling-line effect on a sample doodle.
-          WigglyStrokePreview()
+          WigglyStrokePreview(wiggle: userPreferences.enableWigglyStrokes)
             .frame(height: 220)
             .frame(maxWidth: .infinity)
             .background(.black)
@@ -172,6 +172,9 @@ struct LoopingVideoPlayerView: View {
 /// A small self-contained demo of the boiling-line effect, used in the
 /// experimental features list so the toggle has something to show.
 private struct WigglyStrokePreview: View {
+  /// Whether to boil the strokes. Follows the toggle: still when off, wiggling when on.
+  let wiggle: Bool
+
   /// The onboarding mushroom doodle, decoded from `PLACEHOLDER_DATA` polylines in `CANVAS_SIZE` space.
   private static let sample: [PathData] = {
     (try? JSONDecoder().decode([PathData].self, from: PLACEHOLDER_DATA)) ?? []
@@ -181,24 +184,36 @@ private struct WigglyStrokePreview: View {
   @State private var epoch = Date()
 
   var body: some View {
-    TimelineView(.periodic(from: epoch, by: WigglyStroke.boilInterval)) { timeline in
-      Canvas { context, size in
-        let scale = min(size.width, size.height) / CANVAS_SIZE
-        context.translateBy(x: (size.width - CANVAS_SIZE * scale) / 2, y: (size.height - CANVAS_SIZE * scale) / 2)
-        context.scaleBy(x: scale, y: scale)
+    if wiggle {
+      TimelineView(.periodic(from: epoch, by: WigglyStroke.boilInterval)) { timeline in
+        canvas(frame: WigglyStroke.frameIndex(at: timeline.date.timeIntervalSinceReferenceDate))
+      }
+    } else {
+      // Static doodle — no boil clock running.
+      canvas(frame: nil)
+    }
+  }
 
-        let frame = WigglyStroke.frameIndex(at: timeline.date.timeIntervalSinceReferenceDate)
-        for stroke in Self.sample {
-          let path = WigglyStroke.path(points: stroke.points, isDot: stroke.isDot, frame: frame)
-          if stroke.isDot {
-            context.fill(path, with: .color(.appAccent))
-          } else {
-            context.stroke(
-              path,
-              with: .color(.appAccent),
-              style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
-            )
-          }
+  /// Draws the sample doodle. A non-nil `frame` jitters the strokes for that boil
+  /// frame; `nil` draws them straight.
+  private func canvas(frame: Int?) -> some View {
+    Canvas { context, size in
+      let scale = min(size.width, size.height) / CANVAS_SIZE
+      context.translateBy(x: (size.width - CANVAS_SIZE * scale) / 2, y: (size.height - CANVAS_SIZE * scale) / 2)
+      context.scaleBy(x: scale, y: scale)
+
+      for stroke in Self.sample {
+        let path = frame.map {
+          WigglyStroke.path(points: stroke.points, isDot: stroke.isDot, frame: $0)
+        } ?? WigglyStroke.path(points: stroke.points, isDot: stroke.isDot, frame: 0, amplitude: 0)
+        if stroke.isDot {
+          context.fill(path, with: .color(.appAccent))
+        } else {
+          context.stroke(
+            path,
+            with: .color(.appAccent),
+            style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
+          )
         }
       }
     }
