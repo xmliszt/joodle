@@ -172,25 +172,9 @@ struct LoopingVideoPlayerView: View {
 /// A small self-contained demo of the boiling-line effect, used in the
 /// experimental features list so the toggle has something to show.
 private struct WigglyStrokePreview: View {
-  /// A hand-drawn-ish smiley as sampled polylines in `CANVAS_SIZE` space.
-  private static let sample: [(points: [CGPoint], isDot: Bool)] = {
-    func arc(center: CGPoint, radius: CGFloat, from a0: CGFloat, to a1: CGFloat, steps: Int) -> [CGPoint] {
-      (0...steps).map { i in
-        let t = a0 + (a1 - a0) * CGFloat(i) / CGFloat(steps)
-        return CGPoint(x: center.x + cos(t) * radius, y: center.y + sin(t) * radius)
-      }
-    }
-    let c = CGPoint(x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2)
-    let face = arc(center: c, radius: 110, from: 0, to: 2 * .pi, steps: 48)
-    let smile = arc(center: c, radius: 60, from: 0.25 * .pi, to: 0.75 * .pi, steps: 20)
-    let leftEye = CGPoint(x: c.x - 38, y: c.y - 34)
-    let rightEye = CGPoint(x: c.x + 38, y: c.y - 34)
-    return [
-      (face, false),
-      (smile, false),
-      ([leftEye], true),
-      ([rightEye], true),
-    ]
+  /// The onboarding mushroom doodle, decoded from `PLACEHOLDER_DATA` polylines in `CANVAS_SIZE` space.
+  private static let sample: [PathData] = {
+    (try? JSONDecoder().decode([PathData].self, from: PLACEHOLDER_DATA)) ?? []
   }()
 
   /// Stable anchor for the boil's periodic clock.

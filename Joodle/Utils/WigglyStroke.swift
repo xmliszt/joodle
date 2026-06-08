@@ -60,7 +60,11 @@ enum WigglyStroke {
     guard let first = points.first else { return path }
 
     if isDot {
-      let o = offset(vertex: 0, frame: frame, amplitude: amplitude)
+      // Dots are single-point strokes that would all pass vertex: 0 and thus
+      // boil in lockstep. Seed from the dot's position so each one wiggles in
+      // its own direction while staying deterministic across the loop.
+      let positionSeed = Int(first.x.rounded()) &* 73_856_093 ^ Int(first.y.rounded()) &* 19_349_663
+      let o = offset(vertex: positionSeed, frame: frame, amplitude: amplitude)
       let center = CGPoint(x: first.x + o.dx, y: first.y + o.dy)
       let r = DRAWING_LINE_WIDTH / 2
       path.addEllipse(in: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2))
