@@ -294,9 +294,11 @@ struct DrawingCanvasView: View {
       // Match the bottom gap to the canvas's left/right centering slack so the
       // canvas sits with equal L/R/bottom padding inside the floating container.
       .padding(.bottom, canvasSideInset)
-    // Keep any transient reveal during the camera-mode layout transition dark
-    // instead of letting the underlying white surface show through.
-    .background(Color.black)
+    // No opaque backstop here: the floating container behind us paints the
+    // black-to-clear glass gradient, and an opaque fill would cover its
+    // refractive bottom edge. Any transient reveal during the camera-mode
+    // layout transition now shows that same container backdrop (dark at the
+    // top, glass at the bottom) rather than a bare white surface.
     .onDisappear {
       // Safety net for cases where SwiftUI tears the view down (e.g. selection
       // cleared while canvas is still showing) without propagating the

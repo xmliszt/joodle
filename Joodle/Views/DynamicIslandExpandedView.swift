@@ -100,12 +100,49 @@ struct DynamicIslandExpandedView<Content: View>: View {
     UIScreen.main.bounds.width - (containerHorizontalInset * 2)
   }
 
+  private var containerShape: RoundedRectangle {
+    RoundedRectangle(cornerRadius: containerCornerRadius, style: .continuous)
+  }
+
+  /// Container backdrop: clear Liquid Glass that refracts the blurred
+  /// backdrop behind the container, under a black gradient that stays solid
+  /// at the top (so it still blends into the DI cutout) and fades out toward
+  /// the bottom so the glass edge shows through. While collapsed — and on
+  /// pre-iOS 26 — the container stays flat black so it conceals inside the
+  /// island cutout.
+  private var containerBackground: some View {
+    ZStack {
+      if #available(iOS 26.0, *) {
+        Color.clear
+          .glassEffect(.clear, in: containerShape)
+      } else {
+        Color.black
+      }
+
+      LinearGradient(
+        stops: [
+          .init(color: .black, location: 0),
+          .init(color: .black, location: 0.45),
+          .init(color: .black.opacity(0), location: 1),
+        ],
+        startPoint: .top,
+        endPoint: .bottom
+      )
+
+      // Solid cover while collapsed; fades out with the expand spring so the
+      // glass bottom is only revealed once the container leaves the cutout.
+      Color.black.opacity(isExpanded ? 0 : 1)
+    }
+  }
+
   var body: some View {
     ZStack {
-      // Backdrop that creates the blur effect when expanded, plus an optional
-      // black tint stacked on top so consumers can darken for focus modes.
+      // Backdrop when expanded: a subtle dim instead of a blur material — the
+      // container's clear Liquid Glass refracts what's behind it, and blurring
+      // the backdrop would wash out that lensing. Keeping the content sharp
+      // (just darkened for focus) lets the glass edge distortion read clearly.
       if isExpanded {
-        Rectangle().fill(.ultraThinMaterial)
+        Rectangle().fill(Color.black.opacity(0.15))
       }
 
       // Invisible container
@@ -131,10 +168,11 @@ struct DynamicIslandExpandedView<Content: View>: View {
           width: isExpanded ? expandedContentWidth : collapsedSize.width,
           height: isExpanded ? nil : collapsedSize.height,
           alignment: .top)
-        // Black to blend into dynamic island cutout
-        .background(.black)
+        // Black at the top to blend into the dynamic island cutout, fading
+        // into clear refractive glass toward the bottom when expanded.
+        .background(containerBackground)
         // Corner radius matches border of the device
-        .clipShape(RoundedRectangle(cornerRadius: containerCornerRadius, style: .continuous))
+        .clipShape(containerShape)
         .tutorialHighlightAnchor(
           tutorialAnchorID ?? "",
           isEnabled: tutorialAnchorID != nil,
