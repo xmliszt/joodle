@@ -80,6 +80,9 @@ struct ExperimentalFeaturesView: View {
                 .font(.appBody())
             }
           }
+          // Stage 2 of the Wiggly Strokes discovery — touching the toggle
+          // resolves the whole feature tip.
+          .featureTip(FeatureTipDefinitions.AnchorID.wigglyToggle)
         }
       } footer: {
         Text("Makes your doodles come alive with a shaky wiggle that never sits still.")
@@ -104,6 +107,8 @@ struct ExperimentalFeaturesView: View {
     .navigationTitle("Experimental Features")
     .navigationBarTitleDisplayMode(.inline)
     .postHogScreenView("Experimental Features")
+    // Scope for stage 2 of the Wiggly Strokes feature tip.
+    .featureTipScope(FeatureTipDefinitions.ScopeID.experimentalFeatures)
   }
 }
 

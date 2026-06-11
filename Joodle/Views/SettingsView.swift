@@ -380,6 +380,9 @@ struct SettingsView: View {
       developerOptionsSection
     }
     .background(NavigationGestureEnabler(isEnabled: !showThemeOverlay))
+    // Scope for the Wiggly Strokes feature tip — shows on landing (before the
+    // Labs row scrolls into view) and reliably hides when any child is pushed.
+    .featureTipScope(FeatureTipDefinitions.ScopeID.settings)
     .navigationDestination(isPresented: $showExperimentalFeatures) {
       ExperimentalFeaturesView()
         .postHogScreenView("Experimental Features")
@@ -800,6 +803,9 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
         }
       }
+      // Stage 1 of the Wiggly Strokes discovery. Tapping only advances into the
+      // Labs screen (resolveOnTap: false); the toggle there resolves the tip.
+      .featureTip(FeatureTipDefinitions.AnchorID.wigglyExperimentRow, resolveOnTap: false)
     } header: {
       Text("Labs")
     }
@@ -1240,6 +1246,10 @@ ID: \(deviceIdentifier)
         Button("Reset Changelog State") {
           ChangelogManager.shared.resetChangelogState()
           print("DEBUG: Changelog state reset - will show on next launch")
+        }
+
+        NavigationLink("Preview Changelog Sheet") {
+          ChangelogPreviewDebugView()
         }
 
         simulateUserConditionButtons

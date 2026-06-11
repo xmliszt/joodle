@@ -6,7 +6,8 @@
 //  a small bubble with a directional beak pointing at the target control. It
 //  never blocks input (`.allowsHitTesting(false)`) — the user keeps full
 //  control of the underlying UI. Positioning is derived from the anchor frame
-//  published by `FeatureTipManager`.
+//  published by `FeatureTipManager`; when a scoped tip's target is off-screen,
+//  the bubble clamps to the published `fallbackEdge` and points toward it.
 //
 
 import SwiftUI
@@ -14,21 +15,93 @@ import SwiftUI
 struct FeatureTipOverlayView: View {
     @ObservedObject private var manager = FeatureTipManager.shared
 
+    /// Cached top safe-area inset. Only changes on rotation, so we capture it
+    /// when the overlay size changes instead of walking the window list on every
+    /// (per-scroll-frame) render.
+    @State private var topInset: CGFloat = 0
+
     var body: some View {
         GeometryReader { geo in
-            if let tip = manager.activeTip, let frame = manager.activeFrame {
+            if let tip = manager.activeTip, let target = resolvedTarget(tip: tip, screenSize: geo.size) {
                 FeatureTipBubble(
                     message: tip.message,
-                    targetFrame: frame,
+                    targetFrame: target.frame,
+                    horizontalTarget: tip.horizontalTarget,
                     screenSize: geo.size
                 )
+                .opacity(target.opacity)
                 .id(tip.id)
-                .transition(.opacity.combined(with: .scale(scale: 0.92)))
+                .transition(.opacity.combined(with: .scale(scale: 0.8)))
             }
+            // Report full-screen height so the manager can derive the fallback
+            // edge from a last-known anchor frame, and refresh the cached inset.
+            Color.clear
+                .onAppear {
+                    manager.setViewportHeight(geo.size.height)
+                    topInset = Self.keyWindowTopInset
+                }
+                .onChange(of: geo.size.height) { _, newHeight in
+                    manager.setViewportHeight(newHeight)
+                    topInset = Self.keyWindowTopInset
+                }
         }
         .allowsHitTesting(false)
         .ignoresSafeArea()
-        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: manager.activeTip?.id)
+        // Crisp, bouncy entry/exit.
+        .animation(.spring(response: 0.3, dampingFraction: 0.55), value: manager.activeTip?.id)
+    }
+
+    /// Resolve the bubble's target frame and opacity for the current state, or
+    /// `nil` when nothing should show.
+    ///
+    /// - On-screen target: follow the live frame, fading out as it nears the top
+    ///   safe area (there's never a reason to point a fresh tip *upward*).
+    /// - Off-screen below (`.bottom`): clamp flush to the bottom edge, fully
+    ///   opaque, beak pointing down.
+    /// - Off-screen above (`.top`): hide — the fade already took it to zero.
+    private func resolvedTarget(tip: FeatureTip, screenSize: CGSize) -> (frame: CGRect, opacity: Double)? {
+        // `.anchorVisible` tips (e.g. camera) only ever show against a live
+        // frame, with no edge-clamp or scroll fade.
+        guard case .scoped = tip.behavior else {
+            return manager.activeFrame.map { ($0, 1) }
+        }
+
+        if let frame = manager.activeFrame {
+            return (frame, topFadeOpacity(targetMinY: frame.minY))
+        }
+        switch manager.fallbackEdge {
+        case .bottom:
+            return (Self.bottomEdgeFrame(screenSize: screenSize), 1)
+        case .top:
+            return nil
+        }
+    }
+
+    /// Fade the tip out as its target scrolls up into the top safe area: fully
+    /// visible until ~10pt before the safe-area boundary, fully gone once the
+    /// target has scrolled past the safe-area height.
+    private func topFadeOpacity(targetMinY: CGFloat) -> Double {
+        let fadeStart = topInset + 10  // opacity 1 at or below this y
+        let fadeEnd: CGFloat = 0  // opacity 0 once scrolled past the safe area
+        guard fadeStart > fadeEnd else { return targetMinY > fadeEnd ? 1 : 0 }
+        let t = (targetMinY - fadeEnd) / (fadeStart - fadeEnd)
+        return Double(min(max(t, 0), 1))
+    }
+
+    /// A zero-size frame parked just past the bottom edge, so the bubble math
+    /// places the bubble just inside that edge with the beak pointing down.
+    private static func bottomEdgeFrame(screenSize: CGSize) -> CGRect {
+        CGRect(x: screenSize.width / 2, y: screenSize.height, width: 0, height: 0)
+    }
+
+    /// Top safe-area inset of the key window (the overlay ignores the safe area,
+    /// so `GeometryReader` reports none).
+    private static var keyWindowTopInset: CGFloat {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }?
+            .safeAreaInsets.top ?? 0
     }
 }
 
@@ -37,6 +110,7 @@ struct FeatureTipOverlayView: View {
 private struct FeatureTipBubble: View {
     let message: LocalizedStringResource
     let targetFrame: CGRect
+    let horizontalTarget: FeatureTipHorizontalTarget
     let screenSize: CGSize
 
     @State private var bubbleSize: CGSize = .zero
@@ -46,6 +120,17 @@ private struct FeatureTipBubble: View {
     private let edgePadding: CGFloat = 16  // keep bubble this far from screen edges
     private let beakWidth: CGFloat = 18
     private let beakHeight: CGFloat = 9
+    /// Roughly half a UISwitch's width — used to aim the beak at the switch when
+    /// the target is a whole toggle row rather than the control itself.
+    private let trailingInset: CGFloat = 26
+
+    /// The x the beak should point at within the target.
+    private var pointX: CGFloat {
+        switch horizontalTarget {
+        case .center:   return targetFrame.midX
+        case .trailing: return targetFrame.maxX - trailingInset
+        }
+    }
 
     /// Place below the target when there's more room below; otherwise above.
     private var placeBelow: Bool {
@@ -60,10 +145,12 @@ private struct FeatureTipBubble: View {
         let minX = edgePadding + half
         let maxX = screenSize.width - edgePadding - half
         guard minX <= maxX else { return screenSize.width / 2 }
-        return min(max(targetFrame.midX, minX), maxX)
+        return min(max(pointX, minX), maxX)
     }
 
-    /// Vertical center of the whole bubble+beak stack.
+    /// Vertical center of the whole bubble+beak stack. When the target is past a
+    /// screen edge (off-screen), this sits the bubble flush against that edge —
+    /// intentionally ignoring the safe area so it reads as "blocked by the edge".
     private var bubbleCenterY: CGFloat {
         let totalHeight = bubbleSize.height + beakHeight
         if placeBelow {
@@ -76,7 +163,7 @@ private struct FeatureTipBubble: View {
     /// Beak horizontal offset from the bubble center so it keeps pointing at the
     /// target even when the bubble is clamped to a screen edge.
     private var beakOffsetX: CGFloat {
-        let raw = targetFrame.midX - bubbleCenterX
+        let raw = pointX - bubbleCenterX
         let limit = max(0, bubbleSize.width / 2 - beakWidth)
         return min(max(raw, -limit), limit)
     }
@@ -149,24 +236,22 @@ private struct BeakTriangle: Shape {
             .position(x: 340, y: 120)
 
         FeatureTipBubble(
-            message: "Try to use a photo as doodle reference",
+            message: "Take a photo as reference",
             targetFrame: CGRect(x: 318, y: 98, width: 44, height: 44),
+            horizontalTarget: .center,
             screenSize: CGSize(width: 393, height: 852)
         )
     }
 }
 
-#Preview("Feature Tip - Above target") {
+#Preview("Feature Tip - Clamped to bottom edge") {
     ZStack {
         Color.backgroundColor.ignoresSafeArea()
-        Circle()
-            .fill(Color.appAccent)
-            .frame(width: 44, height: 44)
-            .position(x: 60, y: 760)
 
         FeatureTipBubble(
-            message: "Try to use a photo as doodle reference",
-            targetFrame: CGRect(x: 38, y: 738, width: 44, height: 44),
+            message: "Make your doodles wiggle",
+            targetFrame: CGRect(x: 196, y: 852, width: 0, height: 0),
+            horizontalTarget: .center,
             screenSize: CGSize(width: 393, height: 852)
         )
     }
