@@ -98,7 +98,7 @@ struct HeaderImageCarouselView: View {
     /// Fixed container shape for every item. Media that doesn't match it
     /// letterboxes inside, with the corner-sampled fill keeping the rounded
     /// corners visible (see `CarouselVideoModel.backgroundColor`).
-    private let itemAspectRatio: CGFloat = 3.0 / 5.0
+    private let itemAspectRatio: CGFloat = 9.0 / 16.0
 
     /// True when the URL points at a video container we play with AVPlayer
     /// rather than render as a (possibly animated) image.
@@ -190,11 +190,24 @@ private final class CarouselVideoModel: ObservableObject {
     /// frame. Used to size the player to the video's own shape so it fits
     /// centred — a narrower/taller video keeps its full height and never crops.
     @Published var videoAspectRatio: CGFloat?
+    /// True when this OS can't decode/display the video (e.g. an AV1 file on a
+    /// device with no AV1 decoder): the first-frame decode fails or the ready
+    /// item reports a zero `presentationSize`. The view shows a placeholder
+    /// instead of a permanently blank surface.
+    @Published var failedToDisplay = false
 
     private var timeObserver: Any?
     private var endObserver: NSObjectProtocol?
     private var statusObserver: NSKeyValueObservation?
     private var isConfigured = false
+    /// Set when `restart()` is asked to play before the item is ready. The
+    /// status observer consumes it once the item reaches `.readyToPlay`.
+    private var shouldPlayWhenReady = false
+    /// Tracks whether we've started playback at least once, so the first play
+    /// skips the seek (the item is already at zero) and only loops/reactivations
+    /// rewind. An early `seek(to: .zero)` before the layer presents its first
+    /// frame can leave the surface blank on iOS 18.5.
+    private var hasStarted = false
 
     func configure(url: URL) {
         guard !isConfigured else { return }
@@ -207,9 +220,22 @@ private final class CarouselVideoModel: ObservableObject {
 
         // Flip the skeleton off only once the item can actually render a frame.
         // KVO callbacks can arrive off the main thread, so hop back to publish.
+        // If a play was requested before the item was ready (the common case on
+        // first appearance), start it now — seeking a not-yet-ready item can drop
+        // its completion on some iOS versions, leaving the layer blank.
         statusObserver = item.observe(\.status, options: [.initial, .new]) { [weak self] item, _ in
             guard item.status == .readyToPlay else { return }
-            DispatchQueue.main.async { self?.isReady = true }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isReady = true
+                // A ready item with a zero presentation size has no displayable
+                // video track on this OS (e.g. AV1 with no hardware decoder), so
+                // surface the placeholder instead of a blank box.
+                if self.player.currentItem?.presentationSize == .zero {
+                    self.failedToDisplay = true
+                }
+                if self.shouldPlayWhenReady { self.restart() }
+            }
         }
 
         let interval = CMTime(seconds: 0.05, preferredTimescale: 600)
@@ -241,7 +267,15 @@ private final class CarouselVideoModel: ObservableObject {
         generator.appliesPreferredTrackTransform = true
         let time = CMTime(seconds: 0, preferredTimescale: 600)
         generator.generateCGImagesAsynchronously(forTimes: [NSValue(time: time)]) { [weak self] _, cgImage, _, result, _ in
-            guard result == .succeeded, let cgImage else { return }
+            // A failed first-frame decode means this OS can't open the video's
+            // format (e.g. AV1 without a hardware decoder) — flag it so the view
+            // shows a placeholder rather than a blank surface.
+            guard result == .succeeded, let cgImage else {
+                if result == .failed {
+                    DispatchQueue.main.async { self?.failedToDisplay = true }
+                }
+                return
+            }
             // `appliesPreferredTrackTransform` orients the frame, so its pixel
             // dimensions reflect the displayed shape.
             let aspectRatio = cgImage.height > 0 ? CGFloat(cgImage.width) / CGFloat(cgImage.height) : nil
@@ -256,9 +290,27 @@ private final class CarouselVideoModel: ObservableObject {
     /// Rewind to the start and play — used both on first activation and to loop
     /// a lone video. Waits for the seek to land before starting playback so
     /// AVPlayerItemDidPlayToEndTime fires reliably on every cycle.
+    ///
+    /// If the item isn't ready yet, defer playback to the status observer rather
+    /// than seeking now: an early seek on a not-yet-ready item can drop its
+    /// completion (notably on iOS 18.5), so `play()` would never fire and the
+    /// surface would stay blank even after the skeleton clears.
     func restart() {
+        guard player.currentItem?.status == .readyToPlay else {
+            shouldPlayWhenReady = true
+            return
+        }
+        shouldPlayWhenReady = false
         isFinished = false
         progress = 0
+        // First play: the fresh item is already at zero, so play directly. An
+        // early seek before the layer has presented a frame can strand the
+        // surface blank on iOS 18.5. Loop/reactivation restarts rewind first.
+        guard hasStarted else {
+            hasStarted = true
+            player.play()
+            return
+        }
         player.seek(to: .zero) { [weak self] _ in
             self?.player.play()
         }
@@ -323,28 +375,39 @@ private struct CarouselVideoView: View {
     @StateObject private var model = CarouselVideoModel()
 
     var body: some View {
-        VideoPlayerLayerView(player: model.player)
+        VideoPlayerLayerView(
+            player: model.player,
+            cornerRadius: cornerRadius,
+            backgroundFill: model.backgroundColor
+        )
             // Size to the video's own shape so it fits centred and never crops:
             // a narrower/taller video keeps its full height with the sides free.
             // Until the first frame resolves we use the fallback ratio so the
             // layer keeps a footprint instead of collapsing.
             .aspectRatio(model.videoAspectRatio ?? fallbackAspectRatio, contentMode: .fit)
-            .background(model.backgroundColor)
             .overlay {
-                if !model.isReady {
+                if model.failedToDisplay {
+                    UnavailableMediaPlaceholder(cornerRadius: cornerRadius)
+                        .transition(.opacity)
+                } else if !model.isReady {
                     SweepingSkeletonView(cornerRadius: cornerRadius)
                         .transition(.opacity)
                 }
             }
             .animation(.easeInOut(duration: 0.3), value: model.isReady)
-            .compositingGroup()
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .animation(.easeInOut(duration: 0.3), value: model.failedToDisplay)
             .onAppear {
                 model.configure(url: url)
                 if isActive { model.restart() }
             }
             .onChange(of: isActive) { _, active in
                 if active { model.restart() } else { model.pause() }
+            }
+            .onChange(of: model.failedToDisplay) { _, failed in
+                // A lone looping video that can't display would otherwise loop
+                // invisibly forever; pause it. Carousel pages keep playing so
+                // their end notification still advances past the broken page.
+                if failed && loops { model.pause() }
             }
             .onReceive(model.$progress) { value in
                 if isActive { progress = value }
@@ -358,6 +421,23 @@ private struct CarouselVideoView: View {
                 }
             }
             .onDisappear { model.pause() }
+    }
+}
+
+/// Shown in place of a video this OS can't decode (e.g. an AV1 file on a device
+/// with no AV1 decoder). A calm, static muted fill with a small slashed-video
+/// glyph — clearly intentional rather than a broken/blank surface.
+struct UnavailableMediaPlaceholder: View {
+    var cornerRadius: CGFloat
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(Color(uiColor: .secondarySystemFill))
+            .overlay {
+                Image(systemName: "video.slash.fill")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+            }
     }
 }
 
@@ -402,10 +482,22 @@ struct SweepingSkeletonView: View {
 }
 
 /// Chromeless video surface (no transport controls), letterboxed to fit so
-/// tutorial UI is never cropped. Corner rounding is applied at the SwiftUI
-/// level via `.compositingGroup()` + `.clipShape()`.
+/// tutorial UI is never cropped.
+///
+/// The `AVPlayerLayer` is the view's *backing layer* (via `layerClass`) rather
+/// than a sublayer synced in `layoutSubviews()`. Backing the view directly is
+/// the most robust pattern — the layer's frame always tracks `bounds` with no
+/// timing window where it can be zero-sized (a frequent cause of "audio plays
+/// but video is blank"). Corner rounding and the letterbox fill are applied
+/// natively on that layer (`cornerRadius` + `masksToBounds`) instead of with
+/// SwiftUI's `.clipShape()`/`.compositingGroup()`, which would flatten the live
+/// video into an offscreen buffer and render blank on iOS 18.x.
 private struct VideoPlayerLayerView: UIViewRepresentable {
     let player: AVPlayer
+    var cornerRadius: CGFloat = 0
+    /// Fill drawn behind the letterboxed video (the corner-sampled background
+    /// colour), clipped to the same rounded corners.
+    var backgroundFill: Color = .clear
 
     func makeUIView(context: Context) -> PlayerLayerUIView {
         PlayerLayerUIView(player: player)
@@ -413,31 +505,40 @@ private struct VideoPlayerLayerView: UIViewRepresentable {
 
     func updateUIView(_ uiView: PlayerLayerUIView, context: Context) {
         uiView.player = player
+        uiView.cornerRadius = cornerRadius
+        uiView.backgroundColor = UIColor(backgroundFill)
     }
 
     final class PlayerLayerUIView: UIView {
-        private let playerLayer = AVPlayerLayer()
+        override class var layerClass: AnyClass { AVPlayerLayer.self }
+
+        private var playerLayer: AVPlayerLayer {
+            // Safe: `layerClass` guarantees the backing layer is an AVPlayerLayer.
+            layer as! AVPlayerLayer
+        }
 
         var player: AVPlayer? {
             get { playerLayer.player }
             set { playerLayer.player = newValue }
         }
 
+        var cornerRadius: CGFloat = 0 {
+            didSet {
+                guard cornerRadius != oldValue else { return }
+                playerLayer.cornerRadius = cornerRadius
+                playerLayer.cornerCurve = .continuous
+                playerLayer.masksToBounds = true
+            }
+        }
+
         init(player: AVPlayer) {
             super.init(frame: .zero)
             playerLayer.player = player
             playerLayer.videoGravity = .resizeAspect
-            layer.addSublayer(playerLayer)
-            backgroundColor = .clear
         }
 
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
-        }
-
-        override func layoutSubviews() {
-            super.layoutSubviews()
-            playerLayer.frame = bounds
         }
     }
 }
