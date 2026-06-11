@@ -135,10 +135,10 @@ struct HeaderImageCarouselView: View {
                 isActive: true,
                 loops: true,
                 cornerRadius: itemCornerRadius,
+                fallbackAspectRatio: itemAspectRatio,
                 progress: .constant(0),
                 onEnded: {}
             )
-            .aspectRatio(itemAspectRatio, contentMode: .fit)
         } else {
             imageView(url: url)
         }
@@ -154,6 +154,7 @@ struct HeaderImageCarouselView: View {
                 isActive: isActive,
                 loops: false,
                 cornerRadius: itemCornerRadius,
+                fallbackAspectRatio: itemAspectRatio,
                 progress: progress,
                 onEnded: onEnded
             )
@@ -178,17 +179,21 @@ private final class CarouselVideoModel: ObservableObject {
     let player = AVPlayer()
     @Published var progress: Double = 0
     @Published var isFinished = false
+    /// True once the player item can render its first frame. Until then the
+    /// video surface is blank, so the view covers it with a loading skeleton.
+    @Published var isReady = false
     /// Colour sampled from a corner of the video's first frame. We fill the
     /// carousel item with it so the letterbox around a `.resizeAspect` video
     /// reads as the video's own background and the rounded corners stay visible.
     @Published var backgroundColor: Color = .clear
-    /// Native aspect ratio (width / height) of the video, derived from its first
-    /// frame. Used to size the player to the real video shape so a portrait video
-    /// fills its space instead of sitting letterboxed inside a fixed box.
+    /// Native aspect ratio (width / height) of the video, read from its first
+    /// frame. Used to size the player to the video's own shape so it fits
+    /// centred — a narrower/taller video keeps its full height and never crops.
     @Published var videoAspectRatio: CGFloat?
 
     private var timeObserver: Any?
     private var endObserver: NSObjectProtocol?
+    private var statusObserver: NSKeyValueObservation?
     private var isConfigured = false
 
     func configure(url: URL) {
@@ -199,6 +204,13 @@ private final class CarouselVideoModel: ObservableObject {
         player.replaceCurrentItem(with: item)
         player.isMuted = true
         loadBackgroundColor(url: url)
+
+        // Flip the skeleton off only once the item can actually render a frame.
+        // KVO callbacks can arrive off the main thread, so hop back to publish.
+        statusObserver = item.observe(\.status, options: [.initial, .new]) { [weak self] item, _ in
+            guard item.status == .readyToPlay else { return }
+            DispatchQueue.main.async { self?.isReady = true }
+        }
 
         let interval = CMTime(seconds: 0.05, preferredTimescale: 600)
         timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
@@ -259,6 +271,7 @@ private final class CarouselVideoModel: ObservableObject {
         if let endObserver {
             NotificationCenter.default.removeObserver(endObserver)
         }
+        statusObserver?.invalidate()
         player.pause()
     }
 }
@@ -300,6 +313,10 @@ private struct CarouselVideoView: View {
     let isActive: Bool
     var loops: Bool = false
     var cornerRadius: CGFloat = 0
+    /// Aspect ratio used only while the video's real shape is still loading, so
+    /// the representable has a defined footprint instead of collapsing (a nil
+    /// ratio here is `.scaledToFit()`, which collapses a no-intrinsic-size view).
+    var fallbackAspectRatio: CGFloat
     @Binding var progress: Double
     var onEnded: () -> Void
 
@@ -307,11 +324,19 @@ private struct CarouselVideoView: View {
 
     var body: some View {
         VideoPlayerLayerView(player: model.player)
-            // Size to the video's real shape (once its first frame is read) so a
-            // portrait video fills its footprint instead of letterboxing inside a
-            // square/fixed box. Until then `nil` is a no-op and the layer fills.
-            .aspectRatio(model.videoAspectRatio, contentMode: .fit)
+            // Size to the video's own shape so it fits centred and never crops:
+            // a narrower/taller video keeps its full height with the sides free.
+            // Until the first frame resolves we use the fallback ratio so the
+            // layer keeps a footprint instead of collapsing.
+            .aspectRatio(model.videoAspectRatio ?? fallbackAspectRatio, contentMode: .fit)
             .background(model.backgroundColor)
+            .overlay {
+                if !model.isReady {
+                    SweepingSkeletonView(cornerRadius: cornerRadius)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.3), value: model.isReady)
             .compositingGroup()
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .onAppear {
@@ -333,6 +358,46 @@ private struct CarouselVideoView: View {
                 }
             }
             .onDisappear { model.pause() }
+    }
+}
+
+/// Loading placeholder shown over a carousel item (video or remote image) until
+/// its content is ready. A muted fill with a soft highlight band that sweeps
+/// top-to-bottom on a loop, reading as a skeleton rather than a spinner so it
+/// stays calm during the brief uncached load.
+struct SweepingSkeletonView: View {
+    var cornerRadius: CGFloat
+
+    @State private var sweepDown = false
+
+    /// Band height as a fraction of the available height.
+    private let bandFraction: CGFloat = 0.5
+
+    var body: some View {
+        GeometryReader { proxy in
+            let height = proxy.size.height
+            let bandHeight = height * bandFraction
+
+            Rectangle()
+                .fill(Color(uiColor: .secondarySystemFill))
+                .overlay {
+                    LinearGradient(
+                        colors: [.clear, Color.white.opacity(0.4), .clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: bandHeight)
+                    // Start fully above the top edge, finish fully below the
+                    // bottom edge, so the highlight travels the whole surface.
+                    .offset(y: sweepDown ? height : -bandHeight)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: false)) {
+                        sweepDown = true
+                    }
+                }
+        }
     }
 }
 

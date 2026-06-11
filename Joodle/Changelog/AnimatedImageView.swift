@@ -16,20 +16,26 @@ struct AnimatedImageView: View {
     @State private var isLoading = true
     @State private var loadFailed = false
 
+    /// Item shape used for the loading skeleton so it has a defined footprint
+    /// even when the parent proposes no height (the loaded image then fits
+    /// within whatever box the carousel gives it).
+    private let loadingAspectRatio: CGFloat = 3.0 / 5.0
+
     var body: some View {
         Group {
             if let animatedImage = animatedImage {
                 GIFImageView(image: animatedImage)
                     .aspectRatio(contentMode: .fit)
             } else if isLoading {
-                ProgressView()
-                    .frame(height: 200)
+                SweepingSkeletonView(cornerRadius: 32)
+                    .aspectRatio(loadingAspectRatio, contentMode: .fit)
             } else if loadFailed {
                 EmptyView()
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
         .padding()
+        .animation(.easeInOut(duration: 0.3), value: animatedImage == nil)
         .onAppear {
             loadGIF()
         }
