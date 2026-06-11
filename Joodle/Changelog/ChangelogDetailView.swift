@@ -92,15 +92,6 @@ struct HeaderImageCarouselView: View {
     let urls: [URL]
     var autoScrollInterval: TimeInterval = 5.0
 
-    @State private var currentIndex = 0
-    @State private var autoScrollTimer: Timer?
-    /// Drives the active page's pill fill — a linear ramp over the interval.
-    @State private var pageProgress: Double = 0
-
-    /// Horizontal inset on each page so neighbouring items keep a gap instead of
-    /// sitting edge-to-edge as the carousel pages.
-    private let itemPadding: CGFloat = 16
-
     /// Fixed corner radius for every carousel item.
     private let itemCornerRadius: CGFloat = 32
 
@@ -115,37 +106,21 @@ struct HeaderImageCarouselView: View {
         ["mp4", "mov", "m4v"].contains(url.pathExtension.lowercased())
     }
 
-    /// Whether the page currently on screen is a video — when it is, the video
-    /// owns both the progress fill and the advance, so the image timer stays off.
-    private var currentIsVideo: Bool {
-        urls.indices.contains(currentIndex) && isVideo(urls[currentIndex])
-    }
-
     var body: some View {
         if urls.count == 1, let url = urls.first {
             singleMediaView(url: url)
                 .frame(maxWidth: .infinity)
         } else {
-            VStack(spacing: 12) {
-                TabView(selection: $currentIndex) {
-                    ForEach(Array(urls.enumerated()), id: \.offset) { index, url in
-                        mediaView(url: url, isActive: index == currentIndex)
-                            .padding(.horizontal, itemPadding)
-                            .tag(index)
-                    }
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .frame(maxWidth: .infinity)
-                .aspectRatio(itemAspectRatio, contentMode: .fit)
-                .onAppear { startAutoScroll() }
-                .onDisappear { stopAutoScroll() }
-                .onChange(of: currentIndex) { _, _ in restartAutoScroll() }
-
-                PageIndicatorView(
-                    totalPages: urls.count,
-                    currentPage: currentIndex,
-                    progress: pageProgress
-                )
+            // Paging mechanics + auto-advance live in PagingCarousel. Video pages
+            // opt into external timing so they drive their own progress/advance.
+            PagingCarousel(
+                pageCount: urls.count,
+                autoScrollInterval: autoScrollInterval,
+                aspectRatio: itemAspectRatio,
+                spacing: 12,
+                usesExternalTiming: { isVideo(urls[$0]) }
+            ) { index, isActive, progress, advance in
+                mediaView(url: urls[index], isActive: isActive, progress: progress, onEnded: advance)
             }
         }
     }
@@ -169,18 +144,18 @@ struct HeaderImageCarouselView: View {
         }
     }
 
-    /// A single paged item: a playing video (which drives `pageProgress` and
-    /// advances on end) or an image.
+    /// A single paged item: a playing video (which drives `progress` and advances
+    /// on end via `onEnded`) or an image.
     @ViewBuilder
-    private func mediaView(url: URL, isActive: Bool) -> some View {
+    private func mediaView(url: URL, isActive: Bool, progress: Binding<Double>, onEnded: @escaping () -> Void) -> some View {
         if isVideo(url) {
             CarouselVideoView(
                 url: url,
                 isActive: isActive,
                 loops: false,
                 cornerRadius: itemCornerRadius,
-                progress: $pageProgress,
-                onEnded: { advance() }
+                progress: progress,
+                onEnded: onEnded
             )
         } else {
             imageView(url: url)
@@ -190,47 +165,6 @@ struct HeaderImageCarouselView: View {
     private func imageView(url: URL) -> some View {
         AnimatedImageView(url: url)
             .clipShape(RoundedRectangle(cornerRadius: itemCornerRadius, style: .continuous))
-    }
-
-    private func startAutoScroll() {
-        guard urls.count > 1 else { return }
-        // Reset the fill so a fresh page always starts empty.
-        pageProgress = 0
-        // A video page reports its own playback position and advances itself
-        // when it ends — leave the image timer off so the two don't fight.
-        guard !currentIsVideo else { return }
-        guard autoScrollInterval > 0 else { return }
-        animatePageProgress()
-        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: autoScrollInterval, repeats: false) { _ in
-            advance()
-        }
-    }
-
-    private func advance() {
-        withAnimation(.easeInOut(duration: 0.3)) {
-            currentIndex = (currentIndex + 1) % urls.count
-        }
-    }
-
-    /// Resets the pill fill to empty, then ramps it to full over the interval
-    /// (reset committed in its own transaction so the ramp animates from 0).
-    private func animatePageProgress() {
-        pageProgress = 0
-        DispatchQueue.main.async {
-            withAnimation(.linear(duration: autoScrollInterval)) {
-                pageProgress = 1
-            }
-        }
-    }
-
-    private func stopAutoScroll() {
-        autoScrollTimer?.invalidate()
-        autoScrollTimer = nil
-    }
-
-    private func restartAutoScroll() {
-        stopAutoScroll()
-        startAutoScroll()
     }
 }
 
@@ -248,6 +182,10 @@ private final class CarouselVideoModel: ObservableObject {
     /// carousel item with it so the letterbox around a `.resizeAspect` video
     /// reads as the video's own background and the rounded corners stay visible.
     @Published var backgroundColor: Color = .clear
+    /// Native aspect ratio (width / height) of the video, derived from its first
+    /// frame. Used to size the player to the real video shape so a portrait video
+    /// fills its space instead of sitting letterboxed inside a fixed box.
+    @Published var videoAspectRatio: CGFloat?
 
     private var timeObserver: Any?
     private var endObserver: NSObjectProtocol?
@@ -291,8 +229,15 @@ private final class CarouselVideoModel: ObservableObject {
         generator.appliesPreferredTrackTransform = true
         let time = CMTime(seconds: 0, preferredTimescale: 600)
         generator.generateCGImagesAsynchronously(forTimes: [NSValue(time: time)]) { [weak self] _, cgImage, _, result, _ in
-            guard result == .succeeded, let color = cgImage?.cornerColor else { return }
-            DispatchQueue.main.async { self?.backgroundColor = color }
+            guard result == .succeeded, let cgImage else { return }
+            // `appliesPreferredTrackTransform` orients the frame, so its pixel
+            // dimensions reflect the displayed shape.
+            let aspectRatio = cgImage.height > 0 ? CGFloat(cgImage.width) / CGFloat(cgImage.height) : nil
+            let color = cgImage.cornerColor
+            DispatchQueue.main.async {
+                if let aspectRatio { self?.videoAspectRatio = aspectRatio }
+                if let color { self?.backgroundColor = color }
+            }
         }
     }
 
@@ -362,6 +307,10 @@ private struct CarouselVideoView: View {
 
     var body: some View {
         VideoPlayerLayerView(player: model.player)
+            // Size to the video's real shape (once its first frame is read) so a
+            // portrait video fills its footprint instead of letterboxing inside a
+            // square/fixed box. Until then `nil` is a no-op and the layer fills.
+            .aspectRatio(model.videoAspectRatio, contentMode: .fit)
             .background(model.backgroundColor)
             .compositingGroup()
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))

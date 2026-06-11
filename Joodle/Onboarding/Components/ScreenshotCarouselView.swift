@@ -99,9 +99,11 @@ struct SingleScreenshotView: View {
                 Color(uiColor: .systemBackground)
 
                 screenshotImage
-                    .scaledToFill()
+                    // Fit (not fill) so a screenshot whose real aspect ratio
+                    // differs from its declared orientation is scaled down and
+                    // centered rather than cropped.
+                    .scaledToFit()
                     .frame(width: geometry.size.width, height: geometry.size.height)
-                    .clipped()
 
                 // Overlay dots at calculated positions
                 ForEach(item.dots) { dot in
@@ -206,113 +208,19 @@ struct ScreenshotCarouselView: View {
     let screenshots: [ScreenshotItem]
     var autoScrollInterval: TimeInterval = 5.0
 
-    @State private var currentIndex = 0
-    /// Bound to the paging scroll view. Programmatic changes wrapped in
-    /// `withAnimation` slide the next page in; `PageTabViewStyle` could not
-    /// animate programmatic selection changes (only user swipes), which is
-    /// why the advance used to pop instead of slide.
-    @State private var scrolledIndex: Int?
-    @State private var autoScrollTimer: Timer?
-    /// Drives the active page's pill fill. For images this is a linear ramp
-    /// over `autoScrollInterval`; a future video item would instead feed its
-    /// real playback position here (and call `advance()` when it ends).
-    @State private var pageProgress: Double = 0
-
     var body: some View {
         if screenshots.isEmpty {
             EmptyView()
         } else if screenshots.count == 1 {
             SingleScreenshotView(item: screenshots[0])
         } else {
-            VStack(spacing: 16) {
-                ScrollView(.horizontal) {
-                    // Non-lazy so the outgoing page stays alive and slides off
-                    // screen. A LazyHStack culls it the moment it leaves the
-                    // viewport, making it pop out instead of sliding.
-                    HStack(spacing: 0) {
-                        ForEach(Array(screenshots.enumerated()), id: \.element.id) { index, item in
-                            SingleScreenshotView(item: item)
-                                .padding(.horizontal, 16)
-                                // Fill the page so the aspect-fit screenshot
-                                // stays centered, matching the old TabView.
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                // Each page spans exactly the scroll viewport
-                                // so paging snaps one screenshot at a time.
-                                .containerRelativeFrame(.horizontal)
-                                .id(index)
-                        }
-                    }
-                    .scrollTargetLayout()
-                }
-                // Greedy height gives `containerRelativeFrame` a concrete size
-                // to resolve against (the page tab view was greedy too).
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .scrollTargetBehavior(.paging)
-                .scrollPosition(id: $scrolledIndex)
-                .scrollIndicators(.hidden)
-                .onAppear {
-                    scrolledIndex = currentIndex
-                    startAutoScroll()
-                }
-                .onDisappear {
-                    stopAutoScroll()
-                }
-                .onChange(of: scrolledIndex) { _, newValue in
-                    // Fired by both auto-advance and manual swipes. Sync the
-                    // indicator and reset the timer so the next auto-advance is
-                    // a full interval away from wherever we landed.
-                    guard let newValue, newValue != currentIndex else { return }
-                    currentIndex = newValue
-                    restartAutoScroll()
-                }
-
-                // Custom page indicators
-                PageIndicatorView(
-                    totalPages: screenshots.count,
-                    currentPage: currentIndex,
-                    progress: pageProgress
-                )
+            PagingCarousel(
+                pageCount: screenshots.count,
+                autoScrollInterval: autoScrollInterval
+            ) { index, _, _, _ in
+                SingleScreenshotView(item: screenshots[index])
             }
         }
-    }
-
-    // MARK: - Auto-scroll
-
-    private func startAutoScroll() {
-        guard screenshots.count > 1, autoScrollInterval > 0 else { return }
-
-        animatePageProgress()
-        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: autoScrollInterval, repeats: true) { _ in
-            advance()
-        }
-    }
-
-    private func advance() {
-        withAnimation(.easeInOut(duration: 0.4)) {
-            scrolledIndex = (currentIndex + 1) % screenshots.count
-        }
-    }
-
-    /// Resets the pill fill to empty, then ramps it to full over the interval.
-    /// The reset is committed in its own transaction so the ramp animates from
-    /// 0 rather than collapsing into a no-op against the previous page's value.
-    private func animatePageProgress() {
-        pageProgress = 0
-        DispatchQueue.main.async {
-            withAnimation(.linear(duration: autoScrollInterval)) {
-                pageProgress = 1
-            }
-        }
-    }
-
-    private func stopAutoScroll() {
-        autoScrollTimer?.invalidate()
-        autoScrollTimer = nil
-    }
-
-    private func restartAutoScroll() {
-        stopAutoScroll()
-        startAutoScroll()
     }
 }
 
