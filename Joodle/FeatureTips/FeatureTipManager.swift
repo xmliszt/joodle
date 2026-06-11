@@ -19,6 +19,11 @@
 //      features via the onboarding tutorial — don't get tooltips. Existing,
 //      already-onboarded users have these tips unseen, so newly-added tips
 //      surface for them on update.
+//    • Tips flagged `showsAfterOnboarding` are exempt from that permanent
+//      suppression: on onboarding completion they're suppressed only for the
+//      current session (in-memory, see `sessionSuppressedIDs`), so they stay
+//      hidden the first time the user opens the app but surface from the second
+//      launch onward — for features the onboarding tutorial doesn't cover.
 //
 
 import SwiftUI
@@ -60,6 +65,13 @@ final class FeatureTipManager: ObservableObject {
     private var viewportHeight: CGFloat = 0
 
     private var seenIDs: Set<String>
+
+    /// Tips suppressed for this app session only — never persisted. Populated
+    /// by `markAllCurrentTipsAsSeen()` for `showsAfterOnboarding` tips so they
+    /// stay hidden for the rest of the onboarding session, then surface on the
+    /// next launch (a fresh manager starts this set empty). These tips are NOT
+    /// in `seenIDs`, so they keep showing across launches until tapped.
+    private var sessionSuppressedIDs: Set<String> = []
 
     /// Whether any defined tip is still unseen. When `false` the manager can
     /// never surface a tip, so the per-scroll-frame registration hot path
@@ -156,9 +168,19 @@ final class FeatureTipManager: ObservableObject {
     /// Suppress every currently-defined tip. Call once on the user's first
     /// onboarding completion so new installs don't see tooltips for features
     /// the onboarding tutorial already covered.
+    ///
+    /// Tips flagged `showsAfterOnboarding` are suppressed only for this session
+    /// (in-memory) rather than permanently, so they stay hidden the first time
+    /// the app is opened but surface on the next launch.
     func markAllCurrentTipsAsSeen() {
-        let allIDs = FeatureTipDefinitions.all.map(\.id)
-        seenIDs.formUnion(allIDs)
+        let permanentIDs = FeatureTipDefinitions.all
+            .filter { !$0.showsAfterOnboarding }
+            .map(\.id)
+        let deferredIDs = FeatureTipDefinitions.all
+            .filter(\.showsAfterOnboarding)
+            .map(\.id)
+        seenIDs.formUnion(permanentIDs)
+        sessionSuppressedIDs.formUnion(deferredIDs)
         refreshHasUnseenTips()
         persistSeenIDs()
         recompute()
@@ -169,6 +191,7 @@ final class FeatureTipManager: ObservableObject {
     /// Whether a tip is currently eligible to display, per its behavior.
     private func isEligible(_ tip: FeatureTip) -> Bool {
         guard !seenIDs.contains(tip.id) else { return false }
+        guard !sessionSuppressedIDs.contains(tip.id) else { return false }
         switch tip.behavior {
         case .anchorVisible:
             return frames[tip.anchorID] != nil
@@ -224,6 +247,7 @@ final class FeatureTipManager: ObservableObject {
     /// Clear all seen state so tips reappear (for manual testing).
     func resetSeenState() {
         seenIDs.removeAll()
+        sessionSuppressedIDs.removeAll()
         refreshHasUnseenTips()
         persistSeenIDs()
         recompute()

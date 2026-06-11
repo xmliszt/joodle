@@ -69,6 +69,16 @@ struct FeatureTip: Identifiable {
     /// shows at a time.
     let priority: Int
 
+    /// When `true`, finishing onboarding does NOT permanently mark this tip
+    /// seen. Instead the manager suppresses it only for the remainder of the
+    /// onboarding session, so it stays hidden the first time the user opens the
+    /// app but surfaces from the second launch onward — until they tap its
+    /// target. Use for features that aren't covered by the onboarding tutorial.
+    ///
+    /// When `false` (the default) the tip is suppressed for good on first
+    /// onboarding completion, since the tutorial already taught the feature.
+    let showsAfterOnboarding: Bool
+
     init(
         id: String,
         anchorID: String,
@@ -76,7 +86,8 @@ struct FeatureTip: Identifiable {
         message: LocalizedStringResource,
         behavior: FeatureTipBehavior = .anchorVisible,
         horizontalTarget: FeatureTipHorizontalTarget = .center,
-        priority: Int = 0
+        priority: Int = 0,
+        showsAfterOnboarding: Bool = false
     ) {
         self.id = id
         self.anchorID = anchorID
@@ -85,5 +96,6 @@ struct FeatureTip: Identifiable {
         self.behavior = behavior
         self.horizontalTarget = horizontalTarget
         self.priority = priority
+        self.showsAfterOnboarding = showsAfterOnboarding
     }
 }

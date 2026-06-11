@@ -50,7 +50,8 @@ enum FeatureTipDefinitions {
             featureKey: wigglyStrokesFeature,
             message: "Make your doodles wiggle",
             behavior: .scoped(scopeID: ScopeID.settings, defaultEdge: .bottom),
-            priority: 5
+            priority: 5,
+            showsAfterOnboarding: true
         ),
         // Stage 2: point at the toggle switch on the Experimental screen.
         FeatureTip(
@@ -60,7 +61,8 @@ enum FeatureTipDefinitions {
             message: "Make your doodles wiggle",
             behavior: .scoped(scopeID: ScopeID.experimentalFeatures, defaultEdge: .bottom),
             horizontalTarget: .trailing,
-            priority: 6
+            priority: 6,
+            showsAfterOnboarding: true
         )
     ]
 }
