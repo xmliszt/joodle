@@ -11,7 +11,22 @@ import SwiftUI
 struct CircularGlassButtonStyle: ViewModifier {
   let tintColor: Color?
 
+  /// Subtle dim applied while the button is disabled, so an unavailable action
+  /// reads as inactive without fully hiding the glass.
+  private static let disabledDimOpacity: Double = 0.4
+
+  /// Set by an enclosing `.disabled(...)`. Drives the disabled dim so callers
+  /// don't each hand-roll an opacity for the inactive state.
+  @Environment(\.isEnabled) private var isEnabled
+
   func body(content: Content) -> some View {
+    styledContent(content)
+      .opacity(isEnabled ? 1.0 : Self.disabledDimOpacity)
+      .animation(.easeInOut(duration: 0.2), value: isEnabled)
+  }
+
+  @ViewBuilder
+  private func styledContent(_ content: Content) -> some View {
     if #available(iOS 26, *) {
       // iOS 26+: Use native glass background effect with circular shape
       content

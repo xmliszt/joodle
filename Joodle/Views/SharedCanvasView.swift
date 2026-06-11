@@ -16,6 +16,11 @@ struct CanvasButtonsConfig {
   let canClear: Bool
   let canUndo: Bool
   let canRedo: Bool
+  /// True while an existing doodle's undo history is still being prepared
+  /// (it's built after the open animation settles). Shows the undo/redo
+  /// buttons optimistically — disabled — so they don't pop in half a second
+  /// after the canvas opens.
+  let isUndoHistoryLoading: Bool
   let showClearConfirmation: Binding<Bool>?
   /// Optional view shown in the center slot when undo/redo buttons are hidden
   let centerContent: AnyView?
@@ -35,6 +40,7 @@ struct CanvasButtonsConfig {
     canClear: Bool = true,
     canUndo: Bool = false,
     canRedo: Bool = false,
+    isUndoHistoryLoading: Bool = false,
     showClearConfirmation: Binding<Bool>? = nil,
     centerContent: AnyView? = nil,
     leadingExtra: AnyView? = nil,
@@ -47,6 +53,7 @@ struct CanvasButtonsConfig {
     self.canClear = canClear
     self.canUndo = canUndo
     self.canRedo = canRedo
+    self.isUndoHistoryLoading = isUndoHistoryLoading
     self.showClearConfirmation = showClearConfirmation
     self.centerContent = centerContent
     self.leadingExtra = leadingExtra
@@ -54,6 +61,12 @@ struct CanvasButtonsConfig {
     self.hideStrokeButtons = hideStrokeButtons
   }
 }
+
+/// Duration of the drawing's fade-in reveal — matched to the button entry
+/// spring (which uses this same value for its `response`) so the strokes and
+/// buttons land together. File-scoped because a generic type
+/// (`SharedCanvasView<TrailingHeader>`) can't hold a `static` stored property.
+private let strokeTraceDuration: TimeInterval = 0.5
 
 /// A reusable canvas view that handles drawing logic, rendering, and gestures.
 /// It is designed to be stateless regarding the data persistence, delegating that to the parent view.
@@ -103,6 +116,24 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   /// deliberate "saving" state during the brief synchronous save.
   var isSaving: Bool = false
 
+  /// Gates the top action-buttons row. The parent holds this false until the
+  /// floating container has finished expanding, then flips it true so the row
+  /// fades in *after* the open animation settles. Keeping the live-glass
+  /// buttons out of the tree during the expansion both avoids the mid-open
+  /// state flicker and keeps them out of the container's offscreen warp pass
+  /// (where rasterizing Liquid Glass per frame was a major source of lag).
+  /// Defaults to `true` so non-animated callers (previews, tutorial) are
+  /// unaffected.
+  var topButtonsVisible: Bool = true
+
+  /// Set by the parent (to "now") once the container has finished expanding to
+  /// play a one-shot stroke-trace replay: every committed path is drawn
+  /// progressively from start to tip over `strokeTraceDuration`, all sharing
+  /// one 0→1 progress so they start and finish together. `nil` (the default for
+  /// non-animated callers like previews/tutorial, and after the replay ends)
+  /// draws the strokes statically at full.
+  var strokeRevealDate: Date? = nil
+
   /// Track the maximum distance from start point during a gesture to detect dots vs strokes
   @State private var maxDistanceFromStart: CGFloat = 0
   @State private var gestureStartPoint: CGPoint = .zero
@@ -149,6 +180,8 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     captureFlashID: UUID? = nil,
     isCapturing: Bool = false,
     isSaving: Bool = false,
+    topButtonsVisible: Bool = true,
+    strokeRevealDate: Date? = nil,
     onCommitStroke: @escaping () -> Void,
     @ViewBuilder trailingHeader: @escaping () -> TrailingHeader
   ) {
@@ -172,6 +205,8 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.captureFlashID = captureFlashID
     self.isCapturing = isCapturing
     self.isSaving = isSaving
+    self.topButtonsVisible = topButtonsVisible
+    self.strokeRevealDate = strokeRevealDate
     self.onCommitStroke = onCommitStroke
     self.TrailingHeaderView = trailingHeader
   }
@@ -183,89 +218,124 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     userPreferences.enableWigglyStrokes && !isCameraLive && !paths.isEmpty
   }
 
+  /// Top action-buttons row. On iOS 26+ the row gets its own
+  /// `GlassEffectContainer` so the buttons' Liquid Glass composites locally as
+  /// one group (same pattern as `HeaderButtonsView`). Without a container the
+  /// glass layers are hoisted out of the row and end up rendered beneath the
+  /// floating container's black gradient — invisible but still hit-testable.
+  @ViewBuilder
+  private func actionButtonsRow(_ config: CanvasButtonsConfig) -> some View {
+    if #available(iOS 26.0, *) {
+      GlassEffectContainer(spacing: 8) {
+        actionButtonsRowContent(config)
+      }
+    } else {
+      actionButtonsRowContent(config)
+    }
+  }
+
+  private func actionButtonsRowContent(_ config: CanvasButtonsConfig) -> some View {
+    HStack {
+      // Clear button — mounted only when there's something to delete. Hidden
+      // entirely in camera mode (hideStrokeButtons). Mount/unmount rather than
+      // opacity: inside a `GlassEffectContainer` an opacity-0 child's Liquid
+      // Glass capsule still composites and stays visible, so the trash button
+      // would never hide on an empty canvas. A clear frame reserves the slot so
+      // the row layout never shifts. `leadingExtra` (e.g. camera button)
+      // overlays the same slot when the clear button isn't shown.
+      ZStack {
+        Color.clear
+          .frame(width: 44, height: 44)
+        if !config.hideStrokeButtons, config.canClear {
+          Button(action: {
+            if let showConfirmation = config.showClearConfirmation {
+              showConfirmation.wrappedValue = true
+            } else {
+              config.onClear()
+            }
+          }) {
+            Image(systemName: "trash")
+          }
+          .circularGlassButton(tintColor: .red)
+          .transition(.opacity)
+        }
+        if !config.canClear || config.hideStrokeButtons, let leading = config.leadingExtra {
+          leading
+            .transition(.opacity)
+        }
+      }
+      .animation(.easeInOut(duration: 0.2), value: config.canClear)
+      // Dim + disable while saving (the trailing Save button stays active
+      // as the spinner indicator).
+      .opacity(isSaving ? 0.35 : 1.0)
+      .disabled(isSaving)
+
+      Spacer()
+
+      // Trailing content: in camera mode, prefer a `trailingExtra` override
+      // (e.g. album picker button); otherwise show the normal trailing
+      // (e.g. Save button).
+      if config.hideStrokeButtons {
+        if let trailing = config.trailingExtra {
+          trailing
+        }
+      } else if !(TrailingHeaderView() is EmptyView) {
+        TrailingHeaderView()
+      }
+
+    }
+    .overlay {
+      // Center content absolutely centered, ignoring left/right widths.
+      // Dimmed + disabled while saving, matching the leading slot (the
+      // trailing Save button stays active as the spinner indicator).
+      Group {
+        if !config.hideStrokeButtons,
+          config.canUndo || config.canRedo || config.isUndoHistoryLoading
+        {
+          HStack(spacing: 8) {
+            // Undo button
+            if let onUndo = config.onUndo {
+              Button(action: onUndo) {
+                Image(systemName: "arrow.uturn.backward")
+              }
+              .circularGlassButton(tintColor: .appTextSecondary)
+              .disabled(!config.canUndo)
+            }
+
+            // Redo button
+            if let onRedo = config.onRedo {
+              Button(action: onRedo) {
+                Image(systemName: "arrow.uturn.forward")
+              }
+              .circularGlassButton(tintColor: .appTextSecondary)
+              .disabled(!config.canRedo)
+            }
+          }
+          .transition(.opacity)
+        } else if let centerContent = config.centerContent {
+          centerContent
+            .transition(.opacity)
+        }
+      }
+      .opacity(isSaving ? 0.35 : 1.0)
+      .disabled(isSaving)
+    }
+  }
+
   var body: some View {
     VStack(spacing: 16) {
       // Action Buttons Row
       if let config = buttonsConfig {
-        HStack() {
-          // Clear button — use opacity to reserve space and prevent layout shift.
-          // Hidden entirely in camera mode (hideStrokeButtons).
-          // `leadingExtra` (e.g. camera button) overlays the same slot when canClear is false.
-          ZStack {
-            if !config.hideStrokeButtons {
-              Button(action: {
-                if let showConfirmation = config.showClearConfirmation {
-                  showConfirmation.wrappedValue = true
-                } else {
-                  config.onClear()
-                }
-              }) {
-                Image(systemName: "trash")
-              }
-              .circularGlassButton(tintColor: .red)
-              .opacity(config.canClear ? 1.0 : 0.0)
-              .disabled(!config.canClear)
-              .allowsHitTesting(config.canClear)
-            }
-            if !config.canClear || config.hideStrokeButtons, let leading = config.leadingExtra {
-              leading
-                .transition(.opacity.combined(with: .scale))
-            }
+        // Mounted only once `topButtonsVisible` flips true (after the floating
+        // container finishes expanding). The reserved-height frame lives on the
+        // wrapper so the layout is stable whether or not the row is mounted —
+        // the buttons bounce into the already-reserved slot.
+        ZStack {
+          if topButtonsVisible {
+            actionButtonsRow(config)
+              // Plain fade-in for the whole row as the canvas content surfaces.
+              .transition(.opacity)
           }
-          // Dim + disable while saving (the trailing Save button stays active
-          // as the spinner indicator).
-          .opacity(isSaving ? 0.35 : 1.0)
-          .disabled(isSaving)
-
-          Spacer()
-
-          // Trailing content: in camera mode, prefer a `trailingExtra` override
-          // (e.g. album picker button); otherwise show the normal trailing
-          // (e.g. Save button).
-          if config.hideStrokeButtons {
-            if let trailing = config.trailingExtra {
-              trailing
-            }
-          } else if !(TrailingHeaderView() is EmptyView) {
-            TrailingHeaderView()
-          }
-
-        }
-        .overlay {
-          // Center content absolutely centered, ignoring left/right widths.
-          // Dimmed + disabled while saving, matching the leading slot (the
-          // trailing Save button stays active as the spinner indicator).
-          Group {
-            if !config.hideStrokeButtons, config.canUndo || config.canRedo {
-              HStack(spacing: 8) {
-                // Undo button
-                if let onUndo = config.onUndo {
-                  Button(action: onUndo) {
-                    Image(systemName: "arrow.uturn.backward")
-                  }
-                  .circularGlassButton(tintColor: .appTextSecondary)
-                  .disabled(!config.canUndo)
-                  .opacity(config.canUndo ? 1.0 : 0.3)
-                }
-
-                // Redo button
-                if let onRedo = config.onRedo {
-                  Button(action: onRedo) {
-                    Image(systemName: "arrow.uturn.forward")
-                  }
-                  .circularGlassButton(tintColor: .appTextSecondary)
-                  .disabled(!config.canRedo)
-                  .opacity(config.canRedo ? 1.0 : 0.3)
-                }
-              }
-              .transition(.opacity.combined(with: .scale))
-            } else if let centerContent = config.centerContent {
-              centerContent
-                .transition(.opacity.combined(with: .scale))
-            }
-          }
-          .opacity(isSaving ? 0.35 : 1.0)
-          .disabled(isSaving)
         }
         // Reserve enough height for a circular glass button (40pt + 2pt padding on
         // iOS 26+) so the row keeps the same height whether the leading/trailing
@@ -273,6 +343,11 @@ struct SharedCanvasView<TrailingHeader: View>: View {
         // is shown. Avoids a layout shift on entering/leaving camera mode.
         .frame(maxWidth: .infinity, minHeight: 44)
         .padding(.horizontal, 12)
+        // Springy, lightly-damped curve so the buttons overshoot and settle —
+        // a bounce-in as the canvas content surfaces post-expansion. Response is
+        // tied to `strokeTraceDuration` (the drawing's fade-in) so the slots and
+        // the drawing share one duration and read as a single coherent reveal.
+        .animation(.spring(response: strokeTraceDuration, dampingFraction: 0.55), value: topButtonsVisible)
         // Drive the leading/center/trailing transitions with a springy curve.
         // Kept as an implicit `.animation(value:)` rather than baked into the
         // transitions themselves so a `disablesAnimations=true` transaction
@@ -313,16 +388,28 @@ struct SharedCanvasView<TrailingHeader: View>: View {
             .allowsHitTesting(false)
           }
 
-        // Drawing area. When the experimental wiggle is on, a TimelineView
-        // drives a low-fps boil over the committed strokes; otherwise it's a
-        // plain static Canvas. The stroke-input gesture is attached to the
-        // container below so it works identically in either mode.
+        // Drawing area. While `strokeRevealDate` is set (just after the
+        // expansion settles) a display-linked TimelineView fades the whole
+        // drawing in: opacity 0→1 over `strokeTraceDuration`, every committed
+        // path drawn full from the first frame. Once it elapses — or when the
+        // wiggle is on / for static callers — it falls back to the normal full
+        // render. The stroke-input gesture is attached to the container below so
+        // it works identically throughout.
         Group {
-          if wiggleEnabled {
+          if let strokeRevealDate {
+            TimelineView(.animation) { timeline in
+              let elapsed = timeline.date.timeIntervalSince(strokeRevealDate)
+              let progress = min(max(elapsed / strokeTraceDuration, 0), 1)
+              Canvas { context, _ in
+                renderCanvasContents(context: &context, wiggleFrame: nil)
+              }
+              .opacity(progress)
+            }
+          } else if wiggleEnabled {
             // Periodic clock at the boil rate (~7fps) — the effect only changes
             // state that often, so there's no need to redraw at 60fps.
             TimelineView(.periodic(from: wiggleEpoch, by: WigglyStroke.boilInterval)) { timeline in
-              Canvas { context, size in
+              Canvas { context, _ in
                 renderCanvasContents(
                   context: &context,
                   wiggleFrame: WigglyStroke.frameIndex(at: timeline.date.timeIntervalSinceReferenceDate)
@@ -330,13 +417,14 @@ struct SharedCanvasView<TrailingHeader: View>: View {
               }
             }
           } else {
-            Canvas { context, size in
+            Canvas { context, _ in
               renderCanvasContents(context: &context, wiggleFrame: nil)
             }
           }
         }
         .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
         .id(placeholderID)
+        // Hidden in camera mode.
         .opacity(isCameraLive ? 0 : 1)
         .allowsHitTesting(!isCameraLive)
         .gesture(
@@ -535,9 +623,13 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   }
 
   /// Draw the canvas contents into `context`. When `wiggleFrame` is non-nil the
-  /// committed strokes are jittered for that boil frame; the placeholder and the
-  /// in-progress `currentPath` (still under the finger) are always drawn crisp.
-  private func renderCanvasContents(context: inout GraphicsContext, wiggleFrame: Int?) {
+  /// committed strokes are jittered for that boil frame. The whole-drawing
+  /// fade-in reveal is handled by the caller (a TimelineView animating the
+  /// `Canvas`'s opacity), so every stroke here is always drawn full.
+  private func renderCanvasContents(
+    context: inout GraphicsContext,
+    wiggleFrame: Int?
+  ) {
     // Draw placeholder if empty
     if paths.isEmpty && currentPath.isEmpty && !placeholderPaths.isEmpty {
       for (path, isDot) in placeholderPaths {
@@ -556,18 +648,18 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     // Draw all completed paths. Use the precomputed wiggle points only when the
     // boil is active AND the cache is in sync with `paths` (a freshly committed
     // stroke draws straight for the one frame before `wiggleSources` catches up).
-    let boilFrame = (wiggleSources.count == paths.count) ? wiggleFrame : nil
+    let boilFrame = wiggleSources.count == paths.count ? wiggleFrame : nil
     for (index, path) in paths.enumerated() {
       let isDot = index < pathMetadata.count ? pathMetadata[index].isDot : false
-      let drawPath: Path = boilFrame.map {
+      let basePath: Path = boilFrame.map {
         WigglyStroke.path(points: wiggleSources[index], isDot: isDot, frame: $0)
       } ?? path
 
       if isDot {
-        context.fill(drawPath, with: .color(.appAccent))
+        context.fill(basePath, with: .color(.appAccent))
       } else {
         context.stroke(
-          drawPath,
+          basePath,
           with: .color(.appAccent),
           style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
         )
@@ -588,9 +680,15 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     }
   }
 
-  /// Recompute the wiggle point cache from the committed `paths`. Cheap and only
-  /// runs when the stroke set changes (commit/undo/redo/clear/load).
+  /// Recompute the wiggle point cache from the committed `paths`. Only runs when
+  /// the wiggle is actually enabled — otherwise walking every stroke's points
+  /// (`extractPoints`) on the main thread is pure waste, and it used to fire on
+  /// every doodle load even with the experimental feature off.
   private func rebuildWiggleSources() {
+    guard userPreferences.enableWigglyStrokes else {
+      if !wiggleSources.isEmpty { wiggleSources = [] }
+      return
+    }
     wiggleSources = paths.map { $0.extractPoints() }
   }
 

@@ -72,6 +72,17 @@ struct DrawingCanvasView: View {
   /// (e.g. DI device entry-switch) cannot overwrite another entry's doodle data.
   @State private var drawingStateLoaded = false
 
+  /// Monotonic token invalidating in-flight async drawing loads. Bumped when a
+  /// new load starts and when the post-dismiss state clear runs, so a decode
+  /// that lands after the canvas moved on is dropped instead of applied.
+  @State private var loadGeneration = 0
+
+  /// True from the moment an existing doodle starts loading until its undo
+  /// history (built after the open animation settles) is ready. Drives the
+  /// optimistic — disabled — undo/redo buttons so they're present from the
+  /// first frame instead of popping in half a second later.
+  @State private var undoHistoryPending = false
+
   /// Monotonic token used to defer the post-dismiss in-memory state reset until
   /// after the collapse animation finishes. Bumped on every show/hide transition
   /// so a pending deferred reset is invalidated if the canvas reopens first.
@@ -86,6 +97,33 @@ struct DrawingCanvasView: View {
   /// Guards `runSaveFlow()` against re-entry (e.g. a tap-outside arriving while
   /// the Save button's flow is already in flight).
   @State private var isDismissing = false
+
+  /// Controls the top action-buttons row. Held false while the floating
+  /// container expands, then flipped true once it has fully settled so the
+  /// buttons fade in *after* the open animation rather than rendering (and
+  /// glitching through their loading states) mid-expansion.
+  @State private var topButtonsVisible = false
+
+  /// Set to "now" once the expansion settles to play the stroke-trace reveal
+  /// replay (cleared again once it elapses). Until then `paths` is left empty so
+  /// the container expands over a cheap, empty canvas — rendering a dense
+  /// doodle's `Canvas` through the container's scale + warp/glow shaders + glass
+  /// during the spring was the dominant source of open-lag for entries with
+  /// existing drawings.
+  @State private var strokeRevealDate: Date?
+
+  /// True once the post-expansion reveal has run. Lets a decode that lands
+  /// *after* the reveal (rare — slower than the 0.45s settle) surface its
+  /// strokes immediately instead of waiting for a reveal that already passed.
+  @State private var canvasContentRevealed = false
+
+  /// Strokes decoded off-main but not yet applied to `paths` — held until the
+  /// expansion settles, then surfaced by `revealCanvasContent()`.
+  @State private var pendingStrokes: (paths: [Path], metadata: [PathMetadata])?
+
+  /// Monotonic token guarding the deferred reveal so a dismiss/reopen before
+  /// the delay elapses cancels a stale reveal.
+  @State private var canvasRevealGeneration = 0
 
   /// Token for the deferred (post-collapse) persistence scheduled by
   /// `runSaveFlow()`. Bumped whenever the canvas reopens so a pending save is
@@ -163,12 +201,24 @@ struct DrawingCanvasView: View {
     }
   }
 
+  /// Whether the entry being opened already has a persisted doodle. Known
+  /// *synchronously* (no decode), unlike `paths` which is populated by the
+  /// async load — so the top-row layout can settle on its final shape from the
+  /// first frame instead of morphing camera→trash once the strokes land.
+  private var entryHasDoodle: Bool {
+    if isMockMode { return mockEntry?.drawingData != nil }
+    return entry?.drawingData != nil
+  }
+
   /// Whether the camera reference button (top-left) should be visible.
   /// Mirrors the bulb button visibility logic — hidden once any stroke exists
   /// and hidden while the camera live mode is active (the top row is empty
   /// except for the flip-camera button at the center).
   private var canShowCameraButton: Bool {
-    guard isCameraFeatureActive, paths.isEmpty, currentPath.isEmpty, !isCameraLive else {
+    // Never offer the camera slot for an entry that already has a doodle —
+    // `paths` is briefly empty while the async decode is in flight, which used
+    // to flash the camera button before it flipped to the trash button.
+    guard isCameraFeatureActive, !entryHasDoodle, paths.isEmpty, currentPath.isEmpty, !isCameraLive else {
       return false
     }
     // In the camera tutorial, hide the button once a reference has been
@@ -204,6 +254,7 @@ struct DrawingCanvasView: View {
       canClear: !paths.isEmpty || !currentPath.isEmpty,
       canUndo: !undoStack.isEmpty,
       canRedo: !redoStack.isEmpty,
+      isUndoHistoryLoading: undoHistoryPending,
       showClearConfirmation: $showClearConfirmation,
       centerContent: isCameraLive
         ? AnyView(cameraFlipButton)
@@ -241,6 +292,8 @@ struct DrawingCanvasView: View {
           captureFlashID: cameraCaptureFlashID,
           isCapturing: cameraIsCapturing,
           isSaving: isSaving,
+          topButtonsVisible: topButtonsVisible,
+          strokeRevealDate: strokeRevealDate,
           onCommitStroke: commitCurrentStroke
         ) {
           // Save button — becomes a rotating spinner while the drawing persists.
@@ -329,6 +382,11 @@ struct DrawingCanvasView: View {
         checkAccessState()
       }
       loadExistingDrawing()
+      // Hold strokes + buttons back until the expansion settles, then surface
+      // them together once it has finished growing.
+      canvasContentRevealed = false
+      topButtonsVisible = false
+      scheduleCanvasReveal()
     }
     .onChange(of: isShowing) { oldValue, newValue in
       // Invalidate any pending deferred reset from a previous dismiss.
@@ -345,7 +403,15 @@ struct DrawingCanvasView: View {
           checkAccessState()
         }
         loadExistingDrawing()
+        // Strokes + buttons surface only after the container finishes expanding.
+        canvasContentRevealed = false
+        topButtonsVisible = false
+        scheduleCanvasReveal()
       } else {
+        // Reset the reveal immediately so strokes/buttons don't linger through
+        // the collapse and the next open starts empty + buttonless.
+        resetCanvasReveal()
+
         // Tear down camera state so the LED turns off and the transient
         // tracing photo doesn't leak into the next entry.
         if isCameraFeatureActive {
@@ -728,6 +794,88 @@ struct DrawingCanvasView: View {
     }
   }
 
+  // MARK: - Canvas Content Reveal
+
+  /// Settle time of the container's expand spring (`springFkingSatifying`,
+  /// response 0.3 → settles ≈0.45s). The strokes and the top-row buttons are
+  /// both held back until the container has finished growing so they surface
+  /// *after* the open, keeping the expansion itself butter-smooth.
+  private static let canvasRevealDelay: TimeInterval = 0.45
+
+  /// Duration of the stroke-trace reveal replay. Kept in sync with
+  /// `SharedCanvasView`'s own `strokeTraceDuration` (and the button bounce) so
+  /// strokes and buttons land together.
+  private static let strokeTraceDuration: TimeInterval = 0.5
+
+  /// Schedule the post-expansion reveal of the strokes + buttons. Guarded by a
+  /// generation token so a dismiss (or reopen) before the delay elapses cancels
+  /// the pending reveal.
+  private func scheduleCanvasReveal() {
+    canvasRevealGeneration += 1
+    let token = canvasRevealGeneration
+    DispatchQueue.main.asyncAfter(deadline: .now() + Self.canvasRevealDelay) {
+      guard token == canvasRevealGeneration, isShowing else { return }
+      revealCanvasContent()
+    }
+  }
+
+  /// Surface the canvas content now that the expansion has settled: apply any
+  /// strokes that finished decoding during the animation, bounce the buttons
+  /// in, and kick off the stroke-trace replay so they land together.
+  private func revealCanvasContent() {
+    canvasContentRevealed = true
+    applyPendingStrokes()
+    // Trace the strokes in (SharedCanvasView animates this one-shot replay).
+    startStrokeTrace()
+    // Bounce the buttons in (SharedCanvasView animates this with its spring).
+    topButtonsVisible = true
+  }
+
+  /// Start the stroke-trace replay by stamping `strokeRevealDate`, then clear it
+  /// once the replay has elapsed so the canvas drops back to its static (or
+  /// boiling) render and the display-linked TimelineView stops redrawing.
+  private func startStrokeTrace() {
+    let now = Date()
+    strokeRevealDate = now
+    DispatchQueue.main.asyncAfter(deadline: .now() + Self.strokeTraceDuration + 0.1) {
+      // Skip if a newer trace started (or a dismiss cleared it) in the meantime.
+      guard strokeRevealDate == now else { return }
+      strokeRevealDate = nil
+    }
+  }
+
+  /// Reset the reveal state immediately and cancel any pending reveal — used on
+  /// dismiss so the next open starts from a clean (empty, buttonless) expand.
+  private func resetCanvasReveal() {
+    canvasRevealGeneration += 1
+    canvasContentRevealed = false
+    topButtonsVisible = false
+    strokeRevealDate = nil
+    pendingStrokes = nil
+  }
+
+  /// Move strokes decoded during the expansion into `paths`. Prepends ahead of
+  /// anything committed in the meantime so nothing the user drew is dropped,
+  /// and builds the undo history (deferred slightly so the reveal fade isn't
+  /// disrupted by the O(n²) bookkeeping).
+  private func applyPendingStrokes() {
+    guard let pending = pendingStrokes else { return }
+    pendingStrokes = nil
+
+    paths = pending.paths + paths
+    pathMetadata = pending.metadata + pathMetadata
+    drawingStateLoaded = true
+
+    let generation = loadGeneration
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+      guard generation == loadGeneration else { return }
+      undoStack = (0..<paths.count).map { i in
+        (Array(paths.prefix(i)), Array(pathMetadata.prefix(i)))
+      }
+      undoHistoryPending = false
+    }
+  }
+
   // MARK: - Private Methods
 
   private func commitCurrentStroke() {
@@ -794,11 +942,6 @@ struct DrawingCanvasView: View {
   }
 
   private func loadExistingDrawing() {
-    // Mark that we've loaded (or attempted to load) drawing state for this
-    // session. This makes the canvas authoritative — save operations are
-    // allowed only after this flag is set.
-    drawingStateLoaded = true
-
     // Reset inspiration prompt for new session
     currentPrompt = nil
     isIlluminated = false
@@ -810,7 +953,9 @@ struct DrawingCanvasView: View {
     }
 
     guard let data = entry?.drawingData else {
-      // Initialize with empty state for new drawings
+      // Initialize with empty state for new drawings. Nothing to decode, so
+      // the canvas is authoritative — and saves allowed — immediately.
+      drawingStateLoaded = true
       undoStack.removeAll()
       redoStack.removeAll()
       // Clear drawing
@@ -819,9 +964,6 @@ struct DrawingCanvasView: View {
       currentPath = Path()
       isDrawing = false
       currentPathIsDot = false
-
-      // Clear redo stack when new action is performed
-      redoStack.removeAll()
       return
     }
 
@@ -831,6 +973,7 @@ struct DrawingCanvasView: View {
   private func loadMockDrawing() {
     guard let mockEntry = mockEntry, let data = mockEntry.drawingData else {
       // Initialize with empty state for new drawings
+      drawingStateLoaded = true
       undoStack.removeAll()
       redoStack.removeAll()
       paths.removeAll()
@@ -838,17 +981,56 @@ struct DrawingCanvasView: View {
       currentPath = Path()
       isDrawing = false
       currentPathIsDot = false
-      redoStack.removeAll()
       return
     }
 
     loadPathsFromData(data)
   }
 
+  /// Decode and rebuild persisted strokes off the main thread, applying them
+  /// in a quick main-queue hop. Doing all of this synchronously — as it used
+  /// to — ran in the same main-thread turn that starts the expand spring, so
+  /// opening an existing doodle visibly hitched the first frames of the
+  /// expansion (JSON-decoding every stroke point plus the O(n²) undo-history
+  /// build). The apply usually lands within the first frames of the
+  /// animation, masked by the content fade-in.
+  ///
+  /// The canvas stays non-authoritative (`drawingStateLoaded == false`) until
+  /// the strokes are applied, so the existing save guards skip any save
+  /// attempt during the in-flight window instead of clobbering the entry with
+  /// an empty canvas.
   private func loadPathsFromData(_ data: Data) {
-    do {
-      let decodedPaths = try JSONDecoder().decode([PathData].self, from: data)
-      paths = decodedPaths.map { pathData in
+    // Drop any leftover strokes from a previous session synchronously so the
+    // decoded result never merges with them (e.g. reopening the same date
+    // before its 0.45s-deferred post-dismiss clear has run).
+    paths.removeAll()
+    pathMetadata.removeAll()
+    undoStack.removeAll()
+    redoStack.removeAll()
+
+    // Existing data implies an undo history will arrive — show the undo/redo
+    // buttons optimistically (disabled) from the first frame.
+    undoHistoryPending = true
+
+    loadGeneration += 1
+    let generation = loadGeneration
+
+    DispatchQueue.global(qos: .userInitiated).async {
+      let decodedPaths: [PathData]
+      do {
+        decodedPaths = try JSONDecoder().decode([PathData].self, from: data)
+      } catch {
+        print("Failed to load drawing data: \(error)")
+        DispatchQueue.main.async {
+          guard generation == loadGeneration else { return }
+          undoHistoryPending = false
+        }
+        return
+      }
+
+      // Rebuild the stroke geometry off-main too — Path is a value type with
+      // no main-thread affinity, and this walk is the other big chunk of work.
+      let loadedPaths = decodedPaths.map { pathData in
         var path = Path()
         if pathData.isDot && pathData.points.count >= 1 {
           // Recreate dot as ellipse
@@ -873,20 +1055,25 @@ struct DrawingCanvasView: View {
         }
         return path
       }
+      let loadedMetadata = decodedPaths.map { PathMetadata(isDot: $0.isDot) }
 
-      // Load metadata as well
-      pathMetadata = decodedPaths.map { PathMetadata(isDot: $0.isDot) }
+      DispatchQueue.main.async {
+        guard generation == loadGeneration else { return }
 
-      // Pre-populate undo stack from stroke history so Undo is
-      // immediately available when opening an existing doodle.
-      // Each entry is a progressive prefix of the loaded strokes.
-      undoStack = (0..<paths.count).map { i in
-        (Array(paths.prefix(i)), Array(pathMetadata.prefix(i)))
+        // Hold the decoded strokes until the expansion settles instead of
+        // applying them mid-animation — rendering a dense doodle's Canvas
+        // through the container's scale + warp/glow shaders + glass during the
+        // spring is what hitched the open. `revealCanvasContent()` applies and
+        // fades them in once the container has finished growing.
+        pendingStrokes = (loadedPaths, loadedMetadata)
+
+        // If the decode somehow outran the expansion (slower devices, tiny
+        // doodles), the reveal has already passed — trace them in immediately.
+        if canvasContentRevealed {
+          applyPendingStrokes()
+          startStrokeTrace()
+        }
       }
-      redoStack.removeAll()
-
-    } catch {
-      print("Failed to load drawing data: \(error)")
     }
   }
 
@@ -952,6 +1139,10 @@ struct DrawingCanvasView: View {
   /// (undo/redo/trash → camera/inspiration) and the saving dim/spinner persist
   /// smoothly through the animation.
   private func clearInMemoryDrawingState() {
+    // Invalidate any in-flight async load so a slow decode can't resurrect
+    // strokes (and re-arm the save guards) after this teardown.
+    loadGeneration += 1
+    undoHistoryPending = false
     paths.removeAll()
     pathMetadata.removeAll()
     currentPath = Path()

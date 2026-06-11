@@ -25,7 +25,7 @@ private struct RevealingCharacterView: View {
   var body: some View {
     Text(character)
       .font(.appCallout(weight: .semibold))
-      .foregroundStyle(isGlowing ? Color.white : Color.appTextSecondary)
+      .foregroundStyle(isGlowing ? Color.white : Color.appTextPrimary)
       .opacity(isVisible ? 1 : 0)
       .blur(radius: isVisible ? 0 : 5)
       .offset(x: isVisible ? 0 : -10, y: isVisible ? 0 : 10)
