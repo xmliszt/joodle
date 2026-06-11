@@ -23,9 +23,15 @@ struct FeatureTipOverlayView: View {
     var body: some View {
         GeometryReader { geo in
             if let tip = manager.activeTip, let target = resolvedTarget(tip: tip, screenSize: geo.size) {
+                // Anchor frames are reported in global space, but the bubble
+                // positions itself in this overlay's local space. They coincide
+                // when the overlay fills the window (app root), but when it's
+                // hosted inside a presented sheet the overlay's origin is offset
+                // from the window — so translate the target into local space.
+                let localOrigin = geo.frame(in: .global).origin
                 FeatureTipBubble(
                     message: tip.message,
-                    targetFrame: target.frame,
+                    targetFrame: target.frame.offsetBy(dx: -localOrigin.x, dy: -localOrigin.y),
                     horizontalTarget: tip.horizontalTarget,
                     screenSize: geo.size
                 )

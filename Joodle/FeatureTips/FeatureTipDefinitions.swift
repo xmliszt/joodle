@@ -19,6 +19,8 @@ enum FeatureTipDefinitions {
         static let wigglyExperimentRow = "featureTip.wigglyStrokes.experimentRow"
         /// The "Wiggly Strokes" toggle on the Experimental Features screen.
         static let wigglyToggle = "featureTip.wigglyStrokes.toggle"
+        /// The Instagram quick-share button in `ShareCardSelectorView`.
+        static let instagramShare = "featureTip.instagramShare"
     }
 
     /// Stable scope identifiers for `.scoped` tips. A scope is a whole screen
@@ -62,6 +64,17 @@ enum FeatureTipDefinitions {
             behavior: .scoped(scopeID: ScopeID.experimentalFeatures, defaultEdge: .bottom),
             horizontalTarget: .trailing,
             priority: 6,
+            showsAfterOnboarding: true
+        ),
+        // Surface the Instagram quick-share path. The bubble points at the
+        // Instagram share button, which is always on screen while the share
+        // sheet is open (when Instagram is installed).
+        FeatureTip(
+            id: "featureTip.instagramShare",
+            anchorID: AnchorID.instagramShare,
+            featureKey: "instagramShare",
+            message: "Share your doodle to Instagram",
+            priority: 1,
             showsAfterOnboarding: true
         )
     ]

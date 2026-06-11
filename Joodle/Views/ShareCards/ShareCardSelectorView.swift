@@ -375,6 +375,12 @@ struct ShareCardSelectorView: View {
       }
       .interactiveDismissDisabled(isSharing || isExportingAnimated)
       .postHogScreenView("Share Card")
+      // This screen is presented as a sheet, so the app-root feature-tip
+      // overlay is occluded by it. Host a second overlay here (the manager is a
+      // shared singleton) so the Instagram-share tip can surface over the sheet.
+      .overlay {
+        FeatureTipOverlayView()
+      }
     }
   }
 
@@ -419,6 +425,7 @@ struct ShareCardSelectorView: View {
       .background(instagramGradient)
       .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
     }
+    .featureTip(FeatureTipDefinitions.AnchorID.instagramShare)
   }
 
   // MARK: - Share Button Customization
