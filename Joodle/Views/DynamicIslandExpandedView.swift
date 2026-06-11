@@ -313,7 +313,11 @@ struct DynamicIslandExpandedView<Content: View>: View {
           }
         }
       } else {
-        Color.black
+        // No Liquid Glass: a frosted ultra-thin material gives a soft blur of
+        // the content behind the bottom region (where the gradient fades to
+        // clear) instead of the clear-glass look, which renders badly on these
+        // OSes.
+        Rectangle().fill(.ultraThinMaterial)
       }
 
       LinearGradient(
@@ -327,8 +331,12 @@ struct DynamicIslandExpandedView<Content: View>: View {
       )
 
       // Half-oval contrast glow rising from the bottom edge so the prompt
-      // text stays legible over the clear refractive glass.
-      contrastWash
+      // text stays legible over the clear refractive glass. Only needed on
+      // Liquid Glass: the frosted material fallback is opaque enough on its
+      // own, so the wash is redundant there.
+      if #available(iOS 26.0, *) {
+        contrastWash
+      }
 
       // Solid cover while collapsed; fades out with the expand spring so the
       // glass bottom is only revealed once the container leaves the cutout.

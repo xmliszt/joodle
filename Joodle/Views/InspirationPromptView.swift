@@ -22,10 +22,22 @@ private struct RevealingCharacterView: View {
   @State private var isVisible = false
   @State private var isGlowing = false
 
+  /// Settled colour once the glow fades. On Liquid Glass the container's clear
+  /// glass refracts the content behind it, so the text rides `appTextPrimary`
+  /// (which flips with the theme) to keep contrast. On pre-Liquid-Glass OSes
+  /// the container is always a dark frosted surface, so the text is always white.
+  private var settledColor: Color {
+    if #available(iOS 26.0, *) {
+      return Color.appTextPrimary
+    } else {
+      return .white
+    }
+  }
+
   var body: some View {
     Text(character)
       .font(.appCallout(weight: .semibold))
-      .foregroundStyle(isGlowing ? Color.white : Color.appTextPrimary)
+      .foregroundStyle(isGlowing ? Color.white : settledColor)
       .opacity(isVisible ? 1 : 0)
       .blur(radius: isVisible ? 0 : 5)
       .offset(x: isVisible ? 0 : -10, y: isVisible ? 0 : 10)
