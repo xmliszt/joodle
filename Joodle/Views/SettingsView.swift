@@ -709,14 +709,18 @@ struct SettingsView: View {
       // Language
       HStack {
         SettingsIconView(systemName: "globe", backgroundColor: .indigo)
+        Text("Language")
+          .foregroundColor(.primary)
+        Spacer()
         Picker(selection: $selectedLanguage) {
           ForEach(AppLanguage.allCases) { language in
             Text(language.displayName).tag(language)
           }
         } label: {
+          // Hidden via .labelsHidden(); retained as the picker's VoiceOver label.
           Text("Language")
-            .foregroundColor(.primary)
         }
+        .labelsHidden()
         .onChange(of: selectedLanguage) { oldValue, newValue in
           guard oldValue != newValue else { return }
           let previousCode = userPreferences.appLanguage.isEmpty
@@ -1513,11 +1517,14 @@ struct DailyReminderSettingsView: View {
         if userPreferences.isDailyReminderEnabled {
           HStack {
             SettingsIconView(systemName: "clock.fill", backgroundColor: .red)
+            Text("Reminder Time")
+            Spacer()
             DatePicker(
               "Reminder Time",
               selection: dailyReminderTimeBinding,
               displayedComponents: .hourAndMinute
             )
+            .labelsHidden()
           }
         }
       } footer: {
