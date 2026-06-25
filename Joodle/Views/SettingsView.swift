@@ -323,46 +323,17 @@ struct SettingsView: View {
     localizedString("OK", for: selectedLanguage.code)
   }
 
-  private func localizedString(_ key: String, for languageCode: String) -> String {
-    let resolvedLocalizations = Bundle.preferredLocalizations(
-      from: Bundle.main.localizations,
-      forPreferences: [languageCode]
-    )
-
-    for localization in resolvedLocalizations {
-      if let resolved = localizedStringInBundle(key, lproj: localization) {
-        return resolved
-      }
-    }
-
-    if let exact = localizedStringInBundle(key, lproj: languageCode) {
-      return exact
-    }
-
-    // Fallback from codes like "zh-Hans" to base language "zh" if needed.
-    if let baseLanguageCode = languageCode.split(separator: "-").first {
-      let base = String(baseLanguageCode)
-      if base != languageCode, let fallback = localizedStringInBundle(key, lproj: base) {
-        return fallback
-      }
-    }
-
-    // English is the development language; prefer key text over current-bundle lookup.
-    if languageCode == "en" || languageCode.hasPrefix("en-") {
-      return key
-    }
-
-    return Bundle.main.localizedString(forKey: key, value: key, table: nil)
-  }
-
-  private func localizedStringInBundle(_ key: String, lproj: String) -> String? {
-    guard let lprojPath = Bundle.main.path(forResource: lproj, ofType: "lproj"),
-          let localizedBundle = Bundle(path: lprojPath) else {
-      return nil
-    }
-
-    let localized = localizedBundle.localizedString(forKey: key, value: key, table: nil)
-    return localized == key ? nil : localized
+  /// Resolves a string in a specific target language rather than the app's
+  /// current language — used to show the language-change alert in the language
+  /// the user is switching *to*.
+  ///
+  /// Takes a `LocalizedStringResource` (not a raw `String`) so the literal at the
+  /// call site is auto-extracted into the String Catalog. That keeps these keys
+  /// from silently going missing, and stops Xcode flagging them as stale.
+  private func localizedString(_ resource: LocalizedStringResource, for languageCode: String) -> String {
+    var localized = resource
+    localized.locale = Locale(identifier: languageCode)
+    return String(localized: localized)
   }
   
   var body: some View {

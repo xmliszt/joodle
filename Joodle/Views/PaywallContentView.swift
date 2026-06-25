@@ -381,7 +381,7 @@ struct PaywallContentView: View {
     // Onboarding reads as a full step: title is left-aligned and wraps freely.
     // Other surfaces stay centered above their price cards.
     VStack(alignment: isOnboarding ? .leading : .center, spacing: 8) {
-      Text(headerTitle)
+      Text(headerTitleDisplay)
         .font(.appFont(size: 34, weight: .bold))
         .multilineTextAlignment(isOnboarding ? .leading : .center)
         .fixedSize(horizontal: false, vertical: true)
@@ -400,6 +400,12 @@ struct PaywallContentView: View {
     case .expired:
       return "Keep your Joodle Pro"
     }
+  }
+
+  /// Resolved title with "Joodle Pro" joined by a non-breaking space so the
+  /// brand never splits across lines when the title wraps.
+  private var headerTitleDisplay: String {
+    String(localized: headerTitle).replacingOccurrences(of: "Joodle Pro", with: "Joodle\u{00A0}Pro")
   }
 
   // MARK: - Context Body
