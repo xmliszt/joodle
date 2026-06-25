@@ -10,6 +10,7 @@ import StoreKit
 
 struct StandalonePaywallView: View {
     let source: String
+    var context: PaywallContext = .expired
 
     @Environment(\.dismiss) private var dismiss
     @StateObject private var storeManager = StoreKitManager.shared
@@ -26,6 +27,7 @@ struct StandalonePaywallView: View {
                         .scaleEffect(1.5)
                 } else {
                     PaywallContentView(configuration: PaywallConfiguration(
+                        context: context,
                         useOnboardingStyle: false,
                         paywallSource: source,
                         onPurchaseComplete: {
@@ -44,14 +46,28 @@ struct StandalonePaywallView: View {
                     ))
                 }
             }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.appFont(size: 15, weight: .bold))
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
         }
+        .presentationDragIndicator(.visible)
         .postHogScreenView("Paywall - Standalone")
         .task {
             // Refresh subscription status from StoreKit before showing paywall
             await subscriptionManager.updateSubscriptionStatus()
 
-            // If user is already subscribed, dismiss immediately
-            if subscriptionManager.hasPremiumAccess {
+            // The pay screen is pointless for someone who already has premium — dismiss it.
+            // The trial-status sheet is the exception: a trial user DOES have premium access
+            // (via the grace period), and seeing their own trial status is the whole point.
+            if context == .expired, subscriptionManager.hasPremiumAccess {
                 dismiss()
                 return
             }

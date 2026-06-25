@@ -9,6 +9,7 @@
 
 import Foundation
 import Combine
+@preconcurrency import UserNotifications
 
 @MainActor
 class GracePeriodManager: ObservableObject {
@@ -23,6 +24,12 @@ class GracePeriodManager: ObservableObject {
 
     private static let startDateKey = "grace_period_start_date"
     private static let paywallShownKey = "has_shown_grace_expired_paywall"
+
+    /// Identifier for the gentle "trial ending soon" local notification.
+    private static let trialReminderIdentifier = "joodle_trial_reminder"
+
+    /// Fire the trial reminder this long before expiry (2 days → at day 5 of a 7-day trial).
+    static let trialReminderLeadTime: TimeInterval = 2 * 24 * 60 * 60
 
     // MARK: - Published Properties
 
@@ -82,6 +89,7 @@ class GracePeriodManager: ObservableObject {
         // Check if a start date already exists (in either store)
         if gracePeriodStartDate != nil {
             updateState()
+            scheduleTrialReminderIfNeeded()
             return
         }
 
@@ -89,6 +97,7 @@ class GracePeriodManager: ObservableObject {
         let now = Date()
         setStartDate(now)
         updateState()
+        scheduleTrialReminderIfNeeded()
 
         // Track analytics
         AnalyticsManager.shared.trackGracePeriodStarted(startDate: now)
@@ -116,6 +125,14 @@ class GracePeriodManager: ObservableObject {
     var gracePeriodExpirationDate: Date? {
         guard let startDate = gracePeriodStartDate else { return nil }
         return startDate.addingTimeInterval(Self.gracePeriodDuration)
+    }
+
+    /// Fraction (0...1) of the trial elapsed, for the timeline progress fill.
+    /// 0 when not started; 1 once expired.
+    var gracePeriodProgress: Double {
+        guard let startDate = gracePeriodStartDate else { return 0 }
+        let elapsed = Date().timeIntervalSince(startDate)
+        return min(max(elapsed / Self.gracePeriodDuration, 0), 1)
     }
 
     // MARK: - Private Helpers
@@ -188,6 +205,9 @@ class GracePeriodManager: ObservableObject {
             hasGracePeriodExpired = true
             gracePeriodDaysRemaining = 0
 
+            // No reminder needed once the trial is over.
+            cancelTrialReminder()
+
             if wasInGracePeriod {
                 // Grace period just expired — track it
                 AnalyticsManager.shared.trackGracePeriodExpired()
@@ -214,9 +234,70 @@ class GracePeriodManager: ObservableObject {
     }
 
     @objc private func cloudStoreDidChange(_ notification: Notification) {
-        // iCloud KVS changed externally — restore and recalculate
-        restoreFromCloudIfNeeded()
-        updateState()
+        // KVS change notifications are delivered on a background thread; hop to
+        // the main actor before touching the @Published state.
+        Task { @MainActor in
+            restoreFromCloudIfNeeded()
+            updateState()
+        }
+    }
+
+    // MARK: - Trial Reminder
+
+    /// Schedule a gentle local notification ~2 days before the trial ends (day 5 of 7).
+    /// Idempotent: re-adding with the same identifier replaces any existing one.
+    /// No-op for subscribers, or once the reminder date has already passed.
+    func scheduleTrialReminderIfNeeded() {
+        // Subscribers don't need a trial reminder.
+        guard !SubscriptionManager.shared.isSubscribed else {
+            cancelTrialReminder()
+            return
+        }
+        guard let startDate = gracePeriodStartDate else { return }
+
+        let fireDate = startDate.addingTimeInterval(Self.gracePeriodDuration - Self.trialReminderLeadTime)
+        guard fireDate > Date() else { return }  // day 5 already passed — nothing to schedule
+
+        let components = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute, .second], from: fireDate
+        )
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: Self.trialReminderIdentifier,
+            content: trialReminderContent(),
+            trigger: trigger
+        )
+
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+                return
+            }
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ [GracePeriod] Error scheduling trial reminder: \(error)")
+                } else {
+                    print("✅ [GracePeriod] Trial reminder scheduled for \(fireDate)")
+                }
+            }
+        }
+    }
+
+    /// Cancel the pending trial reminder, if any.
+    func cancelTrialReminder() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: [Self.trialReminderIdentifier]
+        )
+    }
+
+    /// Warm, pressure-free copy for the trial reminder. Joodle's trial has no auto-charge,
+    /// so the tone reassures rather than warns — the user simply returns to Free, data intact.
+    private func trialReminderContent() -> UNMutableNotificationContent {
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "2 days left of Joodle Pro ✨")
+        content.body = String(localized: "Hope you're loving Pro! You've got 2 more days of unlimited entries, every widget, and watermark-free sharing.")
+        content.sound = .default
+        content.userInfo = ["isTrialReminder": true]
+        return content
     }
 
     // MARK: - Testing Methods (Non-Production)
@@ -234,8 +315,29 @@ class GracePeriodManager: ObservableObject {
         cloudStore.removeObject(forKey: Self.paywallShownKey)
         cloudStore.synchronize()
         hasAttemptedStart = false
+        cancelTrialReminder()
         updateState()
         print("🔄 Grace period reset")
+    }
+
+    /// Fire the trial reminder notification shortly (for testing its copy/appearance).
+    /// Background the app within a few seconds to see it on the lock screen.
+    func sendTrialReminderNow() {
+        guard AppEnvironment.isActuallyNonProduction else { return }
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: Self.trialReminderIdentifier + "_debug",
+            content: trialReminderContent(),
+            trigger: trigger
+        )
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ [GracePeriod] Error sending test trial reminder: \(error)")
+            } else {
+                print("✅ [GracePeriod] Test trial reminder will fire in 5s")
+            }
+        }
     }
 
     /// Set a custom start date for testing.

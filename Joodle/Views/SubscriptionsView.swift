@@ -192,7 +192,7 @@ struct SubscriptionsView: View {
           .font(.appFont(size: 28, weight: .bold))
 
         let daysLeft = GracePeriodManager.shared.gracePeriodDaysRemaining
-        Text(String(localized: "You have free access to all Pro features for \(localizedDayCount(daysLeft)) more."))
+        Text(String(localized: "You're on the Pro Trial — experiencing every Pro feature for \(localizedDayCount(daysLeft)) more."))
           .font(.appSubheadline())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.center)
@@ -202,7 +202,7 @@ struct SubscriptionsView: View {
           Image(systemName: "clock.fill")
             .font(.appCaption2())
             .foregroundStyle(.appAccent)
-          Text(String(localized: "Free access · \(localizedDayCount(daysLeft)) left"))
+          Text(String(localized: "Pro Trial · \(localizedDayCount(daysLeft)) left"))
             .font(.appCaption())
         }
         .foregroundColor(.secondary)
@@ -432,7 +432,7 @@ struct SubscriptionsView: View {
       }
       return String(localized: "FREE TRIAL")
     } else if GracePeriodManager.shared.isInGracePeriod {
-      return String(localized: "FREE ACCESS")
+      return String(localized: "PRO TRIAL")
     }
     return nil
   }

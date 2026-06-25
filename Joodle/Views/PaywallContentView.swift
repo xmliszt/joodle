@@ -10,8 +10,21 @@ import StoreKit
 
 // MARK: - Configuration
 
+/// The surface a paywall is being shown in. Drives which sections render.
+enum PaywallContext: Equatable {
+  /// Informative intro shown during onboarding: value + trial timeline, no purchase.
+  case onboarding
+  /// Shown mid-trial from the Settings banner. Timeline reflects `daysLeft`; offers optional early upgrade.
+  case trialStatus(daysLeft: Int)
+  /// The real pay screen, shown once the trial has ended: Free-vs-Pro comparison + plans.
+  case expired
+}
+
 /// Configuration for PaywallContentView behavior and appearance
 struct PaywallConfiguration {
+  /// The surface this paywall is shown in. Determines section composition.
+  var context: PaywallContext = .expired
+
   /// Whether to use onboarding-style buttons
   var useOnboardingStyle: Bool = false
 
@@ -305,24 +318,21 @@ struct PaywallContentView: View {
   @State private var errorMessage: String?
   @State private var useProMode = true
   @State private var showRedeemCode = false
+  @State private var showEarlyUpgrade = false
 
   var body: some View {
-    ScrollView {
-      VStack(spacing: 16) {
-        // Header Section
-        headerSection
+    VStack(spacing: 0) {
+      ScrollView {
+        VStack(spacing: 16) {
+          headerSection
+          contextBody
+        }
+      }
 
-        // Features Section
-        featuresSection
-
-        // Pricing Section
-        pricingSection
-
-        // CTA Section
-        ctaSection
-
-        // Legal Links
-        legalLinksSection
+      // In onboarding, the continue button stays pinned to the bottom like the
+      // other onboarding steps rather than scrolling with the content.
+      if case .onboarding = configuration.context {
+        onboardingContinueButton
       }
     }
     .alert(String(localized: "Purchase Failed"), isPresented: $showError) {
@@ -358,12 +368,72 @@ struct PaywallContentView: View {
 
   private var headerSection: some View {
     VStack(spacing: 8) {
-      Text("Get Joodle Pro")
+      Text(headerTitle)
         .font(.appFont(size: 34, weight: .bold))
         .multilineTextAlignment(.center)
     }
     .padding(.top, 24)
     .padding(.horizontal, 8)
+  }
+
+  private var headerTitle: LocalizedStringResource {
+    switch configuration.context {
+    case .onboarding:
+      return "Your 7 days of Pro"
+    case .trialStatus(let daysLeft):
+      return "Pro Trial — \(daysLeft) days left"
+    case .expired:
+      return "Get Joodle Pro"
+    }
+  }
+
+  // MARK: - Context Body
+
+  /// Composes the body sections according to which surface the paywall is shown in.
+  @ViewBuilder
+  private var contextBody: some View {
+    switch configuration.context {
+    case .onboarding:
+      TrialTimelineView(style: .onboarding, progress: 0)
+      ProComparisonTable()
+      onboardingContinueButton
+
+    case .trialStatus:
+      TrialTimelineView(style: .trial, progress: GracePeriodManager.shared.gracePeriodProgress)
+      ProComparisonTable()
+      if showEarlyUpgrade {
+        pricingSection
+        ctaSection
+        legalLinksSection
+      } else {
+        earlyUpgradeButton
+      }
+
+    case .expired:
+      ProComparisonTable()
+      pricingSection
+      ctaSection
+      legalLinksSection
+    }
+  }
+
+  /// No-commitment continue button used in the onboarding context (shared glass style).
+  private var onboardingContinueButton: some View {
+    OnboardingButtonView(label: "Continue") {
+      configuration.onContinueFree?()
+    }
+    .padding(.top, 8)
+  }
+
+  /// Secondary affordance in the trial-status context that reveals the pricing/purchase section.
+  /// Uses the same glass style as the onboarding action button for consistency.
+  private var earlyUpgradeButton: some View {
+    OnboardingButtonView(label: "Get Joodle Pro now") {
+      withAnimation(.springFkingSatifying) {
+        showEarlyUpgrade = true
+      }
+    }
+    .padding(.top, 8)
   }
 
   // MARK: - Features Section
@@ -820,16 +890,20 @@ struct PaywallContentView: View {
 
 // MARK: - Preview
 
-#Preview("Default Style") {
-  PaywallContentView(configuration: PaywallConfiguration(
-    useOnboardingStyle: false
-  ))
+#Preview("Expired (pay screen)") {
+  PaywallContentView(configuration: PaywallConfiguration(context: .expired))
 }
 
-#Preview("Onboarding Style with Toggle") {
-  PaywallContentView(configuration: PaywallConfiguration(
-    useOnboardingStyle: true
-  ))
+#Preview("Onboarding (informative)") {
+  PaywallContentView(configuration: PaywallConfiguration(context: .onboarding))
+}
+
+#Preview("Trial Status (5 days left)") {
+  PaywallContentView(configuration: PaywallConfiguration(context: .trialStatus(daysLeft: 5)))
+}
+
+#Preview("Trial Status (1 day left)") {
+  PaywallContentView(configuration: PaywallConfiguration(context: .trialStatus(daysLeft: 1)))
 }
 
 #Preview("Slider CTA - Pro Mode") {

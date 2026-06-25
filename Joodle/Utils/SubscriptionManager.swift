@@ -170,6 +170,9 @@ class SubscriptionManager: ObservableObject {
     // Free plan limits - maximum total Joodles allowed for free users
     nonisolated static let freeJoodlesAllowed = 30
 
+    // Free plan limits - maximum anniversary alarms allowed for free users
+    nonisolated static let freeAnniversaryAlarmsAllowed = 5
+
     var maxJoodlesAllowed: Int {
         hasPremiumAccess ? Int.max : Self.freeJoodlesAllowed
     }
@@ -375,6 +378,9 @@ class SubscriptionManager: ObservableObject {
 
     private func handleSubscriptionGained() {
         print("🎉 Subscription gained!")
+
+        // A subscriber no longer needs the trial-ending reminder.
+        GracePeriodManager.shared.cancelTrialReminder()
 
         // Auto-disable watermark for new pro users (they can now remove it)
         if UserPreferences.shared.shareCardWatermarkEnabled {

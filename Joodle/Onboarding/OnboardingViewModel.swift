@@ -10,6 +10,7 @@ enum OnboardingStep: Hashable, CaseIterable {
     case featureIntroWidgets       // Feature intro: Widgets (kept - can't be interactive)
     case icloudConfig              // iCloud sync configuration
     case dailyReminder             // Daily reminder configuration
+    case proIntro                  // Informative Joodle Pro trial intro (timeline, no purchase)
     case onboardingCompletion      // Completion step
 }
 
@@ -54,6 +55,22 @@ class OnboardingViewModel: ObservableObject {
     /// Skip for: return users (reinstall with existing subscription)
     var shouldShowFeatureIntro: Bool {
         !isReturnUser
+    }
+
+    /// Whether to show the informative Joodle Pro trial intro.
+    /// Only genuine first-time users see it — skip for revisits and users who already subscribe,
+    /// since the "your 7 days of Pro starts now" framing only holds for a fresh grace period.
+    var shouldShowProIntro: Bool {
+        !isRevisitingOnboarding && !StoreKitManager.shared.hasActiveSubscription
+    }
+
+    /// Advance from the final setup step to the Pro intro (if eligible) or straight to completion.
+    private func advanceAfterSetup() {
+        if shouldShowProIntro {
+            navigationPath.append(OnboardingStep.proIntro)
+        } else {
+            navigationPath.append(OnboardingStep.onboardingCompletion)
+        }
     }
 
     var modelContext: ModelContext?
@@ -105,7 +122,11 @@ class OnboardingViewModel: ObservableObject {
             navigationPath.append(OnboardingStep.dailyReminder)
 
         case .dailyReminder:
-            // After daily reminder config, go to completion
+            // After daily reminder config, show the Pro trial intro (or skip to completion)
+            advanceAfterSetup()
+
+        case .proIntro:
+            // After the informative Pro intro, finish up
             navigationPath.append(OnboardingStep.onboardingCompletion)
 
         case .onboardingCompletion:
@@ -121,7 +142,7 @@ class OnboardingViewModel: ObservableObject {
         // Track that user skipped iCloud sync
         AnalyticsManager.shared.trackSettingChanged(name: "icloud_sync_onboarding", value: "skipped")
 
-        navigationPath.append(OnboardingStep.onboardingCompletion)
+        advanceAfterSetup()
     }
 
     func goBack() {
@@ -321,6 +342,7 @@ class OnboardingViewModel: ObservableObject {
         case .featureIntroWidgets: return "feature_intro_widgets"
         case .icloudConfig: return "icloud_config"
         case .dailyReminder: return "daily_reminder"
+        case .proIntro: return "pro_intro"
         case .onboardingCompletion: return "completion"
         }
     }

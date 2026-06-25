@@ -138,7 +138,7 @@ struct MembershipBannerView: View {
           
           if hasPremiumAccess {
             if isInGracePeriod {
-              Text(String(localized: "Free access · \(localizedDayCount(gracePeriodDaysRemaining)) left"))
+              Text(String(localized: "Pro Trial · \(localizedDayCount(gracePeriodDaysRemaining)) left"))
                 .font(.appSubheadline())
                 .foregroundColor(.white.opacity(0.9))
             } else if let statusMessage = statusMessage {
@@ -163,10 +163,10 @@ struct MembershipBannerView: View {
               HStack(spacing: 4) {
                 Image(systemName: "bell")
                   .font(.appCaption())
-                Text("\(alarmCount, format: .number.grouping(.never))/5")
+                Text("\(alarmCount, format: .number.grouping(.never))/\(SubscriptionManager.freeAnniversaryAlarmsAllowed, format: .number.grouping(.never))")
                   .font(.appCaption())
               }
-              .foregroundColor(alarmCount >= 5 ? .red : .black.opacity(0.8))
+              .foregroundColor(alarmCount >= SubscriptionManager.freeAnniversaryAlarmsAllowed ? .red : .black.opacity(0.8))
             }
           }
         }
@@ -201,6 +201,7 @@ struct SettingsView: View {
   @State private var showPaywall = false
   @State private var paywallSource = "settings"
   @State private var showSubscriptions = false
+  @State private var showTrialStatus = false
   @State private var showAppStats = false
 #if DEBUG
   @State private var showDataSeeder = false
@@ -427,6 +428,12 @@ struct SettingsView: View {
     .sheet(isPresented: $showPaywall) {
       StandalonePaywallView(source: paywallSource)
     }
+    .sheet(isPresented: $showTrialStatus) {
+      StandalonePaywallView(
+        source: "trial_status",
+        context: .trialStatus(daysLeft: GracePeriodManager.shared.gracePeriodDaysRemaining)
+      )
+    }
     .navigationDestination(isPresented: $showSubscriptions) {
       SubscriptionsView()
         .postHogScreenView("Subscriptions")
@@ -568,7 +575,9 @@ struct SettingsView: View {
         joodleCount: currentJoodleCount,
         alarmCount: reminderManager.reminders.count,
         onTap: {
-          if subscriptionManager.hasPremiumAccess {
+          if GracePeriodManager.shared.isInGracePeriod {
+            showTrialStatus = true
+          } else if subscriptionManager.hasPremiumAccess {
             showSubscriptions = true
           } else {
             showPaywall = true
@@ -3020,6 +3029,8 @@ struct LearnCoreFeaturesView: View {
 struct DebugDataSeederView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.modelContext) private var modelContext
+  @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = true
+  @ObservedObject private var gracePeriodManager = GracePeriodManager.shared
   @State private var selectedYear = Calendar.current.component(.year, from: Date())
   @State private var seedCount = 10
   @State private var selectedDrawingSize: DebugDataSeeder.DrawingSize = .placeholder
@@ -3181,6 +3192,61 @@ struct DebugDataSeederView: View {
           }
         }
 
+        // MARK: Paywall & Onboarding
+        Section {
+          HStack {
+            Text("Trial state")
+            Spacer()
+            Text(trialStateDescription)
+              .foregroundStyle(.secondary)
+          }
+
+          Button {
+            GracePeriodManager.shared.resetGracePeriod()
+            GracePeriodManager.shared.startGracePeriodIfNeeded()
+            UserDefaults.standard.removeObject(forKey: "isRevisitFromSettings")
+            hasCompletedOnboarding = false
+            dismiss()
+          } label: {
+            Label("Restart Onboarding (fresh first-run)", systemImage: "arrow.counterclockwise.circle")
+          }
+
+          Button("Simulate Trial: 5 days left") {
+            GracePeriodManager.shared.resetGracePeriod()
+            GracePeriodManager.shared.setGracePeriodStart(Date().addingTimeInterval(-2 * 86_400))
+            dismiss()
+          }
+
+          Button("Simulate Trial: Day 5 (reminder · 2 left)") {
+            GracePeriodManager.shared.resetGracePeriod()
+            GracePeriodManager.shared.setGracePeriodStart(Date().addingTimeInterval(-5 * 86_400))
+            dismiss()
+          }
+
+          Button("Simulate Trial: 1 day left") {
+            GracePeriodManager.shared.resetGracePeriod()
+            GracePeriodManager.shared.setGracePeriodStart(Date().addingTimeInterval(-6 * 86_400))
+            dismiss()
+          }
+
+          Button("Simulate Trial: Expired") {
+            GracePeriodManager.shared.resetGracePeriod()
+            GracePeriodManager.shared.setGracePeriodStart(Date().addingTimeInterval(-8 * 86_400))
+            dismiss()
+          }
+
+          Button {
+            GracePeriodManager.shared.sendTrialReminderNow()
+            dismiss()
+          } label: {
+            Label("Send Trial Reminder Now (5s)", systemImage: "bell.badge")
+          }
+        } header: {
+          Text("Paywall & Onboarding")
+        } footer: {
+          Text("Restart Onboarding resets the trial to day 0 and replays the first-time flow including the Pro intro step. Trial simulations set the grace-period clock — return to Settings to see the banner/sheet; relaunch to see the expired auto-paywall. \"Send Trial Reminder Now\" fires the day-5 reminder notification in 5s — background the app to see it on the lock screen.")
+        }
+
         // MARK: Danger Zone
         Section("Danger Zone") {
           Button("Clear Seeded Data for \(selectedYear, format: .number.grouping(.never))", role: .destructive) {
@@ -3208,6 +3274,16 @@ struct DebugDataSeederView: View {
   }
 
   // MARK: - Helpers
+
+  private var trialStateDescription: String {
+    if gracePeriodManager.isInGracePeriod {
+      return "Trial · \(gracePeriodManager.gracePeriodDaysRemaining)d left"
+    }
+    if gracePeriodManager.hasGracePeriodExpired {
+      return "Expired"
+    }
+    return "Not started"
+  }
 
   private func formatBytes(_ bytes: Int) -> String {
     if bytes >= 1_048_576 {

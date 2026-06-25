@@ -25,6 +25,8 @@ struct OnboardingFlowView: View {
                         iCloudConfigView(viewModel: viewModel)
                     case .dailyReminder:
                         DailyReminderConfigView(viewModel: viewModel)
+                    case .proIntro:
+                        ProIntroStepView(viewModel: viewModel)
                     case .onboardingCompletion:
                         OnboardingCompletionView(viewModel: viewModel)
                     }
@@ -40,5 +42,24 @@ struct OnboardingFlowView: View {
             }
         }
         .postHogScreenView("Onboarding")
+    }
+}
+
+// MARK: - Pro Intro Step
+
+/// Onboarding step that shows the informative Joodle Pro trial intro
+/// (value + 7-day trial timeline, no purchase). "Continue" advances without commitment.
+struct ProIntroStepView: View {
+    @ObservedObject var viewModel: OnboardingViewModel
+
+    var body: some View {
+        PaywallContentView(configuration: PaywallConfiguration(
+            context: .onboarding,
+            paywallSource: "onboarding_pro_intro",
+            onContinueFree: {
+                viewModel.completeStep(.proIntro)
+            }
+        ))
+        .postHogScreenView("Onboarding Pro Intro")
     }
 }

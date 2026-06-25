@@ -419,7 +419,7 @@ struct ContentView: View {
       Text("Your Joodle Pro subscription has ended. Some features are now limited.")
     }
     .sheet(isPresented: $showGraceExpiredPaywall) {
-      StandalonePaywallView(source: "grace_expired")
+      StandalonePaywallView(source: "grace_expired", context: .expired)
     }
     .alert(String(localized: "Move Doodle"), isPresented: $showMoveConfirmation) {
       Button(String(localized: "Move"), role: .none) {
