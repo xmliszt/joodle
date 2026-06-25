@@ -1023,7 +1023,7 @@ ID: \(deviceIdentifier)
           SettingsRowView(
             icon: "bubble.left.and.bubble.right.fill",
             iconColor: .pink,
-            title: "Submit Your Feedback",
+            title: "Feature Request",
             isExternal: true
           )
         }

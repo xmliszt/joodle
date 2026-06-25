@@ -13969,30 +13969,30 @@
         }
       }
     },
-    "Submit Your Feedback" : {
+    "Feature Request" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envoyer votre avis"
+            "value" : "Demande de fonctionnalité"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "フィードバックを送信"
+            "value" : "機能リクエスト"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "피드백 제출"
+            "value" : "기능 요청"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "提交你的反馈"
+            "value" : "功能建议"
           }
         }
       }
