@@ -251,10 +251,11 @@ class AnimatedDrawingRenderer {
       drawingSize = 800 * scale
     }
 
-    // Carry the experimental wiggle into the exported video when enabled, so the
-    // animated card boils just like the in-app drawing. The dedicated wiggly
-    // styles always boil regardless of the preference.
-    let wiggleOn = style.forcesWiggle || UserPreferences.shared.enableWigglyStrokes
+    // Carry the wiggle into the exported video when enabled, so the animated
+    // card boils just like the in-app drawing. The dedicated wiggly styles
+    // always boil; the user-preference wiggle is gated behind Joodle Pro.
+    let isPremium = await MainActor.run { SubscriptionManager.shared.hasPremiumAccess }
+    let wiggleOn = style.forcesWiggle || (UserPreferences.shared.enableWigglyStrokes && isPremium)
 
     var frames: [UIImage] = []
     frames.reserveCapacity(frameCount)

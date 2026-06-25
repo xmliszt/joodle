@@ -215,7 +215,8 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   /// Suppressed in camera-live mode (the drawing surface is hidden) and while a
   /// placeholder is showing (no real strokes yet).
   private var wiggleEnabled: Bool {
-    userPreferences.enableWigglyStrokes && !isCameraLive && !paths.isEmpty
+    // Wiggly strokes are a Joodle Pro feature.
+    userPreferences.enableWigglyStrokes && SubscriptionManager.shared.hasPremiumAccess && !isCameraLive && !paths.isEmpty
   }
 
   /// Top action-buttons row. On iOS 26+ the row gets its own

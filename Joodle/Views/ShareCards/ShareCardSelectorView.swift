@@ -61,6 +61,9 @@ struct ShareCardSelectorView: View {
   // Instagram share state
   @State private var isSharingToInstagram: Bool = false
 
+  // Paywall shown when a free user tries to share a Joodle Pro–only card.
+  @State private var showPaywall: Bool = false
+
   /// Instagram brand gradient (top-left yellow → orange → pink → purple bottom-right)
   private var instagramGradient: LinearGradient {
     LinearGradient(
@@ -94,6 +97,12 @@ struct ShareCardSelectorView: View {
   /// Check if user is a Joodle Pro subscriber
   private var isJoodlePro: Bool {
     SubscriptionManager.shared.hasPremiumAccess
+  }
+
+  /// The dedicated wiggly cards are Joodle Pro–only. Free users can browse
+  /// (and preview) them, but must subscribe before sharing.
+  private var selectedStyleRequiresPro: Bool {
+    selectedStyle.forcesWiggle && !isJoodlePro
   }
 
   /// Check if the entry has a drawing (required for animated styles)
@@ -255,6 +264,10 @@ struct ShareCardSelectorView: View {
                       .contentTransition(.numericText())
                       .animation(.springFkingSatifying, value: exportProgress)
                   } else {
+                    if selectedStyleRequiresPro {
+                      Image(systemName: "lock.fill")
+                        .font(.appFont(size: 16, weight: .semibold))
+                    }
                     Text(shareButtonText)
                       .font(.appFont(size: 18, weight:.semibold))
                   }
@@ -291,6 +304,10 @@ struct ShareCardSelectorView: View {
                     .font(.appFont(size: 18, weight: .semibold))
                     .contentTransition(.numericText())
                 } else {
+                  if selectedStyleRequiresPro {
+                    Image(systemName: "lock.fill")
+                      .font(.appFont(size: 16, weight: .semibold))
+                  }
                   Text(shareButtonText)
                     .font(.appFont(size: 18, weight:.semibold))
                 }
@@ -328,6 +345,9 @@ struct ShareCardSelectorView: View {
       }
       .sheet(item: $shareItem) { item in
         ShareSheet(items: item.items)
+      }
+      .sheet(isPresented: $showPaywall) {
+        StandalonePaywallView(source: "wiggly_share_card")
       }
       .sheet(isPresented: $showYearPicker) {
         YearPickerSheet(earliestYear: earliestYear, selectedYear: $selectedYear) {
@@ -711,6 +731,7 @@ struct ShareCardSelectorView: View {
   @ViewBuilder
   private func cardPreviewContainer<Content: View>(style: ShareCardStyle, @ViewBuilder content: () -> Content) -> some View {
     let padding: CGFloat = 60
+    let cornerRadius: CGFloat = 80
     let paddedSize = CGSize(
       width: style.cardSize.width + padding * 2,
       height: style.cardSize.height + padding * 2
@@ -722,12 +743,27 @@ struct ShareCardSelectorView: View {
 
       content()
         .frame(width: style.cardSize.width, height: style.cardSize.height)
-        .clipShape(RoundedRectangle(cornerRadius: 80))
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         .shadow(color: .black.opacity(0.07), radius: 10, x: 0, y: 8)
     }
     .frame(width: paddedSize.width, height: paddedSize.height)
     .scaleEffect(previewScale)
     .frame(width: style.previewSize.width, height: style.previewSize.height)
+    .overlay(alignment: .topTrailing) {
+      // Mark the Joodle Pro–only wiggly cards for free users. Sit the badge
+      // inside the card's top-right corner: the preview frame is padded around
+      // the card, so first cross that padding, then add a gap that makes the
+      // badge's rounded corner concentric with the card's corner radius
+      // (gap = cardCornerRadius − badgeCornerRadius).
+      if style.forcesWiggle && !isJoodlePro {
+        let badgeCornerRadius: CGFloat = 8
+        let cardEdgeInset = padding * previewScale
+        let concentricGap = max(cornerRadius * previewScale - badgeCornerRadius, 0)
+        PremiumFeatureBadge()
+          .padding(.top, cardEdgeInset + concentricGap)
+          .padding(.trailing, cardEdgeInset + concentricGap)
+      }
+    }
   }
 
   @ViewBuilder
@@ -978,6 +1014,11 @@ struct ShareCardSelectorView: View {
   }
 
   private func shareCard() {
+    // Wiggly cards are Joodle Pro–only — route free users to the paywall.
+    guard !selectedStyleRequiresPro else {
+      showPaywall = true
+      return
+    }
     guard shareItem == nil, !isExportingAnimated else { return }
 
     let watermarkSetting = UserPreferences.shared.shareCardWatermarkEnabled
@@ -1088,6 +1129,11 @@ struct ShareCardSelectorView: View {
   }
 
   private func shareToInstagram() {
+    // Wiggly cards are Joodle Pro–only — route free users to the paywall.
+    guard !selectedStyleRequiresPro else {
+      showPaywall = true
+      return
+    }
     guard !isSharing, !isSharingToInstagram, !isExportingAnimated else { return }
 
     let watermarkSetting = UserPreferences.shared.shareCardWatermarkEnabled

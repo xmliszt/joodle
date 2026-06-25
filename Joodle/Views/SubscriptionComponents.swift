@@ -153,6 +153,8 @@ struct ProComparisonTable: View {
     let pro: LocalizedStringResource
     /// Pro value is "unlimited" — prefix it with an infinity glyph instead of text.
     let proIsUnlimited: Bool
+    /// Pro value is the wiggly placeholder doodle instead of text.
+    var proIsWiggle: Bool = false
   }
 
   private var rows: [ComparisonRow] {
@@ -166,7 +168,9 @@ struct ProComparisonTable: View {
       ComparisonRow(label: "Sharing",
                     free: String(localized: "With Joodle mark"), pro: "No watermark", proIsUnlimited: false),
       ComparisonRow(label: "Accent colors",
-                    free: String(localized: "Core colors"), pro: "Full palette", proIsUnlimited: false)
+                    free: String(localized: "Core colors"), pro: "Full palette", proIsUnlimited: false),
+      ComparisonRow(label: "Wiggly strokes",
+                    free: "—", pro: "", proIsUnlimited: false, proIsWiggle: true)
     ]
   }
 
@@ -237,7 +241,13 @@ struct ProComparisonTable: View {
         .frame(width: valueColumnWidth)
 
       Group {
-        if row.proIsUnlimited {
+        if row.proIsWiggle {
+          // Showcase the feature with a single boiling line at the canvas's true
+          // stroke width, so the wiggle reads clearly. The row grows past its
+          // 44pt minimum to fit.
+          WigglyLinePreview()
+            .frame(width: valueColumnWidth, height: 52)
+        } else if row.proIsUnlimited {
           HStack(spacing: 3) {
             Image(systemName: "infinity").font(.appFont(size: 13, weight: .bold))
             Text(row.pro)
@@ -251,6 +261,48 @@ struct ProComparisonTable: View {
       .frame(width: valueColumnWidth)
     }
     .frame(minHeight: 44)
+  }
+}
+
+// MARK: - Wiggly Line Preview
+
+/// A single hand-drawn-looking line that boils with the wigglypaint effect,
+/// drawn at the canvas's true stroke width and jitter amplitude (1:1, no
+/// scaling) so the Pro comparison row shows the feature exactly as it reads
+/// while doodling.
+private struct WigglyLinePreview: View {
+  /// Stable anchor for the boil's periodic clock.
+  @State private var epoch = Date()
+
+  /// A loose wave — deliberately not straight, to read like a real stroke —
+  /// sampled densely enough that the per-vertex boil looks like a lively wiggle.
+  private func points(in size: CGSize) -> [CGPoint] {
+    let count = 28
+    let padX: CGFloat = 16
+    let usableWidth = size.width - padX * 2
+    let midY = size.height / 2
+    let amplitude = size.height * 0.18
+    return (0..<count).map { i in
+      let t = CGFloat(i) / CGFloat(count - 1)
+      let x = padX + t * usableWidth
+      // 1.5 humps plus a faint faster ripple so it looks hand-drawn, not sinusoidal.
+      let y = midY - amplitude * (sin(t * .pi * 3) * 0.85 + sin(t * .pi * 6 + 0.7) * 0.15)
+      return CGPoint(x: x, y: y)
+    }
+  }
+
+  var body: some View {
+    TimelineView(.periodic(from: epoch, by: WigglyStroke.boilInterval)) { timeline in
+      Canvas { context, size in
+        let frame = WigglyStroke.frameIndex(at: timeline.date.timeIntervalSinceReferenceDate)
+        let path = WigglyStroke.path(points: points(in: size), isDot: false, frame: frame)
+        context.stroke(
+          path,
+          with: .color(.appAccent),
+          style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
+        )
+      }
+    }
   }
 }
 

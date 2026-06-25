@@ -691,7 +691,10 @@ struct SettingsView: View {
           Spacer()
         }
       }
-      
+      // Stage 1 of the Wiggly Strokes discovery. Tapping only advances into the
+      // Customization screen (resolveOnTap: false); the toggle there resolves the tip.
+      .featureTip(FeatureTipDefinitions.AnchorID.wigglyCustomizationRow, resolveOnTap: false)
+
       // Interactions
       if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
         NavigationLink {
@@ -812,9 +815,6 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
         }
       }
-      // Stage 1 of the Wiggly Strokes discovery. Tapping only advances into the
-      // Labs screen (resolveOnTap: false); the toggle there resolves the tip.
-      .featureTip(FeatureTipDefinitions.AnchorID.wigglyExperimentRow, resolveOnTap: false)
     } header: {
       Text("Labs")
     }
@@ -1708,7 +1708,34 @@ struct CustomizationSettingsView: View {
       }
     )
   }
-  
+
+  private var wigglyStrokesBinding: Binding<Bool> {
+    Binding(
+      // Reflect the *effective* state: wiggle only applies for Joodle Pro, so
+      // free users always see the toggle off (with a Pro badge) even if the
+      // preference was switched on while it was a free experimental feature.
+      get: { userPreferences.enableWigglyStrokes && subscriptionManager.hasPremiumAccess },
+      set: { newValue in
+        // Joodle Pro feature — free users get the paywall instead of toggling on.
+        guard subscriptionManager.hasPremiumAccess else {
+          paywallSource = "wiggly_strokes_toggle"
+          showPaywall = true
+          return
+        }
+
+        let previousValue = userPreferences.enableWigglyStrokes
+        userPreferences.enableWigglyStrokes = newValue
+        if newValue != previousValue {
+          AnalyticsManager.shared.trackSettingChanged(
+            name: "wiggly_strokes",
+            value: newValue,
+            previousValue: previousValue
+          )
+        }
+      }
+    )
+  }
+
   var body: some View {
     ScrollViewReader { scrollProxy in
       Form {
@@ -1835,7 +1862,37 @@ struct CustomizationSettingsView: View {
         } header: {
           Text("Theme Color")
         }
-        
+
+        // Wiggly Strokes Section (Joodle Pro)
+        Section {
+          VStack(spacing: 24) {
+            // Live demo of the boiling-line effect — always wiggling so it
+            // showcases the feature even while the toggle is off.
+            WigglyStrokePreview()
+              .frame(height: 220)
+              .frame(maxWidth: .infinity)
+              .background(.black)
+              .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+            Toggle(isOn: wigglyStrokesBinding) {
+              HStack(spacing: 6) {
+                Text("Wiggly Strokes")
+                if !subscriptionManager.hasPremiumAccess {
+                  PremiumFeatureBadge()
+                }
+              }
+            }
+            .tint(.appAccent)
+            // Stage 2 of the Wiggly Strokes discovery — touching the toggle
+            // resolves the whole feature tip.
+            .featureTip(FeatureTipDefinitions.AnchorID.wigglyToggle)
+          }
+        } header: {
+          Text("Wiggly Strokes")
+        } footer: {
+          Text("Makes your doodles come alive with a shaky wiggle that never sits still.")
+        }
+
         // Prompt for notes after doodling - no header
         Section {
           Toggle(isOn: Binding(
@@ -1916,6 +1973,8 @@ struct CustomizationSettingsView: View {
     .navigationBarTitleDisplayMode(.inline)
     .postHogScreenView("Customization Settings")
     .preferredColorScheme(userPreferences.preferredColorScheme)
+    // Scope for stage 2 of the Wiggly Strokes feature tip.
+    .featureTipScope(FeatureTipDefinitions.ScopeID.customization)
     .overlay {
       if showThemeOverlay, let color = pendingThemeColor {
         ThemeColorLoadingOverlay(
@@ -1929,6 +1988,49 @@ struct CustomizationSettingsView: View {
           }
         )
         .id(color)
+      }
+    }
+  }
+}
+
+// MARK: - Wiggly Stroke Preview
+
+/// A small self-contained demo of the boiling-line effect, used in the
+/// Customization screen so the Wiggly Strokes toggle has something to show.
+private struct WigglyStrokePreview: View {
+  /// The onboarding mushroom doodle, decoded from `PLACEHOLDER_DATA` polylines in `CANVAS_SIZE` space.
+  private static let sample: [PathData] = {
+    (try? JSONDecoder().decode([PathData].self, from: PLACEHOLDER_DATA)) ?? []
+  }()
+
+  /// Stable anchor for the boil's periodic clock.
+  @State private var epoch = Date()
+
+  var body: some View {
+    // Always boil — the preview demonstrates the effect regardless of the toggle.
+    TimelineView(.periodic(from: epoch, by: WigglyStroke.boilInterval)) { timeline in
+      canvas(frame: WigglyStroke.frameIndex(at: timeline.date.timeIntervalSinceReferenceDate))
+    }
+  }
+
+  /// Draws the sample doodle, jittered for the given boil `frame`.
+  private func canvas(frame: Int) -> some View {
+    Canvas { context, size in
+      let scale = min(size.width, size.height) / CANVAS_SIZE
+      context.translateBy(x: (size.width - CANVAS_SIZE * scale) / 2, y: (size.height - CANVAS_SIZE * scale) / 2)
+      context.scaleBy(x: scale, y: scale)
+
+      for stroke in Self.sample {
+        let path = WigglyStroke.path(points: stroke.points, isDot: stroke.isDot, frame: frame)
+        if stroke.isDot {
+          context.fill(path, with: .color(.appAccent))
+        } else {
+          context.stroke(
+            path,
+            with: .color(.appAccent),
+            style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
+          )
+        }
       }
     }
   }

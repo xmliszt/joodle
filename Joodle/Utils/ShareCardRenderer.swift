@@ -344,8 +344,10 @@ class ShareCardRenderer {
     let drawingSize: CGFloat = style.includesExcerpt ? 600 * scale : 800 * scale
 
     // Match the in-app wiggle when enabled; map progress onto the boil's clock
-    // so a scrubbed preview frame still shows a jittered line.
-    let wiggleFrame: Int? = (style.forcesWiggle || UserPreferences.shared.enableWigglyStrokes)
+    // so a scrubbed preview frame still shows a jittered line. The user-preference
+    // wiggle is gated behind Joodle Pro; the dedicated wiggly styles always boil.
+    let isPremium = await MainActor.run { SubscriptionManager.shared.hasPremiumAccess }
+    let wiggleFrame: Int? = (style.forcesWiggle || (UserPreferences.shared.enableWigglyStrokes && isPremium))
       ? WigglyStroke.frameIndex(at: Double(progress) * config.maxDuration)
       : nil
 

@@ -149,7 +149,11 @@ struct DrawingDisplayView: View {
   /// opts out via `allowsWiggleAnimation` (e.g. a static share-card preview/export,
   /// where a wiggling preview would misrepresent the still that gets shared).
   private var wiggleEnabled: Bool {
-    allowsWiggleAnimation && (forcesWiggleAnimation || userPreferences.enableWigglyStrokes) && !useThumbnail && !wiggleSources.isEmpty
+    // The user-preference wiggle is a Joodle Pro feature; `forcesWiggleAnimation`
+    // (the dedicated wiggly share cards) stays independent so their previews
+    // still boil even for free users browsing the paywalled card.
+    let userWiggle = userPreferences.enableWigglyStrokes && SubscriptionManager.shared.hasPremiumAccess
+    return allowsWiggleAnimation && (forcesWiggleAnimation || userWiggle) && !useThumbnail && !wiggleSources.isEmpty
   }
 
   private var foregroundColor: Color {

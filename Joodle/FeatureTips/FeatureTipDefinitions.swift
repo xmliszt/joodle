@@ -15,9 +15,9 @@ enum FeatureTipDefinitions {
     /// the `.featureTip(_:)` call sites can't drift apart.
     enum AnchorID {
         static let cameraReference = "featureTip.cameraReference"
-        /// The "Experimental Features" row in Settings' Labs section.
-        static let wigglyExperimentRow = "featureTip.wigglyStrokes.experimentRow"
-        /// The "Wiggly Strokes" toggle on the Experimental Features screen.
+        /// The "Customization" row in Settings.
+        static let wigglyCustomizationRow = "featureTip.wigglyStrokes.customizationRow"
+        /// The "Wiggly Strokes" toggle on the Customization screen.
         static let wigglyToggle = "featureTip.wigglyStrokes.toggle"
         /// The Instagram quick-share button in `ShareCardSelectorView`.
         static let instagramShare = "featureTip.instagramShare"
@@ -28,7 +28,7 @@ enum FeatureTipDefinitions {
     /// `.featureTipScope(_:)`).
     enum ScopeID {
         static let settings = "featureTipScope.settings"
-        static let experimentalFeatures = "featureTipScope.experimentalFeatures"
+        static let customization = "featureTipScope.customization"
     }
 
     /// Shared key linking the two-stage Wiggly Strokes discovery so touching
@@ -45,23 +45,23 @@ enum FeatureTipDefinitions {
             message: "Take a photo as reference",
             priority: 0
         ),
-        // Stage 1: guide the user from Settings into the Labs section.
+        // Stage 1: guide the user from Settings into the Customization screen.
         FeatureTip(
             id: "featureTip.wigglyStrokes.settingsEntry",
-            anchorID: AnchorID.wigglyExperimentRow,
+            anchorID: AnchorID.wigglyCustomizationRow,
             featureKey: wigglyStrokesFeature,
             message: "Make your doodles wiggle",
             behavior: .scoped(scopeID: ScopeID.settings, defaultEdge: .bottom),
             priority: 5,
             showsAfterOnboarding: true
         ),
-        // Stage 2: point at the toggle switch on the Experimental screen.
+        // Stage 2: point at the toggle switch on the Customization screen.
         FeatureTip(
             id: "featureTip.wigglyStrokes.toggleEntry",
             anchorID: AnchorID.wigglyToggle,
             featureKey: wigglyStrokesFeature,
             message: "Make your doodles wiggle",
-            behavior: .scoped(scopeID: ScopeID.experimentalFeatures, defaultEdge: .bottom),
+            behavior: .scoped(scopeID: ScopeID.customization, defaultEdge: .bottom),
             horizontalTarget: .trailing,
             priority: 6,
             showsAfterOnboarding: true
