@@ -322,17 +322,23 @@ struct PaywallContentView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      ScrollView {
-        VStack(spacing: 16) {
+      if case .onboarding = configuration.context {
+        // Onboarding content is sized to fit the screen, so it stays fixed (no
+        // scrolling) like the other onboarding steps, with the button pinned below.
+        VStack(spacing: 32) {
           headerSection
           contextBody
         }
-      }
+        .frame(maxHeight: .infinity, alignment: .top)
 
-      // In onboarding, the continue button stays pinned to the bottom like the
-      // other onboarding steps rather than scrolling with the content.
-      if case .onboarding = configuration.context {
         onboardingContinueButton
+      } else {
+        ScrollView {
+          VStack(spacing: 32) {
+            headerSection
+            contextBody
+          }
+        }
       }
     }
     .alert(String(localized: "Purchase Failed"), isPresented: $showError) {
@@ -366,24 +372,33 @@ struct PaywallContentView: View {
 
   // MARK: - Header Section
 
+  private var isOnboarding: Bool {
+    if case .onboarding = configuration.context { return true }
+    return false
+  }
+
   private var headerSection: some View {
-    VStack(spacing: 8) {
+    // Onboarding reads as a full step: title is left-aligned and wraps freely.
+    // Other surfaces stay centered above their price cards.
+    VStack(alignment: isOnboarding ? .leading : .center, spacing: 8) {
       Text(headerTitle)
         .font(.appFont(size: 34, weight: .bold))
-        .multilineTextAlignment(.center)
+        .multilineTextAlignment(isOnboarding ? .leading : .center)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: isOnboarding ? .leading : .center)
     }
     .padding(.top, 24)
-    .padding(.horizontal, 8)
+    .padding(.horizontal, isOnboarding ? 24 : 8)
   }
 
   private var headerTitle: LocalizedStringResource {
     switch configuration.context {
     case .onboarding:
-      return "Your 7 days of Pro"
+      return "The next 7 days of Joodle Pro are on us"
     case .trialStatus(let daysLeft):
-      return "Pro Trial — \(daysLeft) days left"
+      return "You're on Pro — \(daysLeft) days to enjoy"
     case .expired:
-      return "Get Joodle Pro"
+      return "Keep your Joodle Pro"
     }
   }
 
@@ -396,7 +411,6 @@ struct PaywallContentView: View {
     case .onboarding:
       TrialTimelineView(style: .onboarding, progress: 0)
       ProComparisonTable()
-      onboardingContinueButton
 
     case .trialStatus:
       TrialTimelineView(style: .trial, progress: GracePeriodManager.shared.gracePeriodProgress)
@@ -428,7 +442,7 @@ struct PaywallContentView: View {
   /// Secondary affordance in the trial-status context that reveals the pricing/purchase section.
   /// Uses the same glass style as the onboarding action button for consistency.
   private var earlyUpgradeButton: some View {
-    OnboardingButtonView(label: "Get Joodle Pro now") {
+    OnboardingButtonView(label: "Get Joodle Pro") {
       withAnimation(.springFkingSatifying) {
         showEarlyUpgrade = true
       }
@@ -654,7 +668,7 @@ struct PaywallContentView: View {
       allowModeToggle: false,
       isLoading: isPurchasing || storeManager.hasActiveSubscription,
       trialPeriodText: selectedTrialPeriodText,
-      fallbackButtonText: selectedProductIsLifetime ? String(localized: "Buy Joodle Pro") : String(localized: "Subscribe to Joodle Pro"),
+      fallbackButtonText: selectedProductIsLifetime ? String(localized: "Buy Joodle Pro") : String(localized: "Continue with Pro"),
       onSlideComplete: handleSlideComplete
     )
   }

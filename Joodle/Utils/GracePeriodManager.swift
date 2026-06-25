@@ -293,8 +293,8 @@ class GracePeriodManager: ObservableObject {
     /// so the tone reassures rather than warns — the user simply returns to Free, data intact.
     private func trialReminderContent() -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
-        content.title = String(localized: "2 days left of Joodle Pro ✨")
-        content.body = String(localized: "Hope you're loving Pro! You've got 2 more days of unlimited entries, every widget, and watermark-free sharing.")
+        content.title = String(localized: "2 more days of Joodle Pro ✨")
+        content.body = String(localized: "Hope you're loving Pro! You've got 2 more days of unlimited entries, every widget, and watermark-free sharing. When it ends, nothing's charged — you'll just move to Free.")
         content.sound = .default
         content.userInfo = ["isTrialReminder": true]
         return content

@@ -53,10 +53,11 @@ struct TrialTimelineView: View {
   }
 
   /// Day each milestone sits at, along a 7-day trial: start (0), reminder (5), ends (7).
-  /// Segment heights are scaled to these spans so the fill is true to elapsed time.
+  /// Milestones are spaced evenly; only the rail *fill* is proportional to elapsed time.
   private let dayAnchors: [Double] = [0, 5, 7]
   private let totalDays: Double = 7
-  private let pointsPerDay: CGFloat = 18
+  /// Uniform height of every connector between milestones (visual spacing, not time-scaled).
+  private let segmentHeight: CGFloat = 28
 
   private var elapsedDays: Double { min(max(progress, 0), 1) * totalDays }
 
@@ -71,13 +72,13 @@ struct TrialTimelineView: View {
       return [
         Node(icon: "lock.open.fill", title: "Today", subtitle: "Full access to all Pro features."),
         Node(icon: "bell.fill", title: "In 5 days", subtitle: "We'll remind you before it ends."),
-        Node(icon: "crown.fill", title: "In 7 days", subtitle: "Keep Pro or continue on Free.")
+        Node(icon: "crown.fill", title: "In 7 days", subtitle: "No auto charge — get Pro, or keep doodling on Free.")
       ]
     case .trial:
       return [
         Node(icon: "lock.open.fill", title: "Pro trial starts", subtitle: "Full access to all Pro features."),
         Node(icon: "bell.fill", title: "Reminder", subtitle: "We'll remind you before it ends."),
-        Node(icon: "crown.fill", title: "Pro trial ends", subtitle: "Keep Pro or continue on Free.")
+        Node(icon: "crown.fill", title: "Pro trial ends", subtitle: "No auto charge — get Pro, or keep doodling on Free.")
       ]
     }
   }
@@ -93,9 +94,8 @@ struct TrialTimelineView: View {
 
   private func nodeRow(index: Int, node: Node, isLast: Bool) -> some View {
     let reached = elapsedDays >= dayAnchors[index] - 0.0001
-    // Height of the connector below this node, scaled to its day-span, and how much is filled.
+    // Connectors are a fixed height; the fill within each reflects elapsed time across its day-span.
     let segmentDays = isLast ? 0 : dayAnchors[index + 1] - dayAnchors[index]
-    let segmentHeight = CGFloat(segmentDays) * pointsPerDay
     let segmentFill = segmentDays == 0 ? 0 : min(max((elapsedDays - dayAnchors[index]) / segmentDays, 0), 1)
 
     return HStack(alignment: .top, spacing: 14) {
@@ -162,11 +162,11 @@ struct ProComparisonTable: View {
       ComparisonRow(label: "Anniversary alarms",
                     free: "\(SubscriptionManager.freeAnniversaryAlarmsAllowed)", pro: "Unlimited", proIsUnlimited: true),
       ComparisonRow(label: "Widgets",
-                    free: String(localized: "No widgets"), pro: "All widgets", proIsUnlimited: false),
+                    free: "—", pro: "All widgets", proIsUnlimited: false),
       ComparisonRow(label: "Sharing",
-                    free: String(localized: "Watermark"), pro: "No watermark", proIsUnlimited: false),
+                    free: String(localized: "With Joodle mark"), pro: "No watermark", proIsUnlimited: false),
       ComparisonRow(label: "Accent colors",
-                    free: String(localized: "Limited"), pro: "Full palette", proIsUnlimited: false)
+                    free: String(localized: "Core colors"), pro: "Full palette", proIsUnlimited: false)
     ]
   }
 

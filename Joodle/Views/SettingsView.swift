@@ -126,7 +126,7 @@ struct MembershipBannerView: View {
         // Content overlay - positioned at top to avoid mushroom glow at bottom
         VStack(alignment: .leading, spacing: 6) {
           HStack {
-            Text(hasPremiumAccess ? "Joodle Pro" : "Unlock Joodle Pro")
+            Text(hasPremiumAccess ? "Joodle Pro" : "Keep your Joodle Pro")
               .font(.appHeadline())
               .fontWeight(.bold)
               .foregroundColor(hasPremiumAccess ? .white : .black)
