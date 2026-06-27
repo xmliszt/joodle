@@ -39,7 +39,7 @@ struct CameraZoomSlider: View {
   private let minorStepLog: CGFloat = 0.08664339 // ln(2) / 8
   /// Time constant of a tick's magnification decay after it leaves center. Larger
   /// is a longer, slower-fading trail.
-  private let waveReleaseSeconds: CGFloat = 0.5
+  private let waveReleaseSeconds: CGFloat = 0.12
 
   /// Live zoom while dragging, in log space. `nil` when not dragging, so the
   /// ruler follows the externally driven `zoomFactor`.
@@ -91,7 +91,7 @@ struct CameraZoomSlider: View {
       .fill(Color.black)
       .overlay(
         EdgeMorphTabOutline(edge: edge, flareHeight: flareHeight)
-          .stroke(Color.white.opacity(0.2), lineWidth: 2)
+          .stroke(Color.white.opacity(0.2), lineWidth: 1)
       )
   }
 
@@ -163,13 +163,17 @@ struct CameraZoomSlider: View {
           let target = exp(-pow(n / 0.32, 2))
           let charge = max(target, (wave.charge[tick.log] ?? target) * release)
           wave.charge[tick.log] = charge
-          // Cull drawing only — charge above is still updated so off-screen ticks
+          // Length snaps to full only for the tick actually at center — no gradual
+          // growth on approach — then releases on the same decay as it moves off.
+          let lengthTarget: CGFloat = abs(tick.log - focused) < 0.0001 ? 1 : 0
+          let lengthCharge = max(lengthTarget, (wave.lengthCharge[tick.log] ?? lengthTarget) * release)
+          wave.lengthCharge[tick.log] = lengthCharge
+          // Cull drawing only — charges above are still updated so off-screen ticks
           // decay instead of freezing and popping when they scroll back in.
           guard y >= -16, y <= size.height + 16 else { continue }
 
-          // Length grows modestly, thickness much more — the focused tick reads as
-          // a distinctly fatter, magnified highlight rather than just a longer one.
-          let lengthScale = 1 + 0.2 * charge - 0.45 * pow(n, 1.4)
+          // Thickness still magnifies at center; length does not — it is driven
+          // purely by the charge sweep below.
           let thicknessScale = 1 + 1 * charge - 0.30 * pow(n, 1.4)
           let baseLength: CGFloat
           let restOpacity: CGFloat
@@ -178,7 +182,11 @@ struct CameraZoomSlider: View {
           case .medium: baseLength = 12; restOpacity = 0.3
           case .minor:  baseLength = 6;  restOpacity = 0.3
           }
-          let length = baseLength * lengthScale
+          // A tick snaps to the longest height the instant it reaches center
+          // (regardless of tier), then eases back to its own length as the length
+          // charge releases — so the full-length tick trails the drag.
+          let longestLength: CGFloat = 24
+          let length = baseLength + (longestLength - baseLength) * lengthCharge
           let thickness = 1.8 * max(thicknessScale, 0.4)
           let originX: CGFloat = edge == .trailing ? size.width - outerInset - length : outerInset
           let rect = CGRect(x: originX, y: y - thickness / 2, width: length, height: thickness)
@@ -221,6 +229,9 @@ struct CameraZoomSlider: View {
   /// it during rendering without tripping SwiftUI's "modifying state" invalidation.
   private final class WaveState {
     var charge: [CGFloat: CGFloat] = [:]
+    /// Length trail, kept separate because it snaps on at center (step attack)
+    /// rather than easing up on approach like the magnification `charge`.
+    var lengthCharge: [CGFloat: CGFloat] = [:]
     var lastTime: TimeInterval?
   }
 
