@@ -29,11 +29,9 @@ struct CameraZoomSlider: View {
   /// Width of the value label's pill. Kept just wide enough for "0.5x" so it
   /// hugs the screen edge without floating over the ruler.
   private let labelWidth: CGFloat = 40
-  /// Convex radius of the two inner corners (away from the screen edge).
-  private let convexRadius: CGFloat = 28
-  /// Concave radius of the two corners that touch the screen edge — these flare
-  /// outward so the panel smoothly morphs into the edge.
-  private let concaveRadius: CGFloat = 16
+  /// Vertical span of each ogee that sweeps the panel from its straight inner
+  /// edge out to the screen edge. Taller = a longer, gentler S-curve.
+  private let flareHeight: CGFloat = 64
   /// Points of travel per natural-log unit of zoom — sets how far apart the
   /// octaves (0.5→1→2) sit. Log spacing makes them evenly spaced.
   private let pointsPerLogUnit: CGFloat = 104
@@ -83,13 +81,18 @@ struct CameraZoomSlider: View {
   // MARK: - Container
 
   private var tabShape: EdgeMorphTab {
-    EdgeMorphTab(edge: edge, convexRadius: convexRadius, concaveRadius: concaveRadius)
+    EdgeMorphTab(edge: edge, flareHeight: flareHeight)
   }
 
   private var container: some View {
     // Pure, opaque black — no glass or translucency — flush against the screen
-    // edge with concave corners morphing into it.
-    tabShape.fill(Color.black)
+    // edge with concave corners morphing into it, with a hairline white outline.
+    tabShape
+      .fill(Color.black)
+      .overlay(
+        EdgeMorphTabOutline(edge: edge, flareHeight: flareHeight)
+          .stroke(Color.white.opacity(0.2), lineWidth: 2)
+      )
   }
 
   // MARK: - Value label
@@ -360,36 +363,79 @@ struct HandednessSliderPreview: View {
   }
 }
 
-/// A panel that hugs one screen edge: the two inner corners are convex-rounded,
-/// while the two corners touching the edge are *concave* fillets that flare the
-/// panel out so it morphs smoothly into the edge (it is full-height against the
-/// edge and inset by `concaveRadius` along the flat inner span).
+/// A panel that hugs one screen edge: a straight inner edge that sweeps out to the
+/// screen edge through a tall ogee (S-curve) at top and bottom, so the panel morphs
+/// into the edge over one continuous smooth curve with no corners. The ogee is
+/// vertical where it leaves the inner edge and vertical again where it meets the
+/// screen edge, so both joins are tangent-smooth.
 private struct EdgeMorphTab: Shape {
   var edge: HorizontalEdge
-  var convexRadius: CGFloat
-  var concaveRadius: CGFloat
+  var flareHeight: CGFloat
 
   func path(in rect: CGRect) -> Path {
     let w = rect.width
     let h = rect.height
-    let c = min(convexRadius, h / 2 - 1, w - 1)
-    let k = min(concaveRadius, h / 2 - 1, w - 1)
+    let ky = min(flareHeight, h / 2 - 1)   // vertical span of each ogee
 
-    // Built for a trailing (right) edge; the screen edge is at x == w.
+    // Built for a trailing (right) edge: screen edge at x == w, inner edge at x == 0.
     var path = Path()
-    path.move(to: CGPoint(x: c, y: k))
-    path.addLine(to: CGPoint(x: w - k, y: k))                                   // flat top
-    path.addQuadCurve(to: CGPoint(x: w, y: 0), control: CGPoint(x: w, y: k))    // concave flare → edge
-    path.addLine(to: CGPoint(x: w, y: h))                                       // flush along the edge
-    path.addQuadCurve(to: CGPoint(x: w - k, y: h - k), control: CGPoint(x: w, y: h - k)) // concave flare
-    path.addLine(to: CGPoint(x: c, y: h - k))                                   // flat bottom
-    path.addQuadCurve(to: CGPoint(x: 0, y: h - k - c), control: CGPoint(x: 0, y: h - k)) // convex
-    path.addLine(to: CGPoint(x: 0, y: k + c))                                   // inner edge
-    path.addQuadCurve(to: CGPoint(x: c, y: k), control: CGPoint(x: 0, y: k))    // convex
+    path.move(to: CGPoint(x: 0, y: ky))
+    EdgeMorphFlare.ogee(&path, from: CGPoint(x: 0, y: ky), to: CGPoint(x: w, y: 0))    // inner → edge
+    path.addLine(to: CGPoint(x: w, y: h))                                              // flush along the edge
+    EdgeMorphFlare.ogee(&path, from: CGPoint(x: w, y: h), to: CGPoint(x: 0, y: h - ky)) // edge → inner
+    path.addLine(to: CGPoint(x: 0, y: ky))                                             // straight inner edge
     path.closeSubpath()
 
     if edge == .leading {
       // Mirror horizontally so the edge sits at x == 0.
+      return path.applying(CGAffineTransform(scaleX: -1, y: 1).translatedBy(x: -w, y: 0))
+    }
+    return path
+  }
+}
+
+/// The ogee that morphs the panel into the screen edge. A single cubic Bézier with
+/// vertical tangents at both ends — straight where it leaves the inner edge and
+/// straight again where it meets the screen edge — so it reads as one flowing
+/// S-curve. `handle` is the fraction of the vertical span each tangent runs:
+/// larger keeps the ends straighter and sweeps harder through the middle.
+private enum EdgeMorphFlare {
+  static let handle: CGFloat = 0.62
+
+  /// Connects an inner-edge point to a screen-edge point with vertical tangents at
+  /// both ends. `from` must be the current path point.
+  static func ogee(_ path: inout Path, from: CGPoint, to: CGPoint) {
+    let l = abs(from.y - to.y) * handle
+    let dir: CGFloat = to.y < from.y ? -1 : 1
+    path.addCurve(
+      to: to,
+      control1: CGPoint(x: from.x, y: from.y + dir * l),
+      control2: CGPoint(x: to.x, y: to.y - dir * l)
+    )
+  }
+}
+
+/// The visible outline of `EdgeMorphTab`: the same contour but left open so the
+/// flush segment running along the screen edge is omitted — only the inner edge
+/// and the two ogees get stroked, not the line against the edge.
+private struct EdgeMorphTabOutline: Shape {
+  var edge: HorizontalEdge
+  var flareHeight: CGFloat
+
+  func path(in rect: CGRect) -> Path {
+    let w = rect.width
+    let h = rect.height
+    let ky = min(flareHeight, h / 2 - 1)
+
+    // Traced from the bottom edge point around the inner contour to the top edge
+    // point, so the (w, h) → (w, 0) edge segment is never drawn.
+    var path = Path()
+    path.move(to: CGPoint(x: w, y: h))
+    EdgeMorphFlare.ogee(&path, from: CGPoint(x: w, y: h), to: CGPoint(x: 0, y: h - ky)) // edge → inner
+    path.addLine(to: CGPoint(x: 0, y: ky))                                             // straight inner edge
+    EdgeMorphFlare.ogee(&path, from: CGPoint(x: 0, y: ky), to: CGPoint(x: w, y: 0))    // inner → edge
+
+    if edge == .leading {
       return path.applying(CGAffineTransform(scaleX: -1, y: 1).translatedBy(x: -w, y: 0))
     }
     return path
