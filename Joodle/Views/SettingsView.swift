@@ -667,16 +667,14 @@ struct SettingsView: View {
       .featureTip(FeatureTipDefinitions.AnchorID.wigglyCustomizationRow, resolveOnTap: false)
 
       // Interactions
-      if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
-        NavigationLink {
-          InteractionsSettingsView()
-        } label: {
-          HStack {
-            SettingsIconView(systemName: "hand.tap.fill", backgroundColor: .blue)
-            Text("Interactions")
-              .foregroundColor(.primary)
-            Spacer()
-          }
+      NavigationLink {
+        InteractionsSettingsView()
+      } label: {
+        HStack {
+          SettingsIconView(systemName: "hand.tap.fill", backgroundColor: .blue)
+          Text("Interactions")
+            .foregroundColor(.primary)
+          Spacer()
         }
       }
       
@@ -2192,25 +2190,57 @@ struct AnniversaryAlarmRow: View {
 
 struct InteractionsSettingsView: View {
   @Environment(\.userPreferences) private var userPreferences
-  
+
   private var hapticBinding: Binding<Bool> {
     Binding(
       get: { userPreferences.enableHaptic },
       set: { userPreferences.enableHaptic = $0 }
     )
   }
-  
+
+  private var handednessBinding: Binding<SliderHandedness> {
+    Binding(
+      get: { userPreferences.cameraZoomSliderHandedness },
+      set: { userPreferences.cameraZoomSliderHandedness = $0 }
+    )
+  }
+
   var body: some View {
     Form {
-      Section {
-        Toggle(isOn: hapticBinding) {
-          HStack {
-            SettingsIconView(systemName: "hand.tap.fill", backgroundColor: .blue)
-            Text("Haptic Feedback")
+      if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
+        Section {
+          Toggle(isOn: hapticBinding) {
+            HStack {
+              SettingsIconView(systemName: "hand.tap.fill", backgroundColor: .blue)
+              Text("Haptic Feedback")
+            }
           }
+        } footer: {
+          Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration.")
         }
+      }
+
+      Section {
+        if #available(iOS 26.0, *) {
+          Picker("Camera Zoom Slider", selection: handednessBinding) {
+            ForEach(SliderHandedness.allCases, id: \.self) { handedness in
+              Text(handedness.displayName).tag(handedness)
+            }
+          }
+          .pickerStyle(.palette)
+          .glassEffect(.regular.interactive())
+        } else {
+          Picker("Camera Zoom Slider", selection: handednessBinding) {
+            ForEach(SliderHandedness.allCases, id: \.self) { handedness in
+              Text(handedness.displayName).tag(handedness)
+            }
+          }
+          .pickerStyle(.palette)
+        }
+      } header: {
+        Text("Camera Zoom Slider")
       } footer: {
-        Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration.")
+        Text("Choose which side the camera zoom slider appears on. Pick \"Right-handed\" to keep it under your right thumb.")
       }
     }
     .navigationTitle("Interactions")

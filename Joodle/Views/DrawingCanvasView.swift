@@ -24,6 +24,7 @@ enum JoodleAccessState {
 struct DrawingCanvasView: View {
   @Environment(\.modelContext) private var modelContext
   @Environment(\.scenePhase) private var scenePhase
+  @Environment(\.userPreferences) private var userPreferences
   @StateObject private var subscriptionManager = SubscriptionManager.shared
 
   let date: Date
@@ -246,6 +247,17 @@ struct DrawingCanvasView: View {
   private var cameraCaptureFlashID: UUID? { isCameraFeatureActive ? cameraContext.captureFlashID : nil }
   private var cameraIsCapturing: Bool { isCameraFeatureActive && cameraContext.isCapturing }
 
+  private var cameraZoomCapabilities: CameraZoomCapabilities {
+    isCameraFeatureActive ? cameraContext.zoomCapabilities : .disabled
+  }
+  private var cameraDisplayZoom: CGFloat { isCameraFeatureActive ? cameraContext.displayZoomFactor : 1.0 }
+  /// Slider/pinch range, guarded so a degenerate capabilities set yields a
+  /// valid (possibly empty) range rather than an inverted one.
+  private var cameraZoomRange: ClosedRange<CGFloat> {
+    let caps = cameraZoomCapabilities
+    return caps.minDisplayZoom...max(caps.minDisplayZoom, caps.maxDisplayZoom)
+  }
+
   private var canvasButtonsConfig: CanvasButtonsConfig {
     CanvasButtonsConfig(
       onClear: clearDrawing,
@@ -292,6 +304,11 @@ struct DrawingCanvasView: View {
           captureFlashID: cameraCaptureFlashID,
           isCapturing: cameraIsCapturing,
           isSaving: isSaving,
+          cameraZoomFactor: cameraDisplayZoom,
+          cameraZoomRange: cameraZoomRange,
+          cameraKeyZoomFactors: cameraZoomCapabilities.keyZoomFactors,
+          zoomSliderHandedness: userPreferences.cameraZoomSliderHandedness,
+          onSetCameraZoom: { cameraContext.setZoom($0) },
           topButtonsVisible: topButtonsVisible,
           strokeRevealDate: strokeRevealDate,
           onCommitStroke: commitCurrentStroke

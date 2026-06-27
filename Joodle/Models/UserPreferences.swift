@@ -22,6 +22,9 @@ enum Pref {
   // Start of week: "sunday" or "monday"
   static let startOfWeek = Key(key: "start_of_week", default: "sunday")
 
+  // Which side the camera zoom slider appears on
+  static let cameraZoomSliderHandedness = Key(key: "camera_zoom_slider_handedness", default: SliderHandedness.right)
+
   // Experimental features
   static let enableTimeBackdrop = Key(key: "enable_time_backdrop", default: false)
   static let enableWigglyStrokes = Key(key: "enable_wiggly_strokes", default: false)
@@ -78,6 +81,7 @@ enum Pref {
     isDailyReminderEnabled.key,
     dailyReminderTimeSeconds.key,
     startOfWeek.key,
+    cameraZoomSliderHandedness.key,
     enableTimeBackdrop.key,
     enableWigglyStrokes.key,
     announcementsEnabled.key,
@@ -152,6 +156,11 @@ final class UserPreferences {
   var startOfWeek: String = Pref.startOfWeek.defaultValue {
     didSet {
       _startOfWeekWatcher = startOfWeek
+    }
+  }
+  var cameraZoomSliderHandedness: SliderHandedness = Pref.cameraZoomSliderHandedness.defaultValue {
+    didSet {
+      _cameraZoomSliderHandednessWatcher = cameraZoomSliderHandedness
     }
   }
 
@@ -314,6 +323,20 @@ final class UserPreferences {
     set { set(Pref.startOfWeek, newValue) }
   }
 
+  private var _cameraZoomSliderHandednessWatcher: SliderHandedness {
+    get {
+      if let rawValue = defaults.string(forKey: Pref.cameraZoomSliderHandedness.key),
+         let handedness = SliderHandedness(rawValue: rawValue)
+      {
+        return handedness
+      }
+      return Pref.cameraZoomSliderHandedness.defaultValue
+    }
+    set {
+      defaults.set(newValue.rawValue, forKey: Pref.cameraZoomSliderHandedness.key)
+    }
+  }
+
   private var _enableTimeBackdropWatcher: Bool {
     get { get(Pref.enableTimeBackdrop) }
     set { set(Pref.enableTimeBackdrop, newValue) }
@@ -384,6 +407,7 @@ final class UserPreferences {
     isDailyReminderEnabled = _isDailyReminderEnabledWatcher
     dailyReminderTimeSeconds = _dailyReminderTimeSecondsWatcher
     startOfWeek = _startOfWeekWatcher
+    cameraZoomSliderHandedness = _cameraZoomSliderHandednessWatcher
     enableTimeBackdrop = _enableTimeBackdropWatcher
     enableWigglyStrokes = _enableWigglyStrokesWatcher
     announcementsEnabled = _announcementsEnabledWatcher
@@ -449,6 +473,7 @@ final class UserPreferences {
     isDailyReminderEnabled = Pref.isDailyReminderEnabled.defaultValue
     dailyReminderTimeSeconds = Pref.dailyReminderTimeSeconds.defaultValue
     startOfWeek = Pref.startOfWeek.defaultValue
+    cameraZoomSliderHandedness = Pref.cameraZoomSliderHandedness.defaultValue
     enableTimeBackdrop = Pref.enableTimeBackdrop.defaultValue
     enableWigglyStrokes = Pref.enableWigglyStrokes.defaultValue
     announcementsEnabled = Pref.announcementsEnabled.defaultValue

@@ -34,6 +34,11 @@ final class CameraReferenceContext: ObservableObject {
   /// Mirror of `controller.currentDevice` so views observing the context
   /// re-render whenever the active capture device changes (e.g. flip).
   @Published var currentDevice: AVCaptureDevice?
+  /// Mirror of `controller.zoomCapabilities` — drives the zoom slider's range,
+  /// key ticks, and whether it's shown at all.
+  @Published var zoomCapabilities: CameraZoomCapabilities = .disabled
+  /// Mirror of `controller.displayZoomFactor` — the 0.5/1/2/3 shown to the user.
+  @Published var displayZoomFactor: CGFloat = 1.0
   /// Mirror of `shutter.isFullyClosed`. Republished here so views observing
   /// the context (rather than the nested controller directly) re-render when
   /// the shutter reaches the fully-closed state.
@@ -82,6 +87,12 @@ final class CameraReferenceContext: ObservableObject {
     controller.$currentDevice
       .receive(on: DispatchQueue.main)
       .assign(to: &$currentDevice)
+    controller.$zoomCapabilities
+      .receive(on: DispatchQueue.main)
+      .assign(to: &$zoomCapabilities)
+    controller.$displayZoomFactor
+      .receive(on: DispatchQueue.main)
+      .assign(to: &$displayZoomFactor)
     shutter.$isFullyClosed
       .receive(on: DispatchQueue.main)
       .assign(to: &$isShutterFullyClosed)
@@ -209,6 +220,10 @@ final class CameraReferenceContext: ObservableObject {
       // frame before the shutter starts opening.
       try? await Task.sleep(nanoseconds: 80_000_000)
     }
+  }
+
+  func setZoom(_ display: CGFloat) {
+    controller.setDisplayZoom(display)
   }
 
   func capture() async {

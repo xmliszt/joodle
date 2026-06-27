@@ -116,6 +116,19 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   /// deliberate "saving" state during the brief synchronous save.
   var isSaving: Bool = false
 
+  /// Current display zoom of the live camera (1.0 = baseline). Drives the
+  /// zoom slider thumb and the pinch gesture's starting point.
+  var cameraZoomFactor: CGFloat = 1.0
+  /// Display-zoom range the slider/pinch can reach. A degenerate `1...1`
+  /// (the default) hides the slider and disables pinch zoom.
+  var cameraZoomRange: ClosedRange<CGFloat> = 1...1
+  /// Display zooms rendered as labeled ticks on the slider (e.g. 0.5/1/2/3).
+  var cameraKeyZoomFactors: [CGFloat] = []
+  /// Which canvas edge the zoom slider hugs.
+  var zoomSliderHandedness: SliderHandedness = .right
+  /// Called with a new display zoom from the slider or the pinch gesture.
+  var onSetCameraZoom: (CGFloat) -> Void = { _ in }
+
   /// Gates the top action-buttons row. The parent holds this false until the
   /// floating container has finished expanding, then flips it true so the row
   /// fades in *after* the open animation settles. Keeping the live-glass
@@ -158,6 +171,13 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   /// Opacity of the black capture-flash overlay. Pulsed 0 → 1 → 0 on each
   /// `captureFlashID` change to fake a shutter snap.
   @State private var captureFlashOpacity: Double = 0
+  /// Display zoom captured at the start of a pinch, so each `MagnifyGesture`
+  /// update scales relative to where the zoom was when the gesture began.
+  @State private var pinchStartZoom: CGFloat = 1.0
+  /// True for the lifetime of an in-flight pinch (mirrors the gesture's
+  /// `@GestureState`), letting `.onChanged` capture `pinchStartZoom` exactly
+  /// once at the gesture's first frame.
+  @GestureState private var isPinching: Bool = false
 
   init(
     paths: Binding<[Path]>,
@@ -180,6 +200,11 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     captureFlashID: UUID? = nil,
     isCapturing: Bool = false,
     isSaving: Bool = false,
+    cameraZoomFactor: CGFloat = 1.0,
+    cameraZoomRange: ClosedRange<CGFloat> = 1...1,
+    cameraKeyZoomFactors: [CGFloat] = [],
+    zoomSliderHandedness: SliderHandedness = .right,
+    onSetCameraZoom: @escaping (CGFloat) -> Void = { _ in },
     topButtonsVisible: Bool = true,
     strokeRevealDate: Date? = nil,
     onCommitStroke: @escaping () -> Void,
@@ -205,6 +230,11 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.captureFlashID = captureFlashID
     self.isCapturing = isCapturing
     self.isSaving = isSaving
+    self.cameraZoomFactor = cameraZoomFactor
+    self.cameraZoomRange = cameraZoomRange
+    self.cameraKeyZoomFactors = cameraKeyZoomFactors
+    self.zoomSliderHandedness = zoomSliderHandedness
+    self.onSetCameraZoom = onSetCameraZoom
     self.topButtonsVisible = topButtonsVisible
     self.strokeRevealDate = strokeRevealDate
     self.onCommitStroke = onCommitStroke
@@ -217,6 +247,33 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   private var wiggleEnabled: Bool {
     // Wiggly strokes are a Joodle Pro feature.
     userPreferences.enableWigglyStrokes && SubscriptionManager.shared.hasPremiumAccess && !isCameraLive && !paths.isEmpty
+  }
+
+  /// Whether the camera zoom slider should be mounted: live mode with a real
+  /// (non-degenerate) zoom range to traverse.
+  private var showsZoomSlider: Bool {
+    isCameraLive && cameraZoomRange.lowerBound < cameraZoomRange.upperBound
+  }
+
+  /// Pinch-to-zoom over the live preview. Active only in camera mode (the
+  /// drawing surface is already disabled there, so it never competes with the
+  /// stroke `DragGesture`). Each update scales the zoom captured at gesture
+  /// start, clamped to the available range.
+  private var cameraZoomMagnifyGesture: some Gesture {
+    MagnifyGesture(minimumScaleDelta: 0)
+      .updating($isPinching) { _, state, _ in
+        state = true
+      }
+      .onChanged { value in
+        // Capture the starting zoom on the first frame of the pinch (before
+        // `isPinching` latches true) so subsequent frames scale relative to it.
+        if !isPinching {
+          pinchStartZoom = cameraZoomFactor
+        }
+        let target = pinchStartZoom * value.magnification
+        let clamped = min(max(target, cameraZoomRange.lowerBound), cameraZoomRange.upperBound)
+        onSetCameraZoom(clamped)
+      }
   }
 
   /// Top action-buttons row. On iOS 26+ the row gets its own
@@ -515,6 +572,38 @@ struct SharedCanvasView<TrailingHeader: View>: View {
             .allowsHitTesting(false)
         }
         #endif
+
+        // Pinch-to-zoom catcher over the live preview. Only hit-testable while
+        // live, so it never interferes with the drawing surface (itself
+        // disabled in camera mode). Sits below the zoom slider so the slider's
+        // own drag still wins where they overlap.
+        if isCameraLive {
+          Color.clear
+            .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+            .contentShape(Rectangle())
+            .gesture(cameraZoomMagnifyGesture)
+        }
+
+        // Camera zoom slider — vertically centered against one canvas edge.
+        // Hit-testable and above the live preview, but inset clear of the
+        // bottom shutter/center controls. Also shown over the simulator
+        // placeholder so the flow stays testable without camera hardware.
+        if showsZoomSlider {
+          CameraZoomSlider(
+            zoomFactor: cameraZoomFactor,
+            range: cameraZoomRange,
+            keyFactors: cameraKeyZoomFactors,
+            onChange: onSetCameraZoom
+          )
+          .padding(.horizontal, 12)
+          .frame(
+            width: CANVAS_SIZE,
+            height: CANVAS_SIZE,
+            alignment: zoomSliderHandedness == .right
+              ? .trailing
+              : .leading
+          )
+        }
 
         // Camera shutter — overlays the canvas area regardless of mode so it can
         // close over either the live preview (entry) or the drawing canvas (exit).

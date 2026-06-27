@@ -16,6 +16,27 @@ enum CameraPermissionState {
   case denied
 }
 
+/// Describes the zoom range exposed to the UI for the active capture device.
+/// All UI deals in *display* zoom (the 0.5/1/2/3 numbers the user sees);
+/// `baselineFactor` converts to the device's raw `videoZoomFactor`.
+struct CameraZoomCapabilities: Equatable {
+  /// 0.5 when an ultra-wide constituent is present, otherwise 1.0.
+  var minDisplayZoom: CGFloat
+  /// `min(device.maxAvailableVideoZoomFactor / baselineFactor, 8.0)`.
+  var maxDisplayZoom: CGFloat
+  /// The `videoZoomFactor` that maps to display 1.0x.
+  var baselineFactor: CGFloat
+  /// Subset of [0.5,1,2,3] within [min,max]; always contains 1.0 and the actual min.
+  var keyZoomFactors: [CGFloat]
+
+  static let disabled = CameraZoomCapabilities(
+    minDisplayZoom: 1,
+    maxDisplayZoom: 1,
+    baselineFactor: 1,
+    keyZoomFactors: [1]
+  )
+}
+
 extension Notification.Name {
   /// Posted (on main) after the camera session has been reconfigured — e.g. on
   /// flipping the active camera. Allows the preview layer's coordinator to
@@ -32,6 +53,12 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   /// preview layer's rotation coordinator) observe this to know which device
   /// to track for orientation/mirror.
   @Published var currentDevice: AVCaptureDevice?
+  /// Zoom range for the active device, recomputed whenever the device changes
+  /// (initial configure + flip). `.disabled` until the session is configured.
+  @Published var zoomCapabilities: CameraZoomCapabilities = .disabled
+  /// Current zoom in display terms (the 0.5/1/2/3 the user sees). Reset to 1.0
+  /// on every device change.
+  @Published var displayZoomFactor: CGFloat = 1.0
 
   let session = AVCaptureSession()
   private let sessionQueue = DispatchQueue(label: "dev.liyuxuan.joodle.camera.session")
@@ -144,13 +171,42 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
         self.applyMirroring(for: newPosition)
       }
       self.session.commitConfiguration()
+      if let newDevice {
+        self.applyBaselineZoom(for: newDevice)
+      }
+      let capabilities = newDevice.map(Self.zoomCapabilities) ?? .disabled
       let sessionRef = self.session
       DispatchQueue.main.async { [weak self] in
         self?.currentDevice = newDevice
+        self?.zoomCapabilities = capabilities
+        self?.displayZoomFactor = 1.0
         NotificationCenter.default.post(
           name: .cameraSessionConfigurationDidChange,
           object: sessionRef
         )
+      }
+    }
+  }
+
+  /// Sets the zoom in display terms (0.5/1/2/3). Clamps to the active device's
+  /// display range, converts to the raw `videoZoomFactor` via `baselineFactor`,
+  /// re-clamps to the device's hardware bounds, and applies it on `sessionQueue`.
+  /// `displayZoomFactor` is republished on main.
+  func setDisplayZoom(_ display: CGFloat) {
+    sessionQueue.async { [weak self] in
+      guard let self, let device = self.currentInput?.device else { return }
+      let capabilities = Self.zoomCapabilities(for: device)
+      let clampedDisplay = min(max(display, capabilities.minDisplayZoom), capabilities.maxDisplayZoom)
+      let videoZoomFactor = min(
+        max(clampedDisplay * capabilities.baselineFactor, device.minAvailableVideoZoomFactor),
+        device.maxAvailableVideoZoomFactor
+      )
+      if (try? device.lockForConfiguration()) != nil {
+        device.videoZoomFactor = videoZoomFactor
+        device.unlockForConfiguration()
+      }
+      DispatchQueue.main.async { [weak self] in
+        self?.displayZoomFactor = clampedDisplay
       }
     }
   }
@@ -309,16 +365,78 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
     }
     applyMirroring(for: initialPosition)
     session.commitConfiguration()
+    if let initialDevice {
+      applyBaselineZoom(for: initialDevice)
+    }
+    let capabilities = initialDevice.map(Self.zoomCapabilities) ?? .disabled
     DispatchQueue.main.async { [weak self] in
       self?.currentDevice = initialDevice
+      self?.zoomCapabilities = capabilities
+      self?.displayZoomFactor = 1.0
     }
   }
 
+  /// Picks the richest device for the position so display 0.5x (ultra-wide) is
+  /// available when the hardware has it. For `.back` prefer the virtual devices
+  /// that fuse an ultra-wide constituent (triple → dual-wide), then dual, then
+  /// the plain wide-angle; `.front` only ever has the wide-angle.
   private static func makeInput(position: AVCaptureDevice.Position) -> AVCaptureDeviceInput? {
-    guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position) else {
-      return nil
-    }
+    let deviceTypes: [AVCaptureDevice.DeviceType] = (position == .back)
+      ? [.builtInTripleCamera, .builtInDualWideCamera, .builtInDualCamera, .builtInWideAngleCamera]
+      : [.builtInWideAngleCamera]
+    let device = deviceTypes
+      .lazy
+      .compactMap { AVCaptureDevice.default($0, for: .video, position: position) }
+      .first
+    guard let device else { return nil }
     return try? AVCaptureDeviceInput(device: device)
+  }
+
+  /// Derives the display-zoom range from a device's format-aware min/max and its
+  /// virtual switchover. `baselineFactor` is the `videoZoomFactor` for display
+  /// 1.0x: the first ultra-wide→wide switchover when the device fuses an
+  /// ultra-wide constituent (so display 0.5x = ultra-wide, 1.0x = wide),
+  /// otherwise 1.0 (front camera, or back devices without an ultra-wide).
+  private static func zoomCapabilities(for device: AVCaptureDevice) -> CameraZoomCapabilities {
+    let switchOverFactors = device.virtualDeviceSwitchOverVideoZoomFactors.map { CGFloat(truncating: $0) }
+    let hasUltraWide = device.isVirtualDevice
+      && device.constituentDevices.contains { $0.deviceType == .builtInUltraWideCamera }
+    let baselineFactor: CGFloat = (hasUltraWide ? switchOverFactors.first : nil) ?? 1.0
+
+    let minDisplayZoom = device.minAvailableVideoZoomFactor / baselineFactor
+    let maxDisplayZoom = min(device.maxAvailableVideoZoomFactor / baselineFactor, 8.0)
+    // Degenerate hardware (min > capped max) collapses to a fixed 1.0x.
+    guard maxDisplayZoom >= minDisplayZoom else { return .disabled }
+
+    let keyZoomFactors = [0.5, 1.0, 2.0, 3.0]
+      .filter { $0 >= minDisplayZoom && $0 <= maxDisplayZoom }
+    return CameraZoomCapabilities(
+      minDisplayZoom: minDisplayZoom,
+      maxDisplayZoom: maxDisplayZoom,
+      baselineFactor: baselineFactor,
+      // Guarantee 1.0 and the actual min are always offered as snap targets,
+      // even if rounding pushed them outside the literal [0.5,1,2,3] filter —
+      // but never emit a tick outside [min,max] (1.0 is dropped when the
+      // device's min display zoom is itself above 1.0).
+      keyZoomFactors: ([minDisplayZoom, 1.0] + keyZoomFactors)
+        .filter { $0 >= minDisplayZoom && $0 <= maxDisplayZoom }
+        .reduce(into: [CGFloat]()) { unique, value in
+          if !unique.contains(where: { abs($0 - value) < 0.001 }) { unique.append(value) }
+        }
+        .sorted()
+    )
+  }
+
+  /// Resets the device to display 1.0x (`videoZoomFactor = baselineFactor`) so a
+  /// freshly-bound device starts at the wide lens, not the ultra-wide 0.5x.
+  /// Call on `sessionQueue`.
+  private func applyBaselineZoom(for device: AVCaptureDevice) {
+    let baselineFactor = Self.zoomCapabilities(for: device).baselineFactor
+    let clamped = min(max(baselineFactor, device.minAvailableVideoZoomFactor), device.maxAvailableVideoZoomFactor)
+    if (try? device.lockForConfiguration()) != nil {
+      device.videoZoomFactor = clamped
+      device.unlockForConfiguration()
+    }
   }
 
   private func applyMirroring(for position: AVCaptureDevice.Position) {
