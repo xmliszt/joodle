@@ -69,6 +69,14 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
       )
       let topHeight = _geometry.size.height * effectiveSplit
       let bottomHeight = _geometry.size.height * (1 - effectiveSplit)
+      // Round the top view's bottom corners only while it floats above the
+      // screen bottom. As it reaches full screen (bottomHeight -> 0) the radius
+      // collapses to 0 so the device's hardware corner mask does the rounding,
+      // instead of self-carving a notch that reveals the accent background.
+      let topBottomCornerRadius = min(
+        UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
+        bottomHeight
+      )
 
       ZStack {
         // Background color - animate opacity based on splitPosition for smooth transition
@@ -82,8 +90,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             .frame(width: _geometry.size.width, height: topHeight, alignment: .top)
             .clipShape(
               UnevenRoundedRectangle(
-                bottomLeadingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
-                bottomTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
+                bottomLeadingRadius: topBottomCornerRadius,
+                bottomTrailingRadius: topBottomCornerRadius,
                 style: .continuous)
             )
 
