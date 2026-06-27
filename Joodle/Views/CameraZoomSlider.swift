@@ -208,8 +208,10 @@ struct CameraZoomSlider: View {
       .onChanged { value in
         let anchor = dragAnchorLog ?? logZoom(zoomFactor)
         if dragAnchorLog == nil { dragAnchorLog = anchor }
-        // Drag up (negative height) zooms in.
-        let newLog = clampLog(anchor - value.translation.height / pointsPerLogUnit)
+        // Direct manipulation: the ruler follows the finger. Higher zoom ticks sit
+        // above center, so dragging down brings them to center (zoom in) and
+        // dragging up brings the lower ones (zoom out).
+        let newLog = clampLog(anchor + value.translation.height / pointsPerLogUnit)
         dragLog = newLog
         fireHapticOnTickCrossed(newLog)
         onChange(clampZoom(exp(newLog)))
