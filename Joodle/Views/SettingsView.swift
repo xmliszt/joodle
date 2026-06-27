@@ -1975,6 +1975,12 @@ private struct WigglyStrokePreview: View {
   /// Stable anchor for the boil's periodic clock.
   @State private var epoch = Date()
 
+  /// The preview backdrop is always black, so pin the stroke to the dark-mode
+  /// accent variant regardless of the system appearance.
+  private static var darkAccent: Color {
+    Color(UIColor(.appAccent).resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark)))
+  }
+
   var body: some View {
     // Always boil — the preview demonstrates the effect regardless of the toggle.
     TimelineView(.periodic(from: epoch, by: WigglyStroke.boilInterval)) { timeline in
@@ -1992,11 +1998,11 @@ private struct WigglyStrokePreview: View {
       for stroke in Self.sample {
         let path = WigglyStroke.path(points: stroke.points, isDot: stroke.isDot, frame: frame)
         if stroke.isDot {
-          context.fill(path, with: .color(.appAccent))
+          context.fill(path, with: .color(Self.darkAccent))
         } else {
           context.stroke(
             path,
-            with: .color(.appAccent),
+            with: .color(Self.darkAccent),
             style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
           )
         }
