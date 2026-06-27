@@ -39,6 +39,9 @@ struct CameraZoomSlider: View {
   private let pointsPerLogUnit: CGFloat = 104
   /// Minor-tick interval in log space — eight ticks per octave.
   private let minorStepLog: CGFloat = 0.08664339 // ln(2) / 8
+  /// Time constant of a tick's magnification decay after it leaves center. Larger
+  /// is a longer, slower-fading trail.
+  private let waveReleaseSeconds: CGFloat = 0.5
 
   /// Live zoom while dragging, in log space. `nil` when not dragging, so the
   /// ruler follows the externally driven `zoomFactor`.
@@ -48,6 +51,12 @@ struct CameraZoomSlider: View {
   /// Grid index of the tick currently at center — a change means a tick just
   /// crossed center, which is when a haptic fires (every tick, not just majors).
   @State private var lastTickIndex: Int = .min
+  /// Per-tick magnification "charge": it attacks instantly to the spatial lens
+  /// value as a tick reaches center, then releases slowly once center moves on —
+  /// leaving a decaying scale/opacity trail behind the drag (the native Camera
+  /// ruler's wavy feel). Held in a reference type so the per-frame `TimelineView`
+  /// redraw can update it in place without invalidating the view.
+  @State private var wave = WaveState()
 
   private var currentLog: CGFloat { dragLog ?? logZoom(zoomFactor) }
   private var currentZoom: CGFloat { clampZoom(exp(currentLog)) }
@@ -86,10 +95,16 @@ struct CameraZoomSlider: View {
   // MARK: - Value label
 
   private var valueLabel: some View {
-    Text(Self.format(currentZoom))
+    let value = Self.format(currentZoom)
+    return Text(value)
       .font(.appFont(size: 13, weight: .bold))
       .monospacedDigit()
       .foregroundStyle(Self.darkAccent)
+      // Roll the digits over as the displayed value changes, like the native
+      // control. Keyed on the formatted string so it fires only at display-value
+      // boundaries, not on every sub-step of the drag.
+      .contentTransition(.numericText())
+      .animation(.snappy(duration: 0.2), value: value)
       .frame(width: labelWidth, height: 24)
       // Opaque black pill (same as the container) masks the ticks directly
       // beneath the value, so the label reads cleanly over the ruler.
@@ -116,39 +131,62 @@ struct CameraZoomSlider: View {
   /// draw call per frame. The magnify is baked into each tick's drawn size and
   /// the end-softness into its alpha, so both are free.
   private var ruler: some View {
-    Canvas(opaque: false, rendersAsynchronously: false) { context, size in
-      let centerY = size.height / 2
-      let cur = currentLog
-      let tickList = ticks
-      // The tick nearest center is the focused one, drawn in the accent color.
-      let focused = tickList.min { abs($0.log - cur) < abs($1.log - cur) }?.log ?? cur
-      let accent = Self.darkAccent
+    // A continuous clock so each tick's charge keeps decaying between (and after)
+    // drag events, not only when the value changes — that's what lets the trail
+    // ease back on its own once the finger stops.
+    TimelineView(.animation) { timeline in
+      Canvas(opaque: false, rendersAsynchronously: false) { context, size in
+        let now = timeline.date.timeIntervalSinceReferenceDate
+        let dt = CGFloat(wave.lastTime.map { now - $0 } ?? 0)
+        wave.lastTime = now
+        // Fraction of charge retained this frame. dt == 0 (first frame) keeps all.
+        let release = dt > 0 ? exp(-dt / waveReleaseSeconds) : 1
 
-      for tick in tickList {
-        let y = centerY - (tick.log - cur) * pointsPerLogUnit
-        guard y >= -16, y <= size.height + 16 else { continue }
-        let n = min(abs(y - centerY) / (size.height / 2), 1)
-        // Gaussian "lens" centered on the focused tick. Length grows modestly,
-        // while thickness grows much more — so the focused tick reads as a
-        // distinctly fatter, magnified highlight rather than just a longer one.
-        let lens = exp(-pow(n / 0.32, 2))
-        let lengthScale = 1 + 0.28 * lens - 0.45 * pow(n, 1.4)
-        let thicknessScale = 1 + 0.95 * lens - 0.30 * pow(n, 1.4)
-        let baseLength: CGFloat
-        let restOpacity: CGFloat
-        switch tick.tier {
-        case .major:  baseLength = 22; restOpacity = 0.9
-        case .medium: baseLength = 17; restOpacity = 0.7
-        case .minor:  baseLength = 12; restOpacity = 0.5
+        let centerY = size.height / 2
+        let cur = currentLog
+        let tickList = ticks
+        // The tick nearest center is the focused one, drawn in the accent color.
+        let focused = tickList.min { abs($0.log - cur) < abs($1.log - cur) }?.log ?? cur
+        let accent = Self.darkAccent
+
+        for tick in tickList {
+          let y = centerY - (tick.log - cur) * pointsPerLogUnit
+          let n = min(abs(y - centerY) / (size.height / 2), 1)
+          // Gaussian "lens" target centered on the focused tick. The charge snaps
+          // up to it the instant a tick reaches center (attack) but only eases
+          // back down by `release` per frame — so a tick swayed past center holds
+          // a magnified, brighter trail that decays toward rest. At rest the
+          // charge settles to the target, so the static look is the plain lens.
+          let target = exp(-pow(n / 0.32, 2))
+          let charge = max(target, (wave.charge[tick.log] ?? target) * release)
+          wave.charge[tick.log] = charge
+          // Cull drawing only — charge above is still updated so off-screen ticks
+          // decay instead of freezing and popping when they scroll back in.
+          guard y >= -16, y <= size.height + 16 else { continue }
+
+          // Length grows modestly, thickness much more — the focused tick reads as
+          // a distinctly fatter, magnified highlight rather than just a longer one.
+          let lengthScale = 1 + 0.2 * charge - 0.45 * pow(n, 1.4)
+          let thicknessScale = 1 + 1 * charge - 0.30 * pow(n, 1.4)
+          let baseLength: CGFloat
+          let restOpacity: CGFloat
+          switch tick.tier {
+          case .major:  baseLength = 24; restOpacity = 0.3
+          case .medium: baseLength = 12; restOpacity = 0.3
+          case .minor:  baseLength = 6;  restOpacity = 0.3
+          }
+          let length = baseLength * lengthScale
+          let thickness = 1.8 * max(thicknessScale, 0.4)
+          let originX: CGFloat = edge == .trailing ? size.width - outerInset - length : outerInset
+          let rect = CGRect(x: originX, y: y - thickness / 2, width: length, height: thickness)
+
+          let isFocused = abs(tick.log - focused) < 0.0001
+          // Charge lifts opacity toward full, so a passing tick brightens and then
+          // fades back to its tier's resting opacity.
+          let litOpacity = restOpacity + (1 - restOpacity) * charge
+          let base = isFocused ? accent : Color.white
+          context.fill(Capsule().path(in: rect), with: .color(base.opacity(litOpacity * distanceFade(n))))
         }
-        let length = baseLength * lengthScale
-        let thickness = 2.5 * max(thicknessScale, 0.35)
-        let originX: CGFloat = edge == .trailing ? size.width - outerInset - length : outerInset
-        let rect = CGRect(x: originX, y: y - thickness / 2, width: length, height: thickness)
-
-        let isFocused = abs(tick.log - focused) < 0.0001
-        let base = isFocused ? accent : Color.white.opacity(restOpacity)
-        context.fill(Capsule().path(in: rect), with: .color(base.opacity(distanceFade(n))))
       }
     }
   }
@@ -173,6 +211,14 @@ struct CameraZoomSlider: View {
     let log: CGFloat
     let tier: TickTier
     var id: CGFloat { log }
+  }
+
+  /// Mutable per-frame scratch for the magnification trail, keyed by tick log.
+  /// A class (not `@State` value) so the `Canvas`/`TimelineView` redraw can update
+  /// it during rendering without tripping SwiftUI's "modifying state" invalidation.
+  private final class WaveState {
+    var charge: [CGFloat: CGFloat] = [:]
+    var lastTime: TimeInterval?
   }
 
   /// A single uniform grid of ticks in log space — guaranteeing even spacing.
