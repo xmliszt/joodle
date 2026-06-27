@@ -23,6 +23,7 @@ struct iCloudConfigView: View {
     }
 
     var body: some View {
+        ZStack(alignment: .topLeading) {
         VStack(spacing: 0) {
             Spacer()
 
@@ -104,6 +105,17 @@ struct iCloudConfigView: View {
                 // Continue to completion - restart will be handled after onboarding
                 viewModel.completeStep(.icloudConfig)
             }
+        }
+
+            // Back button in top left corner
+            Button {
+                viewModel.goBack()
+            } label: {
+                Image(systemName: "arrow.left")
+            }
+            .circularGlassButton(tintColor: .primary)
+            .padding(.leading, 16)
+            .padding(.top, 8)
         }
         .navigationBarBackButtonHidden(true)
     }

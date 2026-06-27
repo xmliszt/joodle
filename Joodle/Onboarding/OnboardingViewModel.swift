@@ -7,6 +7,7 @@ enum OnboardingStep: Hashable, CaseIterable {
     case drawingEntry              // The greeting + drawing
     case valueProposition          // Confetti + Explanation
     case yearGridDemo              // Interactive tutorial in sandboxed environment
+    case handednessSetup           // Pick dominant hand → camera zoom slider edge
     case featureIntroWidgets       // Feature intro: Widgets (kept - can't be interactive)
     case icloudConfig              // iCloud sync configuration
     case dailyReminder             // Daily reminder configuration
@@ -109,7 +110,11 @@ class OnboardingViewModel: ObservableObject {
             }
 
         case .yearGridDemo:
-            // After interactive tutorial, show widgets intro
+            // After interactive tutorial, let the user set their handedness
+            navigationPath.append(OnboardingStep.handednessSetup)
+
+        case .handednessSetup:
+            // After choosing a slider edge, show widgets intro
             navigationPath.append(OnboardingStep.featureIntroWidgets)
 
         case .featureIntroWidgets:
@@ -339,6 +344,7 @@ class OnboardingViewModel: ObservableObject {
         case .drawingEntry: return "drawing_entry"
         case .valueProposition: return "value_proposition"
         case .yearGridDemo: return "year_grid_demo"
+        case .handednessSetup: return "handedness_setup"
         case .featureIntroWidgets: return "feature_intro_widgets"
         case .icloudConfig: return "icloud_config"
         case .dailyReminder: return "daily_reminder"

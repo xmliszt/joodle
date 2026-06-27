@@ -22,7 +22,7 @@ enum CameraPermissionState {
 struct CameraZoomCapabilities: Equatable {
   /// 0.5 when an ultra-wide constituent is present, otherwise 1.0.
   var minDisplayZoom: CGFloat
-  /// `min(device.maxAvailableVideoZoomFactor / baselineFactor, 8.0)`.
+  /// `min(device.maxAvailableVideoZoomFactor / baselineFactor, 10.0)`.
   var maxDisplayZoom: CGFloat
   /// The `videoZoomFactor` that maps to display 1.0x.
   var baselineFactor: CGFloat
@@ -448,21 +448,33 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
     let baselineFactor: CGFloat = (hasUltraWide ? switchOverFactors.first : nil) ?? 1.0
 
     let minDisplayZoom = device.minAvailableVideoZoomFactor / baselineFactor
-    let maxDisplayZoom = min(device.maxAvailableVideoZoomFactor / baselineFactor, 8.0)
+    let maxDisplayZoom = min(device.maxAvailableVideoZoomFactor / baselineFactor, 10.0)
     // Degenerate hardware (min > capped max) collapses to a fixed 1.0x.
     guard maxDisplayZoom >= minDisplayZoom else { return .disabled }
 
-    let keyZoomFactors = [0.5, 1.0, 2.0, 3.0]
-      .filter { $0 >= minDisplayZoom && $0 <= maxDisplayZoom }
+    // Constituent-lens switchovers in display terms — the main lens (1.0) and any
+    // tele (e.g. 3x or 5x depending on the device).
+    let switchOverDisplay = switchOverFactors.map { $0 / baselineFactor }
+    // Full-resolution sensor-crop stops in display terms — the "optical-quality"
+    // factors like 2x on a 48MP main sensor. Empty when the format has none.
+    let sensorCropDisplay: [CGFloat] = {
+      if #available(iOS 16.0, *) {
+        return device.activeFormat.secondaryNativeResolutionZoomFactors.map { $0 / baselineFactor }
+      }
+      return []
+    }()
+
     return CameraZoomCapabilities(
       minDisplayZoom: minDisplayZoom,
       maxDisplayZoom: maxDisplayZoom,
       baselineFactor: baselineFactor,
-      // Guarantee 1.0 and the actual min are always offered as snap targets,
-      // even if rounding pushed them outside the literal [0.5,1,2,3] filter —
-      // but never emit a tick outside [min,max] (1.0 is dropped when the
-      // device's min display zoom is itself above 1.0).
-      keyZoomFactors: ([minDisplayZoom, 1.0] + keyZoomFactors)
+      // Optical-quality stops read straight from the hardware (the "MM"-labelled
+      // factors in the system camera): the widest lens (min), the main lens (1.0),
+      // each physical lens switchover, and each full-resolution sensor crop. This
+      // adapts per device — a 3x-tele phone gets a 3x key tick, a 5x-tele phone a
+      // 5x one. Whole-number digital-zoom stops are drawn as shorter medium ticks
+      // by the slider, so they aren't included here.
+      keyZoomFactors: ([minDisplayZoom, 1.0] + switchOverDisplay + sensorCropDisplay)
         .filter { $0 >= minDisplayZoom && $0 <= maxDisplayZoom }
         .reduce(into: [CGFloat]()) { unique, value in
           if !unique.contains(where: { abs($0 - value) < 0.001 }) { unique.append(value) }

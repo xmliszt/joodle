@@ -24,9 +24,11 @@ struct CameraZoomSlider: View {
 
   private let containerWidth: CGFloat = 48
   private let containerHeight: CGFloat = 275
-  /// Inset of the ruler's outer (edge-side) end from the container edge. The
-  /// value label is centered over the ruler lane using the same inset.
+  /// Inset of the ruler's outer (edge-side) end from the container edge.
   private let outerInset: CGFloat = 10
+  /// Width of the value label's pill. Kept just wide enough for "0.5x" so it
+  /// hugs the screen edge without floating over the ruler.
+  private let labelWidth: CGFloat = 40
   /// Convex radius of the two inner corners (away from the screen edge).
   private let convexRadius: CGFloat = 28
   /// Concave radius of the two corners that touch the screen edge — these flare
@@ -49,6 +51,12 @@ struct CameraZoomSlider: View {
 
   private var currentLog: CGFloat { dragLog ?? logZoom(zoomFactor) }
   private var currentZoom: CGFloat { clampZoom(exp(currentLog)) }
+
+  /// The slider sits on an always-black background, so the theme accent is pinned
+  /// to its dark-mode variant regardless of the system appearance.
+  private static var darkAccent: Color {
+    Color(UIColor(.appAccent).resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark)))
+  }
 
   var body: some View {
     ZStack {
@@ -81,21 +89,22 @@ struct CameraZoomSlider: View {
     Text(Self.format(currentZoom))
       .font(.appFont(size: 13, weight: .bold))
       .monospacedDigit()
-      .foregroundStyle(.appAccent)
-      .frame(width: 42, height: 24)
+      .foregroundStyle(Self.darkAccent)
+      .frame(width: labelWidth, height: 24)
       // Opaque black pill (same as the container) masks the ticks directly
       // beneath the value, so the label reads cleanly over the ruler.
       .background(Color.black, in: RoundedRectangle(cornerRadius: 12, style: .circular))
       .position(x: labelCenterX, y: containerHeight / 2)
   }
 
-  /// Center of the value label — placed over the middle of the ruler lane so it
-  /// overlays the focused tick rather than sitting beside the ruler.
+  /// Center of the value label — pinned hard against the screen edge (a couple
+  /// points of breathing room) while still overlapping the ruler, so the value
+  /// hugs the edge and masks the focused tick beneath it.
   private var labelCenterX: CGFloat {
-    let halfMajorReach: CGFloat = 14
+    let edgeGap: CGFloat = 2
     switch edge {
-    case .trailing: return containerWidth - outerInset - halfMajorReach
-    case .leading: return outerInset + halfMajorReach
+    case .trailing: return containerWidth - edgeGap - labelWidth / 2
+    case .leading: return edgeGap + labelWidth / 2
     }
   }
 
@@ -113,7 +122,7 @@ struct CameraZoomSlider: View {
       let tickList = ticks
       // The tick nearest center is the focused one, drawn in the accent color.
       let focused = tickList.min { abs($0.log - cur) < abs($1.log - cur) }?.log ?? cur
-      let accent = Color.appAccent
+      let accent = Self.darkAccent
 
       for tick in tickList {
         let y = centerY - (tick.log - cur) * pointsPerLogUnit
@@ -125,13 +134,20 @@ struct CameraZoomSlider: View {
         let lens = exp(-pow(n / 0.32, 2))
         let lengthScale = 1 + 0.28 * lens - 0.45 * pow(n, 1.4)
         let thicknessScale = 1 + 0.95 * lens - 0.30 * pow(n, 1.4)
-        let length = (tick.isMajor ? 22 : 12) * lengthScale
+        let baseLength: CGFloat
+        let restOpacity: CGFloat
+        switch tick.tier {
+        case .major:  baseLength = 22; restOpacity = 0.9
+        case .medium: baseLength = 17; restOpacity = 0.7
+        case .minor:  baseLength = 12; restOpacity = 0.5
+        }
+        let length = baseLength * lengthScale
         let thickness = 2.5 * max(thicknessScale, 0.35)
         let originX: CGFloat = edge == .trailing ? size.width - outerInset - length : outerInset
         let rect = CGRect(x: originX, y: y - thickness / 2, width: length, height: thickness)
 
         let isFocused = abs(tick.log - focused) < 0.0001
-        let base = isFocused ? accent : Color.white.opacity(tick.isMajor ? 0.9 : 0.5)
+        let base = isFocused ? accent : Color.white.opacity(restOpacity)
         context.fill(Capsule().path(in: rect), with: .color(base.opacity(distanceFade(n))))
       }
     }
@@ -143,30 +159,45 @@ struct CameraZoomSlider: View {
     max(0, 1 - pow(n, 1.7))
   }
 
+  /// Three tick lengths, mirroring the native Camera ruler: the optical lenses
+  /// (`keyFactors`) are longest, whole-number digital-zoom stops are medium, and
+  /// the in-between grid lines are shortest.
+  private enum TickTier {
+    case major   // optical lens factor (0.5/1/2) — longest
+    case medium  // whole-number digital-zoom stop (3/4/…) — in between
+    case minor   // in-between grid line — shortest
+  }
+
   /// A single ruler tick, identified by its log position (unique on the ruler).
   private struct RulerTick: Identifiable {
     let log: CGFloat
-    let isMajor: Bool
+    let tier: TickTier
     var id: CGFloat { log }
   }
 
   /// A single uniform grid of ticks in log space — guaranteeing even spacing.
-  /// A tick is "major" (longer) when it's the grid line nearest a key factor.
-  /// Drawing majors as a subset of the grid (rather than as extra ticks at the
-  /// exact key positions) keeps the minor rhythm even — the 0.5/1/2 octaves land
-  /// exactly on the grid, and an off-octave key like 3 snaps to its nearest line
-  /// instead of crowding the ticks around it.
+  /// Each grid line is tiered by what it lands nearest: a `keyFactor` (major), a
+  /// whole-number zoom (medium), or neither (minor). Tiering a subset of the grid
+  /// (rather than adding extra ticks at the exact key/integer positions) keeps the
+  /// minor rhythm even — the 0.5/1/2 octaves land exactly on the grid, and an
+  /// off-grid stop like 3 snaps to its nearest line instead of crowding it.
   private var ticks: [RulerTick] {
     let lo = logZoom(range.lowerBound)
     let hi = logZoom(range.upperBound)
     guard hi > lo else { return [] }
     let keyLogs = keyFactors.map { logZoom($0) }
+    let integerLogs = stride(from: ceil(range.lowerBound), through: range.upperBound, by: 1)
+      .map { logZoom($0) }
     let steps = max(1, Int(((hi - lo) / minorStepLog).rounded()))
 
     return (0...steps).map { i in
       let value = lo + CGFloat(i) * minorStepLog
-      let isMajor = keyLogs.contains { abs($0 - value) <= minorStepLog * 0.5 }
-      return RulerTick(log: value, isMajor: isMajor)
+      func isNear(_ target: CGFloat) -> Bool { abs(target - value) <= minorStepLog * 0.5 }
+      let tier: TickTier =
+        keyLogs.contains(where: isNear) ? .major
+        : integerLogs.contains(where: isNear) ? .medium
+        : .minor
+      return RulerTick(log: value, tier: tier)
     }
   }
 
@@ -230,6 +261,43 @@ struct CameraZoomSlider: View {
   }
 }
 
+/// The interactive zoom-slider used to demonstrate the handedness setting (in
+/// onboarding and Settings > Interactions). Both edge sliders are always present:
+/// the active one sits at its edge while the inactive one is parked just off the
+/// opposite side. Flipping `edge` (inside `withAnimation`) slides them via offset —
+/// the old side off its edge, the new side in from the other — which animates
+/// reliably even inside a `List`/`Form` row, where a `.transition` would just fade.
+/// Drags are local-only — no camera is involved, it just shows the feel.
+struct HandednessSliderPreview: View {
+  var edge: HorizontalEdge
+
+  @State private var zoom: CGFloat = 1.0
+
+  var body: some View {
+    GeometryReader { geo in
+      ZStack {
+        slider(side: .leading)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+          .offset(x: edge == .leading ? 0 : -geo.size.width)
+        slider(side: .trailing)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+          .offset(x: edge == .trailing ? 0 : geo.size.width)
+      }
+    }
+    .clipped()
+  }
+
+  private func slider(side: HorizontalEdge) -> some View {
+    CameraZoomSlider(
+      zoomFactor: zoom,
+      range: 0.5...10,
+      keyFactors: [0.5, 1, 2],
+      edge: side,
+      onChange: { zoom = $0 }
+    )
+  }
+}
+
 /// A panel that hugs one screen edge: the two inner corners are convex-rounded,
 /// while the two corners touching the edge are *concave* fillets that flare the
 /// panel out so it morphs smoothly into the edge (it is full-height against the
@@ -279,16 +347,16 @@ private struct EdgeMorphTab: Shape {
         HStack {
           CameraZoomSlider(
             zoomFactor: zoom,
-            range: 0.5...8,
-            keyFactors: [0.5, 1, 2, 3],
+            range: 0.5...10,
+            keyFactors: [0.5, 1, 2],
             edge: .leading,
             onChange: { zoom = $0 }
           )
           Spacer()
           CameraZoomSlider(
             zoomFactor: zoom,
-            range: 0.5...8,
-            keyFactors: [0.5, 1, 2, 3],
+            range: 0.5...10,
+            keyFactors: [0.5, 1, 2],
             edge: .trailing,
             onChange: { zoom = $0 }
           )

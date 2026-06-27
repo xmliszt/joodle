@@ -2207,26 +2207,34 @@ struct InteractionsSettingsView: View {
   private var handednessBinding: Binding<SliderHandedness> {
     Binding(
       get: { userPreferences.cameraZoomSliderHandedness },
-      set: { userPreferences.cameraZoomSliderHandedness = $0 }
+      set: { newValue in
+        guard newValue != userPreferences.cameraZoomSliderHandedness else { return }
+        Haptic.play(with: .light)
+        // A non-overshooting curve so the preview slides flush to the edge
+        // instead of overshooting and flashing a gap before it morphs back in.
+        withAnimation(.smooth(duration: 0.4)) {
+          userPreferences.cameraZoomSliderHandedness = newValue
+        }
+      }
     )
+  }
+
+  private var sliderEdge: HorizontalEdge {
+    userPreferences.cameraZoomSliderHandedness == .right ? .trailing : .leading
   }
 
   var body: some View {
     Form {
-      if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
-        Section {
-          Toggle(isOn: hapticBinding) {
-            HStack {
-              SettingsIconView(systemName: "hand.tap.fill", backgroundColor: .blue)
-              Text("Haptic Feedback")
-            }
-          }
-        } footer: {
-          Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration.")
-        }
-      }
-
       Section {
+        // Interactive preview: drag to feel the ruler, and watch it slide to the
+        // other edge when the handedness changes. A fixed black backdrop lets the
+        // always-black slider blend in instead of standing out on a light row.
+        HandednessSliderPreview(edge: sliderEdge)
+          .frame(height: 300)
+          .frame(maxWidth: .infinity)
+          .listRowInsets(EdgeInsets())
+          .listRowBackground(Color.black)
+
         if #available(iOS 26.0, *) {
           Picker("Camera Zoom Slider", selection: handednessBinding) {
             ForEach(SliderHandedness.allCases, id: \.self) { handedness in
@@ -2246,7 +2254,20 @@ struct InteractionsSettingsView: View {
       } header: {
         Text("Camera Zoom Slider")
       } footer: {
-        Text("Choose which side the camera zoom slider appears on. Pick \"Right-handed\" to keep it under your right thumb.")
+        Text("Choose which side the camera zoom slider appears on.")
+      }
+      
+      if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
+        Section {
+          Toggle(isOn: hapticBinding) {
+            HStack {
+              SettingsIconView(systemName: "hand.tap.fill", backgroundColor: .blue)
+              Text("Haptic Feedback")
+            }
+          }
+        } footer: {
+          Text("Haptic feedback also depends on your device's vibration setting in Settings > Accessibility > Touch > Vibration.")
+        }
       }
     }
     .navigationTitle("Interactions")

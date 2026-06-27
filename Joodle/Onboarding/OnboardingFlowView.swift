@@ -19,6 +19,8 @@ struct OnboardingFlowView: View {
                         ValuePropView(viewModel: viewModel)
                     case .yearGridDemo:
                         InteractiveTutorialView(viewModel: viewModel)
+                    case .handednessSetup:
+                        HandednessSetupView(viewModel: viewModel)
                     case .featureIntroWidgets:
                         FeatureIntroWidgetsView(viewModel: viewModel)
                     case .icloudConfig:
