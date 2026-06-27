@@ -36,8 +36,11 @@ struct HandednessSetupView: View {
 
   var body: some View {
     ZStack {
-      // Live slider preview, pinned to the chosen edge and centered vertically.
-      HandednessSliderPreview(edge: sliderEdge)
+      // Live slider preview, pinned to the chosen edge and anchored to the bottom
+      // with the same 80pt inset the real camera uses, so it sits where the user's
+      // thumb will actually meet it rather than floating mid-screen.
+      HandednessSliderPreview(edge: sliderEdge, verticalAlignment: .bottom, bottomInset: 80)
+        .ignoresSafeArea()
 
       VStack(spacing: 24) {
         VStack(spacing: 16) {
@@ -45,7 +48,7 @@ struct HandednessSetupView: View {
             .font(.appTitle2(weight: .bold))
             .multilineTextAlignment(.center)
 
-          Text("The camera zoom slider sits under your thumb. Give it a try, then pick the side that feels natural — you can change this anytime in Settings.")
+          Text("The camera zoom slider should sit under your thumb. Give it a try below, then pick the side that feels natural — you can change this anytime in Settings.")
             .font(.appBody())
             .multilineTextAlignment(.center)
             .foregroundColor(.appTextSecondary)
@@ -53,10 +56,11 @@ struct HandednessSetupView: View {
         .padding(.horizontal, 32)
         .padding(.top, 24)
 
-        Spacer()
-
         handednessPicker
           .padding(.horizontal, 32)
+          .padding(.top, 16)
+
+        Spacer()
 
         OnboardingButtonView(label: "Next") {
           viewModel.completeStep(.handednessSetup)

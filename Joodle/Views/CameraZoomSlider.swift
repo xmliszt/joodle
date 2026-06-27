@@ -272,19 +272,33 @@ struct CameraZoomSlider: View {
 /// Drags are local-only — no camera is involved, it just shows the feel.
 struct HandednessSliderPreview: View {
   var edge: HorizontalEdge
+  /// Where the slider sits vertically. Defaults to centered (Settings shows it in
+  /// a fixed-height row); onboarding passes `.bottom` to match the real camera.
+  var verticalAlignment: VerticalAlignment = .center
+  /// Distance from the bottom when bottom-anchored — mirrors the camera's 80pt.
+  var bottomInset: CGFloat = 0
 
   @State private var zoom: CGFloat = 1.0
+
+  private var leadingAlignment: Alignment {
+    Alignment(horizontal: .leading, vertical: verticalAlignment)
+  }
+
+  private var trailingAlignment: Alignment {
+    Alignment(horizontal: .trailing, vertical: verticalAlignment)
+  }
 
   var body: some View {
     GeometryReader { geo in
       ZStack {
         slider(side: .leading)
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: leadingAlignment)
           .offset(x: edge == .leading ? 0 : -geo.size.width)
         slider(side: .trailing)
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: trailingAlignment)
           .offset(x: edge == .trailing ? 0 : geo.size.width)
       }
+      .padding(.bottom, bottomInset)
     }
     .clipped()
   }
