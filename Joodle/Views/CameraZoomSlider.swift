@@ -181,7 +181,7 @@ struct CameraZoomSlider: View {
 }
 
 private extension CGFloat {
-  func clamped() -> CGFloat { min(max(self, 0), 1) }
+  func clamped() -> CGFloat { Swift.min(Swift.max(self, 0), 1) }
 }
 
 // MARK: - Glass styling
