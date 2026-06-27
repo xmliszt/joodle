@@ -27,6 +27,10 @@ struct RemoteAlert: Codable, Identifiable, Equatable {
     let imageURL: String?
     let type: AnnouncementType
 
+    /// Locales this alert targets. nil or empty means show to all locales.
+    /// When non-empty, only devices whose resolved locale code is in this list see the alert.
+    let locales: [String]? = nil
+
     // MARK: - Announcement Type
 
     /// The type of announcement, used to filter based on user preferences

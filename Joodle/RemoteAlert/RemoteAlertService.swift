@@ -87,6 +87,15 @@ final class RemoteAlertService: ObservableObject {
                 return
             }
 
+            // Locale targeting: nil/empty locales means show to all locales.
+            // Defense in depth — the API already filters by locale server-side.
+            if let locales = alert.locales, !locales.isEmpty,
+               !locales.contains(LocaleProvider.currentLanguageCode) {
+                print("📢 Remote alert: Alert '\(alert.id)' not targeted to locale \(LocaleProvider.currentLanguageCode)")
+                currentAlert = nil
+                return
+            }
+
             // Check if announcements are enabled
             guard isAnnouncementAllowed(type: alert.type) else {
                 print("📢 Remote alert: Alert '\(alert.id)' blocked by user preferences")
