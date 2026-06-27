@@ -17,6 +17,12 @@
             "value": "%@"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -45,6 +51,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "纪念日"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "紀念日"
           }
         },
         "ko": {
@@ -77,6 +89,12 @@
             "value": "带倒计时的纪念日。"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "帶倒數計時的紀念日。"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -105,6 +123,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "选择要在小组件中显示的纪念日。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇要在小工具中顯示的紀念日。"
           }
         },
         "ko": {
@@ -137,6 +161,12 @@
             "value": "%@后"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@後"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -162,6 +192,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Joodle Pro"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "Joodle Pro"
@@ -197,6 +233,12 @@
             "value": "你还没有创建纪念日"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你還沒有建立紀念日"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -225,6 +267,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天没有涂鸦"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天沒有 Joodle"
           }
         },
         "ko": {
@@ -257,6 +305,12 @@
             "value": "这个特别的日子还没有笔记哦。"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這個特別的日子還沒有筆記。"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -287,6 +341,12 @@
             "value": "今天没有笔记哦。"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天沒有筆記。"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -310,6 +370,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "Pro"
@@ -343,6 +409,12 @@
             "value": "随机"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隨機"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -371,6 +443,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "随机涂鸦"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隨機塗鴉"
           }
         },
         "ko": {
@@ -403,6 +481,12 @@
             "value": "随机涂鸦。每天更新。"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "從你的收藏中隨機選取塗鴉。每天更新。"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -431,6 +515,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "选择要显示的纪念日。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇要顯示的紀念日。"
           }
         },
         "ko": {
@@ -463,6 +553,12 @@
             "value": "今天的涂鸦。"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示今天的 Joodle 記錄。"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -488,6 +584,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本月"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "本月"
@@ -523,6 +625,12 @@
             "value": "本周"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -553,6 +661,12 @@
             "value": "今日涂鸦"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日塗鴉"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -578,6 +692,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "明天"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "明天"
@@ -613,6 +733,12 @@
             "value": "解锁"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解鎖"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -641,6 +767,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "升级以解锁小组件"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "升級以解鎖小工具"
           }
         },
         "ko": {
@@ -673,6 +805,12 @@
             "value": "本月的涂鸦。"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一覽本月的塗鴉。"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -701,6 +839,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "本周的涂鸦。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一覽本週的塗鴉。"
           }
         },
         "ko": {
@@ -733,6 +877,12 @@
             "value": "你的本年进度。"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一覽你的年度進度。"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -761,6 +911,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "你的本年进度（带涂鸦）。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以塗鴉檢視你的年度進度。"
           }
         },
         "ko": {
@@ -793,6 +949,12 @@
             "value": "你的本年进度（仅显示涂鸦）。"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以塗鴉檢視你的年度進度。隱藏空白日期。"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -821,6 +983,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "一年总览"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年度總覽"
           }
         },
         "ko": {
@@ -853,6 +1021,12 @@
             "value": "一年总览（带涂鸦）"
           }
         },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年度總覽（含塗鴉）"
+          }
+        },
         "ko": {
           "stringUnit": {
             "state": "translated",
@@ -881,6 +1055,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "一年总览（仅显示涂鸦）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年度總覽（僅顯示塗鴉）"
           }
         },
         "ko": {

@@ -29,6 +29,12 @@
             "state" : "translated",
             "value" : "\"迷你\" 视图模式可纵览你的全年数据。该模式支持分享全年记录的额外分享功能。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「迷你」檢視模式可讓你綜覽整年的資料。此檢視模式還提供額外的分享功能，可分享你的整年記錄。"
+          }
         }
       }
     },
@@ -56,6 +62,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "\"常规\" 视图模式聚焦展示每周数据，每行显示一周 7 天。布局会按星期几自动适配。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「一般」檢視模式提供更聚焦的呈現方式，每行顯示一週的 7 天。版面會自動配合星期幾調整。"
           }
         }
       }
@@ -85,6 +97,12 @@
             "state" : "translated",
             "value" : "系统设置中\"保存到 iCloud\"已停用。要启用同步，请前往：\n\n设置 → [你的名字] → iCloud → 保存到 iCloud → Joodle\n\n并开启开关。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系統設定中的「儲存到 iCloud」已停用。若要啟用同步，請前往：\n\n設定 → [你的名字] → iCloud → 儲存到 iCloud → Joodle\n\n並開啟開關。"
+          }
         }
       }
     },
@@ -113,6 +131,12 @@
             "state" : "translated",
             "value" : "系统设置中\"保存到 iCloud\"已停用。请前往设置 → [你的名字] → iCloud → 保存到 iCloud → Joodle 开启。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「儲存到 iCloud」已停用。請前往「設定 → [你的名字] → iCloud → 儲存到 iCloud → Joodle」開啟。"
+          }
         }
       }
     },
@@ -139,6 +163,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/ 月"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "/ 月"
@@ -173,6 +203,12 @@
             "state" : "translated",
             "value" : "/ 年"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/ 年"
+          }
         }
       }
     },
@@ -199,6 +235,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@"
@@ -232,6 +274,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@\n\n如果此问题持续存在，请联系开发者。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@\n\n如果問題持續發生，請聯絡開發者。"
           }
         }
       }
@@ -269,6 +317,12 @@
             "state" : "translated",
             "value" : "%1$@ / %2$@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ / %2$@"
+          }
         }
       }
     },
@@ -299,6 +353,12 @@
             "state" : "translated",
             "value" : "%@ / 月"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ / 月"
+          }
         }
       }
     },
@@ -325,6 +385,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ / 月"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ / 月"
@@ -365,6 +431,12 @@
             "state" : "translated",
             "value" : "%@ 颜色%@%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 顏色%2$@%3$@"
+          }
         }
       }
     },
@@ -394,6 +466,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@条记录"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 則記錄"
           }
         }
       }
@@ -425,6 +503,12 @@
             "state" : "translated",
             "value" : "%@免费试用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@免費試用"
+          }
         }
       }
     },
@@ -452,6 +536,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "剩余%@个涂鸦"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "剩餘 %@ 個塗鴉"
           }
         }
       }
@@ -487,6 +577,12 @@
             "state" : "translated",
             "value" : "每%2$@%1$@。可随时取消订阅。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每%2$@%1$@。可隨時取消。"
+          }
         }
       }
     },
@@ -521,6 +617,12 @@
             "state" : "translated",
             "value" : "%1$@/%2$@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@/%2$@"
+          }
         }
       }
     },
@@ -545,6 +647,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@%%"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@%%"
@@ -579,6 +687,12 @@
             "state" : "translated",
             "value" : "•"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "•"
+          }
         }
       }
     },
@@ -607,6 +721,12 @@
             "state" : "translated",
             "value" : "© %@ Li Yuxuan. 保留所有权利。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "© %@ Li Yuxuan. 保留一切權利。"
+          }
         }
       }
     },
@@ -633,6 +753,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "®"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "®"
@@ -667,6 +793,12 @@
             "state" : "translated",
             "value" : "还有 2 天 Joodle Pro ✨"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle Pro 還有 2 天 ✨"
+          }
         }
       }
     },
@@ -693,6 +825,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有新版本可用"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "有新版本可用"
@@ -725,6 +863,12 @@
             "state" : "translated",
             "value" : "发生系统错误。请稍后再试。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "發生系統錯誤。請稍後再試。"
+          }
         }
       }
     },
@@ -754,6 +898,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关于实验功能"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關於實驗功能"
           }
         }
       }
@@ -785,6 +935,12 @@
             "state" : "translated",
             "value" : "主题颜色"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主題顏色"
+          }
         }
       }
     },
@@ -814,6 +970,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用所有 Joodle 小组件"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用所有 Joodle 小工具"
           }
         }
       }
@@ -845,6 +1007,12 @@
             "state" : "translated",
             "value" : "使用所有小组件"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用所有小工具"
+          }
         }
       }
     },
@@ -871,6 +1039,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "操作"
@@ -903,6 +1077,12 @@
             "state" : "translated",
             "value" : "已激活"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已啟用"
+          }
         }
       }
     },
@@ -930,6 +1110,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已激活产品"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已啟用產品"
           }
         }
       }
@@ -959,6 +1145,12 @@
             "state" : "translated",
             "value" : "在分享卡片上添加水印"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在分享卡片上加上浮水印"
+          }
         }
       }
     },
@@ -987,6 +1179,12 @@
             "state" : "translated",
             "value" : "添加主屏幕小组件"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入主畫面小工具"
+          }
         }
       }
     },
@@ -1014,6 +1212,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将 Joodle 添加到主屏幕"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將 Joodle 加入主畫面"
           }
         }
       }
@@ -1045,6 +1249,12 @@
             "state" : "translated",
             "value" : "将 Joodle 添加到主屏幕、锁屏，甚至StandBy显示模式"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將 Joodle 加入主畫面、鎖定畫面，甚至「待機顯示」模式"
+          }
         }
       }
     },
@@ -1075,6 +1285,12 @@
             "state" : "translated",
             "value" : "将 Joodle 添加到锁屏"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將 Joodle 加入鎖定畫面"
+          }
         }
       }
     },
@@ -1102,6 +1318,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将 Joodle 添加到屏幕"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將 Joodle 加入「待機顯示」畫面"
           }
         }
       }
@@ -1131,6 +1353,12 @@
             "state" : "translated",
             "value" : "添加锁屏小组件"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入鎖定畫面小工具"
+          }
         }
       }
     },
@@ -1158,6 +1386,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加StandBy显示屏幕小组件"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加入「待機顯示」小工具"
           }
         }
       }
@@ -1187,6 +1421,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "补充说明"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "補充說明"
           }
         }
       }
@@ -1218,6 +1458,12 @@
             "state" : "translated",
             "value" : "闹钟时间"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "鬧鐘時間"
+          }
         }
       }
     },
@@ -1245,6 +1491,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "所有分享模板"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有分享範本"
           }
         }
       }
@@ -1276,6 +1528,12 @@
             "state" : "translated",
             "value" : "所有点击位置：%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有點按位置：%@"
+          }
         }
       }
     },
@@ -1305,6 +1563,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部小组件"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部小工具"
           }
         }
       }
@@ -1336,6 +1600,12 @@
             "state" : "translated",
             "value" : "所有小组件"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有小工具"
+          }
         }
       }
     },
@@ -1363,6 +1633,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "发生意外错误：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "發生非預期的錯誤：%@"
           }
         }
       }
@@ -1394,6 +1670,12 @@
             "state" : "translated",
             "value" : "发生了意外错误。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "發生了非預期的錯誤。"
+          }
         }
       }
     },
@@ -1423,6 +1705,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "动效涂鸦"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動態塗鴉"
           }
         }
       }
@@ -1454,6 +1742,12 @@
             "state" : "translated",
             "value" : "动效涂鸦与笔记摘要"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動態塗鴉與筆記摘要"
+          }
         }
       }
     },
@@ -1483,6 +1777,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "纪念日"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紀念日"
           }
         }
       }
@@ -1514,6 +1814,12 @@
             "state" : "translated",
             "value" : "纪念日闹钟时间"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紀念日鬧鐘時間"
+          }
         }
       }
     },
@@ -1543,6 +1849,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "纪念日提醒"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紀念日提醒"
           }
         }
       }
@@ -1574,6 +1886,12 @@
             "state" : "translated",
             "value" : "纪念日闹钟"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紀念日鬧鐘"
+          }
         }
       }
     },
@@ -1604,6 +1922,12 @@
             "state" : "translated",
             "value" : "公告类型"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公告類型"
+          }
         }
       }
     },
@@ -1630,6 +1954,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "公告"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "公告"
@@ -1662,6 +1992,12 @@
             "state" : "translated",
             "value" : "应用设置"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 設定"
+          }
         }
       }
     },
@@ -1691,6 +2027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "应用统计（开发者专用）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 統計（開發者專用）"
           }
         }
       }
@@ -1722,6 +2064,12 @@
             "state" : "translated",
             "value" : "应用状态"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 狀態"
+          }
         }
       }
     },
@@ -1746,6 +2094,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "App Store"
@@ -1780,6 +2134,12 @@
             "state" : "translated",
             "value" : "应用技巧与教程"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 技巧與教學"
+          }
         }
       }
     },
@@ -1808,6 +2168,12 @@
             "state" : "translated",
             "value" : "仅应用内修改不会影响商店工具包（StoreKit）。请使用 \"从商店工具包同步\" 恢复实际状态。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅 App 內修改不會影響 StoreKit。請使用「從 StoreKit 同步」來還原實際狀態。"
+          }
         }
       }
     },
@@ -1835,6 +2201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "外观"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外觀"
           }
         }
       }
@@ -1866,6 +2238,12 @@
             "state" : "translated",
             "value" : "自动续费%@，直到取消。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動續訂%@，直到取消為止。"
+          }
         }
       }
     },
@@ -1896,6 +2274,12 @@
             "state" : "translated",
             "value" : "自动 iCloud 备份"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動 iCloud 備份"
+          }
         }
       }
     },
@@ -1920,6 +2304,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可用"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "可用"
@@ -1959,6 +2349,12 @@
             "state" : "translated",
             "value" : "备份与恢复"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "備份與還原"
+          }
         }
       }
     },
@@ -1989,6 +2385,12 @@
             "state" : "translated",
             "value" : "本地备份"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本機備份"
+          }
         }
       }
     },
@@ -2017,6 +2419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已保存备份"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已儲存備份"
           }
         }
       }
@@ -2051,6 +2459,12 @@
             "state" : "translated",
             "value" : "精美分享模板"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "精美的分享範本"
+          }
         }
       }
     },
@@ -2080,6 +2494,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "超值"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最超值"
           }
         }
       }
@@ -2111,6 +2531,12 @@
             "state" : "translated",
             "value" : "按年计费"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按年計費"
+          }
         }
       }
     },
@@ -2140,6 +2566,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按月计费"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按月計費"
           }
         }
       }
@@ -2171,6 +2603,12 @@
             "state" : "translated",
             "value" : "蓝色"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "藍色"
+          }
         }
       }
     },
@@ -2197,6 +2635,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "棕色"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "棕色"
@@ -2229,6 +2673,12 @@
             "state" : "translated",
             "value" : "浏览你的涂鸦"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "瀏覽你的塗鴉"
+          }
         }
       }
     },
@@ -2256,6 +2706,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "购买 Joodle Pro"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購買 Joodle Pro"
           }
         }
       }
@@ -2290,6 +2746,12 @@
             "state" : "translated",
             "value" : "需要相机访问权限"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要相機存取權限"
+          }
         }
       }
     },
@@ -2316,6 +2778,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可同步"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "可同步"
@@ -2350,6 +2818,12 @@
             "state" : "translated",
             "value" : "取消"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
         }
       }
     },
@@ -2379,6 +2853,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "随时取消"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隨時可取消"
           }
         }
       }
@@ -2410,6 +2890,12 @@
             "state" : "translated",
             "value" : "在下方画布上记录你今日的美好瞬间。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在下方畫布上記錄你今天的美好瞬間。"
+          }
         }
       }
     },
@@ -2438,6 +2924,12 @@
             "state" : "translated",
             "value" : "记录这一刻"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記錄這一刻"
+          }
         }
       }
     },
@@ -2465,6 +2957,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在 Joodle 中记录你今日的瞬间。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Joodle 中記錄你今天的瞬間。"
           }
         }
       }
@@ -2496,6 +2994,12 @@
             "state" : "translated",
             "value" : "切换视图模式"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換檢視模式"
+          }
         }
       }
     },
@@ -2523,6 +3027,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新日志内容不可用。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法獲取更新日誌內容。"
           }
         }
       }
@@ -2554,6 +3064,12 @@
             "state" : "translated",
             "value" : "未找到更新日志"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找不到更新日誌"
+          }
         }
       }
     },
@@ -2583,6 +3099,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已达到字符上限"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已達字數上限"
           }
         }
       }
@@ -2614,6 +3136,12 @@
             "state" : "translated",
             "value" : "请稍后再来查看更新。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請稍後再回來查看更新。"
+          }
         }
       }
     },
@@ -2643,6 +3171,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检查 iCloud 账户"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查 iCloud 帳號"
           }
         }
       }
@@ -2674,6 +3208,12 @@
             "state" : "translated",
             "value" : "检查 iCloud 存储空间"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查 iCloud 儲存空間"
+          }
         }
       }
     },
@@ -2703,6 +3243,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检查中…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查中…"
           }
         }
       }
@@ -2734,6 +3280,12 @@
             "state" : "translated",
             "value" : "选择你想接收的公告类型。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇你想接收的公告類型。"
+          }
         }
       }
     },
@@ -2762,6 +3314,12 @@
             "state" : "translated",
             "value" : "选择你的方案"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇你的方案"
+          }
         }
       }
     },
@@ -2788,6 +3346,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除"
@@ -2822,6 +3386,12 @@
             "state" : "translated",
             "value" : "清除所有绘画？"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除所有繪畫？"
+          }
         }
       }
     },
@@ -2852,6 +3422,12 @@
             "state" : "translated",
             "value" : "清除绘画"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除繪畫"
+          }
         }
       }
     },
@@ -2879,6 +3455,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除重复记录"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除重複記錄"
           }
         }
       }
@@ -2910,6 +3492,12 @@
             "state" : "translated",
             "value" : "清除 iCloud 键值存储（同步历史）"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除 iCloud 鍵值儲存（同步記錄）"
+          }
         }
       }
     },
@@ -2939,6 +3527,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除点击记录"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除點擊記錄"
           }
         }
       }
@@ -2970,6 +3564,12 @@
             "state" : "translated",
             "value" : "完全关闭应用并重新打开以刷新同步连接。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完全關閉 App 並重新開啟，以重新整理同步連線。"
+          }
         }
       }
     },
@@ -2994,6 +3594,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配色方案"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "配色方案"
@@ -3028,6 +3634,12 @@
             "state" : "translated",
             "value" : "社区"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "社群"
+          }
         }
       }
     },
@@ -3055,6 +3667,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "连接互联网以启用 iCloud 同步。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連接網際網路以啟用 iCloud 同步。"
           }
         }
       }
@@ -3086,6 +3704,12 @@
             "state" : "translated",
             "value" : "联系支持"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聯絡支援"
+          }
         }
       }
     },
@@ -3113,6 +3737,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "联系我们"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聯絡我們"
           }
         }
       }
@@ -3144,6 +3774,12 @@
             "state" : "translated",
             "value" : "内容分类统计"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "內容分類統計"
+          }
         }
       }
     },
@@ -3174,6 +3810,12 @@
             "state" : "translated",
             "value" : "继续"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續"
+          }
         }
       }
     },
@@ -3203,6 +3845,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续使用 Pro"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續使用 Pro"
           }
         }
       }
@@ -3244,6 +3892,12 @@
             "state" : "translated",
             "value" : "复制到剪贴板"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製到剪貼板"
+          }
         }
       }
     },
@@ -3273,6 +3927,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "基础颜色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基礎顏色"
           }
         }
       }
@@ -3304,6 +3964,12 @@
             "state" : "translated",
             "value" : "无法加载更新日志内容。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法載入更新日誌內容。"
+          }
         }
       }
     },
@@ -3333,6 +3999,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法加载备份"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法載入備份"
           }
         }
       }
@@ -3364,6 +4036,12 @@
             "state" : "translated",
             "value" : "创建今天的涂鸦"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "建立今天的塗鴉"
+          }
         }
       }
     },
@@ -3394,6 +4072,12 @@
             "state" : "translated",
             "value" : "当前"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前"
+          }
         }
       }
     },
@@ -3421,6 +4105,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "当前状态"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前狀態"
           }
         }
       }
@@ -3450,6 +4140,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "当前翻译"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前翻譯"
           }
         }
       }
@@ -3481,6 +4177,12 @@
             "state" : "translated",
             "value" : "当前为%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前為%@"
+          }
         }
       }
     },
@@ -3511,6 +4213,12 @@
             "state" : "translated",
             "value" : "自定义"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自訂"
+          }
         }
       }
     },
@@ -3537,6 +4245,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每日提醒"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "每日提醒"
@@ -3569,6 +4283,12 @@
             "state" : "translated",
             "value" : "深色"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深色"
+          }
         }
       }
     },
@@ -3597,6 +4317,12 @@
             "state" : "translated",
             "value" : "从iCloud恢复数据"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已從 iCloud 還原資料"
+          }
         }
       }
     },
@@ -3624,6 +4350,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "调试"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "除錯"
           }
         }
       }
@@ -3658,6 +4390,12 @@
             "state" : "translated",
             "value" : "默认视图模式"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "預設檢視模式"
+          }
         }
       }
     },
@@ -3685,6 +4423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除"
           }
         }
       }
@@ -3716,6 +4460,12 @@
             "state" : "translated",
             "value" : "删除空记录"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除空白記錄"
+          }
         }
       }
     },
@@ -3743,6 +4493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除笔记"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除筆記"
           }
         }
       }
@@ -3774,6 +4530,12 @@
             "state" : "translated",
             "value" : "删除已选（%@）"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除已選取（%@）"
+          }
         }
       }
     },
@@ -3804,6 +4566,12 @@
             "state" : "translated",
             "value" : "要删除此备份吗?"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要刪除此備份嗎？"
+          }
         }
       }
     },
@@ -3831,6 +4599,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除此笔记？此操作不可撤销。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要刪除此筆記嗎？此操作無法復原。"
           }
         }
       }
@@ -3862,6 +4636,12 @@
             "state" : "translated",
             "value" : "详细"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "詳細"
+          }
         }
       }
     },
@@ -3891,6 +4671,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "详情"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "詳細資料"
           }
         }
       }
@@ -3922,6 +4708,12 @@
             "state" : "translated",
             "value" : "开发者选项"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開發者選項"
+          }
         }
       }
     },
@@ -3946,6 +4738,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "停用"
@@ -3978,6 +4776,12 @@
             "state" : "translated",
             "value" : "停用iCloud 云服务同步"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停用 iCloud 同步"
+          }
         }
       }
     },
@@ -4004,6 +4808,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "完成"
@@ -4036,6 +4846,12 @@
             "state" : "translated",
             "value" : "涂鸦与更多笔记"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "塗鴉與更多筆記"
+          }
         }
       }
     },
@@ -4066,6 +4882,12 @@
             "state" : "translated",
             "value" : "涂鸦与笔记摘要"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "塗鴉與筆記摘要"
+          }
         }
       }
     },
@@ -4093,6 +4915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "涂鸦与倒计时"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "塗鴉與倒數計時"
           }
         }
       }
@@ -4124,6 +4952,12 @@
             "state" : "translated",
             "value" : "仅涂鸦"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅塗鴉"
+          }
         }
       }
     },
@@ -4153,6 +4987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "画出你今天用得最多的钥匙（家门钥匙、车钥匙或笔记本电脑按键）。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫出你今天用得最多的鑰匙（家門鑰匙、車鑰匙或筆電按鍵）。"
           }
         }
       }
@@ -4184,6 +5024,12 @@
             "state" : "translated",
             "value" : "画出此刻你桌上面包屑或物品的摆放图案。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫出此刻你桌上麵包屑或物品的擺放圖案。"
+          }
         }
       }
     },
@@ -4213,6 +5059,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "圆点位置微调工具"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "圓點位置微調工具"
           }
         }
       }
@@ -4244,6 +5096,12 @@
             "state" : "translated",
             "value" : "双击滑块可快速跳转到今日记录"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點兩下滑桿即可快速跳至今日記錄"
+          }
         }
       }
     },
@@ -4273,6 +5131,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在 App Store 下载"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 App Store 下載"
           }
         }
       }
@@ -4304,6 +5168,12 @@
             "state" : "translated",
             "value" : "下载新版本"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下載新版本"
+          }
         }
       }
     },
@@ -4331,6 +5201,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在从 iCloud 下载…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在從 iCloud 下載…"
           }
         }
       }
@@ -4362,6 +5238,12 @@
             "state" : "translated",
             "value" : "画一根蜡烛。它在你的工作日中\"燃尽\"了多少？"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫一根蠟燭。它在你的工作日中「燃盡」了多少？"
+          }
         }
       }
     },
@@ -4391,6 +5273,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "画一张便利贴，用一个词总结你的下午。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫一張便利貼，用一個詞總結你的下午。"
           }
         }
       }
@@ -4422,6 +5310,12 @@
             "state" : "translated",
             "value" : "画一扇简单的开着的门。你能在门的另一边看到什么小东西？"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫一扇簡單的開著的門。你能在門的另一邊看到什麼小東西？"
+          }
         }
       }
     },
@@ -4451,6 +5345,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "画一个简单的茶杯。它是满到溢出来、半满，还是完全空的？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫一個簡單的茶杯。它是滿到溢出來、半滿，還是完全空的？"
           }
         }
       }
@@ -4482,6 +5382,12 @@
             "state" : "translated",
             "value" : "画一个小背包。在里面画一块沉重的石头，代表你最大的烦恼。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫一個小背包。在裡面畫一塊沉重的石頭，代表你最大的煩惱。"
+          }
         }
       }
     },
@@ -4511,6 +5417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "为你今天真正完成的一件事画一个小小的奖杯。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "為你今天真正完成的一件事畫一個小小的獎盃。"
           }
         }
       }
@@ -4542,6 +5454,12 @@
             "state" : "translated",
             "value" : "绘制和编辑涂鸦"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繪製與編輯塗鴉"
+          }
         }
       }
     },
@@ -4571,6 +5489,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无限次涂鸦，随心创作"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無限次塗鴉，盡情創作"
           }
         }
       }
@@ -4602,6 +5526,12 @@
             "state" : "translated",
             "value" : "绘制或编辑你的涂鸦，然后点击 ✓ 保存"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繪製或編輯你的塗鴉，然後點一下 ✓ 儲存"
+          }
         }
       }
     },
@@ -4632,6 +5562,12 @@
             "state" : "translated",
             "value" : "绘制测试占位图"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繪製測試佔位圖"
+          }
         }
       }
     },
@@ -4660,6 +5596,12 @@
             "state" : "translated",
             "value" : "画出你刚脱下的鞋子，就按它们现在摆放的位置画。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫出你剛脫下的鞋子，就照它們現在擺放的位置畫。"
+          }
         }
       }
     },
@@ -4687,6 +5629,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "画出你当前饮品的蒸汽形状或水面波纹。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫出你目前飲品的蒸氣形狀或水面波紋。"
           }
         }
       }
@@ -4718,6 +5666,12 @@
             "state" : "translated",
             "value" : "画出此刻你的毯子或袖子的褶皱形态。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫出此刻你的毯子或袖子的皺褶形態。"
+          }
         }
       }
     },
@@ -4745,6 +5699,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "画出你刚吃过的最后一样食物——只要画残渣或包装纸就行。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫出你剛吃過的最後一樣食物——只要畫殘渣或包裝紙就行。"
           }
         }
       }
@@ -4776,6 +5736,12 @@
             "state" : "translated",
             "value" : "把你的精力画成一块真实的电池。还剩多少格电？"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把你的精力畫成一塊真實的電池。還剩幾格電？"
+          }
         }
       }
     },
@@ -4806,6 +5772,12 @@
             "state" : "translated",
             "value" : "重复记录详情"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重複記錄詳情"
+          }
         }
       }
     },
@@ -4834,6 +5806,12 @@
             "state" : "translated",
             "value" : "重复记录"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重複記錄"
+          }
         }
       }
     },
@@ -4861,6 +5839,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编辑涂鸦"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯塗鴉"
           }
         }
       }
@@ -4892,6 +5876,12 @@
             "state" : "translated",
             "value" : "编辑已锁定"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯已鎖定"
+          }
         }
       }
     },
@@ -4922,6 +5912,12 @@
             "state" : "translated",
             "value" : "空记录"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "空白記錄"
+          }
         }
       }
     },
@@ -4950,6 +5946,12 @@
             "state" : "translated",
             "value" : "启用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用"
+          }
         }
       }
     },
@@ -4977,6 +5979,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "启用并重启 Joodle"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用並重新啟動 Joodle"
           }
         }
       }
@@ -5008,6 +6016,12 @@
             "state" : "translated",
             "value" : "启用公告"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用公告"
+          }
         }
       }
     },
@@ -5037,6 +6051,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "启用每日提醒"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用每日提醒"
           }
         }
       }
@@ -5068,6 +6088,12 @@
             "state" : "translated",
             "value" : "启用 iCloud 云服务同步"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用 iCloud 同步"
+          }
         }
       }
     },
@@ -5097,6 +6123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "为 Joodle 启用系统 iCloud"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "為 Joodle 啟用系統 iCloud"
           }
         }
       }
@@ -5128,6 +6160,12 @@
             "state" : "translated",
             "value" : "确保你有足够的 iCloud 存储空间。前往 设置 → [你的名字] → iCloud → 管理存储空间。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請確保你有足夠的 iCloud 儲存空間。前往「設定」→「[你的名稱]」→「iCloud」→「管理儲存空間」。"
+          }
         }
       }
     },
@@ -5157,6 +6195,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按年份分类的记录"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "依年份分類的記錄"
           }
         }
       }
@@ -5188,6 +6232,12 @@
             "state" : "translated",
             "value" : "错误"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "錯誤"
+          }
         }
       }
     },
@@ -5217,6 +6267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "活动和社区动态"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活動與社群動態"
           }
         }
       }
@@ -5248,6 +6304,12 @@
             "state" : "translated",
             "value" : "摘要"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "摘錄"
+          }
         }
       }
     },
@@ -5277,6 +6339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "摘要视频"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "摘錄影片"
           }
         }
       }
@@ -5308,6 +6376,12 @@
             "state" : "translated",
             "value" : "退出生产环境模拟"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結束正式環境模擬"
+          }
         }
       }
     },
@@ -5337,6 +6411,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "实验功能"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "實驗功能"
           }
         }
       }
@@ -5368,6 +6448,12 @@
             "state" : "translated",
             "value" : "实验功能是我们正在测试的试用性功能。此类功能可能影响应用性能或电池寿命。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "實驗功能是我們正在測試的試驗性專案。這類功能可能會影響效能或電池續航力。"
+          }
         }
       }
     },
@@ -5398,6 +6484,12 @@
             "state" : "translated",
             "value" : "立即终止试用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即終止寬限期"
+          }
         }
       }
     },
@@ -5426,6 +6518,12 @@
             "state" : "translated",
             "value" : "到期时间 %@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "到期時間 %@"
+          }
         }
       }
     },
@@ -5453,6 +6551,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "导出完成"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯出完成"
           }
         }
       }
@@ -5489,6 +6593,12 @@
             "state" : "translated",
             "value" : "外部设置"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外部設定"
+          }
         }
       }
     },
@@ -5519,6 +6629,12 @@
             "state" : "translated",
             "value" : "加载失败"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "載入失敗"
+          }
         }
       }
     },
@@ -5546,6 +6662,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "加载产品失败：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "載入產品失敗：%@"
           }
         }
       }
@@ -5577,6 +6699,12 @@
             "state" : "translated",
             "value" : "解析响应失败：%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解析回應失敗：%@"
+          }
         }
       }
     },
@@ -5605,6 +6733,12 @@
             "state" : "translated",
             "value" : "恢复购买失败：%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回復購買失敗：%@"
+          }
         }
       }
     },
@@ -5632,6 +6766,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "功能建议"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "功能建議"
           }
         }
       }
@@ -5668,6 +6808,12 @@
             "state" : "translated",
             "value" : "在地板上找一个影子。现在就画出它的确切轮廓。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在地板上找一個影子。現在就畫出它確切的輪廓。"
+          }
         }
       }
     },
@@ -5697,6 +6843,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在 X 上关注"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 X 上追蹤"
           }
         }
       }
@@ -5728,6 +6880,12 @@
             "state" : "translated",
             "value" : "其他问题"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他問題"
+          }
         }
       }
     },
@@ -5757,6 +6915,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "终身畅享"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "永遠屬於你"
           }
         }
       }
@@ -5788,6 +6952,12 @@
             "state" : "translated",
             "value" : "将主体置于画面中，然后点按快门进行拍摄"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將主體置於畫面中，然後點一下快門進行拍攝"
+          }
         }
       }
     },
@@ -5817,6 +6987,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "免费"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免費"
           }
         }
       }
@@ -5854,6 +7030,12 @@
             "state" : "translated",
             "value" : "免费用户只能编辑前%1$lld个涂鸦日记。这个涂鸦日记是第%2$lld个。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免費帳號只能編輯前 %1$lld 個 Joodle。這個 Joodle 是第 %2$lld 個。"
+          }
         }
       }
     },
@@ -5881,6 +7063,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "免费试用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免費試用"
           }
         }
       }
@@ -5912,6 +7100,12 @@
             "state" : "translated",
             "value" : "免费试用 • 已应用促销码"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免費試用 • 已套用促銷碼"
+          }
         }
       }
     },
@@ -5941,6 +7135,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "免费试用已激活"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免費試用進行中"
           }
         }
       }
@@ -5972,6 +7172,12 @@
             "state" : "translated",
             "value" : "常见问题"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "常見問題"
+          }
         }
       }
     },
@@ -5996,6 +7202,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完整使用所有 Pro 功能。"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "完整使用所有 Pro 功能。"
@@ -6030,6 +7242,12 @@
             "state" : "translated",
             "value" : "全部配色"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完整調色盤"
+          }
         }
       }
     },
@@ -6059,6 +7277,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "通用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一般"
           }
         }
       }
@@ -6090,6 +7314,12 @@
             "state" : "translated",
             "value" : "生成测试占位数据"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "產生測試佔位資料"
+          }
         }
       }
     },
@@ -6119,6 +7349,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "每天收到一条通知，提醒你在 Joodle 中记录你的一刻。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每天收到一則通知，提醒你在 Joodle 中記錄當下的一刻。"
           }
         }
       }
@@ -6150,6 +7386,12 @@
             "state" : "translated",
             "value" : "每天贴心提醒你在 Joodle 中记录生活瞬间。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每天溫柔提醒你在 Joodle 中記錄當下的一刻。"
+          }
         }
       }
     },
@@ -6177,6 +7419,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "提前体验实验功能"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搶先體驗實驗功能"
           }
         }
       }
@@ -6208,6 +7456,12 @@
             "state" : "translated",
             "value" : "联系我们"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "與我們聯絡"
+          }
         }
       }
     },
@@ -6237,6 +7491,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "参与互动"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一起參與"
           }
         }
       }
@@ -6268,6 +7528,12 @@
             "state" : "translated",
             "value" : "获取 Joodle Pro"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "獲取 Joodle Pro"
+          }
         }
       }
     },
@@ -6296,6 +7562,12 @@
             "state" : "translated",
             "value" : "为早期测试者获取促销码"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "為早期測試者獲取促銷碼"
+          }
         }
       }
     },
@@ -6323,6 +7595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前往 设置 → [你的名字] → iCloud → 使用 iCloud 的 App → Joodle，然后开启开关。同步功能需要此设置才能生效。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前往「設定 → [你的名字] → iCloud → 使用 iCloud 的 App → Joodle」，然後開啟開關。同步功能需要此設定才能生效。"
           }
         }
       }
@@ -6354,6 +7632,12 @@
             "state" : "translated",
             "value" : "前往 设置 → [你的名字]，确保你已登录 iCloud。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前往「設定 → [你的名字]」，確保你已登入 iCloud。"
+          }
         }
       }
     },
@@ -6384,6 +7668,12 @@
             "state" : "translated",
             "value" : "试用期（%1$@d）"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "寬限期（%@d）"
+          }
         }
       }
     },
@@ -6413,6 +7703,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "试用期测试"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "寬限期測試"
           }
         }
       }
@@ -6449,6 +7745,12 @@
             "state" : "translated",
             "value" : "绿色"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "綠色"
+          }
         }
       }
     },
@@ -6478,6 +7780,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "触觉反馈"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "觸覺回饋"
           }
         }
       }
@@ -6509,6 +7817,12 @@
             "state" : "translated",
             "value" : "触觉反馈还取决于设备的振动设置（设置 > 辅助功能 > 触控 > 振动）。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "觸覺回饋也取決於裝置的震動設定（設定 > 輔助使用 > 觸控 > 震動）。"
+          }
         }
       }
     },
@@ -6536,6 +7850,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "首页"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "首頁"
           }
         }
       }
@@ -6567,6 +7887,12 @@
             "state" : "translated",
             "value" : "希望你喜欢 Pro！你还有 2 天可以享受无限记录、全部小组件和无水印分享。结束后不会收取任何费用 — 只会切换到免费版。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "希望你喜歡 Pro！你還有 2 天可以享受無限記錄、全部小工具和無浮水印分享。結束後不會收取任何費用 — 只會切換到免費版。"
+          }
         }
       }
     },
@@ -6595,6 +7921,12 @@
             "state" : "translated",
             "value" : "你旁边的充电线或耳机线在桌面上是怎么缠绕的？"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你旁邊的充電線或耳機線在桌面上是怎麼纏繞的？"
+          }
         }
       }
     },
@@ -6622,6 +7954,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "如何为 Joodle 启用 iCloud 云服务同步？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如何為 Joodle 啟用 iCloud 同步？"
           }
         }
       }
@@ -6653,6 +7991,12 @@
             "state" : "translated",
             "value" : "如何获取兑换码"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如何獲取兌換碼"
+          }
         }
       }
     },
@@ -6679,6 +8023,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如何使用 Joodle？"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "如何使用 Joodle？"
@@ -6711,6 +8061,12 @@
             "state" : "translated",
             "value" : "iCloud 账户"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 帳戶"
+          }
         }
       }
     },
@@ -6740,6 +8096,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iCloud 云服务可用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 可用"
           }
         }
       }
@@ -6771,6 +8133,12 @@
             "state" : "translated",
             "value" : "iCloud 备份"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 備份"
+          }
         }
       }
     },
@@ -6801,6 +8169,12 @@
             "state" : "translated",
             "value" : "iCloud 备份"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 備份"
+          }
         }
       }
     },
@@ -6829,6 +8203,12 @@
             "state" : "translated",
             "value" : "设置中已停用 iCloud"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 已在設定中停用"
+          }
         }
       }
     },
@@ -6856,6 +8236,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iCloud 云服务在系统设置中已停用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 已在系統設定中停用"
           }
         }
       }
@@ -6887,6 +8273,12 @@
             "state" : "translated",
             "value" : "设置中已停用 iCloud 云盘"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 雲碟已在設定中停用"
+          }
         }
       }
     },
@@ -6916,6 +8308,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iCloud 云盘对 Joodle 不可用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 雲碟無法用於 Joodle"
           }
         }
       }
@@ -6947,6 +8345,12 @@
             "state" : "translated",
             "value" : "iCloud 云服务可用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 可用"
+          }
         }
       }
     },
@@ -6974,6 +8378,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iOS 设置中已停用 iCloud。请在\"设置 → [你的名字] → iCloud → 保存到 iCloud → Joodle\"中启用以进行同步。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 已在 iOS 設定中停用。請在「設定 → [你的名字] → iCloud → 儲存到 iCloud → Joodle」中啟用以進行同步。"
           }
         }
       }
@@ -7003,6 +8413,12 @@
             "state" : "translated",
             "value" : "设置中已停用 iCloud"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 已在設定中停用"
+          }
         }
       }
     },
@@ -7030,6 +8446,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置中已停用 iCloud。请在\"设置 → [你的名字] → iCloud → 保存到 iCloud → Joodle\"中启用。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 已在設定中停用。請在「設定 → [你的名字] → iCloud → 儲存到 iCloud → Joodle」中啟用。"
           }
         }
       }
@@ -7059,6 +8481,12 @@
             "state" : "translated",
             "value" : "iCloud 不可用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 無法使用"
+          }
         }
       }
     },
@@ -7086,6 +8514,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iCloud 不可用。请检查你的设置。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 無法使用。請檢查你的設定。"
           }
         }
       }
@@ -7115,6 +8549,12 @@
             "state" : "translated",
             "value" : "此设备上 iCloud 受限制。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此裝置上的 iCloud 受到限制。"
+          }
         }
       }
     },
@@ -7142,6 +8582,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iCloud 暂时不可用。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 暫時無法使用。"
           }
         }
       }
@@ -7173,6 +8619,12 @@
             "state" : "translated",
             "value" : "iCloud 不可用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 無法使用"
+          }
         }
       }
     },
@@ -7203,6 +8655,12 @@
             "state" : "translated",
             "value" : "iCloud 云服务同步"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 同步"
+          }
         }
       }
     },
@@ -7230,6 +8688,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "iCloud 云服务同步已启用，但需要重启才能生效。重启应用后你的数据将开始同步。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 同步已啟用，但需要重新啟動才能生效。重新啟動 App 後，你的資料將開始同步。"
           }
         }
       }
@@ -7261,6 +8725,12 @@
             "state" : "translated",
             "value" : "iCloud 云服务不可用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 無法使用"
+          }
         }
       }
     },
@@ -7288,6 +8758,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置中已停用 iCloud。请重启应用。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「設定」中已停用 iCloud。請重新啟動 App。"
           }
         }
       }
@@ -7319,6 +8795,12 @@
             "state" : "translated",
             "value" : "如果今天是一株植物，画出它今天长出（或掉落）了多少片叶子。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果今天是一株植物，畫出它今天長出（或掉落）了多少片葉子。"
+          }
         }
       }
     },
@@ -7348,6 +8830,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "如果你的大脑是一张天气图，画出现在上面的云彩或太阳。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果你的大腦是一張天氣圖，畫出現在上面的雲朵或太陽。"
           }
         }
       }
@@ -7379,6 +8867,12 @@
             "state" : "translated",
             "value" : "如果你的注意力是一束手电筒光，画出它正照向什么。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果你的專注力是一束手電筒光，畫出它正照向什麼。"
+          }
         }
       }
     },
@@ -7406,6 +8900,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "如果你的压力是一罐缠在一起的电线，画出这些电线有多乱。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果你的壓力是一罐纏在一起的電線，畫出這些電線有多亂。"
           }
         }
       }
@@ -7436,6 +8936,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "想象一眼纵览你一整年的生活。每个涂鸦承载着一段特别的记忆。始终私密。始终属于你。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "想像一眼縱覽你一整年的生活。每個塗鴉都承載著一段特別的回憶。始終私密。始終屬於你。"
           }
         }
       }
@@ -7470,6 +8976,12 @@
             "state" : "translated",
             "value" : "导入完成"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯入完成"
+          }
         }
       }
     },
@@ -7503,6 +9015,12 @@
             "state" : "translated",
             "value" : "导入结果"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匯入結果"
+          }
         }
       }
     },
@@ -7530,6 +9048,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在\"设置\"中，进入\"实验室\"板块，然后点击\"实验功能\"。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在「設定」中，進入「實驗室」區塊，然後點一下「實驗功能」。"
           }
         }
       }
@@ -7561,6 +9085,12 @@
             "state" : "translated",
             "value" : "%@后"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@後"
+          }
         }
       }
     },
@@ -7588,6 +9118,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "5 天后"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 天後"
           }
         }
       }
@@ -7617,6 +9153,12 @@
             "state" : "translated",
             "value" : "7 天后"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "7 天後"
+          }
         }
       }
     },
@@ -7645,6 +9187,12 @@
             "state" : "translated",
             "value" : "应用内操作"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 內操作"
+          }
         }
       }
     },
@@ -7672,6 +9220,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未激活"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未啟用"
           }
         }
       }
@@ -7703,6 +9257,12 @@
             "state" : "translated",
             "value" : "交互"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "互動"
+          }
         }
       }
     },
@@ -7732,6 +9292,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "互动教程"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "互動教學"
           }
         }
       }
@@ -7763,6 +9329,12 @@
             "state" : "translated",
             "value" : "无效的闹钟时间"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無效的鬧鐘時間"
+          }
         }
       }
     },
@@ -7793,6 +9365,12 @@
             "state" : "translated",
             "value" : "无效的 API 地址"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無效的 API 位址"
+          }
         }
       }
     },
@@ -7819,6 +9397,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步中"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "同步中"
@@ -7853,6 +9437,12 @@
             "state" : "translated",
             "value" : "Joodle"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle"
+          }
         }
       }
     },
@@ -7881,6 +9471,12 @@
             "state" : "translated",
             "value" : "Joodle 无法与 iCloud 云服务同步，因为系统设置中\"保存到 iCloud\"已停用。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle 無法與 iCloud 同步，因為系統設定中的「儲存到 iCloud」已停用。"
+          }
         }
       }
     },
@@ -7908,6 +9504,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Joodle 无法将这张参考照片保存到你的相册。若要重新开启保存，请前往“设置 > 通用 > 自定义 > 将照片保存到相册”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle 無法將這張參考照片儲存到你的相簿。若要重新開啟儲存功能，請前往「設定 > 一般 > 自訂 > 將照片儲存到相簿」。"
           }
         }
       }
@@ -7939,6 +9541,12 @@
             "state" : "translated",
             "value" : "Joodle 记录"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle 記錄"
+          }
         }
       }
     },
@@ -7969,6 +9577,12 @@
             "state" : "translated",
             "value" : "Joodle 现已在 App Store 上架！"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle 現已在 App Store 上架！"
+          }
         }
       }
     },
@@ -7997,6 +9611,12 @@
             "state" : "translated",
             "value" : "Joodle 需要访问相机以拍摄用于描摹的参考照片。请在“设置”中开启。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle 需要存取相機，以拍攝用於描摹的參考照片。請在「設定」中開啟。"
+          }
         }
       }
     },
@@ -8024,6 +9644,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Joodle 需要权限才能将照片添加到你的照片图库。请在“设置”中开启照片访问权限，以保存拍摄的参考照片。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle 需要權限才能將照片加入你的照片圖庫。請在「設定」中開啟照片取用權限，以儲存拍攝的參考照片。"
           }
         }
       }
@@ -8055,6 +9681,12 @@
             "state" : "translated",
             "value" : "Joodle Pro"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle Pro"
+          }
         }
       }
     },
@@ -8079,6 +9711,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle 提醒"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Joodle 提醒"
@@ -8113,6 +9751,12 @@
             "state" : "translated",
             "value" : "今日涂鸦"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今日塗鴉"
+          }
         }
       }
     },
@@ -8140,6 +9784,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Joodle 将自动同步你的日记记录和偏好设置到 iCloud 云服务。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle 將自動把你的日記記錄與偏好設定同步到 iCloud。"
           }
         }
       }
@@ -8171,6 +9821,12 @@
             "state" : "translated",
             "value" : "Joodle 大约每天备份一次您的条目。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joodle 大約每天備份一次你的記錄。"
+          }
         }
       }
     },
@@ -8200,6 +9856,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "跳转到月"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳至月份"
           }
         }
       }
@@ -8231,6 +9893,12 @@
             "state" : "translated",
             "value" : "跳转到周"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳至週次"
+          }
         }
       }
     },
@@ -8261,6 +9929,12 @@
             "state" : "translated",
             "value" : "跳转到年"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳至年份"
+          }
         }
       }
     },
@@ -8289,6 +9963,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续保留 Joodle Pro"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繼續保留 Joodle Pro"
           }
         }
       }
@@ -8320,6 +10000,12 @@
             "state" : "translated",
             "value" : "通过 iCloud 云服务让你所有设备上的涂鸦保持同步。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透過 iCloud 讓你所有裝置上的塗鴉保持同步。"
+          }
         }
       }
     },
@@ -8350,6 +10036,12 @@
             "state" : "translated",
             "value" : "实验室"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "實驗室"
+          }
         }
       }
     },
@@ -8378,6 +10070,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "语言"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "語言"
           }
         }
       }
@@ -8408,6 +10106,12 @@
             "state" : "translated",
             "value" : "语言已更改"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "語言已變更"
+          }
         }
       }
     },
@@ -8437,6 +10141,12 @@
             "state" : "translated",
             "value" : "上次备份:%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次備份：%@"
+          }
         }
       }
     },
@@ -8465,6 +10175,12 @@
             "state" : "translated",
             "value" : "上次观察到：%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次觀察到：%@"
+          }
         }
       }
     },
@@ -8492,6 +10208,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "上次同步于"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次同步於"
           }
         }
       }
@@ -8523,6 +10245,12 @@
             "state" : "translated",
             "value" : "稍后"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "稍後"
+          }
         }
       }
     },
@@ -8549,6 +10277,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "了解核心功能"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "了解核心功能"
@@ -8583,6 +10317,12 @@
             "state" : "translated",
             "value" : "了解如何作为早期测试者获取促销码"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "了解如何以早期測試者身分獲取促銷碼"
+          }
         }
       }
     },
@@ -8610,6 +10350,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "了解如何在\"常规\"视图模式下快速查看星期标签"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "了解如何在「一般」檢視模式下快速查看星期標籤"
           }
         }
       }
@@ -8641,6 +10387,12 @@
             "state" : "translated",
             "value" : "法律信息"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "法律資訊"
+          }
         }
       }
     },
@@ -8670,6 +10422,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开始涂鸦之旅！"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開始塗鴉吧！"
           }
         }
       }
@@ -8701,6 +10459,12 @@
             "state" : "translated",
             "value" : "向你展示一个相机小技巧 — 点按以打开画布"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "讓我們示範一個相機小技巧 — 點一下以打開畫布"
+          }
         }
       }
     },
@@ -8731,6 +10495,12 @@
             "state" : "translated",
             "value" : "终身版"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "終身版"
+          }
         }
       }
     },
@@ -8759,6 +10529,12 @@
             "state" : "translated",
             "value" : "终身版"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "終身版"
+          }
         }
       }
     },
@@ -8786,6 +10562,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "浅色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "淺色"
           }
         }
       }
@@ -8817,6 +10599,12 @@
             "state" : "translated",
             "value" : "已达上限"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已達上限"
+          }
         }
       }
     },
@@ -8846,6 +10634,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "加载更新日志…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在載入更新日誌…"
           }
         }
       }
@@ -8882,6 +10676,12 @@
             "state" : "translated",
             "value" : "加载中…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "載入中…"
+          }
         }
       }
     },
@@ -8910,6 +10710,12 @@
             "state" : "translated",
             "value" : "长按主屏幕，点击 + 按钮，搜索\"Joodle\"，然后添加小组件。部分小组件支持配置，在编辑模式下点击小组件即可进行设置。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "長按主畫面，點一下「+」按鈕，搜尋「Joodle」，然後加入小工具。部分小工具可進行設定，在編輯模式下點一下小工具即可設定。"
+          }
         }
       }
     },
@@ -8937,6 +10743,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "长按锁屏界面，点击\"自定\"，然后选择\"添加小组件\"，找到\"Joodle\"，点击或拖拽小组件到锁屏上。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "長按鎖定畫面，點一下「自訂」，接著選「加入小工具」，找到「Joodle」，點一下或拖曳小工具到鎖定畫面上。"
           }
         }
       }
@@ -8968,6 +10780,12 @@
             "state" : "translated",
             "value" : "长按你的涂鸦然后选择\"移动到其他日期\""
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "長按你的塗鴉，然後點一下「移到其他日期」選項"
+          }
         }
       }
     },
@@ -8996,6 +10814,12 @@
             "state" : "translated",
             "value" : "长按，点击 + 按钮，搜索\"Joodle\"，然后添加小组件。部分小组件支持配置，在编辑模式下点击小组件即可进行设置。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "長按，點一下「+」按鈕，搜尋「Joodle」，然後加入小工具。部分小工具可進行設定，在編輯模式下點一下小工具即可設定。"
+          }
         }
       }
     },
@@ -9023,6 +10847,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "看看你常用的那只手。画出它放在你腿上的形状。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "看看你慣用的那隻手。畫出它放在你腿上的形狀。"
           }
         }
       }
@@ -9054,6 +10884,12 @@
             "state" : "translated",
             "value" : "抬头看。你看到的云朵或者天空是什么形状？"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "抬頭看。你看到的雲朵或那片天空是什麼形狀？"
+          }
         }
       }
     },
@@ -9084,6 +10920,12 @@
             "state" : "translated",
             "value" : "由 Joodle 制作"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "由 Joodle 製作"
+          }
         }
       }
     },
@@ -9111,6 +10953,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "确保你正在使用 TestFlight 版本。截取一张截图，然后点击\"分享 Beta 反馈…\"。在反馈部分写下\"我想要促销码\"。最重要的是，在\"分享你的邮箱\"部分填写你的邮箱地址，以便我们将兑换码发送给你！"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請確認你正在使用 TestFlight 版本。擷取一張螢幕截圖，然後點一下「分享 Beta 版回饋…」。在回饋欄位寫下「我想要促銷碼」。最重要的是，在「分享你的電子郵件」欄位填寫你的電子郵件地址，這樣我們才能把兌換碼寄給你！"
           }
         }
       }
@@ -9142,6 +10990,12 @@
             "state" : "translated",
             "value" : "确保你有有效的网络连接（Wi-Fi 或蜂窝数据）。当前状态：%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請確認你已連上網路（Wi-Fi 或行動數據）。目前狀態：%@"
+          }
         }
       }
     },
@@ -9171,6 +11025,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请确认已登录 iCloud,然后在 设置 → [您的姓名] → iCloud → 已保存到 iCloud → 云盘 → 同步到 iCloud 云盘的 App 中开启 Joodle。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請確認你已登入 iCloud，然後在「設定」→「[你的名稱]」→「iCloud」→「已儲存到 iCloud」→「雲碟」→「同步到 iCloud 雲碟的 App」中開啟 Joodle。"
           }
         }
       }
@@ -9202,6 +11062,12 @@
             "state" : "translated",
             "value" : "让涂鸦抖动起来"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "讓你的塗鴉抖動起來"
+          }
         }
       }
     },
@@ -9231,6 +11097,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "用永不停歇的轻微抖动，让你的涂鸦活灵活现。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以永不停歇的輕微抖動，讓你的塗鴉活靈活現。"
           }
         }
       }
@@ -9262,6 +11134,12 @@
             "state" : "translated",
             "value" : "管理 iCloud 备份"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理 iCloud 備份"
+          }
         }
       }
     },
@@ -9291,6 +11169,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "通过 App Store 管理或取消"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透過 App Store 管理或取消"
           }
         }
       }
@@ -9322,6 +11206,12 @@
             "state" : "translated",
             "value" : "在系统设置中管理照片权限、Siri 与搜索以及通知外观。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在系統「設定」App 中管理照片權限、Siri 與搜尋，以及通知外觀。"
+          }
         }
       }
     },
@@ -9351,6 +11241,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "管理订阅"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理訂閱"
           }
         }
       }
@@ -9382,6 +11278,12 @@
             "state" : "translated",
             "value" : "管理你的订阅、更改方案或随时取消。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理你的訂閱、變更方案或隨時取消。"
+          }
         }
       }
     },
@@ -9411,6 +11313,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "手动操作"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "手動操作"
           }
         }
       }
@@ -9442,6 +11350,12 @@
             "state" : "translated",
             "value" : "极简"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "極簡"
+          }
         }
       }
     },
@@ -9472,6 +11386,12 @@
             "state" : "translated",
             "value" : "极简视频"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "極簡影片"
+          }
         }
       }
     },
@@ -9498,6 +11418,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "迷你"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "迷你"
@@ -9532,6 +11458,12 @@
             "state" : "translated",
             "value" : "缺少日期字段"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缺少日期字串"
+          }
         }
       }
     },
@@ -9556,6 +11488,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "星期一"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "星期一"
@@ -9590,6 +11528,12 @@
             "state" : "translated",
             "value" : "月"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "月"
+          }
         }
       }
     },
@@ -9616,6 +11560,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "月"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "月"
@@ -9650,6 +11600,12 @@
             "state" : "translated",
             "value" : "本月总览"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本月總覽"
+          }
         }
       }
     },
@@ -9676,6 +11632,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每月"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "每月"
@@ -9710,6 +11672,12 @@
             "state" : "translated",
             "value" : "月度版"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "月繳方案"
+          }
         }
       }
     },
@@ -9740,6 +11708,12 @@
             "state" : "translated",
             "value" : "更多主题色彩"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更多主題色彩"
+          }
         }
       }
     },
@@ -9767,6 +11741,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移动"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動"
           }
         }
       }
@@ -9798,6 +11778,12 @@
             "state" : "translated",
             "value" : "移动涂鸦"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動塗鴉"
+          }
         }
       }
     },
@@ -9825,6 +11811,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移动涂鸦"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移動塗鴉"
           }
         }
       }
@@ -9854,6 +11846,12 @@
             "state" : "translated",
             "value" : "移动到其他日期"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移至其他日期"
+          }
         }
       }
     },
@@ -9881,6 +11879,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "要将涂鸦移动到 %@ 吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要將塗鴉移至 %@ 嗎？"
           }
         }
       }
@@ -9912,6 +11916,12 @@
             "state" : "translated",
             "value" : "在年份间导航"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在年份間切換"
+          }
         }
       }
     },
@@ -9942,6 +11952,12 @@
             "state" : "translated",
             "value" : "需要帮助？"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要協助？"
+          }
         }
       }
     },
@@ -9969,6 +11985,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "网络"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網路"
           }
         }
       }
@@ -10000,6 +12022,12 @@
             "state" : "translated",
             "value" : "网络错误：%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網路錯誤：%@"
+          }
         }
       }
     },
@@ -10027,6 +12055,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "网络错误：%@。检查网络连接。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網路錯誤：%@。請檢查網路連線。"
           }
         }
       }
@@ -10056,6 +12090,12 @@
             "state" : "translated",
             "value" : "网络错误。请检查你的网络连接后重试。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "網路錯誤。請檢查你的網路連線後再試一次。"
+          }
         }
       }
     },
@@ -10082,6 +12122,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中性色"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "中性色"
@@ -10116,6 +12162,12 @@
             "state" : "translated",
             "value" : "下一步"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一步"
+          }
         }
       }
     },
@@ -10146,6 +12198,12 @@
             "state" : "translated",
             "value" : "下一个纪念日"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一個紀念日"
+          }
         }
       }
     },
@@ -10175,6 +12233,12 @@
             "state" : "translated",
             "value" : "下次备份：%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下次備份：%@"
+          }
         }
       }
     },
@@ -10203,6 +12267,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "即将进行下次备份"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即將進行下次備份"
           }
         }
       }
@@ -10234,6 +12304,12 @@
             "state" : "translated",
             "value" : "无活跃订阅"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有有效的訂閱"
+          }
         }
       }
     },
@@ -10263,6 +12339,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无纪念日闹钟"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有紀念日鬧鐘"
           }
         }
       }
@@ -10294,6 +12376,12 @@
             "state" : "translated",
             "value" : "不自动扣费 — 获取 Pro，或继续用免费版涂鸦。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不會自動扣款 — 獲取 Pro，或繼續用免費版塗鴉。"
+          }
         }
       }
     },
@@ -10322,6 +12410,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂无备份"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚無備份"
           }
         }
       }
@@ -10353,6 +12447,12 @@
             "state" : "translated",
             "value" : "暂无备份"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚無備份"
+          }
         }
       }
     },
@@ -10382,6 +12482,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂无更新日志"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有更新日誌"
           }
         }
       }
@@ -10413,6 +12519,12 @@
             "state" : "translated",
             "value" : "暂无常见问题数据"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有常見問題資料"
+          }
         }
       }
     },
@@ -10440,6 +12552,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无 iCloud 账户"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有 iCloud 帳戶"
           }
         }
       }
@@ -10469,6 +12587,12 @@
             "state" : "translated",
             "value" : "未找到 iCloud 账户"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找不到 iCloud 帳戶"
+          }
         }
       }
     },
@@ -10496,6 +12620,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未找到 iCloud 账户。请在设置中登录 iCloud。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找不到 iCloud 帳戶。請在「設定」中登入 iCloud。"
           }
         }
       }
@@ -10527,6 +12657,12 @@
             "state" : "translated",
             "value" : "iCloud 不可用。请在设置中登录 iCloud。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud 無法使用。請在「設定」中登入 iCloud。"
+          }
         }
       }
     },
@@ -10554,6 +12690,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无网络连接"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有網路連線"
           }
         }
       }
@@ -10583,6 +12725,12 @@
             "state" : "translated",
             "value" : "无网络连接。iCloud 同步需要有效的网络连接。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有網路連線。iCloud 同步需要有效的網路連線。"
+          }
         }
       }
     },
@@ -10610,6 +12758,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "尚未观察到同步活动"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未偵測到同步活動"
           }
         }
       }
@@ -10641,6 +12795,12 @@
             "state" : "translated",
             "value" : "无水印"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無浮水印"
+          }
         }
       }
     },
@@ -10671,6 +12831,12 @@
             "state" : "translated",
             "value" : "常规"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一般"
+          }
         }
       }
     },
@@ -10699,6 +12865,12 @@
             "state" : "translated",
             "value" : "不可用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法使用"
+          }
         }
       }
     },
@@ -10726,6 +12898,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无权使用这些产品。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無權使用這些產品。"
           }
         }
       }
@@ -10757,6 +12935,12 @@
             "state" : "translated",
             "value" : "未找到"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找不到"
+          }
         }
       }
     },
@@ -10781,6 +12965,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "通知"
@@ -10815,6 +13005,12 @@
             "state" : "translated",
             "value" : "通知已停用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知已停用"
+          }
         }
       }
     },
@@ -10845,6 +13041,12 @@
             "state" : "translated",
             "value" : "关闭"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉"
+          }
         }
       }
     },
@@ -10871,6 +13073,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "好"
@@ -10905,6 +13113,12 @@
             "state" : "translated",
             "value" : "一次性"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次性"
+          }
         }
       }
     },
@@ -10932,6 +13146,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "一次性支付%@。无需订阅，无重复收费。永久解锁所有功能。\n"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次性支付%@。無需訂閱，無重複收費。永久解鎖所有功能。\n"
           }
         }
       }
@@ -10963,6 +13183,12 @@
             "state" : "translated",
             "value" : "一次性购买，永久拥有"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次性購買，永久擁有"
+          }
         }
       }
     },
@@ -10992,6 +13218,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "一次性购买，无需订阅。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次性購買，無需訂閱。"
           }
         }
       }
@@ -11023,6 +13255,12 @@
             "state" : "translated",
             "value" : "仅 %@ / 月"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅 %@ / 月"
+          }
         }
       }
     },
@@ -11052,6 +13290,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开 iOS 设置"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟 iOS 設定"
           }
         }
       }
@@ -11083,6 +13327,12 @@
             "state" : "translated",
             "value" : "打开 Joodle"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟 Joodle"
+          }
         }
       }
     },
@@ -11112,6 +13362,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开下一个纪念日"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟下一個紀念日"
           }
         }
       }
@@ -11143,6 +13399,12 @@
             "state" : "translated",
             "value" : "打开设置"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟設定"
+          }
         }
       }
     },
@@ -11170,6 +13432,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在主屏幕向下滑动打开聚焦搜索。搜索\"Joodle\"。点击任意快捷操作。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在主畫面向下滑動以開啟 Spotlight 搜尋。搜尋「Joodle」。點一下任一快速操作。"
           }
         }
       }
@@ -11201,6 +13469,12 @@
             "state" : "translated",
             "value" : "打开你的涂鸦日记，让指尖捕捉每一个重要时刻。每一笔都是一段记忆，汇聚成与你共同成长的收藏。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟你的 Joodle，讓指尖捕捉每一個重要時刻。每一筆都是一段記憶，匯聚成與你共同成長的收藏。"
+          }
         }
       }
     },
@@ -11230,6 +13504,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开 Joodle 创建或编辑今天的涂鸦记录"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟 Joodle 以建立或編輯今天的塗鴉記錄"
           }
         }
       }
@@ -11261,6 +13541,12 @@
             "state" : "translated",
             "value" : "打开 Joodle 查看下一个即将到来的纪念日记录"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟 Joodle 查看下一個即將到來的紀念日記錄"
+          }
         }
       }
     },
@@ -11291,6 +13577,12 @@
             "state" : "translated",
             "value" : "打开 Joodle 应用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟 Joodle App"
+          }
         }
       }
     },
@@ -11320,6 +13612,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "橙色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "橘色"
           }
         }
       }
@@ -11356,6 +13654,12 @@
             "state" : "translated",
             "value" : "概览"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "總覽"
+          }
         }
       }
     },
@@ -11385,6 +13689,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "流逝时光背景"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "流逝時光背景"
           }
         }
       }
@@ -11416,6 +13726,12 @@
             "state" : "translated",
             "value" : "一次付费，永久拥有。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一次付費，永久擁有。"
+          }
         }
       }
     },
@@ -11442,6 +13758,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每%@"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "每%@"
@@ -11474,6 +13796,12 @@
             "state" : "translated",
             "value" : "照片未保存"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "照片未儲存"
+          }
         }
       }
     },
@@ -11501,6 +13829,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要照片访问权限"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要照片存取權限"
           }
         }
       }
@@ -11532,6 +13866,12 @@
             "state" : "translated",
             "value" : "双指向外放大以返回常规视图"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "雙指向外縮放以返回一般檢視"
+          }
         }
       }
     },
@@ -11561,6 +13901,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "粉色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粉紅色"
           }
         }
       }
@@ -11592,6 +13938,12 @@
             "state" : "translated",
             "value" : "方案变更已安排"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "方案變更已排定"
+          }
         }
       }
     },
@@ -11622,6 +13974,12 @@
             "state" : "translated",
             "value" : "请检查网络连接后重试。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請檢查網路連線後再試一次。"
+          }
         }
       }
     },
@@ -11650,6 +14008,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请描述你发现的翻译问题。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請描述你發現的翻譯問題。"
           }
         }
       }
@@ -11681,6 +14045,12 @@
             "state" : "translated",
             "value" : "请在设置中启用通知以接收每日提醒。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請在「設定」中啟用通知，以接收每日提醒。"
+          }
         }
       }
     },
@@ -11711,6 +14081,12 @@
             "state" : "translated",
             "value" : "请在设置中启用通知以接收纪念日闹钟通知。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請在「設定」中啟用通知，以接收紀念日鬧鐘通知。"
+          }
         }
       }
     },
@@ -11739,6 +14115,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请重新启动 Joodle 以使更改完全生效。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請重新啟動 Joodle，讓變更完全生效。"
           }
         }
       }
@@ -11769,6 +14151,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "准备中…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "準備中…"
           }
         }
       }
@@ -11815,6 +14203,12 @@
             "state" : "translated",
             "value" : "打印调试信息到控制台"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將除錯資訊列印至主控台"
+          }
         }
       }
     },
@@ -11845,6 +14239,12 @@
             "state" : "translated",
             "value" : "隐私"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱私權"
+          }
         }
       }
     },
@@ -11873,6 +14273,12 @@
             "state" : "translated",
             "value" : "隐私政策"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱私權政策"
+          }
         }
       }
     },
@@ -11899,6 +14305,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pro"
@@ -11933,6 +14345,12 @@
             "state" : "translated",
             "value" : "PRO"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PRO"
+          }
         }
       }
     },
@@ -11960,6 +14378,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PRO 试用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PRO 試用"
           }
         }
       }
@@ -11991,6 +14415,12 @@
             "state" : "translated",
             "value" : "Pro 试用 · 剩余%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro 試用 · 剩餘 %@"
+          }
         }
       }
     },
@@ -12018,6 +14448,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pro 试用结束"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro 試用結束"
           }
         }
       }
@@ -12047,6 +14483,12 @@
             "state" : "translated",
             "value" : "Pro 试用开始"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pro 試用開始"
+          }
         }
       }
     },
@@ -12074,6 +14516,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你所在地区暂无可用产品。请检查 App Store Connect 地区设置。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你所在地區暫無可用產品。請檢查 App Store Connect 地區設定。"
           }
         }
       }
@@ -12103,6 +14551,12 @@
             "state" : "translated",
             "value" : "已应用促销"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已套用促銷"
+          }
         }
       }
     },
@@ -12130,6 +14584,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "促销码"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "促銷碼"
           }
         }
       }
@@ -12161,6 +14621,12 @@
             "state" : "translated",
             "value" : "促销码已激活"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "促銷碼已啟用"
+          }
         }
       }
     },
@@ -12188,6 +14654,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "促销结束于%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "促銷結束於 %@"
           }
         }
       }
@@ -12219,6 +14691,12 @@
             "state" : "translated",
             "value" : "促销活动"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "促銷活動"
+          }
         }
       }
     },
@@ -12247,6 +14725,12 @@
             "state" : "translated",
             "value" : "涂鸦后提示添加笔记"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "塗鴉後提示新增筆記"
+          }
         }
       }
     },
@@ -12274,6 +14758,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "购买未能完成。可能正在等待批准或已取消。请在\"设置 > [你的名字] > 订阅\"中检查你的订阅状态。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法完成購買。可能正在等待核准或已取消。請在「設定 > [你的名字] > 訂閱」中查看你的訂閱狀態"
           }
         }
       }
@@ -12305,6 +14795,12 @@
             "state" : "translated",
             "value" : "购买失败"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購買失敗"
+          }
         }
       }
     },
@@ -12333,6 +14829,12 @@
             "state" : "translated",
             "value" : "购买失败：%@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "購買失敗：%@"
+          }
         }
       }
     },
@@ -12359,6 +14861,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紫色"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "紫色"
@@ -12391,6 +14899,12 @@
             "state" : "translated",
             "value" : "通过 Siri 快捷指令快速访问"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透過 Siri 捷徑快速存取"
+          }
         }
       }
     },
@@ -12415,6 +14929,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快捷操作"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "快捷操作"
@@ -12447,6 +14967,12 @@
             "state" : "translated",
             "value" : "快速查看星期标签"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速查看星期標籤"
+          }
         }
       }
     },
@@ -12477,6 +15003,12 @@
             "state" : "translated",
             "value" : "快速跳转至今日"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速跳至今日"
+          }
         }
       }
     },
@@ -12505,6 +15037,12 @@
             "state" : "translated",
             "value" : "通过 Siri 快捷指令快速跳转至今日或即将到来的纪念日"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透過 Siri 捷徑快速跳至今日或即將到來的紀念日"
+          }
         }
       }
     },
@@ -12532,6 +15070,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "推荐 Joodle"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "推薦 Joodle"
           }
         }
       }
@@ -12563,6 +15107,12 @@
             "state" : "translated",
             "value" : "红色"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紅色"
+          }
         }
       }
     },
@@ -12592,6 +15142,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "兑换"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "兌換"
           }
         }
       }
@@ -12623,6 +15179,12 @@
             "state" : "translated",
             "value" : "兑换促销码"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "兌換促銷碼"
+          }
         }
       }
     },
@@ -12652,6 +15214,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "刷新 iCloud云服务可用性"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新整理 iCloud 可用狀態"
           }
         }
       }
@@ -12683,6 +15251,12 @@
             "state" : "translated",
             "value" : "正在重新生成缩略图…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在重新產生縮圖…"
+          }
         }
       }
     },
@@ -12707,6 +15281,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "提醒"
@@ -12741,6 +15321,12 @@
             "state" : "translated",
             "value" : "提醒时间"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒時間"
+          }
         }
       }
     },
@@ -12768,6 +15354,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请求已取消。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請求已取消。"
           }
         }
       }
@@ -12798,6 +15390,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要高级订阅"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要進階訂閱"
           }
         }
       }
@@ -12834,6 +15432,12 @@
             "state" : "translated",
             "value" : "重置更新日志状态"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置更新日誌狀態"
+          }
         }
       }
     },
@@ -12863,6 +15467,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重置试用期（7 天）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置試用期（7 天）"
           }
         }
       }
@@ -12894,6 +15504,12 @@
             "state" : "translated",
             "value" : "立即重启"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即重新啟動"
+          }
         }
       }
     },
@@ -12921,6 +15537,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要重启"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要重新啟動"
           }
         }
       }
@@ -12952,6 +15574,12 @@
             "state" : "translated",
             "value" : "重启应用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新啟動應用程式"
+          }
         }
       }
     },
@@ -12981,6 +15609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "恢复"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還原"
           }
         }
       }
@@ -13012,6 +15646,12 @@
             "state" : "translated",
             "value" : "从本地备份恢复"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "從本機備份還原"
+          }
         }
       }
     },
@@ -13042,6 +15682,12 @@
             "state" : "translated",
             "value" : "要从此备份恢复吗?"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要從此備份還原嗎？"
+          }
         }
       }
     },
@@ -13069,6 +15715,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "恢复购买"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回復購買項目"
           }
         }
       }
@@ -13100,6 +15752,12 @@
             "state" : "translated",
             "value" : "恢复购买"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回復購買項目"
+          }
         }
       }
     },
@@ -13127,6 +15785,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在从 iCloud 恢复数据…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在從 iCloud 還原資料…"
           }
         }
       }
@@ -13158,6 +15822,12 @@
             "state" : "translated",
             "value" : "重新订阅"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新訂閱"
+          }
         }
       }
     },
@@ -13187,6 +15857,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "结果"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結果"
           }
         }
       }
@@ -13218,6 +15894,12 @@
             "state" : "translated",
             "value" : "重试"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重試"
+          }
         }
       }
     },
@@ -13247,6 +15929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重新体验引导"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新體驗導覽"
           }
         }
       }
@@ -13278,6 +15966,12 @@
             "state" : "translated",
             "value" : "重新体验引导？"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新體驗導覽？"
+          }
         }
       }
     },
@@ -13304,6 +15998,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "糟糕的一天？精彩的一天？"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "糟糕的一天？精彩的一天？"
@@ -13338,6 +16038,12 @@
             "state" : "translated",
             "value" : "保存"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存"
+          }
         }
       }
     },
@@ -13366,6 +16072,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "节省%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "省下 %@"
           }
         }
       }
@@ -13397,6 +16109,12 @@
             "state" : "translated",
             "value" : "每年节省%@。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每年省下 %@。"
+          }
         }
       }
     },
@@ -13425,6 +16143,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "相比月付节省%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相比月付省下 %@"
           }
         }
       }
@@ -13456,6 +16180,12 @@
             "state" : "translated",
             "value" : "每年节省 $00.00。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每年省下 $00.00。"
+          }
         }
       }
     },
@@ -13486,6 +16216,12 @@
             "state" : "translated",
             "value" : "立即保存备份到 iCloud 云盘"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即將備份儲存到 iCloud 雲碟"
+          }
         }
       }
     },
@@ -13513,6 +16249,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将照片保存到相册"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將照片儲存到相簿"
           }
         }
       }
@@ -13542,6 +16284,12 @@
             "state" : "translated",
             "value" : "将你为描摹拍摄的参考照片保存到“照片”相册"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將你為描摹拍攝的參考照片儲存到「照片」相簿"
+          }
         }
       }
     },
@@ -13570,6 +16318,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "页面或功能"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "畫面或功能"
           }
         }
       }
@@ -13601,6 +16355,12 @@
             "state" : "translated",
             "value" : "选择一个方案开始"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇一個方案開始使用"
+          }
         }
       }
     },
@@ -13630,6 +16390,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "服务器错误：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "伺服器錯誤：%@"
           }
         }
       }
@@ -13661,6 +16427,12 @@
             "state" : "translated",
             "value" : "设置闹钟"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定鬧鐘"
+          }
         }
       }
     },
@@ -13691,6 +16463,12 @@
             "state" : "translated",
             "value" : "为未来的涂鸦记录设置闹钟，在特殊日期收到通知。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "為未來的 Joodle 記錄設定鬧鐘，在特殊日期收到通知。"
+          }
         }
       }
     },
@@ -13719,6 +16497,12 @@
             "state" : "translated",
             "value" : "设置纪念日闹钟"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定紀念日鬧鐘"
+          }
         }
       }
     },
@@ -13746,6 +16530,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在设置 iCloud 同步…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在設定 iCloud 同步…"
           }
         }
       }
@@ -13777,6 +16567,12 @@
             "state" : "translated",
             "value" : "设置"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定"
+          }
         }
       }
     },
@@ -13807,6 +16603,12 @@
             "state" : "translated",
             "value" : "设置 > 自定义"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定 > 自訂"
+          }
         }
       }
     },
@@ -13835,6 +16637,12 @@
             "state" : "translated",
             "value" : "设置完成"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定完成"
+          }
         }
       }
     },
@@ -13861,6 +16669,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "分享"
@@ -13895,6 +16709,12 @@
             "state" : "translated",
             "value" : "请将设备标识符发送至 joodle@liyuxuan.dev，以协助排查购买问题："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請將裝置識別碼傳送至 joodle@liyuxuan.dev，以協助排查購買問題："
+          }
         }
       }
     },
@@ -13923,6 +16743,12 @@
             "state" : "translated",
             "value" : "分享%@年"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享 %@ 年"
+          }
         }
       }
     },
@@ -13947,6 +16773,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享你的一天"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "分享你的一天"
@@ -13981,6 +16813,12 @@
             "state" : "translated",
             "value" : "把涂鸦分享到 Instagram"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把塗鴉分享到 Instagram"
+          }
         }
       }
     },
@@ -14005,6 +16843,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享你的一月"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "分享你的一月"
@@ -14039,6 +16883,12 @@
             "state" : "translated",
             "value" : "分享你的一周"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享你的一週"
+          }
         }
       }
     },
@@ -14065,6 +16915,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "分享"
@@ -14097,6 +16953,12 @@
             "state" : "translated",
             "value" : "无水印分享"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無浮水印分享"
+          }
         }
       }
     },
@@ -14124,6 +16986,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "涂鸦后显示弹窗以添加笔记"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "塗鴉後顯示彈出視窗以新增筆記"
           }
         }
       }
@@ -14153,6 +17021,12 @@
             "state" : "translated",
             "value" : "显示订阅管理面板"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示訂閱管理表單"
+          }
         }
       }
     },
@@ -14180,6 +17054,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示兑换码面板"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示兌換碼表單"
           }
         }
       }
@@ -14210,6 +17090,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在背景中显示全天逐渐下降的动态水位。水位会随设备倾斜而变化。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在背景中顯示整天逐漸下降的動態水位。水位會隨裝置傾斜而變化。"
           }
         }
       }
@@ -14256,6 +17142,12 @@
             "state" : "translated",
             "value" : "模拟生产环境"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模擬正式環境"
+          }
         }
       }
     },
@@ -14285,6 +17177,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "跳过"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "略過"
           }
         }
       }
@@ -14316,6 +17214,12 @@
             "state" : "translated",
             "value" : "特别优惠与促销活动"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "特別優惠與促銷活動"
+          }
         }
       }
     },
@@ -14346,6 +17250,12 @@
             "state" : "translated",
             "value" : "发现翻译错误？"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "發現翻譯錯誤？"
+          }
         }
       }
     },
@@ -14373,6 +17283,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "每周起始日"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每週起始日"
           }
         }
       }
@@ -14402,6 +17318,12 @@
             "state" : "translated",
             "value" : "每周起始日影响\"常规\"视图模式的布局。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每週起始日會影響「正常」檢視模式的版面配置。"
+          }
         }
       }
     },
@@ -14429,6 +17351,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开始同步…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開始同步…"
           }
         }
       }
@@ -14460,6 +17388,12 @@
             "state" : "translated",
             "value" : "状态"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "狀態"
+          }
         }
       }
     },
@@ -14489,6 +17423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "提交测试反馈"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提交測試回饋"
           }
         }
       }
@@ -14520,6 +17460,12 @@
             "state" : "translated",
             "value" : "已订阅 ✓"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已訂閱 ✓"
+          }
         }
       }
     },
@@ -14549,6 +17495,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "订阅"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訂閱"
           }
         }
       }
@@ -14580,6 +17532,12 @@
             "state" : "translated",
             "value" : "订阅已结束"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訂閱已結束"
+          }
         }
       }
     },
@@ -14607,6 +17565,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "订阅即将到期"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訂閱即將到期"
           }
         }
       }
@@ -14638,6 +17602,12 @@
             "state" : "translated",
             "value" : "订阅测试"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訂閱測試"
+          }
         }
       }
     },
@@ -14668,6 +17638,12 @@
             "state" : "translated",
             "value" : "订阅测试控制台"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訂閱測試主控台"
+          }
         }
       }
     },
@@ -14697,6 +17673,12 @@
             "state" : "translated",
             "value" : "建议修改"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "建議修改"
+          }
         }
       }
     },
@@ -14721,6 +17703,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "星期日"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "星期日"
@@ -14755,6 +17743,12 @@
             "state" : "translated",
             "value" : "向左滑动删除，或点击编辑以选择多个闹钟。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向左滑動刪除，或點一下「編輯」以選取多個鬧鐘。"
+          }
         }
       }
     },
@@ -14785,6 +17779,12 @@
             "state" : "translated",
             "value" : "切换方案"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換方案"
+          }
         }
       }
     },
@@ -14814,6 +17814,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "订阅方案切换由 App Store 处理。点击新方案即可购买，或使用\"通过 App Store 管理或取消\"来变更或取消当前订阅。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訂閱方案切換由 App Store 處理。點一下新方案即可購買，或使用「透過 App Store 管理或取消」來變更或取消目前的訂閱。"
           }
         }
       }
@@ -14851,6 +17857,12 @@
             "state" : "translated",
             "value" : "下次续费时切换到%@（%@）"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下次續訂時切換至 %1$@（%2$@）"
+          }
         }
       }
     },
@@ -14887,6 +17899,12 @@
             "state" : "translated",
             "value" : "将于%@切换到%@（%@）"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將於 %3$@ 切換至 %1$@（%2$@）"
+          }
         }
       }
     },
@@ -14916,6 +17934,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "切换到\"常规\"视图模式，然后滚动到网格顶部，继续向上滚动即可看到星期标签。要更改每周起始日，请前往\"设置\" > \"通用\" > \"自定义\" > \"每周起始日\"。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換至「正常」檢視模式，然後捲動到格線頂端，繼續向上捲動即可看到星期標籤。若要變更每週起始日，請前往「設定」>「一般」>「自訂」>「每週起始日」。"
           }
         }
       }
@@ -14947,6 +17971,12 @@
             "state" : "translated",
             "value" : "同步已禁用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步已停用"
+          }
         }
       }
     },
@@ -14977,6 +18007,12 @@
             "state" : "translated",
             "value" : "同步已启用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步已啟用"
+          }
         }
       }
     },
@@ -15005,6 +18041,12 @@
             "state" : "translated",
             "value" : "从商店工具包同步"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "從 StoreKit 同步"
+          }
         }
       }
     },
@@ -15032,6 +18074,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "应用内同步已禁用。启用后可与 iCloud 同步。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App 內同步已停用。啟用後即可與 iCloud 同步。"
           }
         }
       }
@@ -15063,6 +18111,12 @@
             "state" : "translated",
             "value" : "同步可能正在进行"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步可能正在進行中"
+          }
         }
       }
     },
@@ -15093,6 +18147,12 @@
             "state" : "translated",
             "value" : "同步状态"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步狀態"
+          }
         }
       }
     },
@@ -15119,6 +18179,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步到 iCloud"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "同步到 iCloud"
@@ -15151,6 +18217,12 @@
             "state" : "translated",
             "value" : "已启用 iCloud 同步"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已啟用 iCloud 同步"
+          }
         }
       }
     },
@@ -15181,6 +18253,12 @@
             "state" : "translated",
             "value" : "同步中"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步中"
+          }
         }
       }
     },
@@ -15205,6 +18283,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在同步"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在同步"
@@ -15239,6 +18323,12 @@
             "state" : "translated",
             "value" : "同步中…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同步中…"
+          }
         }
       }
     },
@@ -15267,6 +18357,12 @@
             "state" : "translated",
             "value" : "系统"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系統"
+          }
         }
       }
     },
@@ -15294,6 +18390,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "系统错误：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系統錯誤：%@"
           }
         }
       }
@@ -15325,6 +18427,12 @@
             "state" : "translated",
             "value" : "拍张照片作参考"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍張照片作為參考"
+          }
         }
       }
     },
@@ -15354,6 +18462,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "点按要恢复的备份。恢复将用该备份的内容替换所有当前条目。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點按要還原的備份。還原將以該備份的內容取代所有目前的項目。"
           }
         }
       }
@@ -15390,6 +18504,12 @@
             "state" : "translated",
             "value" : "轻触任意日期，将涂鸦移动到那里"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輕觸任一日期，將塗鴉移動到那裡"
+          }
         }
       }
     },
@@ -15417,6 +18537,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "点击每个场景查看分步测试说明"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點按每個情境以查看逐步測試說明"
           }
         }
       }
@@ -15448,6 +18574,12 @@
             "state" : "translated",
             "value" : "点击涂鸦并按住不放，然后拖动即可浏览"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點按你的 Joodle 並按住不放，然後拖移即可瀏覽"
+          }
         }
       }
     },
@@ -15477,6 +18609,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "点击打开画布"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點按以開啟畫布"
           }
         }
       }
@@ -15508,6 +18646,12 @@
             "state" : "translated",
             "value" : "点击选择未来年份"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點按以選擇未來年份"
+          }
         }
       }
     },
@@ -15537,6 +18681,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "点击选择此颜色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點按以選擇此顏色"
           }
         }
       }
@@ -15568,6 +18718,12 @@
             "state" : "translated",
             "value" : "点击设置纪念日闹钟。仅可设置今日或未来日期的纪念日闹钟。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點按以設定紀念日鬧鐘。紀念日鬧鐘僅能設定為今日或未來的日期。"
+          }
         }
       }
     },
@@ -15597,6 +18753,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "点击切换到迷你视图以查看全年"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點按以切換至迷你檢視，查看整年"
           }
         }
       }
@@ -15628,6 +18790,12 @@
             "state" : "translated",
             "value" : "点按即可将相机用作描摹参考"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點按即可將相機用作描摹參考"
+          }
         }
       }
     },
@@ -15656,6 +18824,12 @@
             "state" : "translated",
             "value" : "点击写笔记…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點按以撰寫筆記…"
+          }
         }
       }
     },
@@ -15682,6 +18856,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "青色"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "青色"
@@ -15716,6 +18896,12 @@
             "state" : "translated",
             "value" : "条款"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "條款"
+          }
         }
       }
     },
@@ -15743,6 +18929,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "服务条款"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服務條款"
           }
         }
       }
@@ -15772,6 +18964,12 @@
             "state" : "translated",
             "value" : "测试场景"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "測試情境"
+          }
         }
       }
     },
@@ -15796,6 +18994,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TestFlight"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "TestFlight"
@@ -15828,6 +19032,12 @@
             "state" : "translated",
             "value" : "感谢支持 Joodle！"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "感謝你支持 Joodle！"
+          }
         }
       }
     },
@@ -15857,6 +19067,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 的备份将从 iCloud 云盘中移除。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 的備份將從 iCloud 雲碟中移除。"
           }
         }
       }
@@ -15888,6 +19104,12 @@
             "state" : "translated",
             "value" : "接下来七天的 Joodle Pro 由我们买单"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接下來七天的 Joodle Pro 由我們招待"
+          }
         }
       }
     },
@@ -15917,6 +19139,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "所选时间已过。请为纪念日闹钟选择一个未来的时间。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所選時間已過。請為紀念日鬧鐘選擇一個未來的時間。"
           }
         }
       }
@@ -15948,6 +19176,12 @@
             "state" : "translated",
             "value" : "主题已更改"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主題已變更"
+          }
         }
       }
     },
@@ -15975,6 +19209,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "主题颜色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主題顏色"
           }
         }
       }
@@ -16004,6 +19244,12 @@
             "state" : "translated",
             "value" : "此设备不支持支付功能。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此裝置不支援付款功能。"
+          }
         }
       }
     },
@@ -16031,6 +19277,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此产品在你所在地区不可用。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此產品在你所在地區無法使用。"
           }
         }
       }
@@ -16067,6 +19319,12 @@
             "state" : "translated",
             "value" : "这将用 %@ 的备份永久替换所有当前条目。此操作无法撤销。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這將以 %@ 的備份永久取代所有目前的記錄。此操作無法復原。"
+          }
         }
       }
     },
@@ -16097,6 +19355,12 @@
             "state" : "translated",
             "value" : "这将重新开始完整的引导体验。今天的记录可能被覆盖，你需要重新进行偏好设置。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這將重新開始完整的引導體驗。今天的記錄可能會被覆寫，你需要重新進行偏好設定。"
+          }
         }
       }
     },
@@ -16124,6 +19388,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这将把你的日记记录和偏好设置同步到 iCloud，使其在所有设备上可用。\n\n需要互联网连接和有效的 iCloud 账户。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這將把你的日記記錄與偏好設定同步到 iCloud，讓它們可在你所有的裝置上使用。\n\n需要網際網路連線與有效的 iCloud 帳號。"
           }
         }
       }
@@ -16153,6 +19423,12 @@
             "state" : "translated",
             "value" : "是时候查看你%@的涂鸦了"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "該來看看你%@的 Joodle 了"
+          }
         }
       }
     },
@@ -16181,6 +19457,12 @@
             "state" : "translated",
             "value" : "是时候查看你的涂鸦了！"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "該來看看你的 Joodle 了！"
+          }
         }
       }
     },
@@ -16208,6 +19490,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "是时候开始涂鸦啦 🌸"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "該來 Joodle 一下了 🌸"
           }
         }
       }
@@ -16239,6 +19527,12 @@
             "state" : "translated",
             "value" : "技巧与教程"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "訣竅與教學"
+          }
         }
       }
     },
@@ -16266,6 +19560,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "要启用  iCloud云服务同步，Joodle 需要关闭并重启。\n\n你的数据是安全的，重新打开应用后将同步到 iCloud。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若要啟用 iCloud 同步，Joodle 需要關閉並重新啟動。\n\n你的資料是安全的，重新打開 App 後將同步到 iCloud。"
           }
         }
       }
@@ -16297,6 +19597,12 @@
             "state" : "translated",
             "value" : "要启用同步，你需要在 iCloud 设置中为 Joodle 启用\"保存到 iCloud\"：设置 → [你的名字] → iCloud → 保存到 iCloud → Joodle。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若要啟用同步，你必須在 iCloud 設定中為 Joodle 啟用「儲存到 iCloud」：設定 →[你的名稱]→ iCloud → 儲存到 iCloud → Joodle。"
+          }
         }
       }
     },
@@ -16324,6 +19630,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "要启用同步，你需要在 iCloud 设置中为 Joodle 启用\"保存到 iCloud\"：设置 → [你的名字] → iCloud → 保存到 iCloud → Joodle。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若要啟用同步，你必須在 iCloud 設定中為 Joodle 啟用「儲存到 iCloud」：設定 →[你的名稱]→ iCloud → 儲存到 iCloud → Joodle。"
           }
         }
       }
@@ -16355,6 +19667,12 @@
             "state" : "translated",
             "value" : "要开始将你的涂鸦同步到 iCloud，Joodle 需要重启。\n\n你的涂鸦已保存，重启后将开始同步。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若要開始將你的 Joodle 同步到 iCloud，Joodle 需要重新啟動。\n\n你的 Joodle 已儲存，重新啟動後將開始同步。"
+          }
         }
       }
     },
@@ -16379,6 +19697,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "今天"
@@ -16413,6 +19737,12 @@
             "state" : "translated",
             "value" : "切换同步开关"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切換同步開關"
+          }
         }
       }
     },
@@ -16439,6 +19769,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "明天"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "明天"
@@ -16473,6 +19809,12 @@
             "state" : "translated",
             "value" : "记录总数"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "記錄總數"
+          }
         }
       }
     },
@@ -16502,6 +19844,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "通过相机描摹涂鸦"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透過相機描摹塗鴉"
           }
         }
       }
@@ -16533,6 +19881,12 @@
             "state" : "translated",
             "value" : "如果愿意，可以描摹参考图，然后点按 ✓ 保存"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果想要的話，可以描摹你的參考圖，然後點一下 ✓ 儲存"
+          }
         }
       }
     },
@@ -16560,6 +19914,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "试用结束于%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "試用結束於%@"
           }
         }
       }
@@ -16589,6 +19949,12 @@
             "state" : "translated",
             "value" : "试用结束于%@ • 接下来将应用促销"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "試用結束於%@ • 接著套用促銷"
+          }
         }
       }
     },
@@ -16617,6 +19983,12 @@
             "state" : "translated",
             "value" : "故障排除指南"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "疑難排解指南"
+          }
         }
       }
     },
@@ -16644,6 +20016,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "尝试禁用 iCloud 同步，等待 10 秒后重新启用。这将重建同步连接。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "試著停用 iCloud 同步，等待 10 秒後再重新啟用。這會重建同步連線。"
           }
         }
       }
@@ -16675,6 +20053,12 @@
             "state" : "translated",
             "value" : "教程完成！"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "教學完成！"
+          }
         }
       }
     },
@@ -16703,6 +20087,12 @@
             "state" : "translated",
             "value" : "无法确定 iCloud 状态。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法判斷 iCloud 狀態。"
+          }
         }
       }
     },
@@ -16730,6 +20120,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法加载常见问题。请检查网络连接后重试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法載入常見問題。請檢查你的連線後再試一次。"
           }
         }
       }
@@ -16761,6 +20157,12 @@
             "state" : "translated",
             "value" : "无法加载方案"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法載入方案"
+          }
         }
       }
     },
@@ -16789,6 +20191,12 @@
             "state" : "translated",
             "value" : "无法加载订阅方案。请稍后重试。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法載入訂閱方案。請稍後再試。"
+          }
         }
       }
     },
@@ -16816,6 +20224,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "意外的 StoreKit 错误：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未預期的 StoreKit 錯誤：%@"
           }
         }
       }
@@ -16847,6 +20261,12 @@
             "state" : "translated",
             "value" : "唯一日期"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不重複日期"
+          }
         }
       }
     },
@@ -16875,6 +20295,12 @@
             "state" : "translated",
             "value" : "未知的 iCloud 状态。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知的 iCloud 狀態。"
+          }
         }
       }
     },
@@ -16902,6 +20328,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知的 StoreKit 错误。请检查 App Store Connect 配置。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知的 StoreKit 錯誤。請檢查 App Store Connect 設定。"
           }
         }
       }
@@ -16933,6 +20365,12 @@
             "state" : "translated",
             "value" : "无限"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無限"
+          }
         }
       }
     },
@@ -16962,6 +20400,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无限制纪念日闹钟"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無限制紀念日鬧鐘"
           }
         }
       }
@@ -16993,6 +20437,12 @@
             "state" : "translated",
             "value" : "无限制涂鸦记录"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無限制塗鴉記錄"
+          }
         }
       }
     },
@@ -17022,6 +20472,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无限制涂鸦"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無限制塗鴉"
           }
         }
       }
@@ -17053,6 +20509,12 @@
             "state" : "translated",
             "value" : "永久解锁所有功能"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "永久解鎖所有功能"
+          }
         }
       }
     },
@@ -17083,6 +20545,12 @@
             "state" : "translated",
             "value" : "解锁我的记忆"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解鎖我的回憶"
+          }
         }
       }
     },
@@ -17109,6 +20577,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新"
@@ -17143,6 +20617,12 @@
             "state" : "translated",
             "value" : "更新闹钟"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新鬧鐘"
+          }
         }
       }
     },
@@ -17172,6 +20652,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在更新主题"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在更新主題"
           }
         }
       }
@@ -17203,6 +20689,12 @@
             "state" : "translated",
             "value" : "升级"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升級"
+          }
         }
       }
     },
@@ -17233,6 +20725,12 @@
             "state" : "translated",
             "value" : "升级到 Joodle Pro 享受无限涂鸦"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "升級至 Joodle Pro 享受無限塗鴉"
+          }
         }
       }
     },
@@ -17260,6 +20758,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在上传到 iCloud…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在上傳至 iCloud…"
           }
         }
       }
@@ -17291,6 +20795,12 @@
             "state" : "translated",
             "value" : "检查网络连接"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢查網路連線"
+          }
         }
       }
     },
@@ -17317,6 +20827,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "版本 %@"
@@ -17351,6 +20867,12 @@
             "state" : "translated",
             "value" : "版本 %@"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@"
+          }
         }
       }
     },
@@ -17381,6 +20903,12 @@
             "state" : "translated",
             "value" : "版本 %@ 现已可用"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 現已推出"
+          }
         }
       }
     },
@@ -17407,6 +20935,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看所有方案"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "查看所有方案"
@@ -17439,6 +20973,12 @@
             "state" : "translated",
             "value" : "视图模式"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檢視模式"
+          }
         }
       }
     },
@@ -17467,6 +21007,12 @@
             "state" : "translated",
             "value" : "访问开发者网站"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "造訪開發者網站"
+          }
         }
       }
     },
@@ -17494,6 +21040,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "分享时添加水印"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享時加上浮水印"
           }
         }
       }
@@ -17525,6 +21077,12 @@
             "state" : "translated",
             "value" : "结束前我们会提醒你。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "結束前我們會提醒你。"
+          }
         }
       }
     },
@@ -17555,6 +21113,12 @@
             "state" : "translated",
             "value" : "周"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "週"
+          }
         }
       }
     },
@@ -17582,6 +21146,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "一周总览"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一週總覽"
           }
         }
       }
@@ -17613,6 +21183,12 @@
             "state" : "translated",
             "value" : "欢迎回来！"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "歡迎回來！"
+          }
         }
       }
     },
@@ -17643,6 +21219,12 @@
             "state" : "translated",
             "value" : "你笔记本电脑或平板电脑当前打开的标签页在屏幕上是什么样子？"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你筆記型電腦或平板電腦目前開啟的分頁在螢幕上看起來是什麼樣子？"
+          }
         }
       }
     },
@@ -17669,6 +21251,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新功能"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "新功能"
@@ -17701,6 +21289,12 @@
             "state" : "translated",
             "value" : "启用后，Joodle 会自动将你的日记记录和偏好设置同步到 iCloud。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用後，Joodle 會自動將你的日記記錄與偏好設定同步到 iCloud。"
+          }
         }
       }
     },
@@ -17731,6 +21325,12 @@
             "state" : "translated",
             "value" : "启用后，应用将模拟生产环境（App Store 发布版）运行。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用後，App 將模擬正式環境（App Store 發佈版）運行。"
+          }
         }
       }
     },
@@ -17758,6 +21358,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "启用后，打开应用时你可能偶尔会看到公告。你可以在下方自定义想接收的公告类型。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "啟用後，開啟 App 時你可能偶爾會看到公告。你可以在下方自訂想接收的公告類型。"
           }
         }
       }
@@ -17789,6 +21395,12 @@
             "state" : "translated",
             "value" : "小组件教程"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小工具教學"
+          }
         }
       }
     },
@@ -17818,6 +21430,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "小组件"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小工具"
           }
         }
       }
@@ -17849,6 +21467,12 @@
             "state" : "translated",
             "value" : "随处可用的小组件"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隨處可用的小工具"
+          }
         }
       }
     },
@@ -17878,6 +21502,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "扭来扭去的涂鸦"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扭來扭去的塗鴉"
           }
         }
       }
@@ -17909,6 +21539,12 @@
             "state" : "translated",
             "value" : "扭来扭去的涂鸦与笔记摘要"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "扭來扭去的塗鴉與筆記摘要"
+          }
         }
       }
     },
@@ -17939,6 +21575,12 @@
             "state" : "translated",
             "value" : "摘要但扭起来了"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "摘要但扭起來了"
+          }
         }
       }
     },
@@ -17966,6 +21608,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "极简但扭起来了"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "極簡但扭起來了"
           }
         }
       }
@@ -17997,6 +21645,12 @@
             "state" : "translated",
             "value" : "抖动笔触"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "抖動筆觸"
+          }
         }
       }
     },
@@ -18026,6 +21680,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "抖动笔触"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "抖動筆觸"
           }
         }
       }
@@ -18057,6 +21717,12 @@
             "state" : "translated",
             "value" : "有绘画"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有繪圖"
+          }
         }
       }
     },
@@ -18087,6 +21753,12 @@
             "state" : "translated",
             "value" : "带 Joodle 水印"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "帶 Joodle 浮水印"
+          }
         }
       }
     },
@@ -18114,6 +21786,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "仅有文字"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "僅有文字"
           }
         }
       }
@@ -18145,6 +21823,12 @@
             "state" : "translated",
             "value" : "撰写评价"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撰寫評論"
+          }
         }
       }
     },
@@ -18175,6 +21859,12 @@
             "state" : "translated",
             "value" : "写下关于这一刻的感想"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "寫下關於這一刻的感想"
+          }
         }
       }
     },
@@ -18202,6 +21892,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Xcode 快速参考"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xcode 快速參考"
           }
         }
       }
@@ -18233,6 +21929,12 @@
             "state" : "translated",
             "value" : "年"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "年"
+          }
         }
       }
     },
@@ -18257,6 +21959,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "年"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "年"
@@ -18291,6 +21999,12 @@
             "state" : "translated",
             "value" : "一年总览"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一年總覽"
+          }
         }
       }
     },
@@ -18320,6 +22034,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "一年总览（带涂鸦）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一年總覽（帶塗鴉）"
           }
         }
       }
@@ -18351,6 +22071,12 @@
             "state" : "translated",
             "value" : "一年总览（仅显示涂鸦）"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一年總覽（僅顯示塗鴉）"
+          }
         }
       }
     },
@@ -18380,6 +22106,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "一年总览（带涂鸦）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一年總覽（帶塗鴉）"
           }
         }
       }
@@ -18411,6 +22143,12 @@
             "state" : "translated",
             "value" : "一年总览（仅显示涂鸦）"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一年總覽（僅顯示塗鴉）"
+          }
         }
       }
     },
@@ -18441,6 +22179,12 @@
             "state" : "translated",
             "value" : "一年总览"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一年總覽"
+          }
         }
       }
     },
@@ -18467,6 +22211,12 @@
           }
         },
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每年"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "每年"
@@ -18501,6 +22251,12 @@
             "state" : "translated",
             "value" : "年度版"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "年度版"
+          }
         }
       }
     },
@@ -18528,6 +22284,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "黄色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "黃色"
           }
         }
       }
@@ -18559,6 +22321,12 @@
             "state" : "translated",
             "value" : "你已永久拥有 Joodle，无需购买订阅方案。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你已永久擁有 Joodle，無需購買訂閱方案。"
+          }
         }
       }
     },
@@ -18589,6 +22357,12 @@
             "state" : "translated",
             "value" : "你当前正在模拟生产环境。点击返回开发模式。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你目前正在模擬生產環境。點按即可返回開發模式。"
+          }
         }
       }
     },
@@ -18616,6 +22390,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你无权使用此产品。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你無權使用此產品。"
           }
         }
       }
@@ -18647,6 +22427,12 @@
             "state" : "translated",
             "value" : "你可以在以下位置关闭此提示："
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你可以在以下位置關閉此提示："
+          }
         }
       }
     },
@@ -18677,6 +22463,12 @@
             "state" : "translated",
             "value" : "你创建了你的第一个涂鸦！"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你建立了你的第一個 Joodle！"
+          }
         }
       }
     },
@@ -18704,6 +22496,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你已拥有所有功能的完整使用权限。感谢你的支持！"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你已擁有所有功能的完整使用權限。感謝你的支持！"
           }
         }
       }
@@ -18735,6 +22533,12 @@
             "state" : "translated",
             "value" : "你永久拥有 Joodle Pro。感谢你的支持！"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你永久擁有 Joodle Pro。感謝你的支持！"
+          }
         }
       }
     },
@@ -18765,6 +22569,12 @@
             "state" : "translated",
             "value" : "你将继续使用 Joodle Pro 直到%@。之后你将失去所有高级功能。在当前周期结束后重新订阅以继续使用 Joodle Pro。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你將繼續使用 Joodle Pro 直到 %@。之後你將失去所有進階功能。在目前週期結束後重新訂閱，以繼續使用 Joodle Pro。"
+          }
         }
       }
     },
@@ -18794,6 +22604,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "一切就绪！"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一切就緒！"
           }
         }
       }
@@ -18873,6 +22689,18 @@
               }
             }
           }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "正在體驗 Pro — 還有 %lld 天可享用"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -18902,6 +22730,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你正在体验 Pro 试用 — 还可使用所有 Pro 功能%@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你正在體驗 Pro 試用 — 還可使用所有 Pro 功能 %@。"
           }
         }
       }
@@ -18933,6 +22767,12 @@
             "state" : "translated",
             "value" : "你已准备好开始涂鸦之旅"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你已準備好開始 Joodle 之旅"
+          }
         }
       }
     },
@@ -18960,6 +22800,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你已达到免费涂鸦上限"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你已達到免費 Joodle 上限"
           }
         }
       }
@@ -18991,6 +22837,12 @@
             "state" : "translated",
             "value" : "你的当前订阅"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你目前的方案"
+          }
         }
       }
     },
@@ -19018,6 +22870,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的数据将保留在此设备和  iCloud云服务中，但将停止与其他设备同步。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的資料將保留在此裝置和 iCloud 中，但將停止與其他裝置同步。"
           }
         }
       }
@@ -19049,6 +22907,12 @@
             "state" : "translated",
             "value" : "你的 Joodle Pro 订阅已结束。部分功能现已受限。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的 Joodle Pro 訂閱已結束。部分功能現已受限。"
+          }
         }
       }
     },
@@ -19078,6 +22942,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的记忆仍在这里，静静等待着你。重新发现你曾经创建的涂鸦，每一个都承载着你故事的一部分。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的回憶仍在這裡，靜靜等待著你。重新發現你曾經建立的 Joodle，每一個都承載著你故事的一部分。"
           }
         }
       }
@@ -19109,6 +22979,12 @@
             "state" : "translated",
             "value" : "本月的涂鸦"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本月的塗鴉"
+          }
         }
       }
     },
@@ -19138,6 +23014,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的新主题已就绪！"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的新主題已就緒！"
           }
         }
       }
@@ -19169,6 +23051,12 @@
             "state" : "translated",
             "value" : "你的订阅将于%@自动续费。管理你的订阅、更改方案或随时取消。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的訂閱將於 %@ 自動續訂。隨時管理訂閱、變更方案或取消。"
+          }
         }
       }
     },
@@ -19198,6 +23086,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "本周的涂鸦"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本週的塗鴉"
           }
         }
       }
