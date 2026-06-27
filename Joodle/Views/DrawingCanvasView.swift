@@ -24,7 +24,6 @@ enum JoodleAccessState {
 struct DrawingCanvasView: View {
   @Environment(\.modelContext) private var modelContext
   @Environment(\.scenePhase) private var scenePhase
-  @Environment(\.userPreferences) private var userPreferences
   @StateObject private var subscriptionManager = SubscriptionManager.shared
 
   let date: Date
@@ -306,8 +305,6 @@ struct DrawingCanvasView: View {
           isSaving: isSaving,
           cameraZoomFactor: cameraDisplayZoom,
           cameraZoomRange: cameraZoomRange,
-          cameraKeyZoomFactors: cameraZoomCapabilities.keyZoomFactors,
-          zoomSliderHandedness: userPreferences.cameraZoomSliderHandedness,
           onSetCameraZoom: { cameraContext.setZoom($0) },
           topButtonsVisible: topButtonsVisible,
           strokeRevealDate: strokeRevealDate,

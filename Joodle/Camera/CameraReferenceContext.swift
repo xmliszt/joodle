@@ -39,6 +39,9 @@ final class CameraReferenceContext: ObservableObject {
   @Published var zoomCapabilities: CameraZoomCapabilities = .disabled
   /// Mirror of `controller.displayZoomFactor` — the 0.5/1/2/3 shown to the user.
   @Published var displayZoomFactor: CGFloat = 1.0
+  /// Mirror of `controller.systemControlsActive` — true while the iPhone 16
+  /// Camera Control system overlay is up, so the app hides its own zoom slider.
+  @Published var systemControlsActive: Bool = false
   /// Mirror of `shutter.isFullyClosed`. Republished here so views observing
   /// the context (rather than the nested controller directly) re-render when
   /// the shutter reaches the fully-closed state.
@@ -93,6 +96,9 @@ final class CameraReferenceContext: ObservableObject {
     controller.$displayZoomFactor
       .receive(on: DispatchQueue.main)
       .assign(to: &$displayZoomFactor)
+    controller.$systemControlsActive
+      .receive(on: DispatchQueue.main)
+      .assign(to: &$systemControlsActive)
     shutter.$isFullyClosed
       .receive(on: DispatchQueue.main)
       .assign(to: &$isShutterFullyClosed)

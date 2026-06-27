@@ -59,6 +59,9 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   /// Current zoom in display terms (the 0.5/1/2/3 the user sees). Reset to 1.0
   /// on every device change.
   @Published var displayZoomFactor: CGFloat = 1.0
+  /// True while the iPhone 16 Camera Control system overlay is on screen, so the
+  /// app can hide its own zoom slider and avoid competing with it.
+  @Published var systemControlsActive: Bool = false
 
   let session = AVCaptureSession()
   private let sessionQueue = DispatchQueue(label: "dev.liyuxuan.joodle.camera.session")
@@ -80,6 +83,11 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
     .workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB) as Any,
   ])
   private var currentInput: AVCaptureDeviceInput?
+  /// Capabilities of the bound device, cached on `sessionQueue` so the per-frame
+  /// zoom updates during a drag don't re-scan the device's constituent lenses
+  /// (the `virtualDeviceSwitchOverVideoZoomFactors` / `constituentDevices` walk).
+  /// Refreshed on every device change (configure + flip).
+  private var activeCapabilities: CameraZoomCapabilities = .disabled
   private var didConfigure = false
   private var didRegisterRunningObservers = false
 
@@ -173,8 +181,12 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
       self.session.commitConfiguration()
       if let newDevice {
         self.applyBaselineZoom(for: newDevice)
+        if #available(iOS 18.0, *) {
+          self.configureCameraControls(for: newDevice)
+        }
       }
       let capabilities = newDevice.map(Self.zoomCapabilities) ?? .disabled
+      self.activeCapabilities = capabilities
       let sessionRef = self.session
       DispatchQueue.main.async { [weak self] in
         self?.currentDevice = newDevice
@@ -195,7 +207,7 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
   func setDisplayZoom(_ display: CGFloat) {
     sessionQueue.async { [weak self] in
       guard let self, let device = self.currentInput?.device else { return }
-      let capabilities = Self.zoomCapabilities(for: device)
+      let capabilities = self.activeCapabilities
       let clampedDisplay = min(max(display, capabilities.minDisplayZoom), capabilities.maxDisplayZoom)
       let videoZoomFactor = min(
         max(clampedDisplay * capabilities.baselineFactor, device.minAvailableVideoZoomFactor),
@@ -367,13 +379,45 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
     session.commitConfiguration()
     if let initialDevice {
       applyBaselineZoom(for: initialDevice)
+      if #available(iOS 18.0, *) {
+        configureCameraControls(for: initialDevice)
+      }
     }
     let capabilities = initialDevice.map(Self.zoomCapabilities) ?? .disabled
+    activeCapabilities = capabilities
     DispatchQueue.main.async { [weak self] in
       self?.currentDevice = initialDevice
       self?.zoomCapabilities = capabilities
       self?.displayZoomFactor = 1.0
     }
+  }
+
+  /// Wires the iPhone 16 Camera Control button: a system zoom slider (light-press
+  /// then slide to zoom) plus the controls delegate that signals when the system
+  /// overlay is on screen. No-op on devices/OS without Camera Control. The
+  /// matching click-to-capture is handled by an `AVCaptureEventInteraction` in
+  /// the view layer. Call on `sessionQueue`.
+  @available(iOS 18.0, *)
+  private func configureCameraControls(for device: AVCaptureDevice) {
+    guard session.supportsControls else { return }
+    session.setControlsDelegate(self, queue: .main)
+    session.beginConfiguration()
+    for control in session.controls {
+      session.removeControl(control)
+    }
+    // The system applies the slide's zoom to the device directly; the action
+    // closure (delivered off-main) only mirrors it into our display value so the
+    // custom UI stays in sync.
+    let zoomSlider = AVCaptureSystemZoomSlider(device: device) { [weak self] videoZoomFactor in
+      guard let self else { return }
+      let baseline = Self.zoomCapabilities(for: device).baselineFactor
+      let display = videoZoomFactor / max(baseline, 0.0001)
+      DispatchQueue.main.async { self.displayZoomFactor = display }
+    }
+    if session.canAddControl(zoomSlider) {
+      session.addControl(zoomSlider)
+    }
+    session.commitConfiguration()
   }
 
   /// Picks the richest device for the position so display 0.5x (ultra-wide) is
@@ -449,6 +493,27 @@ final class CameraReferenceController: NSObject, ObservableObject, @unchecked Se
       connection.automaticallyAdjustsVideoMirroring = false
       connection.isVideoMirrored = false
     }
+  }
+}
+
+// MARK: - AVCaptureSessionControlsDelegate (Camera Control overlay)
+
+@available(iOS 18.0, *)
+extension CameraReferenceController: AVCaptureSessionControlsDelegate {
+  func sessionControlsDidBecomeActive(_ session: AVCaptureSession) {}
+
+  // Delegate is registered on the main queue, so these can mutate @Published
+  // state directly.
+  func sessionControlsWillEnterFullscreenAppearance(_ session: AVCaptureSession) {
+    systemControlsActive = true
+  }
+
+  func sessionControlsWillExitFullscreenAppearance(_ session: AVCaptureSession) {
+    systemControlsActive = false
+  }
+
+  func sessionControlsDidBecomeInactive(_ session: AVCaptureSession) {
+    systemControlsActive = false
   }
 }
 

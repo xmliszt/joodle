@@ -391,9 +391,62 @@ struct ContentView: View {
         .padding(.bottom, 32)
       }
       .ignoresSafeArea(.container, edges: .bottom)
-      .opacity(cameraContext.mode == .live ? 1 : 0)
-      .allowsHitTesting(cameraContext.mode == .live)
+      // Hidden while the iPhone 16 Camera Control system overlay is up — the
+      // system shows its own controls, so the app hides its on-screen UI.
+      .opacity(cameraContext.mode == .live && !cameraContext.systemControlsActive ? 1 : 0)
+      .allowsHitTesting(cameraContext.mode == .live && !cameraContext.systemControlsActive)
       .animation(.easeInOut(duration: 0.2), value: cameraContext.mode == .live)
+      .animation(.easeInOut(duration: 0.2), value: cameraContext.systemControlsActive)
+
+      // Hardware shutter: volume buttons (all devices) and the iPhone 16 Camera
+      // Control click trigger a capture while live.
+      CameraCaptureEventView(isEnabled: cameraContext.mode == .live) {
+        Task { await cameraContext.capture() }
+      }
+      .allowsHitTesting(false)
+      .frame(width: 0, height: 0)
+
+      // Camera zoom slider — hugs the screen edge (side per handedness),
+      // anchored 100pt above the bottom so it sits below the floating canvas and
+      // above the shutter. It slides in/out from the edge, and stays hidden
+      // while the iPhone 16 Camera Control system overlay is up so the two
+      // don't compete.
+      let zoomCaps = cameraContext.zoomCapabilities
+      let zoomSliderEdge: HorizontalEdge =
+        userPreferences.cameraZoomSliderHandedness == .right ? .trailing : .leading
+      let showZoomSlider = cameraContext.mode == .live
+        && !cameraContext.systemControlsActive
+        && zoomCaps.minDisplayZoom < zoomCaps.maxDisplayZoom
+      HStack(spacing: 0) {
+        if zoomSliderEdge == .leading {
+          CameraZoomSlider(
+            zoomFactor: cameraContext.displayZoomFactor,
+            range: zoomCaps.minDisplayZoom...max(zoomCaps.minDisplayZoom, zoomCaps.maxDisplayZoom),
+            keyFactors: zoomCaps.keyZoomFactors,
+            edge: .leading,
+            onChange: { cameraContext.setZoom($0) }
+          )
+        }
+        Spacer(minLength: 0)
+        if zoomSliderEdge == .trailing {
+          CameraZoomSlider(
+            zoomFactor: cameraContext.displayZoomFactor,
+            range: zoomCaps.minDisplayZoom...max(zoomCaps.minDisplayZoom, zoomCaps.maxDisplayZoom),
+            keyFactors: zoomCaps.keyZoomFactors,
+            edge: .trailing,
+            onChange: { cameraContext.setZoom($0) }
+          )
+        }
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+      .padding(.bottom, 80)
+      .ignoresSafeArea()
+      .opacity(showZoomSlider ? 1 : 0)
+      .offset(x: showZoomSlider ? 0 : (zoomSliderEdge == .trailing ? 140 : -140))
+      .allowsHitTesting(showZoomSlider)
+      // Ease-out slide out of / back into the screen edge. No bounce: an
+      // overshoot would pull the panel inward off the edge and break the morph.
+      .animation(.easeOut(duration: 0.28), value: showZoomSlider)
 
       // Move drawing mode — floating instruction bar (interactive)
       if isMovingDrawing {
