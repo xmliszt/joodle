@@ -26,8 +26,22 @@ final class MotionManager: ObservableObject {
   /// Whether motion updates are currently active
   @Published private(set) var isActive: Bool = false
 
+  /// Raw gravity direction components (device space, each in -1...1).
+  /// `gravityX` is positive when the device is tilted right; `gravityY` is
+  /// positive toward the top of the device. Consumers map these into screen
+  /// space (screen-down ≈ `(gravityX, -gravityY)`) to drive liquid physics.
+  @Published private(set) var gravityX: Double = 0.0
+  @Published private(set) var gravityY: Double = -1.0
+
+  /// Magnitude of user-induced acceleration in Gs (gravity removed), lightly
+  /// smoothed. Spikes when the device is shaken; used to trigger liquid splashes.
+  @Published private(set) var shakeMagnitude: Double = 0.0
+
   /// Smoothing factor for tilt updates (0-1, lower = smoother)
   private let smoothingFactor: Double = 0.15
+
+  /// Lighter smoothing for the gravity vector so liquid stays responsive to tilt
+  private let gravitySmoothingFactor: Double = 0.3
 
   private init() {}
 
@@ -92,11 +106,27 @@ final class MotionManager: ObservableObject {
 
     // Apply exponential smoothing for fluid motion
     tiltAngle = tiltAngle + (newTiltAngle - tiltAngle) * smoothingFactor
+
+    // Smoothed gravity vector for liquid physics
+    gravityX = gravityX + (gravity.x - gravityX) * gravitySmoothingFactor
+    gravityY = gravityY + (gravity.y - gravityY) * gravitySmoothingFactor
+
+    // User acceleration magnitude (gravity already removed by CoreMotion)
+    let userAcceleration = motion.userAcceleration
+    let magnitude = sqrt(
+      userAcceleration.x * userAcceleration.x
+        + userAcceleration.y * userAcceleration.y
+        + userAcceleration.z * userAcceleration.z
+    )
+    shakeMagnitude = shakeMagnitude + (magnitude - shakeMagnitude) * 0.5
   }
 
   /// Reset motion values to neutral
   func reset() {
     tiltAngle = 0.0
+    gravityX = 0.0
+    gravityY = -1.0
+    shakeMagnitude = 0.0
   }
 
   deinit {

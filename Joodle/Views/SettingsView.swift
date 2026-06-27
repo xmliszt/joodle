@@ -1271,7 +1271,11 @@ ID: \(deviceIdentifier)
       } footer: {
         Text("When enabled, the app will behave as if it's running in production (App Store release).")
       }
-      
+
+#if DEBUG
+      LiquidBackdropDebugSection()
+#endif
+
       Section("Subscription Testing") {
         HStack {
           Text("App Status")
@@ -1455,6 +1459,75 @@ ID: \(deviceIdentifier)
     }
   }
 }
+
+// MARK: - Liquid Backdrop Debug Section
+
+#if DEBUG
+/// Debug-only control to simulate any time of day for the liquid backdrop's drain
+/// level, or reset back to the device clock. Compiled out of release builds.
+private struct LiquidBackdropDebugSection: View {
+  private let debug = LiquidBackdropDebug.shared
+
+  var body: some View {
+    // Read here so the section re-renders when the override changes.
+    let simulatedSeconds = debug.simulatedSecondsSinceMidnight
+
+    Section {
+      Toggle(isOn: Binding(
+        get: { simulatedSeconds != nil },
+        set: { isOn in
+          debug.simulatedSecondsSinceMidnight = isOn ? Self.currentSecondsSinceMidnight() : nil
+        }
+      )) {
+        HStack {
+          SettingsIconView(systemName: "clock.badge.exclamationmark", backgroundColor: .orange)
+          Text("Simulate Time of Day")
+            .font(.appBody())
+        }
+      }
+
+      if let seconds = simulatedSeconds {
+        DatePicker(
+          "Simulated Time",
+          selection: Binding(
+            get: { Self.date(fromSecondsSinceMidnight: seconds) },
+            set: { debug.simulatedSecondsSinceMidnight = Self.secondsSinceMidnight(of: $0) }
+          ),
+          displayedComponents: .hourAndMinute
+        )
+
+        LabeledContent("Liquid Fill") {
+          Text("\(Int((1 - seconds / 86_400) * 100))%")
+            .foregroundStyle(.secondary)
+        }
+
+        Button(role: .destructive) {
+          debug.simulatedSecondsSinceMidnight = nil
+        } label: {
+          Text("Reset to Device Clock")
+        }
+      }
+    } header: {
+      Text("Liquid Backdrop Debug")
+    } footer: {
+      Text("Overrides the time of day that drains the liquid backdrop. Affects only the backdrop fill level — not the device clock. Debug builds only.")
+    }
+  }
+
+  private static func currentSecondsSinceMidnight() -> Double {
+    let now = Date()
+    return now.timeIntervalSince(Calendar.current.startOfDay(for: now))
+  }
+
+  private static func secondsSinceMidnight(of date: Date) -> Double {
+    date.timeIntervalSince(Calendar.current.startOfDay(for: date))
+  }
+
+  private static func date(fromSecondsSinceMidnight seconds: Double) -> Date {
+    Calendar.current.startOfDay(for: Date()).addingTimeInterval(seconds)
+  }
+}
+#endif
 
 // MARK: - Daily Reminder Settings View
 

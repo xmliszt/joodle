@@ -117,6 +117,96 @@ struct ContentView: View {
     dataProvider.selectedDateItem != nil
   }
 
+  /// The scrollable year grid. Extracted from `body` to keep the main view
+  /// expression within the Swift type-checker's complexity budget.
+  private func yearGridScrollView(geometry: GeometryProxy) -> some View {
+    ScrollViewReader { scrollProxy in
+      ScrollView(showsIndicators: false) {
+        // Add spacer at top to account for header overlay
+        Spacer()
+          .frame(height: headerHeight)
+          .id("topSpacer")
+
+        // Use shared JoodleGridInteractionView with optimized hit testing
+        JoodleGridInteractionView(
+          dataProvider: dataProvider,
+          additionalEntries: entries,
+          geometry: geometry,
+          isScrubbing: $isScrubbing,
+          highlightedId: highlightedId,
+          callbacks: createGridCallbacks(geometry: geometry, scrollProxy: scrollProxy),
+          minimumPressDuration: 0.3,
+          allowsHitTesting: true,
+          overlayContent: nil,
+          customHitTestFunction: { location in
+            getItemId(at: location, for: geometry)
+          },
+          isInMoveMode: isMovingDrawing,
+          moveSourceDateString: isMovingDrawing ? moveSourceDateString : nil
+        )
+        .simultaneousGesture(
+          MagnificationGesture()
+            .onChanged { handlePinchChanged(value: $0) }
+            .onEnded { handlePinchEnded(value: $0) }
+        )
+      }
+      // When view mode changes, rebuild hit testing grid
+      .onChange(of: dataProvider.viewMode) {
+        hitTestingGrid = []  // Clear grid to trigger rebuild
+        gridMetrics = nil
+
+        if let selectedDateItem = dataProvider.selectedDateItem {
+          // Delay scroll to allow grid animation to complete
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            scrollToRelevantDate(
+              itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
+          }
+        } else {
+          // Delay scroll to allow grid animation to complete
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            scrollToTodayOrTop(scrollProxy: scrollProxy)
+          }
+        }
+      }
+      // When year changes, scroll to relevant date and rebuild hit testing grid
+      .onChange(of: dataProvider.selectedYear) {
+        hitTestingGrid = []  // Clear grid to trigger rebuild
+        gridMetrics = nil
+
+        // Don't clear selection in move mode — user is browsing years for a target
+        if !isMovingDrawing {
+          dataProvider.clearSelection()
+        }
+
+        DispatchQueue.main.async {
+          scrollToTodayOrTop(scrollProxy: scrollProxy)
+        }
+      }
+      // Initial scroll to today's dot for both modes
+      .onAppear {
+        yearGridViewSize = geometry.size
+        self.scrollProxy = scrollProxy
+
+        DispatchQueue.main.async {
+          scrollToTodayOrTop(scrollProxy: scrollProxy)
+
+          // Auto-select today on launch
+          let currentYear = Calendar.current.component(.year, from: Date())
+          if dataProvider.selectedYear == currentYear {
+            let targetId = dataProvider.getRelevantDateId(for: Date())
+            if let item = dataProvider.getItem(from: targetId) {
+              selectDateItem(item: item, scrollProxy: scrollProxy)
+            }
+          }
+        }
+      }
+      .onDisappear {
+        self.scrollProxy = nil
+      }
+      .scrollDisabled(isScrubbing || isPinching)
+    }
+  }
+
   var body: some View {
     ZStack {
       GeometryReader { geometry in
@@ -130,97 +220,11 @@ struct ContentView: View {
 
                 // Time-passing water backdrop (hide when bottom view is visible or disabled in settings)
                 if userPreferences.enableTimeBackdrop {
-                  PassingTimeBackdropView(isVisible: !isBottomViewVisible)
-                    .ignoresSafeArea(.all, edges: .bottom)
-                    .padding(.top, headerHeight - 20)
+                  LiquidMetaballBackdropView()
                 }
 
                 // Full-screen scrollable year grid with time-passing backdrop
-                ScrollViewReader { scrollProxy in
-                  ScrollView(showsIndicators: false) {
-                    // Add spacer at top to account for header overlay
-                    Spacer()
-                      .frame(height: headerHeight)
-                      .id("topSpacer")
-
-                    // Use shared JoodleGridInteractionView with optimized hit testing
-                    JoodleGridInteractionView(
-                      dataProvider: dataProvider,
-                      additionalEntries: entries,
-                      geometry: geometry,
-                      isScrubbing: $isScrubbing,
-                      highlightedId: highlightedId,
-                      callbacks: createGridCallbacks(geometry: geometry, scrollProxy: scrollProxy),
-                      minimumPressDuration: 0.3,
-                      allowsHitTesting: true,
-                      overlayContent: nil,
-                      customHitTestFunction: { location in
-                        getItemId(at: location, for: geometry)
-                      },
-                      isInMoveMode: isMovingDrawing,
-                      moveSourceDateString: isMovingDrawing ? moveSourceDateString : nil
-                    )
-                    .simultaneousGesture(
-                      MagnificationGesture()
-                        .onChanged { handlePinchChanged(value: $0) }
-                        .onEnded { handlePinchEnded(value: $0) }
-                    )
-                  }
-                  // When view mode changes, rebuild hit testing grid
-                  .onChange(of: dataProvider.viewMode) {
-                    hitTestingGrid = []  // Clear grid to trigger rebuild
-                    gridMetrics = nil
-
-                    if let selectedDateItem = dataProvider.selectedDateItem {
-                      // Delay scroll to allow grid animation to complete
-                      DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        scrollToRelevantDate(
-                          itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
-                      }
-                    } else {
-                      // Delay scroll to allow grid animation to complete
-                      DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        scrollToTodayOrTop(scrollProxy: scrollProxy)
-                      }
-                    }
-                  }
-                  // When year changes, scroll to relevant date and rebuild hit testing grid
-                  .onChange(of: dataProvider.selectedYear) {
-                    hitTestingGrid = []  // Clear grid to trigger rebuild
-                    gridMetrics = nil
-
-                    // Don't clear selection in move mode — user is browsing years for a target
-                    if !isMovingDrawing {
-                      dataProvider.clearSelection()
-                    }
-
-                    DispatchQueue.main.async {
-                      scrollToTodayOrTop(scrollProxy: scrollProxy)
-                    }
-                  }
-                  // Initial scroll to today's dot for both modes
-                  .onAppear {
-                    yearGridViewSize = geometry.size
-                    self.scrollProxy = scrollProxy
-
-                    DispatchQueue.main.async {
-                      scrollToTodayOrTop(scrollProxy: scrollProxy)
-
-                      // Auto-select today on launch
-                      let currentYear = Calendar.current.component(.year, from: Date())
-                      if dataProvider.selectedYear == currentYear {
-                        let targetId = dataProvider.getRelevantDateId(for: Date())
-                        if let item = dataProvider.getItem(from: targetId) {
-                          selectDateItem(item: item, scrollProxy: scrollProxy)
-                        }
-                      }
-                    }
-                  }
-                  .onDisappear {
-                    self.scrollProxy = nil
-                  }
-                  .scrollDisabled(isScrubbing || isPinching)
-                }
+                yearGridScrollView(geometry: geometry)
               }
             },
             bottom: {
