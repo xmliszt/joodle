@@ -353,15 +353,28 @@ struct HandednessSliderPreview: View {
       ZStack {
         slider(side: .leading)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: leadingAlignment)
+          .animation(exitFade, value: edge)
           .offset(x: edge == .leading ? 0 : -geo.size.width)
         slider(side: .trailing)
           .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: trailingAlignment)
+          .animation(exitFade, value: edge)
           .offset(x: edge == .trailing ? 0 : geo.size.width)
       }
       .padding(.bottom, bottomInset)
     }
     .clipped()
   }
+
+  /// Each slider has only a short visible runway at its own edge before the
+  /// `.clipped()` boundary; the rest of the travel is off-screen. Under the slow
+  /// position ease the departing slider's visible window is the *start* of its
+  /// travel (accelerating into the clip — the abrupt pop) while the arriving one's
+  /// is the *end* (decelerating into place — already smooth). A fast opacity fade,
+  /// scoped here so it runs quicker than the offset animation, dissolves the
+  /// departing slider while it is still visible, yet completes long before the
+  /// arriving slider crosses into view — so the exit softens without dimming the
+  /// entrance.
+  private var exitFade: Animation { .easeOut(duration: 0.4) }
 
   private func slider(side: HorizontalEdge) -> some View {
     CameraZoomSlider(
