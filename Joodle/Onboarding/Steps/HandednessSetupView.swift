@@ -36,12 +36,6 @@ struct HandednessSetupView: View {
 
   var body: some View {
     ZStack {
-      // Live slider preview, pinned to the chosen edge and anchored to the bottom
-      // with the same 80pt inset the real camera uses, so it sits where the user's
-      // thumb will actually meet it rather than floating mid-screen.
-      HandednessSliderPreview(edge: sliderEdge, verticalAlignment: .bottom, bottomInset: 80)
-        .ignoresSafeArea()
-
       VStack(spacing: 24) {
         VStack(spacing: 16) {
           Text("Are you left or right-handed?")
@@ -56,7 +50,7 @@ struct HandednessSetupView: View {
         .padding(.horizontal, 32)
         .padding(.top, 24)
 
-        handednessPicker
+        handednessSelector
           .padding(.horizontal, 32)
           .padding(.top, 16)
 
@@ -66,28 +60,46 @@ struct HandednessSetupView: View {
           viewModel.completeStep(.handednessSetup)
         }
       }
+
+      // Live slider preview, pinned to the chosen edge and anchored to the bottom
+      // with the same 80pt inset the real camera uses, so it sits where the user's
+      // thumb will actually meet it rather than floating mid-screen. Layered last
+      // so the slider draws on top of the illustration container it overlaps.
+      HandednessSliderPreview(edge: sliderEdge, verticalAlignment: .bottom, bottomInset: 80)
+        .ignoresSafeArea()
     }
     // No back button: returning would re-enter the interactive tutorial.
     .navigationBarBackButtonHidden(true)
   }
 
-  @ViewBuilder
-  private var handednessPicker: some View {
-    if #available(iOS 26.0, *) {
-      picker.glassEffect(.regular.interactive())
-    } else {
-      picker
+  // Two hand illustrations side by side — left hand on the left, right hand on
+  // the right — that act as the handedness picker. Tapping one selects it; the
+  // chosen side stays fully opaque while the other dims.
+  private var handednessSelector: some View {
+    HStack(spacing: 0) {
+      handOption(.left)
+      handOption(.right)
     }
+    .background(.appBorder.opacity(0.4))
+    .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
   }
 
-  private var picker: some View {
-    Picker("Camera Zoom Slider", selection: handednessBinding) {
-      ForEach(SliderHandedness.allCases, id: \.self) { handedness in
-        Text(handedness.displayName).tag(handedness)
+  private func handOption(_ handedness: SliderHandedness) -> some View {
+    let isSelected = userPreferences.cameraZoomSliderHandedness == handedness
+    return Image("LeftHandWireframe")
+      .resizable()
+      .scaledToFit()
+      .frame(maxWidth: .infinity)
+      // The right-handed option is the same wireframe mirrored horizontally.
+      .scaleEffect(x: handedness == .right ? -1 : 1, y: 1)
+      .opacity(isSelected ? 1 : 0.3)
+      .animation(.easeInOut(duration: 0.2), value: isSelected)
+      .contentShape(Rectangle())
+      .onTapGesture {
+        handednessBinding.wrappedValue = handedness
       }
-    }
-    .pickerStyle(.palette)
-    .labelsHidden()
+      .accessibilityLabel(handedness.displayName)
+      .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
   }
 }
 
