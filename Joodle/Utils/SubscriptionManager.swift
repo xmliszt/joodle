@@ -302,6 +302,16 @@ class SubscriptionManager: ObservableObject {
 
             print("✅ Subscription active - expires: \(storeManager.subscriptionExpirationDate?.formatted() ?? "N/A")")
         } else {
+            // A lifetime non-consumable never expires, so an empty entitlements read
+            // for a known lifetime owner is a transient StoreKit glitch, not a real
+            // loss. Clearing here would fire a false "subscription expired" alert.
+            if isLifetimeUser || storedProductID == "dev.liyuxuan.joodle.pro.lifetime" {
+                print("⚠️ StoreKit returned empty for lifetime owner - ignoring transient read")
+                lastOnlineVerificationDate = Date()
+                WidgetHelper.shared.updateSubscriptionStatus()
+                return
+            }
+
             // StoreKit says no active subscription - immediately clear everything
             // StoreKit is the source of truth, stored date is just a cache
             subscriptionExpirationDate = nil
