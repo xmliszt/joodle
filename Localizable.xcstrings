@@ -4039,7 +4039,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "複製到剪貼板"
+            "value" : "複製到剪貼簿"
           }
         }
       }
@@ -10641,7 +10641,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "讓我們示範一個相機小技巧 — 點一下以打開畫布"
+            "value" : "讓我們示範一個相機小技巧 — 點一下以開啟畫布"
           }
         }
       }
@@ -15756,7 +15756,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重新啟動應用程式"
+            "value" : "重新啟動 App"
           }
         }
       }
@@ -17238,7 +17238,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "顯示訂閱管理表單"
+            "value" : "顯示訂閱管理面板"
           }
         }
       }
@@ -17272,7 +17272,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "顯示兌換碼表單"
+            "value" : "顯示兌換碼面板"
           }
         }
       }
@@ -17535,7 +17535,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每週起始日會影響「正常」檢視模式的版面配置。"
+            "value" : "每週起始日會影響「一般」檢視模式的版面配置。"
           }
         }
       }
@@ -18152,7 +18152,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "切換至「正常」檢視模式，然後捲動到格線頂端，繼續向上捲動即可看到星期標籤。若要變更每週起始日，請前往「設定」>「一般」>「自訂」>「每週起始日」。"
+            "value" : "切換至「一般」檢視模式，然後捲動到格線頂端，繼續向上捲動即可看到星期標籤。若要變更每週起始日，請前往「設定」>「一般」>「自訂」>「每週起始日」。"
           }
         }
       }
@@ -20134,7 +20134,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如果想要的話，可以描摹你的參考圖，然後點一下 ✓ 儲存"
+            "value" : "可以照著參考圖描摹，然後點一下 ✓ 儲存"
           }
         }
       }
