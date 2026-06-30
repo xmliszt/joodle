@@ -543,7 +543,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
         // black. Show a placeholder while live so the camera-reference flow and
         // onboarding tutorial stay testable.
         if isCameraLive {
-          SimulatorCameraPlaceholder()
+          SimulatorCameraPlaceholder(zoomFactor: cameraZoomFactor)
             .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
             .allowsHitTesting(false)
         }
@@ -1134,25 +1134,22 @@ private struct StatefulPreviewWrapperWithUndo<Content: View>: View {
 
 #if targetEnvironment(simulator)
 /// Stand-in for the live camera feed on the simulator, which has no camera
-/// hardware. Keeps the camera-reference flow and onboarding tutorial testable
-/// without rendering a black frame.
+/// hardware. Shows a fixed reference photo scaled by the current zoom so the
+/// zoom slider visibly magnifies the "feed", keeping the camera-reference flow
+/// and onboarding tutorial testable without rendering a black frame.
 private struct SimulatorCameraPlaceholder: View {
-  var body: some View {
-    ZStack {
-      LinearGradient(
-        colors: [Color(.systemIndigo).opacity(0.55), Color(.systemPurple).opacity(0.45)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-      )
+  var zoomFactor: CGFloat
 
-      VStack(spacing: 12) {
-        Image(systemName: "camera.viewfinder")
-          .font(.system(size: 56, weight: .regular))
-        Text("Simulator camera")
-          .font(.footnote.weight(.medium))
-      }
-      .foregroundStyle(.white.opacity(0.85))
-    }
+  var body: some View {
+    // At the minimum zoom the photo fills the square (its center crop); higher
+    // zoom magnifies around center, matching what `capture()` crops out.
+    let minZoom = CameraReferenceContext.simulatorZoomCapabilities.minDisplayZoom
+    Image("SimulatorCameraReference")
+      .resizable()
+      .scaledToFill()
+      .scaleEffect(zoomFactor / minZoom)
+      .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+      .clipped()
   }
 }
 #endif

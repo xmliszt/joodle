@@ -169,6 +169,11 @@ final class CameraReferenceContext: ObservableObject {
     shutter.cycle {
       try? await Task.sleep(nanoseconds: 120_000_000)
       if Task.isCancelled { return }
+      // No camera hardware means no real zoom capabilities, so the zoom slider
+      // would stay hidden. Publish a representative range and reset the factor
+      // so the slider is reachable and draggable for UI debugging.
+      self.zoomCapabilities = Self.simulatorZoomCapabilities
+      self.displayZoomFactor = 1.0
       withAnimation(.easeInOut(duration: 0.2)) { self.mode = .live }
     }
     #else
@@ -229,7 +234,12 @@ final class CameraReferenceContext: ObservableObject {
   }
 
   func setZoom(_ display: CGFloat) {
+    #if targetEnvironment(simulator)
+    // No device to drive, so reflect the slider's value directly.
+    displayZoomFactor = min(max(display, zoomCapabilities.minDisplayZoom), zoomCapabilities.maxDisplayZoom)
+    #else
     controller.setDisplayZoom(display)
+    #endif
   }
 
   func capture() async {
@@ -239,7 +249,7 @@ final class CameraReferenceContext: ObservableObject {
     // No camera to capture from — synthesize a placeholder reference photo so
     // the "trace over your reference" step is reachable on the simulator.
     isCapturing = true
-    self.backdropImage = Self.makeSimulatorPlaceholderImage()
+    self.backdropImage = Self.makeSimulatorPlaceholderImage(zoom: displayZoomFactor)
     isCapturing = false
     withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
     #else
@@ -284,37 +294,38 @@ final class CameraReferenceContext: ObservableObject {
   }
 
   #if targetEnvironment(simulator)
-  /// A static stand-in "reference photo" used on the simulator, which has no
-  /// camera. Rendered once on demand so the captured-backdrop / trace step
-  /// shows something recognizable instead of an empty frame.
-  static func makeSimulatorPlaceholderImage() -> UIImage {
-    let size = CGSize(width: 1024, height: 1024)
-    let renderer = UIGraphicsImageRenderer(size: size)
-    return renderer.image { context in
-      let cgContext = context.cgContext
-      let colors = [UIColor.systemIndigo.cgColor, UIColor.systemPurple.cgColor]
-      if let gradient = CGGradient(
-        colorsSpace: CGColorSpaceCreateDeviceRGB(),
-        colors: colors as CFArray,
-        locations: [0, 1]
-      ) {
-        cgContext.drawLinearGradient(
-          gradient,
-          start: .zero,
-          end: CGPoint(x: size.width, y: size.height),
-          options: []
-        )
-      }
-      let config = UIImage.SymbolConfiguration(pointSize: 280, weight: .regular)
-      if let symbol = UIImage(systemName: "camera.viewfinder", withConfiguration: config)?
-        .withTintColor(.white.withAlphaComponent(0.85), renderingMode: .alwaysOriginal) {
-        let origin = CGPoint(
-          x: (size.width - symbol.size.width) / 2,
-          y: (size.height - symbol.size.height) / 2
-        )
-        symbol.draw(at: origin)
-      }
+  /// Stand-in zoom range for the simulator, modelled on an ultra-wide-equipped
+  /// back camera (0.5x–10x with 0.5/1/2 lens stops), so the zoom slider can be
+  /// exercised without camera hardware.
+  static let simulatorZoomCapabilities = CameraZoomCapabilities(
+    minDisplayZoom: 0.5,
+    maxDisplayZoom: 10,
+    baselineFactor: 1,
+    keyZoomFactors: [0.5, 1, 2]
+  )
+
+  /// Crops the simulator reference photo to the centered square the live
+  /// preview is currently showing at `zoom`, so a simulator capture yields the
+  /// same framing the user sees. Mirrors `SimulatorCameraPlaceholder`: the
+  /// square shrinks (magnifying the center) as zoom climbs above the minimum.
+  static func makeSimulatorPlaceholderImage(zoom: CGFloat) -> UIImage {
+    guard let source = UIImage(named: "SimulatorCameraReference"),
+          let cgImage = source.cgImage else {
+      return UIImage()
     }
+    let width = CGFloat(cgImage.width)
+    let height = CGFloat(cgImage.height)
+    let shortSide = min(width, height)
+    let minZoom = simulatorZoomCapabilities.minDisplayZoom
+    let cropSide = min(shortSide, shortSide * minZoom / max(zoom, minZoom))
+    let cropRect = CGRect(
+      x: (width - cropSide) / 2,
+      y: (height - cropSide) / 2,
+      width: cropSide,
+      height: cropSide
+    )
+    guard let cropped = cgImage.cropping(to: cropRect) else { return source }
+    return UIImage(cgImage: cropped, scale: source.scale, orientation: source.imageOrientation)
   }
   #endif
 
