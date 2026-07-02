@@ -323,15 +323,20 @@ struct PaywallContentView: View {
   var body: some View {
     VStack(spacing: 0) {
       if case .onboarding = configuration.context {
-        // Onboarding content is sized to fit the screen, so it stays fixed (no
-        // scrolling) like the other onboarding steps, with the button pinned below.
-        VStack(spacing: 32) {
-          headerSection
-          contextBody
+        // The continue button floats over the bottom so the overflow content
+        // scrolls underneath it — no opaque bar behind the button. Bottom
+        // padding reserves room so the last content can scroll clear of it.
+        ScrollView {
+          VStack(spacing: 32) {
+            headerSection
+            contextBody
+          }
+          .frame(maxWidth: .infinity, alignment: .top)
+          .padding(.bottom, 96)
         }
-        .frame(maxHeight: .infinity, alignment: .top)
-
-        onboardingContinueButton
+        .overlay(alignment: .bottom) {
+          onboardingContinueButton
+        }
       } else {
         ScrollView {
           VStack(spacing: 32) {
