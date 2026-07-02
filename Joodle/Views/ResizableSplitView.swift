@@ -59,6 +59,13 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   /// Compensate corner radius so it is just a bit smaller than device actual radius
   private let CORNER_RADIUS_COMPENSATION: CGFloat = 5
 
+  /// The panel corner radius, kept a little smaller than the device's screen
+  /// corner so it reads as concentric. `UIDevice.screenCornerRadius` is floored
+  /// for flat-display phones (iPhone SE) at the source, so this stays positive.
+  private var panelCornerRadius: CGFloat {
+    UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION
+  }
+
   var body: some View {
     GeometryReader { _geometry in
       // Combine the committed split position with the live drag offset
@@ -74,7 +81,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
       // collapses to 0 so the device's hardware corner mask does the rounding,
       // instead of self-carving a notch that reveals the accent background.
       let topBottomCornerRadius = min(
-        UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
+        panelCornerRadius,
         bottomHeight
       )
 
@@ -150,8 +157,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             .frame(width: _geometry.size.width, height: bottomHeight, alignment: .top)
             .clipShape(
               UnevenRoundedRectangle(
-                topLeadingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
-                topTrailingRadius: UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION,
+                topLeadingRadius: panelCornerRadius,
+                topTrailingRadius: panelCornerRadius,
                 style: .continuous)
             )
         }

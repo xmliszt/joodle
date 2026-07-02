@@ -496,6 +496,11 @@ struct JoodleApp: App {
   var body: some Scene {
     WindowGroup {
       ZStack {
+        // Opaque base so the brief window between the launch screen dismissing
+        // and the main content's first render reads as the app background
+        // rather than a flash of the bare window.
+        Color.appBackground.ignoresSafeArea()
+
         if !hasCompletedOnboarding {
           OnboardingFlowView()
             .environment(\.userPreferences, UserPreferences.shared)
@@ -510,9 +515,25 @@ struct JoodleApp: App {
                 checkPendingRestartAfterOnboarding()
               }
             }
-        } else {
+        } else if !showLaunchScreen {
+          // Defer mounting the main content until the launch screen dismisses.
+          // On cold launch straight into the grid, mounting ContentView as the
+          // very first content — while the scene is still settling and the launch
+          // overlay is up — made its whole subtree fail to render on non-DI
+          // devices (iPhone SE / iOS 26). Mounting it after the launch screen is
+          // gone reproduces the always-working onboarding→content path.
+          //
+          // On cold launch iOS 26's NavigationStack lays its content out at the
+          // content's collapsed "ideal" size (≈72×355 on iPhone SE) instead of its
+          // own full bounds, leaving the UI rendered into a sliver. The stack's
+          // outer frame is correct, so measure it with a GeometryReader placed
+          // above the stack and pin ContentView to that size — a fixed frame both
+          // overrides the bad proposal and makes ContentView's ideal size full, so
+          // the stack proposes the full size back with no clipping.
+          GeometryReader { navProxy in
           NavigationStack {
             ContentView(selectedDateFromWidget: $selectedDateFromWidget)
+              .frame(width: navProxy.size.width, height: navProxy.size.height)
               .environment(\.userPreferences, UserPreferences.shared)
               .environment(\.cloudSyncManager, CloudSyncManager.shared)
               .environment(\.networkMonitor, NetworkMonitor.shared)
@@ -574,6 +595,7 @@ struct JoodleApp: App {
           // users. Lives only in this branch so it never covers onboarding.
           .overlay {
             FeatureTipOverlayView()
+          }
           }
         }
 

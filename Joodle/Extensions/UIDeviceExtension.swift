@@ -75,15 +75,31 @@ extension UIDevice {
 // MARK: - Screen Corner Radius
 extension UIDevice {
 
+  /// Design floor for flat-display phones (e.g. iPhone SE) that report a screen
+  /// corner radius of 0. The app derives concentric rounding for its cards
+  /// (split panels, floating canvas, move overlay) from this value; on a square
+  /// display concentricity is moot, so a fixed design radius keeps those
+  /// surfaces rounded instead of collapsing to sharp (or negative) corners.
+  private static let minPhoneCornerRadius: CGFloat = 30
+
   /// Returns the screen corner radius using private API with safe fallback
   /// Uses `_displayCornerRadius` for accuracy, falls back to safe area heuristics
   static var screenCornerRadius: CGFloat {
-    // Try private API first (most accurate)
-    if let radius = UIScreen.main.value(forKey: "_displayCornerRadius") as? CGFloat, radius > 0 {
-      return radius
+    let resolved: CGFloat = {
+      // Try private API first (most accurate)
+      if let radius = UIScreen.main.value(forKey: "_displayCornerRadius") as? CGFloat, radius > 0 {
+        return radius
+      }
+      // Fallback: estimate based on safe area insets
+      return estimatedCornerRadius
+    }()
+
+    // Flat-display phones report 0 — floor to a design radius so the app's
+    // rounded surfaces don't render as sharp rectangles.
+    if resolved <= 0, UIDevice.current.userInterfaceIdiom == .phone {
+      return minPhoneCornerRadius
     }
-    // Fallback: estimate based on safe area insets
-    return estimatedCornerRadius
+    return resolved
   }
 
   /// Estimates corner radius based on device characteristics when private API fails

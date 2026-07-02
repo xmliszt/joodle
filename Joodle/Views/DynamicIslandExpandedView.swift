@@ -178,6 +178,15 @@ struct DynamicIslandExpandedView<Content: View>: View {
     UIDevice.hasDynamicIsland ? UIDevice.dynamicIslandSize : .zero
   }
 
+  /// Liquid Glass rendered inside a zero-size frame aborts the entire view's
+  /// render on iOS 26 — on non-DI devices (e.g. iPhone SE) the collapsed
+  /// container is `.zero`, which blanked the whole screen. The glass is
+  /// invisible while collapsed anyway (covered by the black layer, and
+  /// zero-sized here), so only mount it once the container has a real frame.
+  private var shouldRenderContainerGlass: Bool {
+    isExpanded || collapsedSize != .zero
+  }
+
   /// Outer container corner radius, concentric with the device screen.
   private var containerCornerRadius: CGFloat {
     max(UIDevice.screenCornerRadius - containerHorizontalInset, 0)
@@ -294,22 +303,25 @@ struct DynamicIslandExpandedView<Content: View>: View {
         // shape): the system resolves glass stacking by view bounds, so a
         // full-size view with a bottom-only shape still underlaps the
         // buttons. Scoped in its own GlassEffectContainer so it also never
-        // merges with them.
-        GlassEffectContainer {
-          GeometryReader { proxy in
-            Color.clear
-              .glassEffect(
-                .clear,
-                in: UnevenRoundedRectangle(
-                  cornerRadii: .init(
-                    bottomLeading: containerCornerRadius,
-                    bottomTrailing: containerCornerRadius
-                  ),
-                  style: .continuous
+        // merges with them. Skipped while the container is collapsed to zero
+        // size (non-DI devices) — zero-size Liquid Glass aborts the render.
+        if shouldRenderContainerGlass {
+          GlassEffectContainer {
+            GeometryReader { proxy in
+              Color.clear
+                .glassEffect(
+                  .clear,
+                  in: UnevenRoundedRectangle(
+                    cornerRadii: .init(
+                      bottomLeading: containerCornerRadius,
+                      bottomTrailing: containerCornerRadius
+                    ),
+                    style: .continuous
+                  )
                 )
-              )
-              .frame(height: proxy.size.height * (1 - glassTopFraction))
-              .frame(maxHeight: .infinity, alignment: .bottom)
+                .frame(height: proxy.size.height * (1 - glassTopFraction))
+                .frame(maxHeight: .infinity, alignment: .bottom)
+            }
           }
         }
       } else {
