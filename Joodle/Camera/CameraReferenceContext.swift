@@ -209,6 +209,17 @@ final class CameraReferenceContext: ObservableObject {
   }
 
   func flip() {
+    #if targetEnvironment(simulator)
+    // No camera hardware to reconfigure: `controller.flip()` would fail to bind a
+    // new input and publish `.disabled` capabilities, hiding the zoom slider. Just
+    // run the shutter animation and re-assert the fake range so the slider stays.
+    shutter.cycle {
+      try? await Task.sleep(nanoseconds: 96_000_000)
+      if Task.isCancelled { return }
+      self.zoomCapabilities = Self.simulatorZoomCapabilities
+      self.displayZoomFactor = 1.0
+    }
+    #else
     shutter.cycle {
       // Tear the preview down before reconfiguring so the previous device's
       // last frame isn't held on the layer while the session swaps inputs.
@@ -231,6 +242,7 @@ final class CameraReferenceContext: ObservableObject {
       // frame before the shutter starts opening.
       try? await Task.sleep(nanoseconds: 80_000_000)
     }
+    #endif
   }
 
   func setZoom(_ display: CGFloat) {
