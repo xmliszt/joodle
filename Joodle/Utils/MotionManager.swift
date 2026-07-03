@@ -43,6 +43,16 @@ final class MotionManager: ObservableObject {
   /// Lighter smoothing for the gravity vector so liquid stays responsive to tilt
   private let gravitySmoothingFactor: Double = 0.3
 
+  // Publish dead-bands: a smoothed value is only re-published when the update
+  // moves it by more than its band. Without one, the smoothing keeps absorbing
+  // sensor noise on a perfectly still device and every observer re-renders at
+  // the motion update rate forever. Freezing inside the band leaves at most
+  // `band / smoothingFactor` of residual error (≈0.4° of tilt) — invisible, and
+  // far below every consumer threshold (liquid wake at 0.02 G, shake at 1.8 G).
+  private let tiltPublishBand: Double = 0.001
+  private let gravityPublishBand: Double = 0.001
+  private let shakePublishBand: Double = 0.01
+
   private init() {}
 
   /// Start receiving motion updates
@@ -105,11 +115,20 @@ final class MotionManager: ObservableObject {
     let newTiltAngle = asin(clampedGravityX)
 
     // Apply exponential smoothing for fluid motion
-    tiltAngle = tiltAngle + (newTiltAngle - tiltAngle) * smoothingFactor
+    let smoothedTilt = tiltAngle + (newTiltAngle - tiltAngle) * smoothingFactor
+    if abs(smoothedTilt - tiltAngle) > tiltPublishBand {
+      tiltAngle = smoothedTilt
+    }
 
     // Smoothed gravity vector for liquid physics
-    gravityX = gravityX + (gravity.x - gravityX) * gravitySmoothingFactor
-    gravityY = gravityY + (gravity.y - gravityY) * gravitySmoothingFactor
+    let smoothedGravityX = gravityX + (gravity.x - gravityX) * gravitySmoothingFactor
+    if abs(smoothedGravityX - gravityX) > gravityPublishBand {
+      gravityX = smoothedGravityX
+    }
+    let smoothedGravityY = gravityY + (gravity.y - gravityY) * gravitySmoothingFactor
+    if abs(smoothedGravityY - gravityY) > gravityPublishBand {
+      gravityY = smoothedGravityY
+    }
 
     // User acceleration magnitude (gravity already removed by CoreMotion)
     let userAcceleration = motion.userAcceleration
@@ -118,7 +137,10 @@ final class MotionManager: ObservableObject {
         + userAcceleration.y * userAcceleration.y
         + userAcceleration.z * userAcceleration.z
     )
-    shakeMagnitude = shakeMagnitude + (magnitude - shakeMagnitude) * 0.5
+    let smoothedShake = shakeMagnitude + (magnitude - shakeMagnitude) * 0.5
+    if abs(smoothedShake - shakeMagnitude) > shakePublishBand {
+      shakeMagnitude = smoothedShake
+    }
   }
 
   /// Reset motion values to neutral

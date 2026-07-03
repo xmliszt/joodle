@@ -15,6 +15,9 @@ import SwiftUI
 /// device is shaken. The particles are rendered as a single connected liquid
 /// surface by `Metaball.metal`, a scalar-field color effect. The whole screen is
 /// the container — safe areas are ignored.
+///
+/// Once the pool settles the simulation sleeps and the timeline pauses, so an
+/// idle backdrop costs nothing; a tilt, shake, drain tick, or resize wakes it.
 struct LiquidMetaballBackdropView: View {
   @StateObject private var motionManager = MotionManager.shared
 
@@ -29,9 +32,14 @@ struct LiquidMetaballBackdropView: View {
 
   @State private var simulation = LiquidSimulation()
 
+  /// Mirrors `LiquidSimulation.isAsleep` into the timeline's pause flag. While
+  /// paused the closure still re-runs on motion publishes, debug-override changes,
+  /// and geometry changes — exactly the events `advance` checks for wake-up.
+  @State private var isTimelinePaused = false
+
   var body: some View {
     GeometryReader { geometry in
-      TimelineView(.animation) { timeline in
+      TimelineView(.animation(paused: isTimelinePaused)) { timeline in
         let _ = simulation.advance(
           to: timeline.date.timeIntervalSinceReferenceDate,
           bounds: geometry.size,
@@ -40,6 +48,7 @@ struct LiquidMetaballBackdropView: View {
           shakeMagnitude: motionManager.shakeMagnitude,
           fillLevel: Self.fillLevel(at: timeline.date)
         )
+        let _ = syncTimelinePause()
 
         // A color effect needs a non-transparent source to rasterize over, so the
         // base rectangle is filled solid; the shader replaces every pixel, carving
@@ -75,6 +84,29 @@ struct LiquidMetaballBackdropView: View {
     .ignoresSafeArea()
     .onAppear { motionManager.startUpdates() }
     .onDisappear { motionManager.stopUpdates() }
+    .task(id: isTimelinePaused) {
+      // Tilt and shake wake a paused backdrop through motion publishes, but the
+      // drain clock advances with nothing to re-render the view — poll it slowly
+      // instead. At roughly ten minutes per drained ball, a 30-second poll is
+      // invisible.
+      guard isTimelinePaused else { return }
+      while !Task.isCancelled {
+        try? await Task.sleep(for: .seconds(30))
+        if simulation.wantsWake(fillLevel: Self.fillLevel(at: Date())) {
+          isTimelinePaused = false
+          return
+        }
+      }
+    }
+  }
+
+  /// Keep the timeline's pause flag in step with the simulation's sleep state.
+  /// Called from the render closure, so the state write is deferred off the
+  /// render pass; sleep transitions are rare, so the extra render is negligible.
+  private func syncTimelinePause() {
+    let asleep = simulation.isAsleep
+    guard asleep != isTimelinePaused else { return }
+    Task { @MainActor in isTimelinePaused = asleep }
   }
 
   /// Remaining fraction of the day: 1 at 00:00 (full container), 0 at end of day.
@@ -155,7 +187,8 @@ final class LiquidSimulation {
   /// tilted pool jams as a coating along the down-wall and a column can cling to a side
   /// wall instead of flowing flat. `computeLeveling` adds the shallow-water pressure
   /// term directly: it measures each column's surface height and pushes every ball
-  /// *down the surface slope* with `gravityAcceleration * levelingGain * slope`. Driven
+  /// *down the surface slope* with `gravityAcceleration * |gravity| * levelingGain *
+  /// slope`, scaled by the in-plane gravity so a flat device isn't churned. Driven
   /// by surface shape rather than local repulsion, it can't be fooled by the fluid's
   /// free edges (a per-ball repulsion heuristic reads those as cohesion and balls up
   /// the pool), and it self-cancels once the surface is flat. Tunable: raise to level
@@ -179,6 +212,36 @@ final class LiquidSimulation {
   // sits well below 1G, a deliberate shake is 2G+).
   private let shakeThreshold: Double = 1.8
   private let shakeForce: CGFloat = 9000
+
+  // Sleep/wake. A settled pool is a static image, yet the animation timeline would
+  // keep re-simulating and re-shading it at display refresh rate — the dominant
+  // real-world cost, since the backdrop spends nearly all its life settled. Once
+  // every ball has been at rest for a sustained run of frames the simulation
+  // sleeps: `advance` early-returns and the view pauses its TimelineView.
+  /// Net drift (points/second, measured as frame-to-frame displacement) below which
+  /// a ball counts as at rest — under a tenth of a point per frame, so freezing it
+  /// is invisible. Displacement, not velocity: contact balls in a settled pool gain
+  /// real speed every sub-step from gravity and pack compression, which the wall
+  /// clamp immediately cancels — velocity reads "restless" while nothing moves,
+  /// worst when the device lies flat and the whole pack presses against the walls.
+  private let restSpeedThreshold: CGFloat = 6
+  /// Consecutive at-rest frames required before sleeping, so a droplet hanging at
+  /// its apex (instantaneously slow) can't put the simulation to sleep mid-flight.
+  private let restFrameThreshold = 45
+  /// Gravity-vector change (in Gs, device space) that wakes a sleeping pool — well
+  /// above sensor noise, well below any deliberate tilt. Compared against a
+  /// snapshot taken at sleep time, so slow drift accumulates until it trips.
+  private let wakeGravityShift: Double = 0.02
+
+  /// Whether the pool is settled and `advance` is skipping all work. The view
+  /// mirrors this into its TimelineView's `paused` flag.
+  private(set) var isAsleep = false
+  private var restFrameCount = 0
+  /// Device gravity at the moment of falling asleep; wake-up compares against it.
+  private var sleepGravityX: Double = 0
+  private var sleepGravityY: Double = 0
+  /// Previous-frame positions for rest detection, reused across frames.
+  private var restPreviousPositions: [CGPoint] = []
 
   private var particles: [LiquidParticle] = []
   /// Ball count for a full container, derived from the screen size.
@@ -228,7 +291,8 @@ final class LiquidSimulation {
       width: max(size.width, bounds.width),
       height: max(size.height, bounds.height)
     )
-    if container != bounds {
+    let containerGrew = container != bounds
+    if containerGrew {
       bounds = container
       // Enough balls to tile the container at the settled (compressed) spacing, so
       // a full pool fills the whole height once it settles and the fill level maps
@@ -237,10 +301,29 @@ final class LiquidSimulation {
       resizePool(to: fullCount)
     }
 
+    let targetCount = targetActiveCount(for: fillLevel)
+
+    // Asleep: skip everything until something the settled pool would react to
+    // changes. Gravity is compared against the sleep-time snapshot because
+    // integration is stopped and can't notice the drift itself.
+    if isAsleep {
+      let gravityShift = hypot(gravityX - sleepGravityX, gravityY - sleepGravityY)
+      let shouldWake = containerGrew
+        || shakeMagnitude > shakeThreshold
+        || gravityShift > wakeGravityShift
+        || targetCount != activeCount
+      guard shouldWake else {
+        lastTimestamp = timestamp
+        return
+      }
+      isAsleep = false
+      restFrameCount = 0
+    }
+
     // Drain the container as the day passes: full pool at the start of the day,
     // empty by its end. Removing balls lowers the level because the remaining
     // ones re-settle under gravity and repulsion.
-    activeCount = min(particles.count, max(0, Int((Double(fullCount) * fillLevel).rounded())))
+    activeCount = targetCount
 
     guard let last = lastTimestamp else {
       lastTimestamp = timestamp
@@ -264,7 +347,11 @@ final class LiquidSimulation {
     // slowly relative to a frame) and reused across every sub-step below.
     let gravityLength = hypot(gravity.dx, gravity.dy)
     if gravityLength > 0.01 {
-      computeLeveling(downX: gravity.dx / gravityLength, downY: gravity.dy / gravityLength)
+      computeLeveling(
+        downX: gravity.dx / gravityLength,
+        downY: gravity.dy / gravityLength,
+        gravityMagnitude: gravityLength
+      )
     }
 
     // Fixed sub-steps keep the repulsion springs stable under explicit integration
@@ -276,7 +363,66 @@ final class LiquidSimulation {
       integrate(delta: subDelta, gravity: gravity)
     }
 
+    updateSleepState(
+      frameDelta: frameDelta,
+      gravityX: gravityX,
+      gravityY: gravityY,
+      shakeMagnitude: shakeMagnitude
+    )
+
     rebuildBallData()
+  }
+
+  /// Ball count the given fill level calls for.
+  private func targetActiveCount(for fillLevel: Double) -> Int {
+    min(particles.count, max(0, Int((Double(fullCount) * fillLevel).rounded())))
+  }
+
+  /// Whether the sleeping simulation should wake for `fillLevel`. The paused view
+  /// polls this on a slow heartbeat, since the drain clock keeps advancing while
+  /// nothing else (render, motion) does.
+  func wantsWake(fillLevel: Double) -> Bool {
+    isAsleep && targetActiveCount(for: fillLevel) != activeCount
+  }
+
+  /// Fall asleep once the whole pool has been at rest for a sustained run of
+  /// frames. Rest is judged by each ball's net displacement since the previous
+  /// frame (see `restSpeedThreshold` for why velocity can never read as rest).
+  /// The gravity snapshot taken here is what wake-up compares against.
+  private func updateSleepState(
+    frameDelta: CGFloat,
+    gravityX: Double,
+    gravityY: Double,
+    shakeMagnitude: Double
+  ) {
+    if restPreviousPositions.count < particles.count {
+      restPreviousPositions = Array(repeating: .zero, count: particles.count)
+    }
+    let restDistance = restSpeedThreshold * frameDelta
+    let restDistanceSq = restDistance * restDistance
+    var isAtRest = shakeMagnitude <= shakeThreshold
+    for index in 0..<activeCount {
+      let position = particles[index].position
+      if isAtRest {
+        let dx = position.x - restPreviousPositions[index].x
+        let dy = position.y - restPreviousPositions[index].y
+        if dx * dx + dy * dy > restDistanceSq {
+          isAtRest = false
+        }
+      }
+      restPreviousPositions[index] = position
+    }
+
+    guard isAtRest else {
+      restFrameCount = 0
+      return
+    }
+    restFrameCount += 1
+    if restFrameCount >= restFrameThreshold {
+      isAsleep = true
+      sleepGravityX = gravityX
+      sleepGravityY = gravityY
+    }
   }
 
   /// Grow or shrink the particle pool to `count`, preserving existing particles so
@@ -368,10 +514,17 @@ final class LiquidSimulation {
   /// every ball is then accelerated *down* its local surface slope. The drive is set
   /// by surface shape, not local repulsion, so the fluid's free edges don't fool it
   /// (a per-ball repulsion signal reads an edge as cohesion and balls the pool up), and
-  /// it self-cancels once the surface is flat. `accel = gravityAcceleration · gain ·
-  /// slope` is the tangential gravity of a surface at that slope, so `gain = 1` is the
-  /// physical rate; it's tuned below 1 to settle gently.
-  private func computeLeveling(downX: CGFloat, downY: CGFloat) {
+  /// it self-cancels once the surface is flat. `accel = gravityAcceleration ·
+  /// gravityMagnitude · gain · slope` is the tangential gravity of a surface at that
+  /// slope, so `gain = 1` is the physical rate; it's tuned below 1 to settle gently.
+  ///
+  /// Scaling by `gravityMagnitude` (the in-plane gravity, in Gs) matters when the
+  /// device lies flat: in-plane gravity is then near-zero sensor bias whose
+  /// *normalized* direction wanders with noise, and an unscaled gain would shove the
+  /// pool at full hydrostatic strength along that wandering axis — perpetual churn
+  /// that never lets the simulation sleep. Scaled, the shove shrinks with gravity
+  /// itself and the pool comes to rest.
+  private func computeLeveling(downX: CGFloat, downY: CGFloat, gravityMagnitude: CGFloat) {
     let count = activeCount
     if levelingAccel.count < particles.count {
       levelingAccel = Array(repeating: 0, count: particles.count)
@@ -411,7 +564,7 @@ final class LiquidSimulation {
     // Accelerate each ball down its surface slope. Neighbour columns with no liquid
     // fall back to this column's own surface, so the slope is zero at the pool's
     // lateral edges and nothing is pushed out into empty space.
-    let gain = gravityAcceleration * levelingGain
+    let gain = gravityAcceleration * gravityMagnitude * levelingGain
     let span = 2 * columnWidth
     for i in 0..<count {
       let column = levelingColumnOf[i]
