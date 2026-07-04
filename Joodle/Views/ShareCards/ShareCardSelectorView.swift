@@ -259,7 +259,7 @@ struct ShareCardSelectorView: View {
               } label: {
                 HStack(spacing: 12) {
                   if isSharing || isExportingAnimated {
-                    Text("\(Int(exportProgress * 100), format: .number.grouping(.never))%")
+                    Text(exportProgress, format: .percent.precision(.fractionLength(0)))
                       .font(.appFont(size: 18, weight: .semibold))
                       .contentTransition(.numericText())
                       .animation(.springFkingSatifying, value: exportProgress)
@@ -300,7 +300,7 @@ struct ShareCardSelectorView: View {
             } label: {
               HStack(spacing: 12) {
                 if isSharing || isExportingAnimated {
-                  Text("\(Int(exportProgress * 100), format: .number.grouping(.never))%")
+                  Text(exportProgress, format: .percent.precision(.fractionLength(0)))
                     .font(.appFont(size: 18, weight: .semibold))
                     .contentTransition(.numericText())
                 } else {

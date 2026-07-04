@@ -659,7 +659,7 @@ struct PaywallContentView: View {
           product: lifetime,
           isSelected: selectedProductID == lifetime.id,
           badge: isPromo
-            ? ltoManager.discountPercent.map { String(localized: "\($0)% OFF") } ?? String(localized: "BEST VALUE")
+            ? ltoManager.discountPercent.map { String(localized: "\((Double($0) / 100).formatted(.percent)) OFF") } ?? String(localized: "BEST VALUE")
             : String(localized: "BEST VALUE"),
           isEligibleForIntroOffer: false,
           layout: .compact,

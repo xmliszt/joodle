@@ -101,7 +101,8 @@ final class LimitedTimeOfferManager: ObservableObject {
 
   var headline: String {
     if let percent = discountPercent {
-      return String(localized: "Limited Time - \(percent)% Off")
+      let formatted = (Double(percent) / 100).formatted(.percent)
+      return String(localized: "Limited Time - \(formatted) Off")
     }
     return String(localized: "Limited Time Offer")
   }

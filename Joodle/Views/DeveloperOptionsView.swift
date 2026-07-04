@@ -223,7 +223,7 @@ struct DeveloperOptionsView: View {
       // is dialed in and the chosen preset is committed to FujifilmFilter.
       NavigationLink {
         FujifilmFilterLab()
-          .navigationTitle("Joodle Photo Filter Lab")
+          .navigationTitle(Text(verbatim: "Joodle Photo Filter Lab"))
           .navigationBarTitleDisplayMode(.inline)
       } label: {
         row(icon: "camera.filters", color: .pink, title: "Photo Filter Lab")
@@ -356,36 +356,39 @@ private struct LiquidBackdropDebugSection: View {
       )) {
         HStack {
           SettingsIconView(systemName: "clock.badge.exclamationmark", backgroundColor: .orange)
-          Text("Simulate Time of Day")
+          Text(verbatim: "Simulate Time of Day")
             .font(.appBody())
         }
       }
 
       if let seconds = simulatedSeconds {
         DatePicker(
-          "Simulated Time",
           selection: Binding(
             get: { Self.date(fromSecondsSinceMidnight: seconds) },
             set: { debug.simulatedSecondsSinceMidnight = Self.secondsSinceMidnight(of: $0) }
           ),
           displayedComponents: .hourAndMinute
-        )
+        ) {
+          Text(verbatim: "Simulated Time")
+        }
 
-        LabeledContent("Liquid Fill") {
-          Text("\(Int((1 - seconds / 86_400) * 100))%")
+        LabeledContent {
+          Text(verbatim: "\(Int((1 - seconds / 86_400) * 100))%")
             .foregroundStyle(.secondary)
+        } label: {
+          Text(verbatim: "Liquid Fill")
         }
 
         Button(role: .destructive) {
           debug.simulatedSecondsSinceMidnight = nil
         } label: {
-          Text("Reset to Device Clock")
+          Text(verbatim: "Reset to Device Clock")
         }
       }
     } header: {
       Text(verbatim: "Liquid Backdrop")
     } footer: {
-      Text("Overrides the time of day that drains the liquid backdrop. Affects only the backdrop fill level — not the device clock. Debug builds only.")
+      Text(verbatim: "Overrides the time of day that drains the liquid backdrop. Affects only the backdrop fill level — not the device clock. Debug builds only.")
     }
   }
 
