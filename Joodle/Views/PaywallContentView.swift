@@ -405,12 +405,23 @@ struct PaywallContentView: View {
 
       // Countdown drives the urgency and stays honest — it counts to the same
       // instant the App Store Connect price reverts and the campaign flag flips.
+      // Only the offer sheet carries it in the header; regular pay surfaces
+      // show it inline, next to the discounted lifetime card.
       if case .limitedTimeOffer = configuration.context, let endDate = ltoManager.endDate {
         CountdownTimerView(endDate: endDate, style: .pills)
       }
     }
     .padding(.top, 24)
     .padding(.horizontal, isOnboarding ? 24 : 8)
+  }
+
+  /// Regular pay surfaces show the countdown inline, right above the lifetime
+  /// card quoting the promo price, while the window is live. The offer sheet
+  /// shows it in the header instead; onboarding never qualifies (isActive
+  /// gates on completed onboarding).
+  private var showsInlineOfferCountdown: Bool {
+    if case .limitedTimeOffer = configuration.context { return false }
+    return ltoManager.isActive
   }
 
   private var headerTitle: LocalizedStringResource {
@@ -624,11 +635,12 @@ struct PaywallContentView: View {
     return ltoManager.isActive
   }
 
-  /// The lifetime card to display: the discounted promo SKU on the offer
-  /// surface, the full-price SKU everywhere else. Never both at once —
-  /// otherwise there'd be a permanent "always buy the cheap one" path.
+  /// The lifetime card to display: the discounted promo SKU whenever the
+  /// user's window is live — on every paywall surface, so no entry point
+  /// quotes a worse price than the offer — and the full-price SKU otherwise.
+  /// Never both at once: there'd be a permanent "always buy the cheap one" path.
   private var displayedLifetimeProduct: Product? {
-    if isShowingPromoOffer, let promo = ltoManager.promoProduct {
+    if ltoManager.isActive, let promo = ltoManager.promoProduct {
       return promo
     }
     return storeManager.lifetimeProduct
@@ -636,6 +648,10 @@ struct PaywallContentView: View {
 
   private var productCards: some View {
     VStack(spacing: 24) {
+      if showsInlineOfferCountdown, let endDate = ltoManager.endDate {
+        CountdownTimerView(endDate: endDate, style: .pills)
+      }
+
       // Top row: Lifetime centered
       if let lifetime = displayedLifetimeProduct {
         let isPromo = lifetime.id == JoodleProducts.lifetimePromo

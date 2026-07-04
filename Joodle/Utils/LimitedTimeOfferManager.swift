@@ -177,7 +177,10 @@ final class LimitedTimeOfferManager: ObservableObject {
       } catch let error as CKError where error.code == .unknownItem {
         // First time on this Apple ID — create the anchor. CloudKit stamps
         // creationDate server-side, so the client never authors the time.
+        // The offerID field also keeps the schema non-empty: CloudKit refuses
+        // to promote a record type that has no custom fields.
         let record = CKRecord(recordType: "OfferAnchor", recordID: anchorRecordID)
+        record["offerID"] = Self.offerID
         let saved = try await database.save(record)
         let serverAnchor = saved.creationDate ?? Date()
         setAnchor(min(localAnchor ?? .distantFuture, serverAnchor))
