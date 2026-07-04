@@ -9,6 +9,20 @@ import Foundation
 import StoreKit
 import Combine
 
+enum JoodleProducts {
+    static let monthly = "dev.liyuxuan.joodle.pro.monthly"
+    static let yearly = "dev.liyuxuan.joodle.pro.yearly"
+    static let lifetime = "dev.liyuxuan.joodle.pro.lifetime"
+    /// Discounted lifetime SKU shown only during the per-user limited-time
+    /// offer window. Unpromoted in App Store Connect, so it has no storefront
+    /// surface — the app is the only way in.
+    static let lifetimePromo = "dev.liyuxuan.joodle.pro.lifetime.promo50"
+
+    /// Either of these grants the lifetime entitlement — every ownership
+    /// check must treat them identically.
+    static let lifetimeIDs: Set<String> = [lifetime, lifetimePromo]
+}
+
 @MainActor
 class StoreKitManager: NSObject, ObservableObject {
     static let shared = StoreKitManager()
@@ -31,9 +45,10 @@ class StoreKitManager: NSObject, ObservableObject {
     @Published var pendingPlanProductID: String?  // The product the subscription will renew to (if different from current)
 
     private let productIDs: [String] = [
-        "dev.liyuxuan.joodle.pro.monthly",
-        "dev.liyuxuan.joodle.pro.yearly",
-        "dev.liyuxuan.joodle.pro.lifetime"
+        JoodleProducts.monthly,
+        JoodleProducts.yearly,
+        JoodleProducts.lifetime,
+        JoodleProducts.lifetimePromo
     ]
 
     /// Whether the user owns the lifetime (non-consumable) purchase
@@ -369,7 +384,7 @@ class StoreKitManager: NSObject, ObservableObject {
 
         // Check for lifetime (non-consumable) purchase via currentEntitlements
         // Also serves as fallback if subscription.status found nothing
-        var foundLifetime = false
+        var foundLifetimeProductID: String?
         for await result in Transaction.currentEntitlements {
             do {
                 let transaction = try checkVerified(result)
@@ -378,8 +393,8 @@ class StoreKitManager: NSObject, ObservableObject {
                     purchasedIDs.insert(transaction.productID)
 
                     // Lifetime purchase takes priority
-                    if transaction.productID == "dev.liyuxuan.joodle.pro.lifetime" {
-                        foundLifetime = true
+                    if JoodleProducts.lifetimeIDs.contains(transaction.productID) {
+                        foundLifetimeProductID = transaction.productID
                         currentProduct = transaction.productID
                     } else if currentProduct == nil {
                         // Only set subscription as current if we don't have one yet
@@ -392,8 +407,9 @@ class StoreKitManager: NSObject, ObservableObject {
         }
 
         // If lifetime is found, override subscription details
-        if foundLifetime {
-            currentProduct = "dev.liyuxuan.joodle.pro.lifetime"
+        let foundLifetime = foundLifetimeProductID != nil
+        if let foundLifetimeProductID {
+            currentProduct = foundLifetimeProductID
             expirationDate = nil  // Lifetime has no expiration
             autoRenew = false
             inTrial = false
@@ -497,13 +513,20 @@ class StoreKitManager: NSObject, ObservableObject {
         products.first { $0.id.contains("yearly") }
     }
 
+    /// The full-price lifetime product — exact match so the discounted promo
+    /// SKU can never masquerade as the regular one.
     var lifetimeProduct: Product? {
-        products.first { $0.id.contains("lifetime") }
+        products.first { $0.id == JoodleProducts.lifetime }
     }
 
-    /// Whether the current active product is the lifetime (non-consumable) purchase
+    /// The discounted lifetime SKU, shown only during the limited-time offer window.
+    var lifetimePromoProduct: Product? {
+        products.first { $0.id == JoodleProducts.lifetimePromo }
+    }
+
+    /// Whether the current active product is a lifetime (non-consumable) purchase
     var isLifetimeUser: Bool {
-        currentProductID == "dev.liyuxuan.joodle.pro.lifetime"
+        currentProductID.map { JoodleProducts.lifetimeIDs.contains($0) } == true
     }
 
     func savingsPercentage() -> Int? {

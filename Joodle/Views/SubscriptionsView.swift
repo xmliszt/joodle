@@ -150,7 +150,9 @@ struct SubscriptionsView: View {
     VStack(spacing: 12) {
       GlossyCrownView(isSubscribed: subscriptionManager.hasPremiumAccess)
 
-      if subscriptionManager.hasPremiumAccess && !GracePeriodManager.shared.isInGracePeriod {
+      // A purchase outranks the grace period: owners who buy mid-trial see
+      // their owned status, not the trial countdown.
+      if subscriptionManager.isSubscribed {
         Text("Joodle Pro")
           .font(.appFont(size: 28, weight: .bold))
 

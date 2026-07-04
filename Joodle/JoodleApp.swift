@@ -201,6 +201,7 @@ struct JoodleApp: App {
   @State private var accentColor: ThemeColor = UserPreferences.shared.accentColor
   @State private var selectedDateFromWidget: Date?
   @State private var showPaywallFromWidget = false
+  @State private var showLimitedTimeOffer = false
   @State private var showLaunchScreen = true
   @State private var hasSetupObservers = false
   @State private var showPendingRestartAlert = false
@@ -570,6 +571,26 @@ struct JoodleApp: App {
               .sheet(isPresented: $showPaywallFromWidget) {
                 StandalonePaywallView(source: "widget")
                   .presentationDetents([.large])
+              }
+              .sheet(isPresented: $showLimitedTimeOffer, onDismiss: {
+                LimitedTimeOfferManager.shared.markCurrentCampaignSeen()
+              }) {
+                StandalonePaywallView(source: "lto_auto", context: .limitedTimeOffer)
+                  .presentationDetents([.large])
+              }
+              .task {
+                // Auto-present the limited-time offer once per campaign, only after
+                // the main content is mounted (this branch already runs post-launch-
+                // screen, honoring the cold-launch render-abort constraint). Defer to
+                // any changelog so we never stack two sheets on the same launch.
+                await LimitedTimeOfferManager.shared.refresh()
+                guard hasCompletedOnboarding, changelogEntry == nil else { return }
+                if LimitedTimeOfferManager.shared.shouldAutoPresent {
+                  try? await Task.sleep(for: .milliseconds(400))
+                  if changelogEntry == nil && !showPaywallFromWidget {
+                    showLimitedTimeOffer = true
+                  }
+                }
               }
               .alert("Enable iCloud Sync", isPresented: $showPendingRestartAlert) {
                 Button("Later", role: .cancel) {

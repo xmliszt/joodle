@@ -15,6 +15,7 @@ struct StandalonePaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var storeManager = StoreKitManager.shared
     @StateObject private var subscriptionManager = SubscriptionManager.shared
+    @StateObject private var ltoManager = LimitedTimeOfferManager.shared
     @State private var isPurchasing = false
     @State private var isCheckingSubscription = true
 
@@ -60,6 +61,14 @@ struct StandalonePaywallView: View {
         }
         .presentationDragIndicator(.visible)
         .postHogScreenView("Paywall - Standalone")
+        .onChange(of: ltoManager.isActive) { _, active in
+            // The countdown hit zero under the open sheet — the offer is gone,
+            // so the sheet goes with it. A purchase also flips isActive, but
+            // that path dismisses via onPurchaseComplete after its own flow.
+            if context == .limitedTimeOffer, !active, !subscriptionManager.isSubscribed {
+                dismiss()
+            }
+        }
         .task {
             // Refresh subscription status from StoreKit before showing paywall
             await subscriptionManager.updateSubscriptionStatus()
@@ -68,6 +77,14 @@ struct StandalonePaywallView: View {
             // The trial-status sheet is the exception: a trial user DOES have premium access
             // (via the grace period), and seeing their own trial status is the whole point.
             if context == .expired, subscriptionManager.hasPremiumAccess {
+                dismiss()
+                return
+            }
+
+            // The offer sheet stays for grace-period trial users — the trial
+            // shouldn't block buying the discounted plan early. Only a real
+            // purchase (subscription or lifetime) makes it pointless.
+            if context == .limitedTimeOffer, subscriptionManager.isSubscribed {
                 dismiss()
                 return
             }

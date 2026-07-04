@@ -25,14 +25,19 @@ struct PricingCard: View {
   let badge: String?
   let isEligibleForIntroOffer: Bool
   let layout: PricingCardLayout
+  /// When set, renders this pre-discount price struck through above the live
+  /// `displayPrice`. Pass the full-price SKU's `displayPrice` during the
+  /// limited-time offer so the reference price is always Apple's real one.
+  let originalPriceText: String?
   let onSelect: () -> Void
-  
+
   init(
     product: Product,
     isSelected: Bool,
     badge: String? = nil,
     isEligibleForIntroOffer: Bool,
     layout: PricingCardLayout = .full,
+    originalPriceText: String? = nil,
     onSelect: @escaping () -> Void
   ) {
     self.product = product
@@ -40,6 +45,7 @@ struct PricingCard: View {
     self.badge = badge
     self.isEligibleForIntroOffer = isEligibleForIntroOffer
     self.layout = layout
+    self.originalPriceText = originalPriceText
     self.onSelect = onSelect
   }
   
@@ -100,6 +106,12 @@ struct PricingCard: View {
           
           // Primary pricing
           HStack(alignment: .firstTextBaseline, spacing: 4) {
+            if let originalPriceText {
+              Text(originalPriceText)
+                .font(.appSubheadline(weight: .medium))
+                .foregroundColor(.secondary)
+                .strikethrough()
+            }
             Text(product.displayPrice)
               .font(.appTitle2(weight: .bold))
               .foregroundColor(.primary)
@@ -131,10 +143,16 @@ struct PricingCard: View {
       
       // Price
       VStack(spacing: 2) {
+        if let originalPriceText {
+          Text(originalPriceText)
+            .font(.appCaption())
+            .foregroundColor(.secondary)
+            .strikethrough()
+        }
         Text(product.displayPrice)
           .font(.appTitle3(weight: .bold))
           .foregroundColor(.primary)
-        
+
         if isLifetime {
           Text("one-time")
             .font(.appCaption())

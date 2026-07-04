@@ -30,6 +30,11 @@
           "locale" : "fr"
         },
         {
+          "description" : "永久解鎖所有功能",
+          "displayName" : "Joodle Pro 終身版",
+          "locale" : "zh_Hant"
+        },
+        {
           "description" : "永久解锁全部功能",
           "displayName" : "Joodle Pro 终身版",
           "locale" : "zh_Hans"
@@ -48,6 +53,46 @@
       "productID" : "dev.liyuxuan.joodle.pro.lifetime",
       "referenceName" : "Joodle Pro Lifetime",
       "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "24.98",
+      "familyShareable" : false,
+      "internalID" : "6787389629",
+      "localizations" : [
+        {
+          "description" : "永久解锁全部功能",
+          "displayName" : "Joodle Pro 终身版",
+          "locale" : "zh_Hans"
+        },
+        {
+          "description" : "すべての機能を永久に解放",
+          "displayName" : "Joodle Pro 永久版",
+          "locale" : "ja"
+        },
+        {
+          "description" : "Unlock all features forever",
+          "displayName" : "Joodle Pro Lifetime",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "모든 기능을 영구적으로 해제",
+          "displayName" : "Joodle Pro 평생 라이선스",
+          "locale" : "ko"
+        },
+        {
+          "description" : "Débloquez toutes les fonctionnalités à vie",
+          "displayName" : "Joodle Pro à vie",
+          "locale" : "fr"
+        },
+        {
+          "description" : "永久解鎖所有功能",
+          "displayName" : "Joodle Pro 終身版",
+          "locale" : "zh_Hant"
+        }
+      ],
+      "productID" : "dev.liyuxuan.joodle.pro.lifetime.promo50",
+      "referenceName" : "Joodle Pro Lifetime 50% Promo",
+      "type" : "NonConsumable"
     }
   ],
   "settings" : {
@@ -58,7 +103,7 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 800766576.24521196,
+    "_lastSynchronizedDate" : 804857990.34637904,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "SGP",
@@ -102,6 +147,9 @@
     ],
     "_timeRate" : 0
   },
+  "subscriptionBundleGroups" : [
+
+  ],
   "subscriptionGroups" : [
     {
       "id" : "21852566",
@@ -130,6 +178,11 @@
           "description" : "",
           "displayName" : "Joodle Pro",
           "locale" : "en_US"
+        },
+        {
+          "description" : "",
+          "displayName" : "Joodle pro",
+          "locale" : "zh_Hant"
         }
       ],
       "name" : "Joodle Pro",
@@ -155,7 +208,7 @@
                 "expired",
                 "existing"
               ],
-              "internalID" : "EAC46367",
+              "internalID" : "8ab414ac-7421-4ec9-8300-9f4e9525393c",
               "isStackable" : false,
               "numberOfPeriods" : 1,
               "paymentMode" : "free",
@@ -180,6 +233,11 @@
               "description" : "Débloquez toutes les fonctionnalités pendant un an",
               "displayName" : "Joodle Pro Mensuel",
               "locale" : "fr"
+            },
+            {
+              "description" : "解鎖一個月的所有功能",
+              "displayName" : "Joodle Pro 月訂閱",
+              "locale" : "zh_Hant"
             },
             {
               "description" : "一个月解锁全部功能",
@@ -223,11 +281,11 @@
             {
               "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
-                "new",
                 "expired",
+                "new",
                 "existing"
               ],
-              "internalID" : "A9034D1C",
+              "internalID" : "161c3161-2bf7-4998-9757-d404a2c7fdd8",
               "isStackable" : true,
               "numberOfPeriods" : 1,
               "paymentMode" : "free",
@@ -241,11 +299,25 @@
                 "new",
                 "existing"
               ],
-              "internalID" : "A9491BF6",
+              "internalID" : "872815b9-2444-43d3-975d-b0a6f37e8dcc",
               "isStackable" : true,
               "numberOfPeriods" : 1,
               "paymentMode" : "free",
               "referenceName" : "1 Year Free",
+              "subscriptionPeriod" : "P1Y"
+            },
+            {
+              "billingPlanType" : "BILLED_UPFRONT",
+              "eligibility" : [
+                "existing",
+                "new",
+                "expired"
+              ],
+              "internalID" : "4b6a062c-845f-454d-aa04-c0596c7703ba",
+              "isStackable" : false,
+              "numberOfPeriods" : 1,
+              "paymentMode" : "free",
+              "referenceName" : "Mergeek 推广",
               "subscriptionPeriod" : "P1Y"
             }
           ],
@@ -281,6 +353,11 @@
               "description" : "일 년 동안 모든 기능 잠금 해제",
               "displayName" : "Joodle Pro 연간",
               "locale" : "ko"
+            },
+            {
+              "description" : "解鎖一整年的所有功能",
+              "displayName" : "Joodle Pro 年訂閱",
+              "locale" : "zh_Hant"
             }
           ],
           "productID" : "dev.liyuxuan.joodle.pro.yearly",
@@ -295,8 +372,11 @@
       ]
     }
   ],
+  "subscriptionSuiteGroups" : [
+
+  ],
   "version" : {
-    "major" : 5,
-    "minor" : 0
+    "major" : 6,
+    "minor" : 3
   }
 }

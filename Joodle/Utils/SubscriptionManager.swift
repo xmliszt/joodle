@@ -104,7 +104,7 @@ class SubscriptionManager: ObservableObject {
     private init() {
         // Set initial subscription state from stored date WITHOUT triggering didSet side effects
         let storedProduct = UserDefaults.standard.string(forKey: "subscriptionProductID")
-        if storedProduct == "dev.liyuxuan.joodle.pro.lifetime" {
+        if let storedProduct, JoodleProducts.lifetimeIDs.contains(storedProduct) {
             // Lifetime purchase - always active, no expiration check needed
             isSubscribed = true
             isLifetimeUser = true
@@ -227,7 +227,7 @@ class SubscriptionManager: ObservableObject {
     /// Updates isSubscribed based on the stored expiration date (no network call)
     private func updateSubscribedStateFromStoredDate() {
         // Lifetime users are always subscribed
-        if storedProductID == "dev.liyuxuan.joodle.pro.lifetime" {
+        if let storedProductID, JoodleProducts.lifetimeIDs.contains(storedProductID) {
             if !isSubscribed {
                 isSubscribed = true
             }
@@ -305,7 +305,7 @@ class SubscriptionManager: ObservableObject {
             // A lifetime non-consumable never expires, so an empty entitlements read
             // for a known lifetime owner is a transient StoreKit glitch, not a real
             // loss. Clearing here would fire a false "subscription expired" alert.
-            if isLifetimeUser || storedProductID == "dev.liyuxuan.joodle.pro.lifetime" {
+            if isLifetimeUser || storedProductID.map({ JoodleProducts.lifetimeIDs.contains($0) }) == true {
                 print("⚠️ StoreKit returned empty for lifetime owner - ignoring transient read")
                 lastOnlineVerificationDate = Date()
                 WidgetHelper.shared.updateSubscriptionStatus()

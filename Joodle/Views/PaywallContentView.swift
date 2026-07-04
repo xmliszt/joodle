@@ -18,6 +18,9 @@ enum PaywallContext: Equatable {
   case trialStatus(daysLeft: Int)
   /// The real pay screen, shown once the trial has ended: Free-vs-Pro comparison + plans.
   case expired
+  /// Limited-time offer surface: countdown header + discounted plans. Driven by
+  /// `LimitedTimeOfferManager`; presented as a sheet and from the Settings banner.
+  case limitedTimeOffer
 }
 
 /// Configuration for PaywallContentView behavior and appearance
@@ -311,6 +314,7 @@ struct PaywallContentView: View {
 
   @StateObject private var storeManager = StoreKitManager.shared
   @StateObject private var subscriptionManager = SubscriptionManager.shared
+  @StateObject private var ltoManager = LimitedTimeOfferManager.shared
 
   @State private var selectedProductID: String?
   @State private var isPurchasing = false
@@ -361,7 +365,14 @@ struct PaywallContentView: View {
     }
     .onChange(of: storeManager.products) { _, newProducts in
       if selectedProductID == nil, !newProducts.isEmpty {
-        selectedProductID = storeManager.lifetimeProduct?.id ?? storeManager.yearlyProduct?.id
+        selectedProductID = displayedLifetimeProduct?.id ?? storeManager.yearlyProduct?.id
+      }
+    }
+    .onChange(of: ltoManager.isActive) { _, active in
+      // The window can lapse while the sheet is open — hand the selection
+      // back to the full-price SKU so the expired promo can't be bought.
+      if !active, selectedProductID == JoodleProducts.lifetimePromo {
+        selectedProductID = storeManager.lifetimeProduct?.id
       }
     }
     .offerCodeRedemption(isPresented: $showRedeemCode) { _ in
@@ -385,12 +396,18 @@ struct PaywallContentView: View {
   private var headerSection: some View {
     // Onboarding reads as a full step: title is left-aligned and wraps freely.
     // Other surfaces stay centered above their price cards.
-    VStack(alignment: isOnboarding ? .leading : .center, spacing: 8) {
+    VStack(alignment: isOnboarding ? .leading : .center, spacing: 16) {
       Text(headerTitleDisplay)
         .font(.appFont(size: 34, weight: .bold))
         .multilineTextAlignment(isOnboarding ? .leading : .center)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: isOnboarding ? .leading : .center)
+
+      // Countdown drives the urgency and stays honest — it counts to the same
+      // instant the App Store Connect price reverts and the campaign flag flips.
+      if case .limitedTimeOffer = configuration.context, let endDate = ltoManager.endDate {
+        CountdownTimerView(endDate: endDate, style: .pills)
+      }
     }
     .padding(.top, 24)
     .padding(.horizontal, isOnboarding ? 24 : 8)
@@ -404,13 +421,22 @@ struct PaywallContentView: View {
       return "You're on Pro — \(daysLeft) days to enjoy"
     case .expired:
       return "Keep your Joodle Pro"
+    case .limitedTimeOffer:
+      // Overridden in headerTitleDisplay by the runtime campaign headline.
+      return "Limited Time Offer"
     }
   }
 
   /// Resolved title with "Joodle Pro" joined by a non-breaking space so the
   /// brand never splits across lines when the title wraps.
   private var headerTitleDisplay: String {
-    String(localized: headerTitle).replacingOccurrences(of: "Joodle Pro", with: "Joodle\u{00A0}Pro")
+    let raw: String
+    if case .limitedTimeOffer = configuration.context {
+      raw = ltoManager.headline
+    } else {
+      raw = String(localized: headerTitle)
+    }
+    return raw.replacingOccurrences(of: "Joodle Pro", with: "Joodle\u{00A0}Pro")
   }
 
   // MARK: - Context Body
@@ -435,6 +461,12 @@ struct PaywallContentView: View {
       }
 
     case .expired:
+      ProComparisonTable()
+      pricingSection
+      ctaSection
+      legalLinksSection
+
+    case .limitedTimeOffer:
       ProComparisonTable()
       pricingSection
       ctaSection
@@ -586,16 +618,36 @@ struct PaywallContentView: View {
     .padding(.vertical, 40)
   }
 
+  /// Whether this surface is the offer sheet with a live per-user window.
+  private var isShowingPromoOffer: Bool {
+    guard case .limitedTimeOffer = configuration.context else { return false }
+    return ltoManager.isActive
+  }
+
+  /// The lifetime card to display: the discounted promo SKU on the offer
+  /// surface, the full-price SKU everywhere else. Never both at once —
+  /// otherwise there'd be a permanent "always buy the cheap one" path.
+  private var displayedLifetimeProduct: Product? {
+    if isShowingPromoOffer, let promo = ltoManager.promoProduct {
+      return promo
+    }
+    return storeManager.lifetimeProduct
+  }
+
   private var productCards: some View {
     VStack(spacing: 24) {
       // Top row: Lifetime centered
-      if let lifetime = storeManager.lifetimeProduct {
+      if let lifetime = displayedLifetimeProduct {
+        let isPromo = lifetime.id == JoodleProducts.lifetimePromo
         PricingCard(
           product: lifetime,
           isSelected: selectedProductID == lifetime.id,
-          badge: String(localized: "BEST VALUE"),
+          badge: isPromo
+            ? ltoManager.discountPercent.map { String(localized: "\($0)% OFF") } ?? String(localized: "BEST VALUE")
+            : String(localized: "BEST VALUE"),
           isEligibleForIntroOffer: false,
           layout: .compact,
+          originalPriceText: isPromo ? storeManager.lifetimeProduct?.displayPrice : nil,
           onSelect: {
             selectedProductID = lifetime.id
           }
@@ -603,32 +655,35 @@ struct PaywallContentView: View {
         .frame(maxWidth: .infinity)
       }
 
-      // Bottom row: Yearly + Monthly side by side
-      HStack(spacing: 24) {
-        if let yearly = storeManager.yearlyProduct {
-          PricingCard(
-            product: yearly,
-            isSelected: selectedProductID == yearly.id,
-            badge: savingsBadgeText(),
-            isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
-            layout: .compact,
-            onSelect: {
-              selectedProductID = yearly.id
-            }
-          )
-        }
+      // Bottom row: Yearly + Monthly side by side. Hidden on the offer sheet —
+      // the discount is lifetime-only, so the subscriptions would only dilute it.
+      if !isShowingPromoOffer {
+        HStack(spacing: 24) {
+          if let yearly = storeManager.yearlyProduct {
+            PricingCard(
+              product: yearly,
+              isSelected: selectedProductID == yearly.id,
+              badge: savingsBadgeText(),
+              isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
+              layout: .compact,
+              onSelect: {
+                selectedProductID = yearly.id
+              }
+            )
+          }
 
-        if let monthly = storeManager.monthlyProduct {
-          PricingCard(
-            product: monthly,
-            isSelected: selectedProductID == monthly.id,
-            badge: nil,
-            isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
-            layout: .compact,
-            onSelect: {
-              selectedProductID = monthly.id
-            }
-          )
+          if let monthly = storeManager.monthlyProduct {
+            PricingCard(
+              product: monthly,
+              isSelected: selectedProductID == monthly.id,
+              badge: nil,
+              isEligibleForIntroOffer: storeManager.isEligibleForIntroOffer,
+              layout: .compact,
+              onSelect: {
+                selectedProductID = monthly.id
+              }
+            )
+          }
         }
       }
     }
@@ -730,8 +785,16 @@ struct PaywallContentView: View {
       // Handle purchase
       if let selectedID = selectedProductID,
          let product = storeManager.products.first(where: { $0.id == selectedID }) {
-        handlePurchase(product)
-      } else if let lifetime = storeManager.lifetimeProduct {
+        // The offer genuinely expires: if the window lapsed between render
+        // and slide, buy the full-price SKU instead of the stale promo.
+        if product.id == JoodleProducts.lifetimePromo, !ltoManager.isActive,
+           let full = storeManager.lifetimeProduct {
+          selectedProductID = full.id
+          handlePurchase(full)
+        } else {
+          handlePurchase(product)
+        }
+      } else if let lifetime = displayedLifetimeProduct {
         // Auto-select lifetime if nothing selected
         selectedProductID = lifetime.id
         handlePurchase(lifetime)
@@ -796,7 +859,7 @@ struct PaywallContentView: View {
 
   private func handleOnAppear() {
     if selectedProductID == nil, !storeManager.products.isEmpty {
-      selectedProductID = storeManager.lifetimeProduct?.id ?? storeManager.yearlyProduct?.id
+      selectedProductID = displayedLifetimeProduct?.id ?? storeManager.yearlyProduct?.id
     }
 
     if storeManager.products.isEmpty && !storeManager.isLoading {

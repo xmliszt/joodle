@@ -188,6 +188,7 @@ struct SettingsView: View {
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @StateObject private var storeKitManager = StoreKitManager.shared
   @StateObject private var reminderManager = ReminderManager.shared
+  @StateObject private var ltoManager = LimitedTimeOfferManager.shared
   
   /// When true, auto-navigates to Customization and scrolls to note prompt setting
   @Binding var navigateToNotePromptSetting: Bool
@@ -197,27 +198,19 @@ struct SettingsView: View {
   }
   @State private var showOnboarding = false
   @State private var showNotificationDeniedAlert = false
-  @State private var showPlaceholderGenerator = false
   @State private var showPaywall = false
   @State private var paywallSource = "settings"
   @State private var showSubscriptions = false
   @State private var showTrialStatus = false
-  @State private var showAppStats = false
-#if DEBUG
-  @State private var showDataSeeder = false
-#endif
+  @State private var showLimitedTimeOffer = false
   @State private var currentJoodleCount: Int = 0
-  
-  @State private var showSubscriptionTesting = false
+
   @State private var showRedeemCode = false
   @State private var showFaq = false
   @State private var showShareSheet = false
   @State private var showDeviceIdentifierAlert = false
   @State private var isAppUpdateAvailable = false
-#if DEBUG
-  @State private var showBannerPreview = false
-#endif
-  
+
   // Theme color change state
   @State private var pendingThemeColor: ThemeColor?
   @State private var showThemeOverlay = false
@@ -237,17 +230,11 @@ struct SettingsView: View {
   
   // Debug: Simulate production environment - bound to AppEnvironment
   @State private var simulateProductionEnvironment = AppEnvironment.simulateProductionEnvironment
-#if DEBUG
-  // Debug: Simulate the user denying camera permission - bound to CameraReferenceContext
-  @State private var simulateCameraDenied = CameraReferenceContext.debugSimulateCameraDenied
-#endif
-  
+
   // Navigation state for sub-pages
   @State private var showExperimentalFeatures = false
   @State private var showCustomization = false
   @State private var scrollToNotePromptSetting = false
-  @State private var showSimulateFirstLaunchAlert = false
-  @State private var userConditionStatusMessage: String?
 
   // Language change state
   @State private var showLanguageRestartAlert = false
@@ -385,17 +372,6 @@ struct SettingsView: View {
     .fullScreenCover(isPresented: $showOnboarding) {
       OnboardingFlowView()
     }
-    .sheet(isPresented: $showPlaceholderGenerator) {
-      PlaceholderGeneratorView()
-    }
-    .sheet(isPresented: $showAppStats) {
-      AppStatsView()
-    }
-#if DEBUG
-    .sheet(isPresented: $showDataSeeder) {
-      DebugDataSeederView()
-    }
-#endif
     .sheet(isPresented: $showPaywall) {
       StandalonePaywallView(source: paywallSource)
     }
@@ -404,6 +380,12 @@ struct SettingsView: View {
         source: "trial_status",
         context: .trialStatus(daysLeft: GracePeriodManager.shared.gracePeriodDaysRemaining)
       )
+    }
+    .sheet(isPresented: $showLimitedTimeOffer, onDismiss: {
+      ltoManager.markCurrentCampaignSeen()
+    }) {
+      StandalonePaywallView(source: "lto_settings", context: .limitedTimeOffer)
+        .presentationDetents([.large])
     }
     .navigationDestination(isPresented: $showSubscriptions) {
       SubscriptionsView()
@@ -446,14 +428,6 @@ struct SettingsView: View {
       }
     } message: {
       Text(languageRestartAlertMessage)
-    }
-    .alert("Simulate First-Time User?", isPresented: $showSimulateFirstLaunchAlert) {
-      Button("Reset & Restart", role: .destructive) {
-        simulateFirstTimeUser()
-      }
-      Button("Cancel", role: .cancel) { }
-    } message: {
-      Text("This resets onboarding and feature-tooltip state and quits the app. Reopen it to go through onboarding as a brand-new user.")
     }
     .offerCodeRedemption(isPresented: $showRedeemCode) { _ in
       Task {
@@ -537,19 +511,32 @@ struct SettingsView: View {
   @ViewBuilder
   private var membershipBannerSection: some View {
     Section {
+      // Limited-time offer banner — the persistent re-entry point while a
+      // campaign is live. Stays even after the auto-sheet is dismissed.
+      if ltoManager.isActive, let endDate = ltoManager.endDate, let percent = ltoManager.discountPercent {
+        LimitedTimeOfferBanner(
+          headline: ltoManager.headline,
+          endDate: endDate,
+          discountPercent: percent,
+          onTap: { showLimitedTimeOffer = true }
+        )
+      }
+
       // Membership Banner - only this should trigger paywall
+      // A purchase outranks the grace period: owners who buy mid-trial see
+      // their owned status, not the trial countdown.
       MembershipBannerView(
         hasPremiumAccess: subscriptionManager.hasPremiumAccess,
-        isInGracePeriod: GracePeriodManager.shared.isInGracePeriod,
+        isInGracePeriod: !subscriptionManager.isSubscribed && GracePeriodManager.shared.isInGracePeriod,
         gracePeriodDaysRemaining: GracePeriodManager.shared.gracePeriodDaysRemaining,
         statusMessage: subscriptionManager.subscriptionStatusMessage,
         joodleCount: currentJoodleCount,
         alarmCount: reminderManager.reminders.count,
         onTap: {
-          if GracePeriodManager.shared.isInGracePeriod {
-            showTrialStatus = true
-          } else if subscriptionManager.hasPremiumAccess {
+          if subscriptionManager.isSubscribed {
             showSubscriptions = true
+          } else if GracePeriodManager.shared.isInGracePeriod {
+            showTrialStatus = true
           } else {
             showPaywall = true
           }
@@ -1151,184 +1138,26 @@ ID: \(deviceIdentifier)
     AppEnvironment.isSimulatingProduction
   }
   
-  /// Debug buttons to put the app into a specific user condition for testing
-  /// onboarding and feature-discovery tooltips.
-  @ViewBuilder
-  private var simulateUserConditionButtons: some View {
-    Button("Simulate First-Time User (restart)") {
-      showSimulateFirstLaunchAlert = true
-    }
-
-    Button("Simulate Existing User w/ Unseen Feature") {
-      // Already onboarded, but feature tips have never been seen — so the
-      // next time the target screen appears, the tooltip shows.
-      UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
-      UserDefaults.standard.removeObject(forKey: "isRevisitFromSettings")
-      FeatureTipManager.shared.resetSeenState()
-      userConditionStatusMessage = "Existing user simulated — feature tooltips reset. Open a drawing to see them."
-      print("DEBUG: Simulated existing user with unseen feature tooltips")
-    }
-
-    if let userConditionStatusMessage {
-      Text(userConditionStatusMessage)
-        .font(.footnote)
-        .foregroundColor(.secondary)
-    }
-  }
-
-  /// Reset all persisted state so the next launch behaves like a brand-new
-  /// install going through onboarding for the first time.
-  private func simulateFirstTimeUser() {
-    // Trigger onboarding as a genuine first run (not a Settings revisit).
-    UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
-    UserDefaults.standard.removeObject(forKey: "isRevisitFromSettings")
-    // Clear feature-tip seen state so onboarding completion re-suppresses them
-    // exactly as it would for a real new install.
-    FeatureTipManager.shared.resetSeenState()
-    print("DEBUG: Simulated first-time user — restarting to apply")
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-      exit(0)
-    }
-  }
-
   @ViewBuilder
   private var developerOptionsSection: some View {
-    if AppEnvironment.isDebug && !simulateProductionEnvironment {
+    if (AppEnvironment.isDebug || isNonProductionEnvironment) && !simulateProductionEnvironment {
       Section {
-        Button("App Stats") {
-          showAppStats = true
-        }
-#if DEBUG
-        // TEMPORARY: filter-tuning workbench. Remove once the Fujifilm grade
-        // is dialed in and the chosen preset is committed to FujifilmFilter.
-        NavigationLink("Joodle Photo Filter Lab") {
-          FujifilmFilterLab()
-            .navigationTitle("Joodle Photo Filter Lab")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-        Button("Data Seeder") {
-          showDataSeeder = true
-        }
-#endif
-        Button("Generate Placeholder") {
-          showPlaceholderGenerator = true
-        }
-        Button("Clear iCloud KVS (Sync History)", role: .destructive) {
-          let cloudStore = NSUbiquitousKeyValueStore.default
-          cloudStore.removeObject(forKey: "is_cloud_sync_enabled_backup")
-          cloudStore.removeObject(forKey: "cloud_sync_was_enabled")
-          cloudStore.synchronize()
-          print("DEBUG: iCloud KVS sync history cleared!")
-        }
-        
-        Button("Reset Changelog State") {
-          ChangelogManager.shared.resetChangelogState()
-          print("DEBUG: Changelog state reset - will show on next launch")
-        }
-
-        NavigationLink("Preview Changelog Sheet") {
-          ChangelogPreviewDebugView()
-        }
-
-        simulateUserConditionButtons
-
-#if DEBUG
-        Button("Show Test Remote Alert") {
-          RemoteAlertService.shared.showTestAlert()
-        }
-        
-        Button("Reset Remote Alert State") {
-          RemoteAlertService.shared.resetDismissedState()
-        }
-        
-        Button("Fetch Remote Alert Now") {
-          Task {
-            await RemoteAlertService.shared.checkForAlert()
-          }
-        }
-#endif
-        
-        Toggle("Simulate Production Environment", isOn: Binding(
-          get: { AppEnvironment.simulateProductionEnvironment },
-          set: { newValue in
-            AppEnvironment.simulateProductionEnvironment = newValue
-            simulateProductionEnvironment = newValue
-          }
-        ))
-
-#if DEBUG
-        Toggle("Simulate Camera Permission Denied", isOn: Binding(
-          get: { CameraReferenceContext.debugSimulateCameraDenied },
-          set: { newValue in
-            CameraReferenceContext.debugSimulateCameraDenied = newValue
-            simulateCameraDenied = newValue
-          }
-        ))
-#endif
-
-      } header: {
-        Text("Developer Options")
-      } footer: {
-        Text("When enabled, the app will behave as if it's running in production (App Store release).")
-      }
-
-#if DEBUG
-      LiquidBackdropDebugSection()
-#endif
-
-      Section("Subscription Testing") {
-        HStack {
-          Text("App Status")
-          Spacer()
-          if subscriptionManager.isSubscribed {
-            Text("Subscribed ✓")
-              .foregroundColor(.green)
-          } else if GracePeriodManager.shared.isInGracePeriod {
-            Text("Grace Period (\(GracePeriodManager.shared.gracePeriodDaysRemaining, format: .number.grouping(.never))d)")
-              .foregroundColor(.orange)
-          } else {
-            Text("Free")
+        NavigationLink {
+          DeveloperOptionsView(simulateProductionEnvironment: $simulateProductionEnvironment)
+        } label: {
+          HStack {
+            SettingsIconView(systemName: "hammer.fill", backgroundColor: .gray)
+            Text(verbatim: "Developer")
+              .foregroundColor(.primary)
+            Spacer()
+            Text(verbatim: AppEnvironment.isDebug ? "Debug" : "TestFlight")
+              .font(.appSubheadline())
               .foregroundColor(.secondary)
           }
         }
-        
-        Button("Subscription Testing Console") {
-          showSubscriptionTesting = true
-        }
-        
-#if DEBUG
-        Button("Preview Membership Banner") {
-          showBannerPreview = true
-        }
-#endif
-      }
-      .sheet(isPresented: $showSubscriptionTesting) {
-        SubscriptionTestingView()
-      }
-#if DEBUG
-      .sheet(isPresented: $showBannerPreview) {
-        MembershipBannerPreviewView()
-      }
-#endif
-    }
-    
-    if isNonProductionEnvironment && !simulateProductionEnvironment {
-      Section("Grace Period Testing") {
-        Button("Expire Grace Period Now", role: .destructive) {
-          // Set grace period start to 8 days ago so it's already expired
-          let expiredDate = Date().addingTimeInterval(-8 * 24 * 60 * 60)
-          GracePeriodManager.shared.setGracePeriodStart(expiredDate)
-          print("⏰ Grace period force-expired (start set to \(expiredDate))")
-        }
-        
-        Button("Reset Grace Period (7 days)") {
-          GracePeriodManager.shared.resetGracePeriod()
-          GracePeriodManager.shared.startGracePeriodIfNeeded()
-          print("🎉 Grace period reset to 7 days from now")
-        }
       }
     }
-    
+
     if isSimulatingProduction {
       Section {
         Button("Exit Production Simulation") {
@@ -1459,75 +1288,6 @@ ID: \(deviceIdentifier)
     }
   }
 }
-
-// MARK: - Liquid Backdrop Debug Section
-
-#if DEBUG
-/// Debug-only control to simulate any time of day for the liquid backdrop's drain
-/// level, or reset back to the device clock. Compiled out of release builds.
-private struct LiquidBackdropDebugSection: View {
-  private let debug = LiquidBackdropDebug.shared
-
-  var body: some View {
-    // Read here so the section re-renders when the override changes.
-    let simulatedSeconds = debug.simulatedSecondsSinceMidnight
-
-    Section {
-      Toggle(isOn: Binding(
-        get: { simulatedSeconds != nil },
-        set: { isOn in
-          debug.simulatedSecondsSinceMidnight = isOn ? Self.currentSecondsSinceMidnight() : nil
-        }
-      )) {
-        HStack {
-          SettingsIconView(systemName: "clock.badge.exclamationmark", backgroundColor: .orange)
-          Text("Simulate Time of Day")
-            .font(.appBody())
-        }
-      }
-
-      if let seconds = simulatedSeconds {
-        DatePicker(
-          "Simulated Time",
-          selection: Binding(
-            get: { Self.date(fromSecondsSinceMidnight: seconds) },
-            set: { debug.simulatedSecondsSinceMidnight = Self.secondsSinceMidnight(of: $0) }
-          ),
-          displayedComponents: .hourAndMinute
-        )
-
-        LabeledContent("Liquid Fill") {
-          Text("\(Int((1 - seconds / 86_400) * 100))%")
-            .foregroundStyle(.secondary)
-        }
-
-        Button(role: .destructive) {
-          debug.simulatedSecondsSinceMidnight = nil
-        } label: {
-          Text("Reset to Device Clock")
-        }
-      }
-    } header: {
-      Text("Liquid Backdrop Debug")
-    } footer: {
-      Text("Overrides the time of day that drains the liquid backdrop. Affects only the backdrop fill level — not the device clock. Debug builds only.")
-    }
-  }
-
-  private static func currentSecondsSinceMidnight() -> Double {
-    let now = Date()
-    return now.timeIntervalSince(Calendar.current.startOfDay(for: now))
-  }
-
-  private static func secondsSinceMidnight(of date: Date) -> Double {
-    date.timeIntervalSince(Calendar.current.startOfDay(for: date))
-  }
-
-  private static func date(fromSecondsSinceMidnight seconds: Double) -> Date {
-    Calendar.current.startOfDay(for: Date()).addingTimeInterval(seconds)
-  }
-}
-#endif
 
 // MARK: - Daily Reminder Settings View
 

@@ -12,6 +12,7 @@ struct SubscriptionTestingView: View {
   @Environment(\.dismiss) private var dismiss
   @StateObject private var storeKitManager = StoreKitManager.shared
   @StateObject private var subscriptionManager = SubscriptionManager.shared
+  @StateObject private var ltoManager = LimitedTimeOfferManager.shared
 
   @State private var isSyncing = false
   @State private var showManageSubscriptions = false
@@ -97,6 +98,43 @@ struct SubscriptionTestingView: View {
         } footer: {
           Text("App-only changes don't affect StoreKit. Use 'Sync from StoreKit' to restore actual status.")
         }
+
+        // MARK: - Limited-Time Offer
+        #if DEBUG
+        Section {
+          statusRow("Offer Active", value: ltoManager.isActive ? "Yes ✓" : "No", isActive: ltoManager.isActive)
+          if let anchor = ltoManager.anchorDate {
+            statusRow("Window Started", value: anchor.formatted(date: .abbreviated, time: .shortened), isActive: true)
+          } else {
+            statusRow("Window Started", value: "Not anchored", isActive: false)
+          }
+          if let endDate = ltoManager.endDate {
+            statusRow("Ends", value: endDate.formatted(date: .abbreviated, time: .shortened), isActive: endDate > Date())
+          }
+          statusRow("Promo Product Loaded", value: ltoManager.promoProduct != nil ? "Yes ✓" : "No", isActive: ltoManager.promoProduct != nil)
+          statusRow("Auto-Present Pending", value: ltoManager.shouldAutoPresent ? "Yes" : "No", isActive: ltoManager.shouldAutoPresent)
+
+          Button("Restart \(Int(LimitedTimeOfferManager.windowHours))h Window") {
+            ltoManager.debugRestartWindow()
+          }
+
+          Button("Expire Window (2 min left)") {
+            ltoManager.debugExpireSoon()
+          }
+
+          Button("Reset Seen Flag (re-arm auto-present)") {
+            ltoManager.debugResetSeenCampaign()
+          }
+
+          Button("Clear All Offer State", role: .destructive) {
+            ltoManager.debugClearAllState()
+          }
+        } header: {
+          Text("Limited-Time Offer (Per-User \(Int(LimitedTimeOfferManager.windowHours))h)")
+        } footer: {
+          Text("The window anchor lives in the CloudKit private database, so it survives reinstall. Clear All also deletes the CloudKit record; a fresh window starts on the next launch/foreground. Auto-present fires on next cold launch when pending.")
+        }
+        #endif
 
         // MARK: - Test Scenarios
         Section {
