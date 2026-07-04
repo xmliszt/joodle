@@ -118,18 +118,28 @@ final class FeatureTipManager: ObservableObject {
     }
 
     /// Called by `.featureTipScope(_:)` when its host screen is covered/popped.
+    ///
+    /// Deliberately keeps `lastFrames`: when a child screen is pushed over this
+    /// scope, the scroll position underneath is preserved, so the last-known
+    /// frames stay valid for deriving the fallback edge after popping back.
+    /// Forgetting them belongs to `forgetLastFrames(inScope:)`, which fires only
+    /// when the host screen is actually destroyed.
     func deactivateScope(_ scopeID: String) {
         guard activeScopes.contains(scopeID) else { return }
         activeScopes.remove(scopeID)
-        // Forget where this scope's targets last sat, so the next time the user
-        // enters the screen the tip starts from its `defaultEdge` instead of
-        // wherever they previously scrolled to (e.g. clamped to the top edge).
+        recompute()
+    }
+
+    /// Called when a scope's host screen is destroyed (left for good, not just
+    /// covered by a pushed child). Forgets where the scope's targets last sat,
+    /// so the next visit — whose scroll position starts fresh — derives the
+    /// fallback edge from `defaultEdge` instead of a stale frame.
+    func forgetLastFrames(inScope scopeID: String) {
         for tip in FeatureTipDefinitions.all {
             if case .scoped(scopeID, _) = tip.behavior {
                 lastFrames.removeValue(forKey: tip.anchorID)
             }
         }
-        recompute()
     }
 
     /// Reported by the overlay so the fallback edge can be derived from a

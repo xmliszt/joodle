@@ -112,6 +112,17 @@ private struct FeatureTipScopeProbe: UIViewControllerRepresentable {
         @available(*, unavailable)
         required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+        deinit {
+            // The controller only deinits when its screen is destroyed — a
+            // pushed child keeps it alive. That's the moment last-known anchor
+            // frames go stale (the next visit starts with a fresh scroll
+            // position), whereas on a mere push/pop they stay valid.
+            let scopeID = scopeID
+            Task { @MainActor in
+                FeatureTipManager.shared.forgetLastFrames(inScope: scopeID)
+            }
+        }
+
         override func viewDidAppear(_ animated: Bool) {
             super.viewDidAppear(animated)
             FeatureTipManager.shared.activateScope(scopeID)
