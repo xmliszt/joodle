@@ -104,3 +104,11 @@ buildServer.json
 
 # Secrets - API keys and sensitive configuration
 Secrets.xcconfig
+
+# Agent tooling installed by `npx @swmansion/argent init` (local only)
+.agents/
+.gemini/
+.kiro/
+.zed/
+.mcp.json
+skills-lock.json
