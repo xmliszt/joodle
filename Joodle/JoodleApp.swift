@@ -585,6 +585,10 @@ struct JoodleApp: App {
                 // any changelog so we never stack two sheets on the same launch.
                 await LimitedTimeOfferManager.shared.refresh()
                 guard hasCompletedOnboarding, changelogEntry == nil else { return }
+                // A pending trial-expired paywall owns the launch (ContentView
+                // presents it and consumes our auto-present); racing it here
+                // would stack two sheets from different presenters.
+                guard !GracePeriodManager.shared.shouldShowGraceExpiredPaywall else { return }
                 if LimitedTimeOfferManager.shared.shouldAutoPresent {
                   try? await Task.sleep(for: .milliseconds(400))
                   if changelogEntry == nil && !showPaywallFromWidget {

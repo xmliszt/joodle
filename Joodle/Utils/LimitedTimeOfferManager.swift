@@ -27,6 +27,10 @@ final class LimitedTimeOfferManager: ObservableObject {
   /// means a fresh anchor record and a fresh window per user.
   static let offerID = "lifetime-promo50"
   static let windowHours: Double = 24
+  /// First trial day (1-based) on which the offer may start for users still
+  /// inside the 7-day trial. Before this day nothing shows and no window
+  /// anchor is created, so the 24h clock can't burn out unseen.
+  static let offerStartTrialDay = 5
 
   private var anchorCacheKey: String { "lto_anchor_\(Self.offerID)" }
   private let dismissedCampaignKey = "lto_dismissed_campaign_id"
@@ -71,10 +75,11 @@ final class LimitedTimeOfferManager: ObservableObject {
   var isActive: Bool {
     // The clock only exists for users who could actually see the offer.
     guard UserDefaults.standard.bool(forKey: "hasCompletedOnboarding") else { return false }
-    // Owners (subscription or lifetime) have nothing to buy. Grace-period
-    // trial users still see the offer — the 7-day trial shouldn't block
-    // buying the discounted plan early.
+    // Owners (subscription or lifetime) have nothing to buy.
     guard !SubscriptionManager.shared.isSubscribed else { return false }
+    // Trial users get merchandised only near the trial's end; a finished
+    // trial qualifies immediately.
+    guard hasReachedTrialOfferDay else { return false }
     // Both SKUs must be purchasable/displayable right now.
     guard promoProduct != nil, fullPriceProduct != nil else { return false }
     guard let endDate, Date() < endDate else { return false }
@@ -108,6 +113,14 @@ final class LimitedTimeOfferManager: ObservableObject {
     set { UserDefaults.standard.set(newValue, forKey: dismissedCampaignKey) }
   }
 
+  /// Trial users qualify from Day 5 of the 7-day trial; anyone whose trial
+  /// already ended (or never started tracking) qualifies immediately.
+  private var hasReachedTrialOfferDay: Bool {
+    let grace = GracePeriodManager.shared
+    guard grace.isInGracePeriod, let day = grace.currentTrialDay else { return true }
+    return day >= Self.offerStartTrialDay
+  }
+
   /// Whether the offer sheet should pop up on its own. The Settings banner
   /// stays visible regardless — this only gates the one-time auto-presentation.
   var shouldAutoPresent: Bool {
@@ -131,10 +144,13 @@ final class LimitedTimeOfferManager: ObservableObject {
     }
 
     // Don't start (or resolve) the clock for users who can't see the offer:
-    // pre-onboarding, already an owner, or the promo SKU isn't live yet.
-    // Someone who unsubscribes later gets their window from that point.
+    // pre-onboarding, already an owner, the promo SKU isn't live yet, or a
+    // trial user who hasn't reached the offer day — their window would burn
+    // out before they were allowed to see it. Someone who unsubscribes later
+    // gets their window from that point.
     guard UserDefaults.standard.bool(forKey: "hasCompletedOnboarding"),
           !SubscriptionManager.shared.isSubscribed,
+          hasReachedTrialOfferDay,
           promoProduct != nil else {
       scheduleExpiry()
       return

@@ -55,7 +55,7 @@ class GracePeriodManager: ObservableObject {
     private init() {
         // Sync iCloud KVS → UserDefaults on init
         cloudStore.synchronize()
-        restoreFromCloudIfNeeded()
+        reconcileWithCloud()
 
         // Calculate initial state
         updateState()
@@ -135,6 +135,15 @@ class GracePeriodManager: ObservableObject {
         return min(max(elapsed / Self.gracePeriodDuration, 0), 1)
     }
 
+    /// 1-based day of the trial (Day 1 starts at the trial start date), or nil
+    /// if the trial never started. Keeps counting past the trial's end.
+    var currentTrialDay: Int? {
+        guard let startDate = gracePeriodStartDate else { return nil }
+        let elapsed = Date().timeIntervalSince(startDate)
+        guard elapsed >= 0 else { return 1 }
+        return Int(elapsed / (24 * 60 * 60)) + 1
+    }
+
     // MARK: - Private Helpers
 
     /// Read the grace period start date from UserDefaults (cache) or iCloud KVS (primary)
@@ -165,16 +174,27 @@ class GracePeriodManager: ObservableObject {
         cloudStore.synchronize()
     }
 
-    /// Restore iCloud KVS data to UserDefaults if local is missing
-    private func restoreFromCloudIfNeeded() {
-        // Restore start date
-        if UserDefaults.standard.object(forKey: Self.startDateKey) == nil,
-           let cloudDate = cloudStore.object(forKey: Self.startDateKey) as? Date {
-            UserDefaults.standard.set(cloudDate, forKey: Self.startDateKey)
-            print("☁️ Restored grace period start date from iCloud KVS: \(cloudDate)")
+    /// Reconcile trial state between UserDefaults and iCloud KVS, keeping the
+    /// earliest start date seen anywhere. On the first launch after a
+    /// reinstall, both stores look empty and a fresh date gets written before
+    /// the old one syncs down from iCloud — taking the minimum lets the
+    /// late-arriving original win, so reinstalling never restarts the trial.
+    private func reconcileWithCloud() {
+        let localDate = UserDefaults.standard.object(forKey: Self.startDateKey) as? Date
+        let cloudDate = cloudStore.object(forKey: Self.startDateKey) as? Date
+
+        if let earliest = [localDate, cloudDate].compactMap({ $0 }).min() {
+            if localDate != earliest {
+                UserDefaults.standard.set(earliest, forKey: Self.startDateKey)
+                print("☁️ Grace period start snapped back to earliest known date: \(earliest)")
+            }
+            if cloudDate != earliest {
+                cloudStore.set(earliest, forKey: Self.startDateKey)
+                cloudStore.synchronize()
+            }
         }
 
-        // Restore paywall shown flag
+        // Paywall-shown is shown-anywhere-wins, mirroring the same idea.
         if !UserDefaults.standard.bool(forKey: Self.paywallShownKey) &&
             cloudStore.bool(forKey: Self.paywallShownKey) {
             UserDefaults.standard.set(true, forKey: Self.paywallShownKey)
@@ -237,8 +257,10 @@ class GracePeriodManager: ObservableObject {
         // KVS change notifications are delivered on a background thread; hop to
         // the main actor before touching the @Published state.
         Task { @MainActor in
-            restoreFromCloudIfNeeded()
+            reconcileWithCloud()
             updateState()
+            // The start date may have snapped back — move the reminder with it.
+            scheduleTrialReminderIfNeeded()
         }
     }
 

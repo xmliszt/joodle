@@ -505,6 +505,13 @@ struct ContentView: View {
         if gracePeriodManager.shouldShowGraceExpiredPaywall && !subscriptionManager.hasPremiumAccess {
           showGraceExpiredPaywall = true
           gracePeriodManager.markGraceExpiredPaywallShown()
+          // This launch belongs to the trial-expired paywall; it already quotes
+          // the promo price and countdown while the offer window is live, so
+          // consume the offer sheet's auto-present instead of stacking a second
+          // sheet. The Settings banner stays as the offer's re-entry point.
+          if LimitedTimeOfferManager.shared.shouldAutoPresent {
+            LimitedTimeOfferManager.shared.markCurrentCampaignSeen()
+          }
         }
       }
     }
