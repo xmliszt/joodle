@@ -172,10 +172,12 @@ private func frontAlpha(front: Double, day: Int, ramp: Double) -> Double {
   min(max((front - Double(day)) / ramp, 0), 1)
 }
 
-/// A grid where an empty day is a small dot and a doodled day is a mushroom
-/// *outline* — a doodle is a stroke, not a fill. `doodle` crossfades each cell
-/// from dot (0) to mushroom (1); `strokeColor` is the mushroom's color, and the
-/// optional `overlayColor` fades a second color on top (the rainbow recolor).
+/// A grid where an empty day is a small dot and a doodled day is a real doodle
+/// (from `CAROUSEL_DOODLES`) — a doodle is a stroke, not a fill. `doodle`
+/// crossfades each cell from dot (0) to drawing (1); `strokeColor` is the
+/// drawing's color, and the optional `overlayColor` fades a second color on top
+/// (the rainbow recolor). Each day gets a fixed doodle from the set, cycled so
+/// the field reads as a varied year rather than one repeated glyph.
 private struct YearGridCanvas: View {
   let totalDays: Int
   let columns: Int
@@ -191,10 +193,11 @@ private struct YearGridCanvas: View {
       let cell = min(size.width / CGFloat(columns), size.height / CGFloat(rows))
       let originX = (size.width - cell * CGFloat(columns)) / 2
       let originY = (size.height - cell * CGFloat(rows)) / 2
-      let glyphWidth = cell * 0.62
-      let glyphHeight = cell * 0.74
+      let glyphBox = cell * 0.78
       let dotRadius = cell * 0.11
-      let lineStyle = StrokeStyle(lineWidth: max(1, cell * 0.09), lineCap: .round, lineJoin: .round)
+      let doodleLineWidth = max(0.6, cell * 0.025)
+      let lineStyle = StrokeStyle(lineWidth: doodleLineWidth, lineCap: .round, lineJoin: .round)
+      let doodleCount = CAROUSEL_DOODLES.count
 
       for day in 0..<totalDays {
         let cellX = originX + CGFloat(day % columns) * cell
@@ -208,51 +211,54 @@ private struct YearGridCanvas: View {
           context.fill(Path(ellipseIn: dot), with: .color(.white.opacity(0.12 * (1 - progress))))
         }
 
-        // Doodled day: a mushroom drawn as an outline, fading in.
-        if progress > 0 {
-          let rect = CGRect(
-            x: cellX + (cell - glyphWidth) / 2,
-            y: cellY + (cell - glyphHeight) / 2,
-            width: glyphWidth,
-            height: glyphHeight
+        // Doodled day: a real drawing, fit and centered into the cell, fading in.
+        if progress > 0, doodleCount > 0 {
+          let art = CAROUSEL_DOODLES[day % doodleCount]
+          let box = CGRect(
+            x: cellX + (cell - glyphBox) / 2,
+            y: cellY + (cell - glyphBox) / 2,
+            width: glyphBox,
+            height: glyphBox
           )
-          let mushroom = mushroomPath(in: rect)
-          context.stroke(mushroom, with: .color(strokeColor(day).opacity(progress)), style: lineStyle)
-          context.stroke(mushroom, with: .color(overlayColor(day).opacity(progress)), style: lineStyle)
+          let fit = fittedTransform(bounds: art.bounds, in: box)
+
+          var strokes = Path()
+          for pathData in art.paths {
+            if pathData.isDot {
+              if let p = pathData.points.first {
+                let c = CGPoint(x: p.x * fit.scale + fit.tx, y: p.y * fit.scale + fit.ty)
+                // A pen dot is a single tap of the nib — its diameter matches the
+                // stroke width, not the cell's placeholder dot. Otherwise a
+                // heavily-stippled doodle (e.g. the cactus) floods its whole cell.
+                let r = doodleLineWidth / 2
+                let dot = Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
+                context.fill(dot, with: .color(strokeColor(day).opacity(progress)))
+                context.fill(dot, with: .color(overlayColor(day).opacity(progress)))
+              }
+            } else if pathData.points.count > 1 {
+              for (index, point) in pathData.points.enumerated() {
+                let pt = CGPoint(x: point.x * fit.scale + fit.tx, y: point.y * fit.scale + fit.ty)
+                if index == 0 { strokes.move(to: pt) } else { strokes.addLine(to: pt) }
+              }
+            }
+          }
+          context.stroke(strokes, with: .color(strokeColor(day).opacity(progress)), style: lineStyle)
+          context.stroke(strokes, with: .color(overlayColor(day).opacity(progress)), style: lineStyle)
         }
       }
     }
   }
 }
 
-/// A tiny mushroom *outline* — a broad rounded cap with its rim, and a U-shaped
-/// stem tucked under the centre (open at the top so it meets the rim without a
-/// doubled line). Meant to be stroked, mirroring how a doodle is drawn.
-private func mushroomPath(in rect: CGRect) -> Path {
-  var path = Path()
-  let capHeight = rect.height * 0.52
-  let capBottomY = rect.minY + capHeight
-
-  path.move(to: CGPoint(x: rect.minX, y: capBottomY))
-  path.addCurve(
-    to: CGPoint(x: rect.maxX, y: capBottomY),
-    control1: CGPoint(x: rect.minX + rect.width * 0.04, y: rect.minY),
-    control2: CGPoint(x: rect.maxX - rect.width * 0.04, y: rect.minY)
-  )
-  path.addLine(to: CGPoint(x: rect.minX, y: capBottomY))
-
-  let stemWidth = rect.width * 0.46
-  let stemLeft = rect.midX - stemWidth / 2
-  let stemRight = rect.midX + stemWidth / 2
-  let stemBottom = rect.maxY
-  let radius = stemWidth * 0.4
-  path.move(to: CGPoint(x: stemLeft, y: capBottomY))
-  path.addLine(to: CGPoint(x: stemLeft, y: stemBottom - radius))
-  path.addQuadCurve(to: CGPoint(x: stemLeft + radius, y: stemBottom), control: CGPoint(x: stemLeft, y: stemBottom))
-  path.addLine(to: CGPoint(x: stemRight - radius, y: stemBottom))
-  path.addQuadCurve(to: CGPoint(x: stemRight, y: stemBottom - radius), control: CGPoint(x: stemRight, y: stemBottom))
-  path.addLine(to: CGPoint(x: stemRight, y: capBottomY))
-  return path
+/// A uniform scale + translation that fits `bounds` into `rect`, preserving
+/// aspect ratio and centering. Apply as `point * scale + (tx, ty)`.
+private func fittedTransform(bounds: CGRect, in rect: CGRect) -> (scale: CGFloat, tx: CGFloat, ty: CGFloat) {
+  let width = max(bounds.width, 0.0001)
+  let height = max(bounds.height, 0.0001)
+  let scale = min(rect.width / width, rect.height / height)
+  let tx = rect.minX + (rect.width - width * scale) / 2 - bounds.minX * scale
+  let ty = rect.minY + (rect.height - height * scale) / 2 - bounds.minY * scale
+  return (scale, tx, ty)
 }
 
 private let demoCellCount = 150
@@ -337,7 +343,11 @@ private struct UnlimitedDoodlesDemo: View {
         YearGridCanvas(
           totalDays: demoCellCount,
           columns: demoGridColumns,
-          doodle: { day in frontAlpha(front: front, day: day, ramp: 5) }
+          // Ramp of 1: a soft leading edge wider than one cell can't fully
+          // resolve when the front parks on an integer plateau (the free cap of
+          // 30, then the full year), which would leave the last doodles frozen
+          // half-faded. One cell keeps both plateaus crisp.
+          doodle: { day in frontAlpha(front: front, day: day, ramp: 1) }
         )
       }
     }
@@ -408,9 +418,9 @@ private struct RainbowThemeDemo: View {
 
 // MARK: - Wiggly Strokes Demo
 
-/// The placeholder doodle drawn 1:1 in canvas space, starting still then easing
-/// into the live wigglypaint boil — so the Free→Pro difference is shown, not just
-/// stated. The boil amplitude ramps from 0 to full over the transition.
+/// A real doodle drawn 1:1 in canvas space, starting still then easing into the
+/// live wigglypaint boil — so the Free→Pro difference is shown, not just stated.
+/// The boil amplitude ramps from 0 to full over the transition.
 private struct WigglyStrokesDemo: View {
   let isActive: Bool
   @State private var epoch = Date()
@@ -424,7 +434,7 @@ private struct WigglyStrokesDemo: View {
   static var playThroughDuration: Double { stillHold + rampDuration + wiggleHold }
 
   private var paths: [DoodlePathData] {
-    (try? JSONDecoder().decode([DoodlePathData].self, from: PLACEHOLDER_DATA)) ?? []
+    CAROUSEL_DOODLES.first?.paths ?? []
   }
 
   /// Boil strength (0…1): 0 while still, easing to 1 as the strokes come alive.
