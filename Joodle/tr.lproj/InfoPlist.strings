@@ -1,0 +1,4 @@
+"Today" = "Bugün";
+"Next Anniversary" = "Sonraki Yıl Dönümü";
+"NSCameraUsageDescription" = "Joodle, karalamanızı çizerken referans alacağınız hızlı fotoğraflar çekmek için kamerayı kullanır. Çektiğiniz fotoğraflar varsayılan olarak Fotoğraflar albümünüze de kaydedilir; bunu Ayarlar'dan kapatabilirsiniz.";
+"NSPhotoLibraryAddUsageDescription" = "Joodle, çizim için referans olarak çektiğiniz fotoğrafları Fotoğraflar albümünüze kaydeder. Bunu Ayarlar'dan kapatabilirsiniz.";

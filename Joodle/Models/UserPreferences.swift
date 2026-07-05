@@ -499,6 +499,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
   case fr
   case ko
   case ja
+  case tr
 
   var id: String { code }
 
@@ -510,6 +511,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case .fr: return "fr"
     case .ko: return "ko"
     case .ja: return "ja"
+    case .tr: return "tr"
     }
   }
 
@@ -522,6 +524,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     case .fr: return "Français"
     case .ko: return "한국어"
     case .ja: return "日本語"
+    case .tr: return "Türkçe"
     }
   }
 

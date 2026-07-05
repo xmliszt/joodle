@@ -346,6 +346,7 @@
 				fr,
 				ko,
 				"zh-Hant",
+				tr,
 			);
 			mainGroup = FADC357A2E48C2E1007AE111;
 			minimizedProjectReferenceProxies = 1;

@@ -11,13 +11,7 @@
             "value": "%@"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@"
-          }
-        },
-        "zh-Hant": {
+        "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "%@"
@@ -29,7 +23,19 @@
             "value": "%@"
           }
         },
-        "ja": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "%@"
@@ -47,6 +53,24 @@
             "value": "Anniversaire"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記念日"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "기념일"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yıl dönümü"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -57,18 +81,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "紀念日"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "기념일"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "記念日"
           }
         }
       }
@@ -83,6 +95,24 @@
             "value": "Joodle d'anniversaire avec compte a rebours."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カウントダウン付き記念日 Joodle。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "카운트다운이 있는 기념일."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri sayımlı yıl dönümü Joodle'si."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -93,18 +123,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "帶倒數計時的紀念日。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "카운트다운이 있는 기념일."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "カウントダウン付き記念日 Joodle。"
           }
         }
       }
@@ -119,6 +137,24 @@
             "value": "Choisissez un anniversaire a afficher dans le widget."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウィジェットに表示する記念日を選択してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "위젯에 표시할 기념일을 선택하세요."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widget'ta gösterilecek bir yıl dönümü seç."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -129,18 +165,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "選擇要在小工具中顯示的紀念日。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "위젯에 표시할 기념일을 선택하세요."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ウィジェットに表示する記念日を選択してください。"
           }
         }
       }
@@ -155,13 +179,7 @@
             "value": "dans %@"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@后"
-          }
-        },
-        "zh-Hant": {
+        "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "%@後"
@@ -173,7 +191,19 @@
             "value": "%@ 후"
           }
         },
-        "ja": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ içinde"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@后"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "%@後"
@@ -191,13 +221,7 @@
             "value": "Joodle Pro"
           }
         },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joodle Pro"
-          }
-        },
-        "zh-Hant": {
+        "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "Joodle Pro"
@@ -209,7 +233,19 @@
             "value": "Joodle Pro"
           }
         },
-        "ja": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Joodle Pro"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Joodle Pro"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "Joodle Pro"
@@ -227,6 +263,24 @@
             "value": "Aucun anniversaire a venir"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今後の記念日はありません"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "다가오는 기념일이 없습니다."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gelecek yıl dönümü yok"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -237,18 +291,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "你還沒有建立紀念日"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "다가오는 기념일이 없습니다."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今後の記念日はありません"
           }
         }
       }
@@ -263,6 +305,24 @@
             "value": "Aucun Joodle aujourd'hui"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日は Joodle がありません"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 낙서가 없습니다."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugün Joodle yok"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -273,18 +333,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天沒有 Joodle"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "오늘의 낙서가 없습니다."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今日は Joodle がありません"
           }
         }
       }
@@ -299,6 +347,24 @@
             "value": "Aucune note pour ce jour special."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この特別な日にはメモがありません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이 특별한 날에 대한 메모가 없습니다."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu özel gün için not yok."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -309,18 +375,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "這個特別的日子還沒有筆記。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "이 특별한 날에 대한 메모가 없습니다."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "この特別な日にはメモがありません。"
           }
         }
       }
@@ -335,6 +389,24 @@
             "value": "Aucune note pour aujourd'hui."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日はメモがありません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘에 대한 메모가 없습니다."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugün için not yok."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -345,18 +417,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "今天沒有筆記。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "오늘에 대한 메모가 없습니다."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今日はメモがありません。"
           }
         }
       }
@@ -369,6 +429,24 @@
             "value": "Pro"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "プロ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -379,18 +457,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pro"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pro"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "プロ"
           }
         }
       }
@@ -403,6 +469,24 @@
             "value": "Aleatoire"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ランダム"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "무작위"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rastgele"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -413,18 +497,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "隨機"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "무작위"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ランダム"
           }
         }
       }
@@ -439,6 +511,24 @@
             "value": "Joodle aleatoire"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ランダムな Joodle"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "무작위 낙서"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rastgele Joodle"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -449,18 +539,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "隨機塗鴉"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "무작위 낙서"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ランダムな Joodle"
           }
         }
       }
@@ -475,6 +553,24 @@
             "value": "Joodle aleatoire de votre collection. Actualise chaque jour."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コレクションからランダムな Joodle を表示します。毎日更新されます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "당신의 컬렉션에서 무작위 낙서를 선택합니다. 매일 새로 고침됩니다."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Koleksiyonundan rastgele bir Joodle. Her gün yenilenir."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -485,18 +581,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "從你的收藏中隨機選取塗鴉。每天更新。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "당신의 컬렉션에서 무작위 낙서를 선택합니다. 매일 새로 고침됩니다."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "コレクションからランダムな Joodle を表示します。毎日更新されます。"
           }
         }
       }
@@ -511,6 +595,24 @@
             "value": "Selectionnez un anniversaire a afficher."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示する記念日を選択してください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "표시할 기념일을 선택하세요."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gösterilecek bir yıl dönümü seç."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -521,18 +623,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "選擇要顯示的紀念日。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "표시할 기념일을 선택하세요."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "表示する記念日を選択してください。"
           }
         }
       }
@@ -547,6 +637,24 @@
             "value": "Affiche le Joodle d'aujourd'hui."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日の Joodle エントリーを表示します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 낙서 항목을 표시합니다."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünkü Joodle kaydını gösterir."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -557,18 +665,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "顯示今天的 Joodle 記錄。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "오늘의 낙서 항목을 표시합니다."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今日の Joodle エントリーを表示します。"
           }
         }
       }
@@ -583,6 +679,24 @@
             "value": "Ce mois-ci"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 달"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu ay"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -593,18 +707,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "本月"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "이번 달"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今月"
           }
         }
       }
@@ -619,6 +721,24 @@
             "value": "Cette semaine"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今週"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 주"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu hafta"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -629,18 +749,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "本週"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "이번 주"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今週"
           }
         }
       }
@@ -655,6 +763,24 @@
             "value": "Joodle d'aujourd'hui"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日の Joodle"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "오늘의 낙서"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bugünkü Joodle"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -665,18 +791,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "今日塗鴉"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "오늘의 낙서"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今日の Joodle"
           }
         }
       }
@@ -691,6 +805,24 @@
             "value": "Demain"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "明日"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "내일"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yarın"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -701,18 +833,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "明天"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "내일"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "明日"
           }
         }
       }
@@ -727,6 +847,24 @@
             "value": "Debloquer"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ロック解除"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "잠금 해제"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kilidi aç"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -737,18 +875,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "解鎖"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "잠금 해제"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ロック解除"
           }
         }
       }
@@ -763,6 +889,24 @@
             "value": "Passez a la version superieure pour debloquer les widgets"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウィジェットのロックを解除するにはアップグレードしてください"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "위젯을 잠금 해제하려면 업그레이드하세요."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Widget'ların kilidini açmak için yükselt"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -773,18 +917,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "升級以解鎖小工具"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "위젯을 잠금 해제하려면 업그레이드하세요."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ウィジェットのロックを解除するにはアップグレードしてください"
           }
         }
       }
@@ -799,6 +931,24 @@
             "value": "Apercu des Joodles de ce mois."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月の Joodle をひと目で確認できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 달의 낙서를 한눈에 보세요."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu ayki Joodle'larını bir bakışta gör."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -809,18 +959,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "一覽本月的塗鴉。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "이번 달의 낙서를 한눈에 보세요."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今月の Joodle をひと目で確認できます。"
           }
         }
       }
@@ -835,6 +973,24 @@
             "value": "Apercu des Joodles de cette semaine."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今週の Joodle をひと目で確認できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이번 주의 낙서를 한눈에 보세요."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu haftaki Joodle'larını bir bakışta gör."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -845,18 +1001,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "一覽本週的塗鴉。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "이번 주의 낙서를 한눈에 보세요."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今週の Joodle をひと目で確認できます。"
           }
         }
       }
@@ -871,6 +1015,24 @@
             "value": "Apercu de votre progression annuelle."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1年の進捗をひと目で確認できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "한눈에 연간 진행 상황을 보세요."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yıl ilerlemeni bir bakışta gör."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -881,18 +1043,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "一覽你的年度進度。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "한눈에 연간 진행 상황을 보세요."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1年の進捗をひと目で確認できます。"
           }
         }
       }
@@ -907,6 +1057,24 @@
             "value": "Apercu de votre progression annuelle avec des Joodles."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Joodle とともに1年の進捗を確認できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "낙서로 연간 진행 상황을 보세요."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yıl ilerlemeni Joodle'larla gör."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -917,18 +1085,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "以塗鴉檢視你的年度進度。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "낙서로 연간 진행 상황을 보세요."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joodle とともに1年の進捗を確認できます。"
           }
         }
       }
@@ -943,6 +1099,24 @@
             "value": "Apercu de votre progression annuelle avec des Joodles. Les jours vides sont masques."
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Joodle とともに1年の進捗を確認できます。空白の日は表示されません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "낙서로 연간 진행 상황을 보세요. 빈 날은 숨겨집니다."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yıl ilerlemeni Joodle'larla gör. Boş günler gizlenir."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -953,18 +1127,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "以塗鴉檢視你的年度進度。隱藏空白日期。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "낙서로 연간 진행 상황을 보세요. 빈 날은 숨겨집니다."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joodle とともに1年の進捗を確認できます。空白の日は表示されません。"
           }
         }
       }
@@ -979,6 +1141,24 @@
             "value": "Progression annuelle"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年間の進捗"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연간 진행 상황"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yıl ilerlemesi"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -989,18 +1169,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "年度總覽"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "연간 진행 상황"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "年間の進捗"
           }
         }
       }
@@ -1015,6 +1183,24 @@
             "value": "Progression annuelle (Joodles)"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年間の進捗（Joodle 付き）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연간 진행 상황 (낙서 포함)"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yıl ilerlemesi (Joodle'lar)"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1025,18 +1211,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "年度總覽（含塗鴉）"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "연간 진행 상황 (낙서 포함)"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "年間の進捗（Joodle 付き）"
           }
         }
       }
@@ -1051,6 +1225,24 @@
             "value": "Progression annuelle (Joodles uniquement)"
           }
         },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年間の進捗（Joodle のみ）"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "연간 진행 상황 (낙서만 표시)"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yıl ilerlemesi (Yalnızca Joodle'lar)"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1061,18 +1253,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "年度總覽（僅顯示塗鴉）"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "연간 진행 상황 (낙서만 표시)"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "年間の進捗（Joodle のみ）"
           }
         }
       }
