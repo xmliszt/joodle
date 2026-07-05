@@ -158,11 +158,21 @@ struct DrawingDisplayView: View {
 
   private var foregroundColor: Color {
     if highlighted { return .appSecondary }
-    if accent { return .appAccent }
+
+    // Under the rainbow theme this resolves to the entry's month color; for
+    // solid themes it's just `.appAccent`. Keyed off the entry, so moving a
+    // doodle across months recolors it with zero data changes.
+    let accentColor = Color.appDrawingColor(forMonth: entry?.month)
+    if accent { return accentColor }
 
     // Override base color if it is a present dot.
-    if dotStyle == .present { return .appAccent }
+    if dotStyle == .present { return accentColor }
     if dotStyle == .future { return .textColor.opacity(0.15) }
+
+    // Resting (non-selected) doodles are monochrome under solid themes, but the
+    // rainbow theme colors them by month. Selection recolors the cell via the
+    // `highlighted` branch above, so this only affects the unselected state.
+    if userPreferences.accentColor.isRainbow { return accentColor }
     return .textColor
   }
 

@@ -83,6 +83,11 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   var buttonsConfig: CanvasButtonsConfig? = nil
   var canvasCornerRadius: CGFloat = 32
 
+  /// Color for the strokes being drawn. Defaults to the global accent; the
+  /// editor passes the date's month color so a doodle drawn under the rainbow
+  /// theme is painted in that month's color as the finger moves.
+  var strokeColor: Color = .appAccent
+
   /// Optional tracing-reference image rendered as a 30% backdrop inside the canvas.
   var backdropImage: UIImage? = nil
   /// When set and `isCameraLive` is true, shows a live camera preview filling the canvas.
@@ -183,6 +188,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     placeholderData: Data? = nil,
     buttonsConfig: CanvasButtonsConfig? = nil,
     canvasCornerRadius: CGFloat = 32,
+    strokeColor: Color = .appAccent,
     backdropImage: UIImage? = nil,
     liveCameraSession: AVCaptureSession? = nil,
     liveCameraDevice: AVCaptureDevice? = nil,
@@ -211,6 +217,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.placeholderData = placeholderData
     self.buttonsConfig = buttonsConfig
     self.canvasCornerRadius = canvasCornerRadius
+    self.strokeColor = strokeColor
     self.backdropImage = backdropImage
     self.liveCameraSession = liveCameraSession
     self.liveCameraDevice = liveCameraDevice
@@ -707,11 +714,11 @@ struct SharedCanvasView<TrailingHeader: View>: View {
       } ?? path
 
       if isDot {
-        context.fill(basePath, with: .color(.appAccent))
+        context.fill(basePath, with: .color(strokeColor))
       } else {
         context.stroke(
           basePath,
-          with: .color(.appAccent),
+          with: .color(strokeColor),
           style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
         )
       }
@@ -720,11 +727,11 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     // Draw current path being drawn — never wiggled so it tracks the finger.
     if !currentPath.isEmpty {
       if currentPathIsDot {
-        context.fill(currentPath, with: .color(.appAccent))
+        context.fill(currentPath, with: .color(strokeColor))
       } else {
         context.stroke(
           currentPath,
-          with: .color(.appAccent),
+          with: .color(strokeColor),
           style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
         )
       }

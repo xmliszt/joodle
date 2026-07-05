@@ -291,6 +291,7 @@ struct DrawingCanvasView: View {
           isDrawing: $isDrawing,
           buttonsConfig: canvasButtonsConfig,
           canvasCornerRadius: canvasCornerRadius,
+          strokeColor: Color.appDrawingColor(for: date),
           backdropImage: cameraBackdropImage,
           liveCameraSession: cameraSession,
           liveCameraDevice: cameraDevice,

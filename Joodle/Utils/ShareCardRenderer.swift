@@ -336,8 +336,8 @@ class ShareCardRenderer {
     let pathsWithMetadata = DrawingPathCache.shared.getPathsWithMetadata(for: drawingData)
     guard !pathsWithMetadata.isEmpty else { return nil }
 
-    // Get stroke color
-    let strokeColor = UIColor(Color.appAccent)
+    // Get stroke color — the entry's month color under the rainbow theme.
+    let strokeColor = UIColor(Color.appDrawingColor(forMonth: entry.month))
 
     // Calculate drawing size based on style
     let scale: CGFloat = 1.0

@@ -10,16 +10,20 @@ import SwiftUI
 /// Represents the available theme accent colors in the app.
 /// Each case corresponds to a color set in Assets.xcassets/Themes.
 enum ThemeColor: String, CaseIterable, Codable, Identifiable {
+    // Ordered so the palette grid transitions smoothly around the color wheel,
+    // starting at the default (orange) and looping back through red → brown.
     case orange = "Orange"
-    case blue = "Blue"
-    case brown = "Brown"
-    case green = "Green"
-    case pink = "Pink"
-    case purple = "Purple"
-    case red = "Red"
-    case teal = "Teal"
     case yellow = "Yellow"
+    case green = "Green"
+    case teal = "Teal"
+    case blue = "Blue"
+    case indigo = "Indigo"
+    case purple = "Purple"
+    case pink = "Pink"
+    case red = "Red"
+    case brown = "Brown"
     case neutral = "Neutral"
+    case rainbow = "Rainbow"
 
     var id: String { rawValue }
 
@@ -30,6 +34,8 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
             return String(localized: "Orange")
         case .blue:
             return String(localized: "Blue")
+        case .indigo:
+            return String(localized: "Indigo")
         case .brown:
             return String(localized: "Brown")
         case .green:
@@ -46,12 +52,21 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
             return String(localized: "Yellow")
         case .neutral:
             return String(localized: "Neutral")
+        case .rainbow:
+            return String(localized: "Rainbow")
         }
     }
 
-    /// The Color from the asset catalog
+    /// The Color from the asset catalog.
+    /// Rainbow has no single asset color: it is a per-month palette applied only
+    /// to doodle strokes (via `drawingColor(forMonth:)`). General UI chrome that
+    /// reads `.appAccent` deliberately falls back to the default accent so the
+    /// app's buttons/tints stay stable rather than shifting color each month.
     var color: Color {
-        Color("Themes/\(rawValue)")
+        if self == .rainbow {
+            return Color("Themes/\(ThemeColor.defaultColor.rawValue)")
+        }
+        return Color("Themes/\(rawValue)")
     }
 
     /// The contrast color for text/icons displayed on top of this accent color
@@ -63,6 +78,9 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
             // Use the primary label color which is black in light mode and white in dark mode,
             // but we need the opposite, so use the background color
             return Color(UIColor.systemBackground)
+        case .rainbow:
+            // Every month color is a saturated mid-tone; white reads on all of them.
+            return .white
         default:
             // All other accent colors are vibrant and work well with white text
             return .white
@@ -81,17 +99,40 @@ enum ThemeColor: String, CaseIterable, Codable, Identifiable {
         case .orange:
             // Default color, always free
             return false
-        case .blue, .brown, .green, .pink, .purple, .red, .teal, .yellow:
+        case .blue, .brown, .green, .indigo, .pink, .purple, .red, .teal, .yellow:
             // All other colors are free for now
             // Change to `true` to paywall individual colors
             return false
         case .neutral:
+            return true
+        case .rainbow:
             return true
         }
     }
 
     /// The default theme color used when no preference is set
     static let defaultColor: ThemeColor = .orange
+
+    // MARK: - Rainbow (per-month) palette
+
+    /// Whether this theme paints each month in its own color.
+    var isRainbow: Bool { self == .rainbow }
+
+    /// The 12 month colors (index 0 = January … 11 = December). Defined in the
+    /// shared `RainbowPalette` so the widget target (which doesn't compile
+    /// `ThemeColor`) uses the same values.
+    static var rainbowPalette: [Color] { RainbowPalette.colors }
+
+    /// The rainbow color for a given month (1 = January … 12 = December).
+    static func rainbowColor(forMonth month: Int) -> Color {
+        RainbowPalette.color(forMonth: month)
+    }
+
+    /// Resolves the stroke color for a doodle in `month` (1-12): the month's
+    /// rainbow color when this theme is rainbow, otherwise the single accent color.
+    func drawingColor(forMonth month: Int) -> Color {
+        isRainbow ? ThemeColor.rainbowColor(forMonth: month) : color
+    }
 }
 
 // MARK: - ThemeColorInfo

@@ -366,9 +366,9 @@ struct TodayDoodleJoodleView: View {
   let drawingData: Data
   let family: WidgetFamily
 
-  /// Theme color loaded from shared preferences
+  /// Stroke color for today's doodle — the current month's color under the rainbow theme.
   private var themeColor: Color {
-    WidgetDataManager.shared.loadThemeColor()
+    WidgetDataManager.shared.doodleStrokeColor(forMonth: Calendar.current.component(.month, from: Date()))
   }
 
   var body: some View {

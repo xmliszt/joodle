@@ -24,118 +24,34 @@ final class ThemeColorManager {
 
     // MARK: - Theme Change Handler
 
-    /// Changes the theme color and regenerates all thumbnails
+    /// Changes the theme color. The switch is instant: stored doodle thumbnails
+    /// are drawn as template masks recolored at display time (both in the grid
+    /// and in widgets), so changing the accent needs no thumbnail regeneration.
     /// - Parameters:
     ///   - newColor: The new theme color to apply
-    ///   - modelContext: The SwiftData model context
+    ///   - modelContext: The SwiftData model context (unused; kept for call-site
+    ///     compatibility now that no regeneration pass runs)
     ///   - completion: Optional completion handler called when done
     func changeThemeColor(
         to newColor: ThemeColor,
         modelContext: ModelContext,
         completion: (() -> Void)? = nil
     ) async {
-        // Update the preference first
+        // Persisting the preference posts `.didChangeAccentColor`, which re-tints
+        // the whole view tree immediately.
         UserPreferences.shared.accentColor = newColor
 
-        // Reset progress state
-        isRegenerating = true
-        regenerationProgress = 0
+        // Nothing to regenerate — keep the flag false so no loading overlay shows.
+        isRegenerating = false
+        regenerationProgress = 1.0
         entriesProcessed = 0
         totalEntriesToProcess = 0
 
-        // Fetch all entries with drawings
-        let descriptor = FetchDescriptor<DayEntry>()
+        // Point widgets at the new theme and reload their timelines. Thumbnail
+        // bytes are unchanged (they're template masks), so no data re-push.
+        WidgetHelper.shared.updateThemeColor(reload: true)
 
-        do {
-            let allEntries = try modelContext.fetch(descriptor)
-
-            // Filter to only entries with drawing data
-            let entriesWithDrawings = allEntries.filter { entry in
-                guard let drawingData = entry.drawingData else { return false }
-                return !drawingData.isEmpty
-            }
-
-            totalEntriesToProcess = entriesWithDrawings.count
-
-            // If no entries to process, we're done
-            if entriesWithDrawings.isEmpty {
-                isRegenerating = false
-                regenerationProgress = 1.0
-                completion?()
-                return
-            }
-
-            // Regenerate thumbnails concurrently with limit
-            await withTaskGroup(of: (Int, Data?, Data?).self) { group in
-                var activeTasks = 0
-                let maxConcurrency = 4 // Limit concurrent tasks to prevent memory spikes
-
-                for (index, entry) in entriesWithDrawings.enumerated() {
-                    guard let drawingData = entry.drawingData else { continue }
-
-                    if activeTasks >= maxConcurrency {
-                        if let (completedIndex, thumb20, thumb200) = await group.next() {
-                            let completedEntry = entriesWithDrawings[completedIndex]
-                            completedEntry.drawingThumbnail20 = thumb20
-                            completedEntry.drawingThumbnail200 = thumb200
-
-                            entriesProcessed += 1
-                            regenerationProgress = Double(entriesProcessed) / Double(totalEntriesToProcess)
-
-                            if entriesProcessed % 20 == 0 {
-                                try? modelContext.save()
-                            }
-                            activeTasks -= 1
-                        }
-                    }
-
-                    group.addTask {
-                        let thumbnails = await DrawingThumbnailGenerator.shared.generateThumbnails(
-                            from: drawingData
-                        )
-                        return (index, thumbnails.0, thumbnails.1)
-                    }
-                    activeTasks += 1
-                }
-
-                // Process remaining tasks
-                for await (index, thumb20, thumb200) in group {
-                    let entry = entriesWithDrawings[index]
-                    entry.drawingThumbnail20 = thumb20
-                    entry.drawingThumbnail200 = thumb200
-
-                    entriesProcessed += 1
-                    regenerationProgress = Double(entriesProcessed) / Double(totalEntriesToProcess)
-
-                    // Save periodically to avoid memory buildup
-                    if entriesProcessed % 20 == 0 {
-                        try? modelContext.save()
-                    }
-                }
-            }
-
-            // Final save
-            try? modelContext.save()
-
-            // Update widget theme color (save only, no reload yet)
-            WidgetHelper.shared.updateThemeColor(reload: false)
-
-            // Update widget data with new thumbnails — this triggers a single reload for all widgets
-            updateWidgetData(entries: allEntries)
-
-        } catch {
-            print("ThemeColorManager: Failed to regenerate thumbnails: \(error)")
-        }
-
-        // Complete
-        isRegenerating = false
-        regenerationProgress = 1.0
         completion?()
-    }
-
-    /// Update widget data after thumbnail regeneration
-    private func updateWidgetData(entries: [DayEntry]) {
-        WidgetHelper.shared.updateWidgetData(with: entries)
     }
 
     /// Get the count of entries that need thumbnail regeneration

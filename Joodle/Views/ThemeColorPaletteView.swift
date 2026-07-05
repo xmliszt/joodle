@@ -47,7 +47,9 @@ struct ThemeColorPaletteView: View {
         self.onColorChangeCompleted = onColorChangeCompleted
     }
 
-    /// All available theme colors with their lock state
+    /// All theme colors, laid out 5-per-row. `ThemeColor.allCases` is ordered so
+    /// the ten free colors fill the first two rows and the last row holds the
+    /// neutral (black/white) swatch and the rainbow swatch.
     private var themeColors: [ThemeColorInfo] {
         ThemeColor.allCases.map { color in
             ThemeColorInfo(themeColor: color, hasPremiumAccess: subscriptionManager.hasPremiumAccess)
@@ -116,12 +118,27 @@ private struct ColorCircleButton: View {
         colorInfo.themeColor == .neutral
     }
 
+    /// Whether this is the rainbow theme, drawn as a per-month gradient swatch.
+    private var isRainbowColor: Bool {
+        colorInfo.themeColor == .rainbow
+    }
+
+    /// Glass ring tint: current month's color for rainbow so the ring stays lively.
+    private var glassTint: Color {
+        if isNeutralColor { return .gray }
+        if isRainbowColor { return ThemeColor.rainbowColor(forMonth: Calendar.current.component(.month, from: Date())) }
+        return colorInfo.color
+    }
+
     var body: some View {
         Button(action: onTap) {
             Group {
                 if isNeutralColor {
                     // Half-half circle for neutral color (black/white)
                     NeutralColorCircle(size: size)
+                } else if isRainbowColor {
+                    // Angular gradient sweeping the 12 month colors
+                    RainbowColorCircle(size: size)
                 } else {
                     Circle()
                         .fill(colorInfo.color)
@@ -150,7 +167,7 @@ private struct ColorCircleButton: View {
             }
         }
         .buttonStyle(.plain)
-        .circularGlassButton(tintColor: isNeutralColor ? .gray : colorInfo.color)
+        .circularGlassButton(tintColor: glassTint)
         .accessibilityLabel(
             String(localized: "\(colorInfo.displayName) color\(isSelected ? ", selected" : "")\(colorInfo.isLocked ? ", locked" : "")")
         )
@@ -159,6 +176,24 @@ private struct ColorCircleButton: View {
                 ? String(localized: "Requires premium subscription")
                 : String(localized: "Tap to select this color")
         )
+    }
+}
+
+// MARK: - Rainbow Color Circle (Per-Month Gradient)
+
+private struct RainbowColorCircle: View {
+    let size: CGFloat
+
+    var body: some View {
+        Circle()
+            .fill(
+                AngularGradient(
+                    // Repeat the first color at the end so the wheel closes seamlessly.
+                    gradient: Gradient(colors: ThemeColor.rainbowPalette + [ThemeColor.rainbowPalette[0]]),
+                    center: .center
+                )
+            )
+            .frame(width: size, height: size)
     }
 }
 
@@ -215,7 +250,7 @@ private struct NeutralColorCircle: View {
 
 #Preview("Color Palette - Free User") {
     VStack(alignment: .leading, spacing: 20) {
-        Text("Accent Color")
+        Text("Theme Color")
             .font(.appHeadline())
 
         ThemeColorPaletteView(
@@ -237,7 +272,7 @@ private struct NeutralColorCircle: View {
 #Preview("Color Palette - In Settings") {
     NavigationStack {
         Form {
-            Section("Accent Color") {
+            Section("Theme Color") {
                 ThemeColorPaletteView(
                     subscriptionManager: SubscriptionManager.shared,
                     onLockedColorTapped: {

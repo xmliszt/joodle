@@ -440,7 +440,10 @@ struct SmallAnniversaryView: View {
         Spacer()
         // Joodle or text content
         if anniversaryData.hasDrawing, let drawingData = anniversaryData.drawingData {
-          AnniversaryJoodleView(drawingData: drawingData)
+          AnniversaryJoodleView(
+            drawingData: drawingData,
+            month: WidgetDataManager.shared.month(fromDateString: anniversaryData.dateString)
+          )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if anniversaryData.hasText, let text = anniversaryData.text {
           Text(text)
@@ -493,7 +496,10 @@ struct MediumAnniversaryView: View {
       HStack(spacing: 12) {
         // Left side: Joodle or placeholder
         if anniversaryData.hasDrawing, let drawingData = anniversaryData.drawingData {
-          AnniversaryJoodleView(drawingData: drawingData)
+          AnniversaryJoodleView(
+            drawingData: drawingData,
+            month: WidgetDataManager.shared.month(fromDateString: anniversaryData.dateString)
+          )
             .frame(width: 80, height: 80)
             .padding(10)
         } else {
@@ -537,7 +543,10 @@ struct LargeAnniversaryView: View {
         Spacer()
         // Joodle or text content
         if anniversaryData.hasDrawing, let drawingData = anniversaryData.drawingData {
-          AnniversaryJoodleView(drawingData: drawingData)
+          AnniversaryJoodleView(
+            drawingData: drawingData,
+            month: WidgetDataManager.shared.month(fromDateString: anniversaryData.dateString)
+          )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if anniversaryData.hasText, let text = anniversaryData.text {
           Text(text)
@@ -565,10 +574,12 @@ struct LargeAnniversaryView: View {
 
 struct AnniversaryJoodleView: View {
   let drawingData: Data
+  /// The doodle's month (1-12), used to pick its rainbow color.
+  let month: Int
 
-  /// Theme color loaded from shared preferences
+  /// Stroke color for the anniversary doodle — its month's color under the rainbow theme.
   private var themeColor: Color {
-    WidgetDataManager.shared.loadThemeColor()
+    WidgetDataManager.shared.doodleStrokeColor(forMonth: month)
   }
 
   var body: some View {

@@ -279,7 +279,9 @@ struct YearGridWidgetView: View {
             hasEntry: hasEntry,
             dotStyle: dotStyle,
             thumbnail: showJoodles ? dayEntry?.thumbnail : nil,
-            strokeColor: themeColor,
+            strokeColor: WidgetDataManager.shared.doodleStrokeColor(
+              forMonth: Calendar.current.component(.month, from: item.date)
+            ),
             strokeMultiplier: 1.0,
             renderScale: showJoodles ? 2.0 : 3.0,
             showEmptyDot: showEmptyDots

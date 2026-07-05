@@ -236,8 +236,9 @@ class AnimatedDrawingRenderer {
     // Calculate frame count based on actual duration
     let frameCount = max(1, Int(ceil(actualDuration * Double(config.frameRate))))
 
-    // Get stroke color resolved for the provided color scheme
-    let strokeColor = resolvedUIColor(for: .appAccent, colorScheme: colorScheme)
+    // Get stroke color resolved for the provided color scheme. Keyed off the
+    // entry's month so a rainbow-theme doodle exports in its month's color.
+    let strokeColor = resolvedUIColor(for: .appDrawingColor(forMonth: entry.month), colorScheme: colorScheme)
 
     // Calculate drawing size based on style
     let scale: CGFloat = 1.0 // We're rendering at actual card size

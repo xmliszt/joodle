@@ -210,10 +210,6 @@ struct SettingsView: View {
   @State private var showDeviceIdentifierAlert = false
   @State private var isAppUpdateAvailable = false
 
-  // Theme color change state
-  @State private var pendingThemeColor: ThemeColor?
-  @State private var showThemeOverlay = false
-  private var themeColorManager = ThemeColorManager.shared
   
   /// Check if restart is needed for sync to work
   private var needsRestartForSync: Bool {
@@ -330,7 +326,7 @@ struct SettingsView: View {
       footerSection
       developerOptionsSection
     }
-    .background(NavigationGestureEnabler(isEnabled: !showThemeOverlay))
+    .background(NavigationGestureEnabler(isEnabled: true))
     // Scope for the Wiggly Strokes feature tip — shows on landing (before the
     // Labs row scrolls into view) and reliably hides when any child is pushed.
     .featureTipScope(FeatureTipDefinitions.ScopeID.settings)
@@ -342,8 +338,6 @@ struct SettingsView: View {
       CustomizationSettingsView(
         showPaywall: $showPaywall,
         paywallSource: $paywallSource,
-        pendingThemeColor: $pendingThemeColor,
-        showThemeOverlay: $showThemeOverlay,
         scrollToNotePromptSetting: scrollToNotePromptSetting
       )
       .postHogScreenView("Customization")
@@ -356,8 +350,6 @@ struct SettingsView: View {
     .navigationBarTitleDisplayMode(.inline)
     .postHogScreenView("Settings")
     .preferredColorScheme(userPreferences.preferredColorScheme)
-    .navigationBarBackButtonHidden(showThemeOverlay)
-    .interactiveDismissDisabled(showThemeOverlay)
     .onChange(of: userPreferences.preferredColorScheme) { _, _ in
       NotificationCenter.default.post(name: .didChangeColorScheme, object: nil)
     }
@@ -600,9 +592,7 @@ struct SettingsView: View {
       NavigationLink {
         CustomizationSettingsView(
           showPaywall: $showPaywall,
-          paywallSource: $paywallSource,
-          pendingThemeColor: $pendingThemeColor,
-          showThemeOverlay: $showThemeOverlay
+          paywallSource: $paywallSource
         )
       } label: {
         HStack {
@@ -1250,9 +1240,6 @@ struct CustomizationSettingsView: View {
   @StateObject private var subscriptionManager = SubscriptionManager.shared
   @Binding var showPaywall: Bool
   @Binding var paywallSource: String
-  @Binding var pendingThemeColor: ThemeColor?
-  @Binding var showThemeOverlay: Bool
-  private var themeColorManager = ThemeColorManager.shared
   
   /// When true, scrolls to the "Prompt for notes after doodling" toggle on appear
   var scrollToNotePromptSetting: Bool = false
@@ -1261,11 +1248,9 @@ struct CustomizationSettingsView: View {
   // access is denied/restricted (iOS won't re-prompt — point them to Settings).
   @State private var showPhotoAccessDeniedAlert = false
 
-  init(showPaywall: Binding<Bool>, paywallSource: Binding<String>, pendingThemeColor: Binding<ThemeColor?>, showThemeOverlay: Binding<Bool>, scrollToNotePromptSetting: Bool = false) {
+  init(showPaywall: Binding<Bool>, paywallSource: Binding<String>, scrollToNotePromptSetting: Bool = false) {
     self._showPaywall = showPaywall
     self._paywallSource = paywallSource
-    self._pendingThemeColor = pendingThemeColor
-    self._showThemeOverlay = showThemeOverlay
     self.scrollToNotePromptSetting = scrollToNotePromptSetting
   }
   
@@ -1526,13 +1511,6 @@ struct CustomizationSettingsView: View {
             onLockedColorTapped: {
               paywallSource = "locked_color"
               showPaywall = true
-            },
-            onColorChangeStarted: { color in
-              pendingThemeColor = color
-              showThemeOverlay = true
-            },
-            onColorChangeCompleted: {
-              // Let the overlay handle the completion
             }
           )
           .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -1652,21 +1630,6 @@ struct CustomizationSettingsView: View {
     .preferredColorScheme(userPreferences.preferredColorScheme)
     // Scope for stage 2 of the Wiggly Strokes feature tip.
     .featureTipScope(FeatureTipDefinitions.ScopeID.customization)
-    .overlay {
-      if showThemeOverlay, let color = pendingThemeColor {
-        ThemeColorLoadingOverlay(
-          themeColorManager: themeColorManager,
-          selectedColor: color,
-          onDismiss: {
-            withAnimation {
-              showThemeOverlay = false
-              pendingThemeColor = nil
-            }
-          }
-        )
-        .id(color)
-      }
-    }
   }
 }
 

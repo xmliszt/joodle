@@ -49,6 +49,20 @@ extension ShapeStyle where Self == Color {
 }
 
 extension Color {
+    /// The stroke color for a doodle belonging to `month` (1-12). Equals the
+    /// single accent color for solid themes, or that month's color under the
+    /// rainbow theme. Pass the entry's month; `nil` falls back to the current
+    /// month (used for the live canvas on empty/new dates and for chrome).
+    static func appDrawingColor(forMonth month: Int?) -> Color {
+        let resolvedMonth = month ?? Calendar.current.component(.month, from: Date())
+        return UserPreferences.shared.accentColor.drawingColor(forMonth: resolvedMonth)
+    }
+
+    /// Convenience: resolves `appDrawingColor(forMonth:)` from a `Date`.
+    static func appDrawingColor(for date: Date) -> Color {
+        appDrawingColor(forMonth: Calendar.current.component(.month, from: date))
+    }
+
     func hueRotated(by degrees: Double) -> Color {
         // Convert to UIColor to access HSB components
         let uiColor = UIColor(self)

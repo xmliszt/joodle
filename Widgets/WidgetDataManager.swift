@@ -194,19 +194,54 @@ struct WidgetDataManager {
 
   // MARK: - Theme Color
 
-  /// Load the user's selected theme color for widget display
-  /// - Returns: The Color to use for accent in widgets
+  /// The rawValue of the rainbow theme (kept as a literal here; the widget
+  /// target doesn't compile the `ThemeColor` enum).
+  private let rainbowColorName = "Rainbow"
+
+  /// Load the user's selected theme color for widget display (UI chrome).
+  /// - Returns: The Color to use for accent in widgets. Under the rainbow theme
+  ///   this deliberately falls back to the default accent — rainbow only colors
+  ///   doodle strokes, not chrome.
   func loadThemeColor() -> Color {
-    guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
-      return resolveThemeColor(named: "Themes/Orange")
-    }
+    resolveThemeColor(named: "Themes/\(chromeColorName())")
+  }
 
-    guard let colorName = sharedDefaults.string(forKey: themeColorKey) else {
-      return resolveThemeColor(named: "Themes/Orange")
-    }
+  /// The stored theme color name, mapped so rainbow chrome uses the default accent.
+  private func chromeColorName() -> String {
+    let name = storedThemeColorName()
+    return name == rainbowColorName ? "Orange" : name
+  }
 
-    // Return the color from the Themes asset catalog, resolved through UIColor
-    return resolveThemeColor(named: "Themes/\(colorName)")
+  /// The raw stored theme color name, or "Orange" when unset.
+  private func storedThemeColorName() -> String {
+    guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier),
+          let colorName = sharedDefaults.string(forKey: themeColorKey) else {
+      return "Orange"
+    }
+    return colorName
+  }
+
+  /// Whether the rainbow (per-month) theme is selected.
+  private var isRainbowSelected: Bool {
+    storedThemeColorName() == rainbowColorName
+  }
+
+  /// The stroke color for a doodle in `month` (1-12). Under the rainbow theme
+  /// this is that month's color; otherwise it's the single accent color. Solid
+  /// themes go through `resolveThemeColor` so they render correctly in widget
+  /// `Canvas`; the rainbow palette is already UIColor-backed and Canvas-safe.
+  func doodleStrokeColor(forMonth month: Int) -> Color {
+    isRainbowSelected ? RainbowPalette.color(forMonth: month) : loadThemeColor()
+  }
+
+  /// Parses the 1-12 month out of a "yyyy-MM-dd" date string, defaulting to the
+  /// current month when malformed.
+  func month(fromDateString dateString: String) -> Int {
+    let parts = dateString.split(separator: "-")
+    if parts.count >= 2, let month = Int(parts[1]), (1...12).contains(month) {
+      return month
+    }
+    return Calendar.current.component(.month, from: Date())
   }
 
   /// Resolves a named color through UIColor to ensure it works in Canvas

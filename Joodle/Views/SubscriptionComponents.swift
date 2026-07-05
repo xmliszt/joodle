@@ -7,29 +7,6 @@
 
 import SwiftUI
 
-// MARK: - Feature Row
-
-struct FeatureRow: View {
-  let icon: String
-  let title: LocalizedStringResource
-
-  var body: some View {
-    HStack(alignment: .center, spacing: 8) {
-      Image(systemName: icon)
-        .font(.appFont(size: 20))
-        .foregroundColor(.appAccent)
-        .frame(width: 32, height: 32)
-
-      Text(title)
-        .font(.appSubheadline())
-        .foregroundColor(.primary)
-
-      Spacer()
-    }
-    .padding(.horizontal, 16)
-  }
-}
-
 // MARK: - Trial Timeline
 
 /// A three-stage trial timeline rendered as a vertical rail (à la TIDE): each stage's
@@ -155,6 +132,8 @@ struct ProComparisonTable: View {
     let proIsUnlimited: Bool
     /// Pro value is the wiggly placeholder doodle instead of text.
     var proIsWiggle: Bool = false
+    /// Pro value is a rainbow gradient chip instead of text.
+    var proIsRainbow: Bool = false
   }
 
   private var rows: [ComparisonRow] {
@@ -167,8 +146,8 @@ struct ProComparisonTable: View {
                     free: "—", pro: "All widgets", proIsUnlimited: false),
       ComparisonRow(label: "Sharing",
                     free: String(localized: "With Joodle mark"), pro: "No watermark", proIsUnlimited: false),
-      ComparisonRow(label: "Accent colors",
-                    free: String(localized: "Core colors"), pro: "Full palette", proIsUnlimited: false),
+      ComparisonRow(label: "Theme color",
+                    free: String(localized: "Core single color"), pro: "", proIsUnlimited: false, proIsRainbow: true),
       ComparisonRow(label: "Wiggly strokes",
                     free: "—", pro: "", proIsUnlimited: false, proIsWiggle: true)
     ]
@@ -247,6 +226,21 @@ struct ProComparisonTable: View {
           // 44pt minimum to fit.
           WigglyLinePreview()
             .frame(width: valueColumnWidth, height: 52)
+        } else if row.proIsRainbow {
+          // The rainbow theme's Pro value: a gradient chip rather than the word
+          // "Rainbow", inset so its padding matches the other cells.
+          RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .fill(
+              LinearGradient(
+                colors: RainbowPalette.colors,
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+              )
+            )
+            .frame(maxWidth: .infinity)
+            .frame(height: 24)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
         } else if row.proIsUnlimited {
           HStack(spacing: 3) {
             Image(systemName: "infinity").font(.appFont(size: 13, weight: .bold))

@@ -247,7 +247,13 @@ struct RandomJoodleWidgetView: View {
         LockScreenCircularView(Joodle: entry.Joodle, family: family, themeColor: themeColor)
       default:
         if let Joodle = entry.Joodle {
-          JoodleView(drawingData: Joodle.drawingData, family: family, themeColor: themeColor)
+          JoodleView(
+            drawingData: Joodle.drawingData,
+            family: family,
+            themeColor: WidgetDataManager.shared.doodleStrokeColor(
+              forMonth: WidgetDataManager.shared.month(fromDateString: Joodle.dateString)
+            )
+          )
             .padding(family == .systemLarge ? 48 : 24)
             .widgetURL(URL(string: "joodle://date/\(Joodle.dateString)"))
             .containerBackground(for: .widget) {
@@ -323,7 +329,13 @@ struct LockScreenCircularView: View {
   var body: some View {
     if let Joodle = Joodle {
       ZStack {
-        JoodleView(drawingData: Joodle.drawingData, family: family, themeColor: themeColor)
+        JoodleView(
+          drawingData: Joodle.drawingData,
+          family: family,
+          themeColor: WidgetDataManager.shared.doodleStrokeColor(
+            forMonth: WidgetDataManager.shared.month(fromDateString: Joodle.dateString)
+          )
+        )
           .padding(8)
       }
       .widgetURL(URL(string: "joodle://date/\(Joodle.dateString)"))

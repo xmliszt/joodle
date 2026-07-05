@@ -284,7 +284,7 @@ struct MonthGridWidgetContentView: View {
                          let drawingData = dayEntry.drawingData {
                         WidgetGridDoodleCanvas(
                           drawingData: drawingData,
-                          themeColor: themeColor
+                          themeColor: WidgetDataManager.shared.doodleStrokeColor(forMonth: month)
                         )
                         .widgetAccentable()
                       }

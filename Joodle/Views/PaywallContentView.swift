@@ -504,38 +504,6 @@ struct PaywallContentView: View {
     .padding(.top, 8)
   }
 
-  // MARK: - Features Section
-
-  private var featuresSection: some View {
-    VStack(alignment: .leading, spacing: 4) {
-      FeatureRow(
-        icon: "scribble.variable",
-        title: "Unlimited Joodle entries"
-      )
-
-      FeatureRow(
-        icon: "alarm.waves.left.and.right.fill",
-        title: "Unlimited anniverary alarms"
-      )
-
-      FeatureRow(
-        icon: "square.grid.2x2.fill",
-        title: "Access to all widgets"
-      )
-
-      FeatureRow(
-        icon: "square.and.arrow.up.fill",
-        title: "Sharing without watermark"
-      )
-
-      FeatureRow(
-        icon: "swatchpalette.fill",
-        title: "More accent colors"
-      )
-    }
-    .padding(8)
-  }
-
   // MARK: - Pricing Section
 
   private var pricingSection: some View {
