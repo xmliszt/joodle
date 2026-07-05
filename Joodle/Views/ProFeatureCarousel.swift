@@ -1,0 +1,521 @@
+//
+//  ProFeatureCarousel.swift
+//  Joodle
+//
+//  A swipeable, auto-advancing showcase of Joodle Pro features rendered as live
+//  SwiftUI demos (no screenshots or video). Sits above the comparison table on
+//  the paywall to create desire before the rational Free-vs-Pro breakdown.
+//
+
+import SwiftUI
+import UIKit
+
+// MARK: - ProFeatureCarousel
+
+struct ProFeatureCarousel: View {
+  private enum Feature: CaseIterable, Identifiable {
+    case unlimited, rainbow, wiggly, backdrop
+
+    var id: Self { self }
+
+    var title: LocalizedStringResource {
+      switch self {
+      case .unlimited: return "Doodle every day, forever"
+      case .rainbow:   return "A color for every month"
+      case .wiggly:    return "Strokes that come alive"
+      case .backdrop:  return "A living backdrop"
+      }
+    }
+
+    var subtitle: LocalizedStringResource {
+      switch self {
+      case .unlimited: return "Free stops at 30 doodles. Pro keeps your whole year — and every year after."
+      case .rainbow:   return "Let your year bloom into all twelve shades of the rainbow theme."
+      case .wiggly:    return "Give every stroke a lively, hand-drawn wiggle."
+      case .backdrop:  return "A pool of liquid drifts and settles behind your year."
+      }
+    }
+
+    var next: Feature {
+      let all = Feature.allCases
+      let index = all.firstIndex(of: self) ?? 0
+      return all[(index + 1) % all.count]
+    }
+
+    /// How long this card's demo takes to play its story once. The animated
+    /// cards report their own play-through; the continuously-looping ones (a
+    /// boil, a settling pool) get a sensible fixed viewing time.
+    var playDuration: Double {
+      switch self {
+      case .unlimited: return UnlimitedDoodlesDemo.playThroughDuration
+      case .rainbow:   return RainbowThemeDemo.playThroughDuration
+      case .wiggly:    return WigglyStrokesDemo.playThroughDuration
+      case .backdrop:  return 4.5
+      }
+    }
+  }
+
+  @State private var selection: Feature = .unlimited
+
+  private let showcaseHeight: CGFloat = 300
+  private let cornerRadius: CGFloat = 28
+  private let blurBandHeight: CGFloat = 88
+
+  /// Beat of stillness on the finished demo before advancing, so a card doesn't
+  /// snap away the instant its animation lands.
+  private let trailingDelay: Double = 1.2
+
+  var body: some View {
+    VStack(spacing: 18) {
+      showcase
+      caption
+    }
+    // Dwell = the current card's play-through + a trailing pause. Re-armed every
+    // time the visible card changes, so a manual swipe resets the timer and it
+    // never advances mid-animation or fights the user.
+    .task(id: selection) {
+      try? await Task.sleep(for: .seconds(selection.playDuration + trailingDelay))
+      guard !Task.isCancelled else { return }
+      withAnimation(.easeInOut) { selection = selection.next }
+    }
+  }
+
+  // MARK: Showcase
+
+  private var showcase: some View {
+    TabView(selection: $selection) {
+      ForEach(Feature.allCases) { feature in
+        demo(for: feature).tag(feature)
+      }
+    }
+    .tabViewStyle(.page(indexDisplayMode: .never))
+    .frame(height: showcaseHeight)
+    .overlay(alignment: .bottom) {
+      // Fade the demo's bottom edge into the paywall background so the page dots
+      // read cleanly over it. Matched to the real background color (not a frosted
+      // material) so it dissolves seamlessly instead of showing as a gray band.
+      LinearGradient(
+        colors: [.clear, Color(uiColor: .systemBackground)],
+        startPoint: .top,
+        endPoint: .bottom
+      )
+      .frame(height: blurBandHeight)
+      .allowsHitTesting(false)
+    }
+    .overlay(alignment: .bottom) {
+      pageDots.padding(.bottom, 16)
+    }
+  }
+
+  @ViewBuilder
+  private func demo(for feature: Feature) -> some View {
+    switch feature {
+    case .unlimited: showcaseTile { UnlimitedDoodlesDemo(isActive: feature == selection) }
+    case .rainbow:   showcaseTile { RainbowThemeDemo(isActive: feature == selection) }
+    case .wiggly:    showcaseTile { WigglyStrokesDemo(isActive: feature == selection) }
+    case .backdrop:  LivingBackdropDemo()
+    }
+  }
+
+  private func showcaseTile<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+    // Transparent so the demo sits directly on the paywall's (dark) background
+    // and the carousel blends in rather than reading as a separate card.
+    ZStack {
+      Color.clear
+      content().padding(24)
+    }
+  }
+
+  private var pageDots: some View {
+    HStack(spacing: 7) {
+      ForEach(Feature.allCases) { feature in
+        Capsule()
+          .fill(feature == selection ? Color.appAccent : Color.white.opacity(0.3))
+          .frame(width: feature == selection ? 20 : 7, height: 7)
+      }
+    }
+    .animation(.springFkingSatifying, value: selection)
+  }
+
+  private var caption: some View {
+    VStack(spacing: 6) {
+      Text(selection.title)
+        .font(.appFont(size: 22, weight: .bold))
+        .foregroundColor(.appTextPrimary)
+
+      Text(selection.subtitle)
+        .font(.appSubheadline())
+        .foregroundColor(.appTextSecondary)
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    .frame(maxWidth: .infinity)
+    .padding(.horizontal, 24)
+    .id(selection)
+    .transition(.opacity)
+    .animation(.easeInOut, value: selection)
+  }
+}
+
+// MARK: - Year Grid (shared by unlimited + rainbow demos)
+
+/// Smoothstep easing on 0…1.
+private func smoothstep(_ t: Double) -> Double {
+  let x = min(max(t, 0), 1)
+  return x * x * (3 - 2 * x)
+}
+
+/// Alpha for a dot given the wavefront position (in day units) and a ramp width:
+/// 1 well behind the front, easing to 0 across the ramp band so the sweep reads
+/// soft instead of snapping dot-by-dot.
+private func frontAlpha(front: Double, day: Int, ramp: Double) -> Double {
+  min(max((front - Double(day)) / ramp, 0), 1)
+}
+
+/// A grid where an empty day is a small dot and a doodled day is a mushroom
+/// *outline* — a doodle is a stroke, not a fill. `doodle` crossfades each cell
+/// from dot (0) to mushroom (1); `strokeColor` is the mushroom's color, and the
+/// optional `overlayColor` fades a second color on top (the rainbow recolor).
+private struct YearGridCanvas: View {
+  let totalDays: Int
+  let columns: Int
+  let doodle: (Int) -> Double
+  var strokeColor: (Int) -> Color = { _ in .appAccent }
+  var overlayColor: (Int) -> Color = { _ in .clear }
+
+  var body: some View {
+    Canvas { context, size in
+      let rows = Int(ceil(Double(totalDays) / Double(columns)))
+      // Square cells so every row is the same height and the grid reads as an
+      // even field regardless of which card it's on.
+      let cell = min(size.width / CGFloat(columns), size.height / CGFloat(rows))
+      let originX = (size.width - cell * CGFloat(columns)) / 2
+      let originY = (size.height - cell * CGFloat(rows)) / 2
+      let glyphWidth = cell * 0.62
+      let glyphHeight = cell * 0.74
+      let dotRadius = cell * 0.11
+      let lineStyle = StrokeStyle(lineWidth: max(1, cell * 0.09), lineCap: .round, lineJoin: .round)
+
+      for day in 0..<totalDays {
+        let cellX = originX + CGFloat(day % columns) * cell
+        let cellY = originY + CGFloat(day / columns) * cell
+        let progress = doodle(day)
+
+        // Empty day: a placeholder dot that fades out as it becomes a doodle.
+        if progress < 1 {
+          let center = CGPoint(x: cellX + cell / 2, y: cellY + cell / 2)
+          let dot = CGRect(x: center.x - dotRadius, y: center.y - dotRadius, width: dotRadius * 2, height: dotRadius * 2)
+          context.fill(Path(ellipseIn: dot), with: .color(.white.opacity(0.12 * (1 - progress))))
+        }
+
+        // Doodled day: a mushroom drawn as an outline, fading in.
+        if progress > 0 {
+          let rect = CGRect(
+            x: cellX + (cell - glyphWidth) / 2,
+            y: cellY + (cell - glyphHeight) / 2,
+            width: glyphWidth,
+            height: glyphHeight
+          )
+          let mushroom = mushroomPath(in: rect)
+          context.stroke(mushroom, with: .color(strokeColor(day).opacity(progress)), style: lineStyle)
+          context.stroke(mushroom, with: .color(overlayColor(day).opacity(progress)), style: lineStyle)
+        }
+      }
+    }
+  }
+}
+
+/// A tiny mushroom *outline* — a broad rounded cap with its rim, and a U-shaped
+/// stem tucked under the centre (open at the top so it meets the rim without a
+/// doubled line). Meant to be stroked, mirroring how a doodle is drawn.
+private func mushroomPath(in rect: CGRect) -> Path {
+  var path = Path()
+  let capHeight = rect.height * 0.52
+  let capBottomY = rect.minY + capHeight
+
+  path.move(to: CGPoint(x: rect.minX, y: capBottomY))
+  path.addCurve(
+    to: CGPoint(x: rect.maxX, y: capBottomY),
+    control1: CGPoint(x: rect.minX + rect.width * 0.04, y: rect.minY),
+    control2: CGPoint(x: rect.maxX - rect.width * 0.04, y: rect.minY)
+  )
+  path.addLine(to: CGPoint(x: rect.minX, y: capBottomY))
+
+  let stemWidth = rect.width * 0.46
+  let stemLeft = rect.midX - stemWidth / 2
+  let stemRight = rect.midX + stemWidth / 2
+  let stemBottom = rect.maxY
+  let radius = stemWidth * 0.4
+  path.move(to: CGPoint(x: stemLeft, y: capBottomY))
+  path.addLine(to: CGPoint(x: stemLeft, y: stemBottom - radius))
+  path.addQuadCurve(to: CGPoint(x: stemLeft + radius, y: stemBottom), control: CGPoint(x: stemLeft, y: stemBottom))
+  path.addLine(to: CGPoint(x: stemRight - radius, y: stemBottom))
+  path.addQuadCurve(to: CGPoint(x: stemRight, y: stemBottom - radius), control: CGPoint(x: stemRight, y: stemBottom))
+  path.addLine(to: CGPoint(x: stemRight, y: capBottomY))
+  return path
+}
+
+private let demoCellCount = 150
+private let demoGridColumns = 15
+private let demoFreeLimit = 30
+
+// MARK: - Demo Badge
+
+/// The consistent state pill shown at the top of every card. It only ever says
+/// Free or Pro — the demo itself shows what changes, so the badge stays terse.
+private struct DemoBadge: View {
+  let isPro: Bool
+
+  var body: some View {
+    HStack(spacing: 6) {
+      Image(systemName: isPro ? "crown.fill" : "lock.fill")
+        .font(.appFont(size: 11, weight: .bold))
+      Text(isPro ? String(localized: "Pro") : String(localized: "Free"))
+        .font(.appCaption(weight: .bold))
+    }
+    .foregroundColor(isPro ? .appAccent : .white.opacity(0.6))
+    .padding(.horizontal, 12)
+    .padding(.vertical, 6)
+    .background(Capsule().fill(.white.opacity(0.08)))
+    .animation(.easeInOut, value: isPro)
+  }
+}
+
+// MARK: - Unlimited Doodles Demo
+
+/// Loops a fill from empty → the free cap (30) → the full year, so the jump from
+/// "limited" to "unlimited" is felt, not just read. Driven off a `TimelineView`
+/// clock (not `withAnimation`) because `Canvas` won't interpolate an animated
+/// `@State` — it would snap to the final frame.
+private struct UnlimitedDoodlesDemo: View {
+  let isActive: Bool
+  @State private var epoch = Date()
+
+  static let fillDuration = 1.8
+  static let freeHold = 1.4
+  static let proFillDuration = 2.4
+  static let proHold = 2.0
+  static let drainDuration = 1.3
+  static let emptyHold = 0.8
+
+  /// One full loop, including the drain-and-reset tail — only seen if the viewer
+  /// lingers past the carousel's dwell.
+  static var cycleDuration: Double {
+    fillDuration + freeHold + proFillDuration + proHold + drainDuration + emptyHold
+  }
+
+  /// Time to reach the end of the story beat (the full-year Pro reveal). The
+  /// carousel advances after this plus its trailing delay, before the drain.
+  static var playThroughDuration: Double {
+    fillDuration + freeHold + proFillDuration + proHold
+  }
+
+  /// Fill fraction (0…1) for a point in the loop, eased through each phase.
+  private func fill(at time: Double) -> Double {
+    let freeFraction = Double(demoFreeLimit) / Double(demoCellCount)
+    var x = time.truncatingRemainder(dividingBy: Self.cycleDuration)
+
+    if x < Self.fillDuration { return freeFraction * smoothstep(x / Self.fillDuration) }
+    x -= Self.fillDuration
+    if x < Self.freeHold { return freeFraction }
+    x -= Self.freeHold
+    if x < Self.proFillDuration { return freeFraction + (1 - freeFraction) * smoothstep(x / Self.proFillDuration) }
+    x -= Self.proFillDuration
+    if x < Self.proHold { return 1 }
+    x -= Self.proHold
+    if x < Self.drainDuration { return 1 - smoothstep(x / Self.drainDuration) }
+    return 0
+  }
+
+  var body: some View {
+    TimelineView(.animation(paused: !isActive)) { timeline in
+      let front = fill(at: timeline.date.timeIntervalSince(epoch)) * Double(demoCellCount)
+      let isPro = front > Double(demoFreeLimit) + 0.5
+
+      VStack(spacing: 14) {
+        DemoBadge(isPro: isPro)
+        YearGridCanvas(
+          totalDays: demoCellCount,
+          columns: demoGridColumns,
+          doodle: { day in frontAlpha(front: front, day: day, ramp: 5) }
+        )
+      }
+    }
+    // Restart the beat each time this card becomes visible, so its play-through
+    // stays in step with the carousel's dwell timer.
+    .onChange(of: isActive) { _, active in
+      if active { epoch = Date() }
+    }
+  }
+}
+
+// MARK: - Rainbow Theme Demo
+
+/// A sweep recolors a full year of doodles from the single accent color into the
+/// per-month rainbow palette, then resets and loops. Clock-driven so the Canvas
+/// redraws every frame (see `UnlimitedDoodlesDemo`).
+private struct RainbowThemeDemo: View {
+  let isActive: Bool
+  @State private var epoch = Date()
+
+  static let pause = 0.6
+  static let revealDuration = 2.2
+  static let hold = 2.6
+  static let resetDuration = 0.8
+
+  static var cycleDuration: Double { pause + revealDuration + hold + resetDuration }
+
+  /// Ends on the fully-rainbow year; the reset tail runs only if the viewer lingers.
+  static var playThroughDuration: Double { pause + revealDuration + hold }
+
+  /// Sweep position (0…1) across the year, eased in and out.
+  private func reveal(at time: Double) -> Double {
+    var x = time.truncatingRemainder(dividingBy: Self.cycleDuration)
+    if x < Self.pause { return 0 }
+    x -= Self.pause
+    if x < Self.revealDuration { return smoothstep(x / Self.revealDuration) }
+    x -= Self.revealDuration
+    if x < Self.hold { return 1 }
+    x -= Self.hold
+    return 1 - smoothstep(x / Self.resetDuration)
+  }
+
+  var body: some View {
+    TimelineView(.animation(paused: !isActive)) { timeline in
+      let fraction = reveal(at: timeline.date.timeIntervalSince(epoch))
+      let front = fraction * Double(demoCellCount)
+      let isRainbow = fraction > 0.02
+
+      VStack(spacing: 14) {
+        DemoBadge(isPro: isRainbow)
+        YearGridCanvas(
+          totalDays: demoCellCount,
+          columns: demoGridColumns,
+          doodle: { _ in 1 },
+          strokeColor: { _ in .appAccent },
+          overlayColor: { day in
+            let month = min(RainbowPalette.colors.count - 1, day * RainbowPalette.colors.count / demoCellCount)
+            return RainbowPalette.colors[month].opacity(frontAlpha(front: front, day: day, ramp: 6))
+          }
+        )
+      }
+    }
+    .onChange(of: isActive) { _, active in
+      if active { epoch = Date() }
+    }
+  }
+}
+
+// MARK: - Wiggly Strokes Demo
+
+/// The placeholder doodle drawn 1:1 in canvas space, starting still then easing
+/// into the live wigglypaint boil — so the Free→Pro difference is shown, not just
+/// stated. The boil amplitude ramps from 0 to full over the transition.
+private struct WigglyStrokesDemo: View {
+  let isActive: Bool
+  @State private var epoch = Date()
+
+  static let stillHold = 1.6
+  static let rampDuration = 1.0
+  static let wiggleHold = 2.2
+  static let resetHold = 0.6
+
+  static var cycleDuration: Double { stillHold + rampDuration + wiggleHold + resetHold }
+  static var playThroughDuration: Double { stillHold + rampDuration + wiggleHold }
+
+  private var paths: [DoodlePathData] {
+    (try? JSONDecoder().decode([DoodlePathData].self, from: PLACEHOLDER_DATA)) ?? []
+  }
+
+  /// Boil strength (0…1): 0 while still, easing to 1 as the strokes come alive.
+  private func amplitudeFactor(at time: Double) -> Double {
+    var x = time.truncatingRemainder(dividingBy: Self.cycleDuration)
+    if x < Self.stillHold { return 0 }
+    x -= Self.stillHold
+    if x < Self.rampDuration { return smoothstep(x / Self.rampDuration) }
+    x -= Self.rampDuration
+    if x < Self.wiggleHold { return 1 }
+    x -= Self.wiggleHold
+    return 1 - smoothstep(x / Self.resetHold)
+  }
+
+  var body: some View {
+    TimelineView(.animation(paused: !isActive)) { timeline in
+      let time = timeline.date.timeIntervalSince(epoch)
+      let factor = amplitudeFactor(at: time)
+      let isWiggly = factor > 0.05
+
+      VStack(spacing: 14) {
+        DemoBadge(isPro: isWiggly)
+        doodle(time: time, amplitudeFactor: factor)
+      }
+    }
+    .onChange(of: isActive) { _, active in
+      if active { epoch = Date() }
+    }
+  }
+
+  private func doodle(time: Double, amplitudeFactor: Double) -> some View {
+    Canvas { context, size in
+      let scale = min(size.width, size.height) / DOODLE_CANVAS_SIZE
+      context.translateBy(
+        x: (size.width - DOODLE_CANVAS_SIZE * scale) / 2,
+        y: (size.height - DOODLE_CANVAS_SIZE * scale) / 2
+      )
+      context.scaleBy(x: scale, y: scale)
+
+      let frame = WigglyStroke.frameIndex(at: time)
+      let amplitude = WigglyStroke.defaultAmplitude * amplitudeFactor
+      for pathData in paths {
+        let path = WigglyStroke.path(points: pathData.points, isDot: pathData.isDot, frame: frame, amplitude: amplitude)
+        context.stroke(
+          path,
+          with: .color(.appAccent),
+          style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
+        )
+      }
+    }
+  }
+}
+
+// MARK: - Living Backdrop Demo
+
+/// The real liquid metaball backdrop pinned at half fill, sitting *behind* a
+/// year grid exactly as it does in the app — the feature in its true context.
+private struct LivingBackdropDemo: View {
+  private let filledThroughCell = Int(Double(demoCellCount) * 0.6)
+
+  var body: some View {
+    ZStack {
+      Color.clear
+      LiquidMetaballBackdropView(liquidOpacity: 0.4, fixedFillLevel: 0.5)
+      VStack(spacing: 14) {
+        DemoBadge(isPro: true)
+        YearGridCanvas(
+          totalDays: demoCellCount,
+          columns: demoGridColumns,
+          doodle: { day in day < filledThroughCell ? 1 : 0 }
+        )
+      }
+      .padding(24)
+    }
+  }
+}
+
+// MARK: - Preview
+
+#Preview("Pro Feature Carousel") {
+  ZStack {
+//    Color.black.ignoresSafeArea()
+    ProFeatureCarousel()
+  }
+}
+
+#Preview("Backdrop demo · grid over liquid") {
+  ZStack {
+    Color.black.ignoresSafeArea()
+    LivingBackdropDemo()
+      .frame(width: 320, height: 300)
+      .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+  }
+}

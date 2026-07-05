@@ -24,6 +24,11 @@ struct LiquidMetaballBackdropView: View {
   /// Overall opacity of the liquid backdrop.
   var liquidOpacity: Double = 0.2
 
+  /// Pins the pool to a fixed fill fraction (0…1) instead of the time-of-day
+  /// drain. `nil` follows the clock; set it for a static showcase (e.g. a paywall
+  /// demo that should always read half-full).
+  var fixedFillLevel: Double? = nil
+
   /// The metaball field is rasterized on a layer shrunk by this factor and scaled
   /// back up, cutting shader fill-rate by `renderScale²` (2 → a quarter of the
   /// pixels). The field is smooth and the backdrop faint, so the upscale is
@@ -46,7 +51,7 @@ struct LiquidMetaballBackdropView: View {
           gravityX: motionManager.gravityX,
           gravityY: motionManager.gravityY,
           shakeMagnitude: motionManager.shakeMagnitude,
-          fillLevel: Self.fillLevel(at: timeline.date)
+          fillLevel: fixedFillLevel ?? Self.fillLevel(at: timeline.date)
         )
         let _ = syncTimelinePause()
 
@@ -92,7 +97,7 @@ struct LiquidMetaballBackdropView: View {
       guard isTimelinePaused else { return }
       while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(30))
-        if simulation.wantsWake(fillLevel: Self.fillLevel(at: Date())) {
+        if simulation.wantsWake(fillLevel: fixedFillLevel ?? Self.fillLevel(at: Date())) {
           isTimelinePaused = false
           return
         }

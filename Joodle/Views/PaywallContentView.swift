@@ -457,10 +457,12 @@ struct PaywallContentView: View {
   private var contextBody: some View {
     switch configuration.context {
     case .onboarding:
+      ProFeatureCarousel()
       TrialTimelineView(style: .onboarding, progress: 0)
       ProComparisonTable()
 
     case .trialStatus:
+      ProFeatureCarousel()
       TrialTimelineView(style: .trial, progress: GracePeriodManager.shared.gracePeriodProgress)
       ProComparisonTable()
       if showEarlyUpgrade {
@@ -472,12 +474,14 @@ struct PaywallContentView: View {
       }
 
     case .expired:
+      ProFeatureCarousel()
       ProComparisonTable()
       pricingSection
       ctaSection
       legalLinksSection
 
     case .limitedTimeOffer:
+      ProFeatureCarousel()
       ProComparisonTable()
       pricingSection
       ctaSection

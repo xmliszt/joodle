@@ -60,6 +60,10 @@ struct StandalonePaywallView: View {
             }
         }
         .presentationDragIndicator(.visible)
+        // The paywall commits to a dark, premium look — the live feature demos
+        // are designed against dark, and it reads as more premium than the
+        // adaptive app chrome.
+        .preferredColorScheme(.dark)
         .postHogScreenView("Paywall - Standalone")
         .onChange(of: ltoManager.isActive) { _, active in
             // The countdown hit zero under the open sheet — the offer is gone,
