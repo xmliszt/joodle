@@ -157,6 +157,7 @@ struct YearGridJoodlesView: View {
             hasEntry: hasEntry,
             dotStyle: dotStyle,
             drawingData: dayEntry?.drawingData, // Render directly with current theme color
+            strokeColor: .appDrawingColor(for: item.date),
             showEmpty: showEmptyDots
           )
         }

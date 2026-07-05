@@ -46,6 +46,7 @@ struct ShareCardDotView: View {
   let dotStyle: DoodleDotStyle
   var thumbnail: Data? = nil
   var drawingData: Data? = nil
+  var strokeColor: Color = .appAccent
   var showEmpty: Bool = true
 
   var body: some View {
@@ -55,7 +56,7 @@ struct ShareCardDotView: View {
       dotStyle: dotStyle,
       drawingData: drawingData,
       thumbnail: thumbnail,
-      strokeColor: .appAccent,
+      strokeColor: strokeColor,
       strokeMultiplier: 1.0,
       renderScale: 2.0,
       showEmptyDot: showEmpty
@@ -211,7 +212,8 @@ struct YearGridDotsView: View {
             size: dotSize,
             hasEntry: hasEntry,
             dotStyle: dotStyle,
-            thumbnail: nil // Dots view doesn't show thumbnails
+            thumbnail: nil, // Dots view doesn't show thumbnails
+            strokeColor: .appDrawingColor(for: item.date)
           )
         }
 
