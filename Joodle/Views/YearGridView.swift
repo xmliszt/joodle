@@ -11,10 +11,6 @@ import SwiftUI
 let GRID_HORIZONTAL_PADDING: CGFloat = 40
 let MAX_SCALE: CGFloat = 1.5
 let MAX_SCALE_DISTANCE: CGFloat = 2.5
-/// Weekday labels starting from Sunday
-let WEEKDAY_LABELS_SUNDAY: [String] = ["S", "M", "T", "W", "T", "F", "S"]
-/// Weekday labels starting from Monday
-let WEEKDAY_LABELS_MONDAY: [String] = ["M", "T", "W", "T", "F", "S", "S"]
 
 struct DateItem: Identifiable, Equatable {
   var id: String
@@ -25,6 +21,7 @@ struct YearGridView: View {
 
   // MARK: Environment
   @Environment(\.userPreferences) private var userPreferences
+  @Environment(\.locale) private var locale
 
   // MARK: Params
   /// The year to display
@@ -81,9 +78,17 @@ struct YearGridView: View {
     return CalendarGridHelper.leadingEmptySlots(for: year, startOfWeek: userPreferences.startOfWeek)
   }
 
-  /// Get weekday labels based on user's start of week preference
+  /// Localized very-short weekday labels, reordered for the user's start-of-week.
+  /// `veryShortWeekdaySymbols` is always Sunday-first, so the Monday variant
+  /// rotates Sunday to the end. Uses the app's locale so it follows the in-app
+  /// language override, matching the widgets.
   private var weekdayLabels: [String] {
-    userPreferences.startOfWeek == "monday" ? WEEKDAY_LABELS_MONDAY : WEEKDAY_LABELS_SUNDAY
+    var calendar = Calendar.current
+    calendar.locale = locale
+    let symbols = calendar.veryShortWeekdaySymbols
+    return userPreferences.startOfWeek.lowercased() == "monday"
+      ? Array(symbols[1...]) + [symbols[0]]
+      : symbols
   }
 
   // MARK: View

@@ -35,11 +35,6 @@
           "locale" : "zh_Hant"
         },
         {
-          "description" : "永久解锁全部功能",
-          "displayName" : "Joodle Pro 终身版",
-          "locale" : "zh_Hans"
-        },
-        {
           "description" : "모든 기능을 영구적으로 해제",
           "displayName" : "Joodle Pro 평생 라이선스",
           "locale" : "ko"
@@ -48,6 +43,16 @@
           "description" : "Unlock all features forever",
           "displayName" : "Joodle Pro Lifetime",
           "locale" : "en_US"
+        },
+        {
+          "description" : "永久解锁全部功能",
+          "displayName" : "Joodle Pro 终身版",
+          "locale" : "zh_Hans"
+        },
+        {
+          "description" : "Tüm özelliklerin kilidini sonsuza dek aç",
+          "displayName" : "Joodle Pro Ömür Boyu",
+          "locale" : "tr"
         }
       ],
       "productID" : "dev.liyuxuan.joodle.pro.lifetime",
@@ -55,7 +60,7 @@
       "type" : "NonConsumable"
     },
     {
-      "displayPrice" : "24.98",
+      "displayPrice" : "29.98",
       "familyShareable" : false,
       "internalID" : "6787389629",
       "localizations" : [
@@ -70,9 +75,19 @@
           "locale" : "ja"
         },
         {
+          "description" : "永久解鎖所有功能",
+          "displayName" : "Joodle Pro 終身版",
+          "locale" : "zh_Hant"
+        },
+        {
           "description" : "Unlock all features forever",
           "displayName" : "Joodle Pro Lifetime",
           "locale" : "en_US"
+        },
+        {
+          "description" : "Tüm özelliklerin kilidini sonsuza dek aç",
+          "displayName" : "Joodle Pro Ömür Boyu",
+          "locale" : "tr"
         },
         {
           "description" : "모든 기능을 영구적으로 해제",
@@ -83,11 +98,6 @@
           "description" : "Débloquez toutes les fonctionnalités à vie",
           "displayName" : "Joodle Pro à vie",
           "locale" : "fr"
-        },
-        {
-          "description" : "永久解鎖所有功能",
-          "displayName" : "Joodle Pro 終身版",
-          "locale" : "zh_Hant"
         }
       ],
       "productID" : "dev.liyuxuan.joodle.pro.lifetime.promo50",
@@ -103,7 +113,7 @@
     "_developerTeamID" : "AB3TLZ2LJT",
     "_disableDialogs" : false,
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 804857990.34637904,
+    "_lastSynchronizedDate" : 804965276.43550706,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,
     "_storefront" : "SGP",
@@ -162,12 +172,7 @@
         {
           "description" : "",
           "displayName" : "Joodle Pro",
-          "locale" : "zh_Hans"
-        },
-        {
-          "description" : "",
-          "displayName" : "Joodle Pro",
-          "locale" : "ko"
+          "locale" : "en_US"
         },
         {
           "description" : "",
@@ -177,7 +182,17 @@
         {
           "description" : "",
           "displayName" : "Joodle Pro",
-          "locale" : "en_US"
+          "locale" : "zh_Hans"
+        },
+        {
+          "description" : "",
+          "displayName" : "Joodle Pro",
+          "locale" : "ko"
+        },
+        {
+          "description" : "",
+          "displayName" : "Joodle pro",
+          "locale" : "tr"
         },
         {
           "description" : "",
@@ -204,9 +219,9 @@
             {
               "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
-                "new",
+                "existing",
                 "expired",
-                "existing"
+                "new"
               ],
               "internalID" : "8ab414ac-7421-4ec9-8300-9f4e9525393c",
               "isStackable" : false,
@@ -235,16 +250,6 @@
               "locale" : "fr"
             },
             {
-              "description" : "解鎖一個月的所有功能",
-              "displayName" : "Joodle Pro 月訂閱",
-              "locale" : "zh_Hant"
-            },
-            {
-              "description" : "一个月解锁全部功能",
-              "displayName" : "Joodle Pro 月度版",
-              "locale" : "zh_Hans"
-            },
-            {
               "description" : "Unlock all features for a month",
               "displayName" : "Joodle Pro Monthly",
               "locale" : "en_US"
@@ -253,6 +258,21 @@
               "description" : "한 달 동안 모든 기능 잠금 해제",
               "displayName" : "Joodle Pro 월간",
               "locale" : "ko"
+            },
+            {
+              "description" : "一个月解锁全部功能",
+              "displayName" : "Joodle Pro 月度版",
+              "locale" : "zh_Hans"
+            },
+            {
+              "description" : "Tüm özelliklerin kilidini bir aylığına aç",
+              "displayName" : "Joodle Pro Aylık",
+              "locale" : "tr"
+            },
+            {
+              "description" : "解鎖一個月的所有功能",
+              "displayName" : "Joodle Pro 月訂閱",
+              "locale" : "zh_Hant"
             }
           ],
           "productID" : "dev.liyuxuan.joodle.pro.monthly",
@@ -281,9 +301,9 @@
             {
               "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
-                "expired",
                 "new",
-                "existing"
+                "existing",
+                "expired"
               ],
               "internalID" : "161c3161-2bf7-4998-9757-d404a2c7fdd8",
               "isStackable" : true,
@@ -296,8 +316,8 @@
               "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
                 "expired",
-                "new",
-                "existing"
+                "existing",
+                "new"
               ],
               "internalID" : "872815b9-2444-43d3-975d-b0a6f37e8dcc",
               "isStackable" : true,
@@ -309,9 +329,9 @@
             {
               "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
-                "existing",
+                "expired",
                 "new",
-                "expired"
+                "existing"
               ],
               "internalID" : "4b6a062c-845f-454d-aa04-c0596c7703ba",
               "isStackable" : false,
@@ -340,6 +360,11 @@
               "locale" : "fr"
             },
             {
+              "description" : "解鎖一整年的所有功能",
+              "displayName" : "Joodle Pro 年訂閱",
+              "locale" : "zh_Hant"
+            },
+            {
               "description" : "一年解锁全部功能",
               "displayName" : "Joodle Pro 年度版",
               "locale" : "zh_Hans"
@@ -355,9 +380,9 @@
               "locale" : "ko"
             },
             {
-              "description" : "解鎖一整年的所有功能",
-              "displayName" : "Joodle Pro 年訂閱",
-              "locale" : "zh_Hant"
+              "description" : "Tüm özelliklerin kilidini bir yıllığına aç",
+              "displayName" : "Joodle Pro Yıllık",
+              "locale" : "tr"
             }
           ],
           "productID" : "dev.liyuxuan.joodle.pro.yearly",
