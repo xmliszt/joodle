@@ -14,7 +14,7 @@ import UIKit
 
 struct ProFeatureCarousel: View {
   private enum Feature: CaseIterable, Identifiable {
-    case unlimited, rainbow, wiggly, backdrop
+    case unlimited, rainbow, wiggly, watermark, backdrop
 
     var id: Self { self }
 
@@ -23,16 +23,18 @@ struct ProFeatureCarousel: View {
       case .unlimited: return "Doodle every day, forever"
       case .rainbow:   return "A color for every month"
       case .wiggly:    return "Strokes that come alive"
-      case .backdrop:  return "A living backdrop"
+      case .watermark: return "Share without the watermark"
+      case .backdrop:  return "Access to fun experiments"
       }
     }
 
     var subtitle: LocalizedStringResource {
       switch self {
       case .unlimited: return "Free stops at 30 doodles. Pro keeps your whole year — and every year after."
-      case .rainbow:   return "Let your year bloom into all twelve shades of the rainbow theme."
+      case .rainbow:   return "Let your year bloom into more vibrant colors, or all twelve shades of the rainbow theme."
       case .wiggly:    return "Give every stroke a lively, hand-drawn wiggle."
-      case .backdrop:  return "A pool of liquid drifts and settles behind your year."
+      case .watermark: return "Free adds a small Joodle mark. Pro exports are clean — just your doodle."
+      case .backdrop:  return "A pool of liquid drifts with passing time, and more future experiments!"
       }
     }
 
@@ -50,6 +52,7 @@ struct ProFeatureCarousel: View {
       case .unlimited: return UnlimitedDoodlesDemo.playThroughDuration
       case .rainbow:   return RainbowThemeDemo.playThroughDuration
       case .wiggly:    return WigglyStrokesDemo.playThroughDuration
+      case .watermark: return WatermarkFreeDemo.playThroughDuration
       case .backdrop:  return 4.5
       }
     }
@@ -113,6 +116,7 @@ struct ProFeatureCarousel: View {
     case .unlimited: showcaseTile { UnlimitedDoodlesDemo(isActive: feature == selection) }
     case .rainbow:   showcaseTile { RainbowThemeDemo(isActive: feature == selection) }
     case .wiggly:    showcaseTile { WigglyStrokesDemo(isActive: feature == selection) }
+    case .watermark: showcaseTile { WatermarkFreeDemo(isActive: feature == selection) }
     case .backdrop:  LivingBackdropDemo()
     }
   }
@@ -488,6 +492,98 @@ private struct WigglyStrokesDemo: View {
   }
 }
 
+// MARK: - Watermark-Free Sharing Demo
+
+/// A boiling doodle — a shared Wiggly Minimal card — toggling between the Free
+/// export (with the "Made with Joodle" watermark) and the clean Pro export, so
+/// the difference is felt rather than described. Transparent like the other
+/// cards, with the watermark tucked below the doodle where the carousel's bottom
+/// fade won't swallow it.
+private struct WatermarkFreeDemo: View {
+  let isActive: Bool
+  @State private var isPro = false
+
+  static let freeHold = 2.0
+  static let proHold = 2.4
+
+  /// Ends on the clean Pro state; the loop keeps toggling if the viewer lingers.
+  static var playThroughDuration: Double { freeHold + proHold }
+
+  /// A fixed doodle — the second of the 2026 sample — so the card reads the same
+  /// every time it comes around.
+  private var paths: [DoodlePathData] {
+    let doodle = CAROUSEL_DOODLES.count > 1 ? CAROUSEL_DOODLES[1] : CAROUSEL_DOODLES.first
+    return doodle?.paths ?? []
+  }
+
+  var body: some View {
+    VStack(spacing: 12) {
+      DemoBadge(isPro: isPro)
+      doodle
+        .frame(maxWidth: .infinity)
+        .frame(height: 120)
+      watermark
+        .opacity(isPro ? 0 : 1)
+      Spacer(minLength: 0)
+    }
+    // Flip Free <-> Pro on a loop while visible, crossfading the watermark so the
+    // "clean export" payoff lands. Paused off-screen to stay in step with the
+    // carousel's dwell timer.
+    .task(id: isActive) {
+      guard isActive else { return }
+      while !Task.isCancelled {
+        try? await Task.sleep(for: .seconds(isPro ? Self.proHold : Self.freeHold))
+        guard !Task.isCancelled else { return }
+        withAnimation(.easeInOut(duration: 0.5)) { isPro.toggle() }
+      }
+    }
+    // Reset to Free each time the card appears so the reveal always plays
+    // Free -> Pro in step with the dwell timer.
+    .onChange(of: isActive) { _, active in
+      if active { isPro = false }
+    }
+  }
+
+  private var doodle: some View {
+    TimelineView(.animation(paused: !isActive)) { timeline in
+      Canvas { context, size in
+        let scale = min(size.width, size.height) / DOODLE_CANVAS_SIZE
+        context.translateBy(
+          x: (size.width - DOODLE_CANVAS_SIZE * scale) / 2,
+          y: (size.height - DOODLE_CANVAS_SIZE * scale) / 2
+        )
+        context.scaleBy(x: scale, y: scale)
+
+        let frame = WigglyStroke.frameIndex(at: timeline.date.timeIntervalSinceReferenceDate)
+        for pathData in paths {
+          let path = WigglyStroke.path(points: pathData.points, isDot: pathData.isDot, frame: frame, amplitude: WigglyStroke.defaultAmplitude)
+          context.stroke(
+            path,
+            with: .color(.appAccent),
+            style: StrokeStyle(lineWidth: DRAWING_LINE_WIDTH, lineCap: .round, lineJoin: .round)
+          )
+        }
+      }
+    }
+  }
+
+  /// The same mark the Free export carries, mirrored inline so it sits where the
+  /// viewer can see it rather than pinned to the clipped bottom-right corner.
+  private var watermark: some View {
+    HStack(spacing: 6) {
+      Image("LaunchIcon")
+        .resizable()
+        .scaledToFit()
+        .frame(width: 22, height: 22)
+        .opacity(0.8)
+      Text("Made with Joodle")
+        .font(.appFont(size: 14))
+        .foregroundColor(.appTextSecondary)
+        .opacity(0.6)
+    }
+  }
+}
+
 // MARK: - Living Backdrop Demo
 
 /// The real liquid metaball backdrop pinned at half fill, sitting *behind* a
@@ -527,5 +623,14 @@ private struct LivingBackdropDemo: View {
     LivingBackdropDemo()
       .frame(width: 320, height: 300)
       .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+  }
+}
+
+#Preview("Watermark demo · wiggly share card") {
+  ZStack {
+    Color.black.ignoresSafeArea()
+    WatermarkFreeDemo(isActive: true)
+      .frame(width: 320, height: 300)
+      .padding(24)
   }
 }
