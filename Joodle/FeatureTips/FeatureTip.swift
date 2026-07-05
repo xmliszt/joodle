@@ -69,6 +69,11 @@ struct FeatureTip: Identifiable {
     /// shows at a time.
     let priority: Int
 
+    /// When `true`, the tip is only eligible while the user has premium access.
+    /// Used for tips that surface a Pro-only feature, so free users never see a
+    /// hint for something they can't use.
+    let requiresPremium: Bool
+
     /// When `true`, finishing onboarding does NOT permanently mark this tip
     /// seen. Instead the manager suppresses it only for the remainder of the
     /// onboarding session, so it stays hidden the first time the user opens the
@@ -87,6 +92,7 @@ struct FeatureTip: Identifiable {
         behavior: FeatureTipBehavior = .anchorVisible,
         horizontalTarget: FeatureTipHorizontalTarget = .center,
         priority: Int = 0,
+        requiresPremium: Bool = false,
         showsAfterOnboarding: Bool = false
     ) {
         self.id = id
@@ -96,6 +102,7 @@ struct FeatureTip: Identifiable {
         self.behavior = behavior
         self.horizontalTarget = horizontalTarget
         self.priority = priority
+        self.requiresPremium = requiresPremium
         self.showsAfterOnboarding = showsAfterOnboarding
     }
 }

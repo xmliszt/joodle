@@ -19,6 +19,10 @@ enum FeatureTipDefinitions {
         static let wigglyCustomizationRow = "featureTip.wigglyStrokes.customizationRow"
         /// The "Wiggly Strokes" toggle on the Customization screen.
         static let wigglyToggle = "featureTip.wigglyStrokes.toggle"
+        /// The "Customization" row in Settings, guiding toward the rainbow theme.
+        static let rainbowCustomizationRow = "featureTip.rainbow.customizationRow"
+        /// The rainbow swatch in the Theme Color grid on the Customization screen.
+        static let rainbowSwatch = "featureTip.rainbow.swatch"
         /// The Instagram quick-share button in `ShareCardSelectorView`.
         static let instagramShare = "featureTip.instagramShare"
     }
@@ -35,6 +39,10 @@ enum FeatureTipDefinitions {
     /// the toggle resolves both stages at once.
     private static let wigglyStrokesFeature = "wigglyStrokes"
 
+    /// Shared key linking the two-stage rainbow theme discovery so selecting the
+    /// rainbow swatch resolves both stages at once.
+    private static let rainbowFeature = "rainbow"
+
     /// All defined tips. Order is irrelevant — `FeatureTipManager` selects by
     /// `priority`.
     static let all: [FeatureTip] = [
@@ -46,6 +54,7 @@ enum FeatureTipDefinitions {
             priority: 0
         ),
         // Stage 1: guide the user from Settings into the Customization screen.
+        // Pro only — don't send free users toward a toggle they can't enable.
         FeatureTip(
             id: "featureTip.wigglyStrokes.settingsEntry",
             anchorID: AnchorID.wigglyCustomizationRow,
@@ -53,6 +62,7 @@ enum FeatureTipDefinitions {
             message: "Make your doodles wiggle",
             behavior: .scoped(scopeID: ScopeID.settings, defaultEdge: .bottom),
             priority: 5,
+            requiresPremium: true,
             showsAfterOnboarding: true
         ),
         // Stage 2: point at the toggle switch on the Customization screen.
@@ -64,6 +74,31 @@ enum FeatureTipDefinitions {
             behavior: .scoped(scopeID: ScopeID.customization, defaultEdge: .bottom),
             horizontalTarget: .trailing,
             priority: 6,
+            requiresPremium: true,
+            showsAfterOnboarding: true
+        ),
+        // Rainbow theme discovery (Pro only, lower priority than Wiggly Strokes
+        // so it surfaces only once Wiggly has been resolved).
+        // Stage 1: guide the user from Settings into the Customization screen.
+        FeatureTip(
+            id: "featureTip.rainbow.settingsEntry",
+            anchorID: AnchorID.rainbowCustomizationRow,
+            featureKey: rainbowFeature,
+            message: "Try one color a month",
+            behavior: .scoped(scopeID: ScopeID.settings, defaultEdge: .bottom),
+            priority: 3,
+            requiresPremium: true,
+            showsAfterOnboarding: true
+        ),
+        // Stage 2: point at the rainbow swatch in the Theme Color grid.
+        FeatureTip(
+            id: "featureTip.rainbow.swatchEntry",
+            anchorID: AnchorID.rainbowSwatch,
+            featureKey: rainbowFeature,
+            message: "Try one color a month",
+            behavior: .scoped(scopeID: ScopeID.customization, defaultEdge: .bottom),
+            priority: 4,
+            requiresPremium: true,
             showsAfterOnboarding: true
         ),
         // Surface the Instagram quick-share path. The bubble points at the

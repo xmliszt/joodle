@@ -67,6 +67,11 @@ struct ThemeColorPaletteView: View {
                         handleColorTap(colorInfo)
                     }
                 )
+                // Stage 2 of the rainbow theme discovery — selecting the rainbow
+                // swatch resolves the whole feature tip.
+                .if(colorInfo.themeColor == .rainbow) { view in
+                    view.featureTip(FeatureTipDefinitions.AnchorID.rainbowSwatch)
+                }
             }
         }
         .padding(.vertical, 16)

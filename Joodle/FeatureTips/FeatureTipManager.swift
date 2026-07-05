@@ -202,6 +202,7 @@ final class FeatureTipManager: ObservableObject {
     private func isEligible(_ tip: FeatureTip) -> Bool {
         guard !seenIDs.contains(tip.id) else { return false }
         guard !sessionSuppressedIDs.contains(tip.id) else { return false }
+        if tip.requiresPremium, !SubscriptionManager.shared.hasPremiumAccess { return false }
         switch tip.behavior {
         case .anchorVisible:
             return frames[tip.anchorID] != nil

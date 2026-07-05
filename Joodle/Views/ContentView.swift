@@ -219,7 +219,9 @@ struct ContentView: View {
                   .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 // Time-passing water backdrop (hide when bottom view is visible or disabled in settings)
-                if userPreferences.enableTimeBackdrop {
+                // Joodle Pro feature — free users never see it, even if the preference
+                // was switched on while it was free.
+                if userPreferences.enableTimeBackdrop && subscriptionManager.hasPremiumAccess {
                   LiquidMetaballBackdropView()
                 }
 

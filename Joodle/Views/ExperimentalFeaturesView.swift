@@ -10,6 +10,35 @@ import SwiftUI
 
 struct ExperimentalFeaturesView: View {
   @Environment(\.userPreferences) private var userPreferences
+  @StateObject private var subscriptionManager = SubscriptionManager.shared
+
+  @State private var showPaywall = false
+
+  private var timeBackdropBinding: Binding<Bool> {
+    Binding(
+      // Reflect the *effective* state: the backdrop only renders for Joodle Pro,
+      // so free users always see the toggle off (with a Pro badge) even if the
+      // preference was switched on while it was a free experimental feature.
+      get: { userPreferences.enableTimeBackdrop && subscriptionManager.hasPremiumAccess },
+      set: { newValue in
+        // Joodle Pro feature — free users get the paywall instead of toggling on.
+        guard subscriptionManager.hasPremiumAccess else {
+          showPaywall = true
+          return
+        }
+
+        let previousValue = userPreferences.enableTimeBackdrop
+        userPreferences.enableTimeBackdrop = newValue
+        if newValue != previousValue {
+          AnalyticsManager.shared.trackSettingChanged(
+            name: "experimental_time_backdrop",
+            value: newValue,
+            previousValue: previousValue
+          )
+        }
+      }
+    )
+  }
 
   var body: some View {
     List {
@@ -24,27 +53,19 @@ struct ExperimentalFeaturesView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
           // Toggle
-          Toggle(isOn: Binding(
-            get: { userPreferences.enableTimeBackdrop },
-            set: { newValue in
-              let previousValue = userPreferences.enableTimeBackdrop
-              userPreferences.enableTimeBackdrop = newValue
-              // Track experimental feature toggle
-              if newValue != previousValue {
-                AnalyticsManager.shared.trackSettingChanged(
-                  name: "experimental_time_backdrop",
-                  value: newValue,
-                  previousValue: previousValue
-                )
-              }
-            }
-          )) {
+          Toggle(isOn: timeBackdropBinding) {
             HStack {
               SettingsIconView(systemName: "water.waves", backgroundColor: .cyan)
-              Text("Passing Time Backdrop")
-                .font(.appBody())
+              HStack(spacing: 6) {
+                Text("Passing Time Backdrop")
+                  .font(.appBody())
+                if !subscriptionManager.hasPremiumAccess {
+                  PremiumFeatureBadge()
+                }
+              }
             }
           }
+          .tint(.appAccent)
         }
       } footer: {
         Text("Shows an animated water level that drains throughout the day in the background. Water level reacts to the tilting of your device.")
@@ -69,6 +90,9 @@ struct ExperimentalFeaturesView: View {
     .navigationTitle("Experimental Features")
     .navigationBarTitleDisplayMode(.inline)
     .postHogScreenView("Experimental Features")
+    .sheet(isPresented: $showPaywall) {
+      StandalonePaywallView(source: "experimental_time_backdrop_toggle")
+    }
   }
 }
 

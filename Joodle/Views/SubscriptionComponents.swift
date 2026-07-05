@@ -149,7 +149,9 @@ struct ProComparisonTable: View {
       ComparisonRow(label: "Theme color",
                     free: String(localized: "Core single color"), pro: "", proIsUnlimited: false, proIsRainbow: true),
       ComparisonRow(label: "Wiggly strokes",
-                    free: "—", pro: "", proIsUnlimited: false, proIsWiggle: true)
+                    free: "—", pro: "", proIsUnlimited: false, proIsWiggle: true),
+      ComparisonRow(label: "Fun experiment",
+                    free: "—", pro: "Full access", proIsUnlimited: false)
     ]
   }
 

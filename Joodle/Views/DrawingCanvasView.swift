@@ -677,8 +677,10 @@ struct DrawingCanvasView: View {
     .tutorialHighlightAnchor(.button(id: .cameraButton), cornerRadius: 22)
     // Only surface the tooltip when the canvas is actually open; the canvas
     // stays in the tree (tucked) when collapsed, which would otherwise point
-    // the tip at a stale off-screen frame.
-    .featureTip(FeatureTipDefinitions.AnchorID.cameraReference, isEnabled: isShowing)
+    // the tip at a stale off-screen frame. Also suppress it while access is
+    // locked — the paywall lock overlay covers the (disabled) canvas, and the
+    // app-root tip overlay would otherwise paint the bubble on top of it.
+    .featureTip(FeatureTipDefinitions.AnchorID.cameraReference, isEnabled: isShowing && canEditOrCreate)
   }
 
   /// Top-right button in camera live mode — opens the system photo picker so

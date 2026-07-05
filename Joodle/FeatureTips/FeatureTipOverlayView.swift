@@ -73,6 +73,14 @@ struct FeatureTipOverlayView: View {
         }
 
         if let frame = manager.activeFrame {
+            // A lazy List/grid can register the target's frame while the cell
+            // still sits entirely below the fold. Chasing that off-screen frame
+            // slides the bubble out of view (a flash-then-vanish); instead clamp
+            // to the bottom edge — keeping the target's x so the beak stays
+            // column-aligned — until its top actually enters the viewport.
+            if frame.minY >= screenSize.height {
+                return (Self.bottomEdgeFrame(screenSize: screenSize, pointingAtX: frame.midX), 1)
+            }
             return (frame, topFadeOpacity(targetMinY: frame.minY))
         }
         switch manager.fallbackEdge {
@@ -96,8 +104,10 @@ struct FeatureTipOverlayView: View {
 
     /// A zero-size frame parked just past the bottom edge, so the bubble math
     /// places the bubble just inside that edge with the beak pointing down.
-    private static func bottomEdgeFrame(screenSize: CGSize) -> CGRect {
-        CGRect(x: screenSize.width / 2, y: screenSize.height, width: 0, height: 0)
+    /// `pointingAtX` aims the beak at a known target column; it defaults to the
+    /// horizontal center when the target's position isn't known yet.
+    private static func bottomEdgeFrame(screenSize: CGSize, pointingAtX x: CGFloat? = nil) -> CGRect {
+        CGRect(x: x ?? screenSize.width / 2, y: screenSize.height, width: 0, height: 0)
     }
 
     /// Top safe-area inset of the key window (the overlay ignores the safe area,
