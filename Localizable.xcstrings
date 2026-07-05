@@ -938,7 +938,44 @@
       }
     },
     "A color for every month" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une couleur pour chaque mois"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "月ごとに違う色"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "매달 다른 색깔"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her aya bir renk"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每月一种颜色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每月一種顏色"
+          }
+        }
+      }
     },
     "A new version is available" : {
       "comment" : "A description of a feature that is available in a new version of the app.",
@@ -983,7 +1020,44 @@
       }
     },
     "A pool of liquid drifts with passing time, and more future experiments!" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une nappe de liquide dérive au fil du temps, et bien d'autres expériences à venir !"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "時の流れとともに液体のプールが揺らめきます。この先ももっと実験が登場します！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시간이 흐르면 액체 웅덩이가 잔잔히 일렁여요. 앞으로 더 많은 실험도 만나보세요!"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaman geçtikçe bir sıvı havuzu salınır ve gelecekte çok daha fazla deney gelir!"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一汪液体随时光缓缓流动，未来还有更多实验等你探索！"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一汪液體隨時光緩緩流動，未來還有更多實驗等你探索！"
+          }
+        }
+      }
     },
     "A system error occurred. Please try again later." : {
       "localizations" : {
@@ -1110,7 +1184,44 @@
       }
     },
     "Access to fun experiments" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès aux expériences amusantes"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "楽しい実験を体験"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재미있는 실험 즐기기"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eğlenceli deneylere erişim"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体验趣味实验"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "體驗趣味實驗"
+          }
+        }
+      }
     },
     "Actions" : {
       "comment" : "A section header that lists actions related to the app stats.",
@@ -5679,7 +5790,44 @@
       }
     },
     "Doodle every day, forever" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un doodle par jour, pour toujours"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "毎日、ずっと落書き"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "매일 낙서, 언제까지나"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her gün, sonsuza dek karala"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每天涂鸦，永不停歇"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每天塗鴉，永不停歇"
+          }
+        }
+      }
     },
     "Doodle only" : {
       "comment" : "Description of a share card style that exports a single doodle without any accompanying text or notes.",
@@ -8108,10 +8256,84 @@
       }
     },
     "Free adds a small Joodle mark. Pro exports are clean — just your doodle." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version gratuite ajoute une petite marque Joodle. Les exports Pro sont nets — juste votre doodle."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無料版は小さな Joodle マークが付きます。Pro の書き出しはすっきり、あなたの落書きだけ。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무료는 작은 Joodle 마크가 붙어요. Pro로 내보내면 오직 당신의 낙서만, 깔끔하게 남습니다."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ücretsiz sürüm küçük bir Joodle işareti ekler. Pro dışa aktarımları tertemiz — yalnızca senin karalaman."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免费版会加上小小的 Joodle 标记。Pro 导出干干净净 — 只有你的涂鸦。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免費版會加上小小的 Joodle 標記。Pro 匯出乾乾淨淨 — 只有你的塗鴉。"
+          }
+        }
+      }
     },
     "Free stops at 30 doodles. Pro keeps your whole year — and every year after." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version gratuite s'arrête à 30 doodles. Pro conserve toute votre année — et chaque année suivante."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無料版は30個の落書きで止まります。Pro なら一年分すべて、そして毎年ずっと残せます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무료는 낙서 30개에서 멈춰요. Pro는 한 해 전체를, 그리고 그 뒤로도 매년 담아둡니다."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ücretsiz 30 karalamada durur. Pro tüm yılını — ve sonraki her yılı — saklar."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免费版止步于 30 个涂鸦。Pro 保留你的一整年 — 以及之后的每一年。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "免費版止步於 30 個塗鴉。Pro 保留你的一整年 — 以及之後的每一年。"
+          }
+        }
+      }
     },
     "FREE TRIAL" : {
       "localizations" : {
@@ -8732,7 +8954,44 @@
       }
     },
     "Give every stroke a lively, hand-drawn wiggle." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Donnez à chaque trait un frétillement vivant, dessiné à la main."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ひと筆ごとに、手描きらしい生き生きとしたぷるぷるを。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선 하나하나에 손으로 그린 듯 생동감 있는 꿈틀거림을 더하세요."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her çizgiye canlı, elle çizilmiş bir titreme kat."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为每一笔加上生动的手绘抖动。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "為每一筆加上生動的手繪抖動。"
+          }
+        }
+      }
     },
     "Go to Settings → [Your Name] → iCloud → Apps Using iCloud → Joodle and turn ON the toggle. This is required for sync to work." : {
       "localizations" : {
@@ -12037,7 +12296,44 @@
       }
     },
     "Let your year bloom into more vibrant colors, or all twelve shades of the rainbow theme." : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laissez votre année s'épanouir dans des couleurs plus vives, ou dans les douze teintes du thème arc-en-ciel."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一年をもっと鮮やかな色で咲かせたり、虹色テーマの12色すべてで彩ったりできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "한 해를 더 선명한 색으로 물들이거나, 무지개 테마의 열두 가지 색으로 가득 채워보세요."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yılını daha canlı renklerle ya da gökkuşağı temasının on iki tonuyla renklendir."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让你的一年绽放出更鲜艳的色彩，或披上彩虹主题的全部十二种色调。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "讓你的一年綻放出更鮮豔的色彩，或披上彩虹主題的全部十二種色調。"
+          }
+        }
+      }
     },
     "Let’s Joodle!" : {
       "comment" : "Label for a button that allows a user to move on from the onboarding process.",
@@ -19505,7 +19801,44 @@
       }
     },
     "Share without the watermark" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partagez sans filigrane"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透かしなしで共有"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "워터마크 없이 공유"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filigransız paylaş"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无水印分享"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無浮水印分享"
+          }
+        }
+      }
     },
     "Share Year %@" : {
       "localizations" : {
@@ -20204,7 +20537,44 @@
       }
     },
     "Strokes that come alive" : {
-
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Des traits qui prennent vie"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動き出すストローク"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "살아 움직이는 선"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Canlanan çizgiler"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活起来的笔触"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活起來的筆觸"
+          }
+        }
+      }
     },
     "Submit Testing Feedback" : {
       "comment" : "Label text for a button that allows a user to submit feedback when the app is in a testing or debug environment.",
