@@ -3,7 +3,6 @@ import Observation
 import Photos
 import SwiftData
 import SwiftUI
-import UniformTypeIdentifiers
 
 // MARK: - Navigation Coordinator for Swipe Back Gesture
 struct NavigationGestureEnabler: UIViewControllerRepresentable {
@@ -221,13 +220,6 @@ struct SettingsView: View {
     userPreferences.isCloudSyncEnabled && ModelContainerManager.shared.needsRestartForSyncChange
   }
   
-  // Import/Export State
-  @State private var showFileExporter = false
-  @State private var showFileImporter = false
-  @State private var exportDocument: JSONDocument?
-  @State private var importMessage = ""
-  @State private var showImportAlert = false
-  
   // Debug: Simulate production environment - bound to AppEnvironment
   @State private var simulateProductionEnvironment = AppEnvironment.simulateProductionEnvironment
 
@@ -390,35 +382,6 @@ struct SettingsView: View {
     .navigationDestination(isPresented: $showSubscriptions) {
       SubscriptionsView()
         .postHogScreenView("Subscriptions")
-    }
-    .fileExporter(
-      isPresented: $showFileExporter,
-      document: exportDocument,
-      contentType: .json,
-      defaultFilename: "Joodle_Data_Backup_\(Date().timeIntervalSince1970)"
-    ) { result in
-      if case .failure(let error) = result {
-        print("Backup failed: \(error.localizedDescription)")
-      }
-    }
-    .fileImporter(
-      isPresented: $showFileImporter,
-      allowedContentTypes: [.json],
-      allowsMultipleSelection: false
-    ) { result in
-      switch result {
-      case .success(let urls):
-        if let url = urls.first {
-          importData(from: url)
-        }
-      case .failure(let error):
-        print("Import failed: \(error.localizedDescription)")
-      }
-    }
-    .alert("Import Result", isPresented: $showImportAlert) {
-      Button("OK", role: .cancel) { }
-    } message: {
-      Text(importMessage)
     }
     .alert(languageRestartAlertTitle, isPresented: $showLanguageRestartAlert) {
       Button(languageRestartAlertConfirmLabel) {
@@ -1199,94 +1162,6 @@ ID: \(deviceIdentifier)
     }
   }
   
-  private func exportData() {
-    let container = modelContext.container
-    Task.detached {
-      do {
-        let context = ModelContext(container)
-        let descriptor = FetchDescriptor<DayEntry>()
-        let entries = try context.fetch(descriptor)
-        let dtos = entries.map { entry in
-          DayEntryDTO(
-            body: entry.body,
-            createdAt: entry.createdAt,
-            dateString: entry.dateString,
-            drawingData: entry.drawingData,
-            drawingThumbnail20: entry.drawingThumbnail20,
-            drawingThumbnail200: entry.drawingThumbnail200
-          )
-        }
-        let data = try JSONEncoder().encode(dtos)
-        
-        await MainActor.run {
-          exportDocument = JSONDocument(data: data)
-          showFileExporter = true
-        }
-      } catch {
-        print("Failed to prepare export: \(error)")
-      }
-    }
-  }
-  
-  private func importData(from url: URL) {
-    let container = modelContext.container
-    Task.detached {
-      guard url.startAccessingSecurityScopedResource() else { return }
-      defer { url.stopAccessingSecurityScopedResource() }
-      
-      do {
-        let data = try Data(contentsOf: url)
-        let dtos = try JSONDecoder().decode([DayEntryDTO].self, from: data)
-        let context = ModelContext(container)
-        
-        var importedCount = 0
-        var mergedCount = 0
-        var skippedCount = 0
-        for dto in dtos {
-          let dtoHasContent = !dto.body.isEmpty || (dto.drawingData != nil && !dto.drawingData!.isEmpty)
-          if !dtoHasContent {
-            skippedCount += 1
-            continue
-          }
-          
-          let entry = DayEntry.findOrCreate(for: dto.createdAt, in: context)
-          let hadContent = !entry.body.isEmpty || (entry.drawingData != nil && !entry.drawingData!.isEmpty)
-          
-          if entry.body.isEmpty && !dto.body.isEmpty {
-            entry.body = dto.body
-          } else if !entry.body.isEmpty && !dto.body.isEmpty && entry.body != dto.body {
-            entry.body = entry.body + "\n\n---\n\n" + dto.body
-          }
-          
-          if (entry.drawingData == nil || entry.drawingData?.isEmpty == true) && dto.drawingData != nil {
-            entry.drawingData = dto.drawingData
-            entry.drawingThumbnail20 = dto.drawingThumbnail20
-            entry.drawingThumbnail200 = dto.drawingThumbnail200
-          }
-          
-          if hadContent {
-            mergedCount += 1
-          } else {
-            importedCount += 1
-          }
-        }
-        
-        try context.save()
-        let finalImported = importedCount
-        let finalMerged = mergedCount
-        let finalSkipped = skippedCount
-        await MainActor.run {
-          importMessage = "Imported \(finalImported) new entries, merged \(finalMerged) existing entries. Skipped \(finalSkipped) empty entries."
-          showImportAlert = true
-        }
-      } catch {
-        await MainActor.run {
-          importMessage = "Import failed: \(error.localizedDescription)"
-          showImportAlert = true
-        }
-      }
-    }
-  }
 }
 
 // MARK: - Daily Reminder Settings View
@@ -2113,11 +1988,6 @@ struct InteractionsSettingsView: View {
 
 struct BackupRestoreSettingsView: View {
   @Environment(\.modelContext) private var modelContext
-  @State private var showFileExporter = false
-  @State private var showFileImporter = false
-  @State private var exportDocument: JSONDocument?
-  @State private var importMessage = ""
-  @State private var showImportAlert = false
   @State private var showICloudSaveAlert = false
   @State private var iCloudSaveMessage = ""
   @AppStorage(BackupScheduler.autoBackupEnabledKey) private var autoBackupEnabled = true
@@ -2193,32 +2063,6 @@ struct BackupRestoreSettingsView: View {
         }
         .disabled(!iCloudAvailable)
       }
-
-      Section {
-        Button(action: { exportData() }) {
-          HStack {
-            SettingsIconView(systemName: "square.and.arrow.up.fill", backgroundColor: .gray)
-            Text("Backup Locally")
-              .foregroundColor(.primary)
-            Spacer()
-            Image(systemName: "chevron.right")
-              .font(.appCaption())
-              .foregroundColor(.secondary)
-          }
-        }
-
-        Button(action: { showFileImporter = true }) {
-          HStack {
-            SettingsIconView(systemName: "square.and.arrow.down.fill", backgroundColor: .gray)
-            Text("Restore From Local Backup")
-              .foregroundColor(.primary)
-            Spacer()
-            Image(systemName: "chevron.right")
-              .font(.appCaption())
-              .foregroundColor(.secondary)
-          }
-        }
-      }
     }
     .navigationTitle("Backup & Restore")
     .navigationBarTitleDisplayMode(.inline)
@@ -2230,35 +2074,6 @@ struct BackupRestoreSettingsView: View {
     .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name.NSUbiquityIdentityDidChange)) { _ in
       refreshICloudAvailability()
     }
-    .fileExporter(
-      isPresented: $showFileExporter,
-      document: exportDocument,
-      contentType: .json,
-      defaultFilename: "Joodle_Data_Backup_\(Date().timeIntervalSince1970)"
-    ) { result in
-      if case .failure(let error) = result {
-        print("Backup failed: \(error.localizedDescription)")
-      }
-    }
-    .fileImporter(
-      isPresented: $showFileImporter,
-      allowedContentTypes: [.json],
-      allowsMultipleSelection: false
-    ) { result in
-      switch result {
-      case .success(let urls):
-        if let url = urls.first {
-          importData(from: url)
-        }
-      case .failure(let error):
-        print("Import failed: \(error.localizedDescription)")
-      }
-    }
-    .alert("Import Result", isPresented: $showImportAlert) {
-      Button("OK", role: .cancel) { }
-    } message: {
-      Text(importMessage)
-    }
     .alert("iCloud Backup", isPresented: $showICloudSaveAlert) {
       Button("OK", role: .cancel) { }
     } message: {
@@ -2266,37 +2081,6 @@ struct BackupRestoreSettingsView: View {
     }
   }
   
-  private func exportData() {
-    let container = modelContext.container
-    Task.detached {
-      do {
-        let context = ModelContext(container)
-        let descriptor = FetchDescriptor<DayEntry>()
-        let entries = try context.fetch(descriptor)
-        let dtos = entries.map { entry in
-          DayEntryDTO(
-            body: entry.body,
-            createdAt: entry.createdAt,
-            dateString: entry.dateString,
-            drawingData: entry.drawingData,
-            drawingThumbnail20: entry.drawingThumbnail20,
-            drawingThumbnail200: entry.drawingThumbnail200
-          )
-        }
-        let data = try JSONEncoder().encode(dtos)
-        
-        await MainActor.run {
-          // Track data exported
-          AnalyticsManager.shared.trackDataExported(entryCount: dtos.count)
-          exportDocument = JSONDocument(data: data)
-          showFileExporter = true
-        }
-      } catch {
-        print("Failed to prepare export: \(error)")
-      }
-    }
-  }
-
   private func refreshICloudAvailability() {
     let containerID = BackupManager.ubiquityContainerIdentifier
     Task.detached(priority: .utility) {
@@ -2377,70 +2161,6 @@ struct BackupRestoreSettingsView: View {
         await MainActor.run {
           iCloudSaveMessage = "Failed to save backup: \(error.localizedDescription)"
           showICloudSaveAlert = true
-        }
-      }
-    }
-  }
-  
-  private func importData(from url: URL) {
-    let container = modelContext.container
-    Task.detached {
-      guard url.startAccessingSecurityScopedResource() else { return }
-      defer { url.stopAccessingSecurityScopedResource() }
-      
-      do {
-        let data = try Data(contentsOf: url)
-        let dtos = try JSONDecoder().decode([DayEntryDTO].self, from: data)
-        let context = ModelContext(container)
-        
-        var importedCount = 0
-        var mergedCount = 0
-        var skippedCount = 0
-        for dto in dtos {
-          let dtoHasContent = !dto.body.isEmpty || (dto.drawingData != nil && !dto.drawingData!.isEmpty)
-          if !dtoHasContent {
-            skippedCount += 1
-            continue
-          }
-          
-          let entry = DayEntry.findOrCreate(for: dto.createdAt, in: context)
-          let hadContent = !entry.body.isEmpty || (entry.drawingData != nil && !entry.drawingData!.isEmpty)
-          
-          if entry.body.isEmpty && !dto.body.isEmpty {
-            entry.body = dto.body
-          } else if !entry.body.isEmpty && !dto.body.isEmpty && entry.body != dto.body {
-            entry.body = entry.body + "\n\n---\n\n" + dto.body
-          }
-          
-          if (entry.drawingData == nil || entry.drawingData?.isEmpty == true) && dto.drawingData != nil {
-            entry.drawingData = dto.drawingData
-            entry.drawingThumbnail20 = dto.drawingThumbnail20
-            entry.drawingThumbnail200 = dto.drawingThumbnail200
-          }
-          
-          if hadContent {
-            mergedCount += 1
-          } else {
-            importedCount += 1
-          }
-        }
-        
-        try context.save()
-        let finalImported = importedCount
-        let finalMerged = mergedCount
-        let finalSkipped = skippedCount
-        await MainActor.run {
-          // Track data imported
-          AnalyticsManager.shared.trackDataImported(entryCount: finalImported + finalMerged)
-          importMessage = "Imported \(finalImported) new entries, merged \(finalMerged) existing entries. Skipped \(finalSkipped) empty entries."
-          showImportAlert = true
-        }
-      } catch {
-        await MainActor.run {
-          // Track import failed
-          AnalyticsManager.shared.trackDataImportFailed(errorMessage: error.localizedDescription)
-          importMessage = "Import failed: \(error.localizedDescription)"
-          showImportAlert = true
         }
       }
     }
@@ -2846,28 +2566,6 @@ struct AppStatsView: View {
         loadDebugBreakdown()
       }
     }
-  }
-}
-
-// MARK: - JSON Document
-
-struct JSONDocument: FileDocument {
-  static var readableContentTypes: [UTType] { [.json] }
-  var data: Data
-  
-  init(data: Data) {
-    self.data = data
-  }
-  
-  init(configuration: ReadConfiguration) throws {
-    guard let data = configuration.file.regularFileContents else {
-      throw CocoaError(.fileReadCorruptFile)
-    }
-    self.data = data
-  }
-  
-  func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-    FileWrapper(regularFileWithContents: data)
   }
 }
 
