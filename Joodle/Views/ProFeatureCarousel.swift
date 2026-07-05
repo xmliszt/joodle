@@ -106,7 +106,7 @@ struct ProFeatureCarousel: View {
       .allowsHitTesting(false)
     }
     .overlay(alignment: .bottom) {
-      pageDots.padding(.bottom, 16)
+      pageDots.padding(.bottom, 4)
     }
   }
 
@@ -461,7 +461,9 @@ private struct WigglyStrokesDemo: View {
 
       VStack(spacing: 14) {
         DemoBadge(isPro: isWiggly)
+        // Nudge the drawing up so it sits a touch higher in the tile.
         doodle(time: time, amplitudeFactor: factor)
+          .padding(.bottom, 28)
       }
     }
     .onChange(of: isActive) { _, active in
