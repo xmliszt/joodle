@@ -103,6 +103,12 @@ struct DoodleRendererView: View {
   /// If false, the empty dot will be hidden
   let showEmptyDot: Bool
 
+  /// Color for an empty (no-entry) placeholder dot. `nil` keeps the default
+  /// monochrome label color; callers pass a month color so the rainbow theme
+  /// tints empty days too. Kept caller-decided so this shared view (compiled by
+  /// the widget target) never has to reach for the theme preference itself.
+  let emptyDotColor: Color?
+
   init(
     size: CGFloat,
     hasEntry: Bool,
@@ -112,7 +118,8 @@ struct DoodleRendererView: View {
     strokeColor: Color,
     strokeMultiplier: CGFloat = 1.0,
     renderScale: CGFloat = 2.0,
-    showEmptyDot: Bool = true
+    showEmptyDot: Bool = true,
+    emptyDotColor: Color? = nil
   ) {
     self.size = size
     self.hasEntry = hasEntry
@@ -123,10 +130,11 @@ struct DoodleRendererView: View {
     self.strokeMultiplier = strokeMultiplier
     self.renderScale = renderScale
     self.showEmptyDot = showEmptyDot
+    self.emptyDotColor = emptyDotColor
   }
 
   private var dotColor: Color {
-    let baseColor: Color = hasEntry ? strokeColor : .primary
+    let baseColor: Color = hasEntry ? strokeColor : (emptyDotColor ?? .primary)
     return baseColor.opacity(dotStyle.opacity)
   }
 

@@ -48,6 +48,7 @@ struct ShareCardDotView: View {
   var drawingData: Data? = nil
   var strokeColor: Color = .appAccent
   var showEmpty: Bool = true
+  var emptyDotColor: Color? = nil
 
   var body: some View {
     DoodleRendererView(
@@ -59,7 +60,8 @@ struct ShareCardDotView: View {
       strokeColor: strokeColor,
       strokeMultiplier: 1.0,
       renderScale: 2.0,
-      showEmptyDot: showEmpty
+      showEmptyDot: showEmpty,
+      emptyDotColor: emptyDotColor
     )
   }
 }
@@ -207,13 +209,21 @@ struct YearGridDotsView: View {
           let dotStyle = getDotStyle(for: item.date)
           let dayEntry = getEntryForDate(item.date)
           let hasEntry = dayEntry?.hasEntry ?? false
+          // Under the rainbow theme, tint empty days by their month too, so the
+          // whole year reads apart by month rather than only the days that hold
+          // an entry. Future days keep their faded opacity (applied by the
+          // renderer's `dotStyle.opacity`) — a faint month tint, not a gray dot.
+          let emptyDotColor: Color? = UserPreferences.shared.accentColor.isRainbow
+            ? .appDrawingColor(for: item.date)
+            : nil
 
           ShareCardDotView(
             size: dotSize,
             hasEntry: hasEntry,
             dotStyle: dotStyle,
             thumbnail: nil, // Dots view doesn't show thumbnails
-            strokeColor: .appDrawingColor(for: item.date)
+            strokeColor: .appDrawingColor(for: item.date),
+            emptyDotColor: emptyDotColor
           )
         }
 

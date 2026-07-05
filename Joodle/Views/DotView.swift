@@ -17,34 +17,50 @@ struct DotView: View {
     let dotStyle: DotStyle
     let scale: CGFloat
     let isAvailableForMove: Bool
+    /// The dot's month (1-12), used to pick its color under the rainbow theme.
+    /// `nil` falls back to the current month.
+    let month: Int?
 
-    init(size: CGFloat, highlighted: Bool, withEntry: Bool, dotStyle: DotStyle, scale: CGFloat, isAvailableForMove: Bool = false) {
+    init(size: CGFloat, highlighted: Bool, withEntry: Bool, dotStyle: DotStyle, scale: CGFloat, isAvailableForMove: Bool = false, month: Int? = nil) {
         self.size = size
         self.highlighted = highlighted
         self.withEntry = withEntry
         self.dotStyle = dotStyle
         self.scale = scale
         self.isAvailableForMove = isAvailableForMove
+        self.month = month
     }
 
     // MARK: Computed dot color
+
+    /// The month's rainbow color under the rainbow theme, otherwise the single
+    /// accent color — matching how doodles resolve their color (see
+    /// `DrawingDisplayView.foregroundColor`).
+    private var accentColor: Color { Color.appDrawingColor(forMonth: month) }
+
+    /// Base color for past/future dots: monochrome under solid themes, but the
+    /// rainbow theme tints each day by its month so the months read apart even
+    /// when a day is empty or holds only a note. Future dots keep their faded
+    /// opacity — a faint month tint rather than a faint gray.
+    private var baseColor: Color {
+        UserPreferences.shared.accentColor.isRainbow ? accentColor : .textColor
+    }
+
     private var dotColor: Color {
         if isAvailableForMove { return .appAccent.opacity(0.8) }
         if highlighted { return .appSecondary }
 
-        // Override base color if it is a present dot.
-        if dotStyle == .present { return .appAccent }
-        if dotStyle == .future { return .textColor.opacity(0.15) }
-        return .textColor
+        if dotStyle == .present { return accentColor }
+        if dotStyle == .future { return baseColor.opacity(0.15) }
+        return baseColor
     }
 
     private var ringColor: Color {
         if highlighted { return .appSecondary }
 
-        // Override base color if it is a present dot.
-        if dotStyle == .present { return .appAccent }
-        if dotStyle == .future { return .textColor.opacity(0.15) }
-        return .textColor
+        if dotStyle == .present { return accentColor }
+        if dotStyle == .future { return baseColor.opacity(0.15) }
+        return baseColor
     }
   
     private var computedSize: CGFloat {

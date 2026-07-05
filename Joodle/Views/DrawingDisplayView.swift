@@ -167,7 +167,11 @@ struct DrawingDisplayView: View {
 
     // Override base color if it is a present dot.
     if dotStyle == .present { return accentColor }
-    if dotStyle == .future { return .textColor.opacity(0.15) }
+    // Future doodles keep their faded opacity, but the rainbow theme tints them
+    // by month like every other day so the future reads apart too.
+    if dotStyle == .future {
+      return (userPreferences.accentColor.isRainbow ? accentColor : .textColor).opacity(0.15)
+    }
 
     // Resting (non-selected) doodles are monochrome under solid themes, but the
     // rainbow theme colors them by month. Selection recolors the cell via the

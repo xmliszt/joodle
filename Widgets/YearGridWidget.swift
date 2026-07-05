@@ -273,18 +273,21 @@ struct YearGridWidgetView: View {
           let dotStyle = getDotStyle(for: item.date)
           let dayEntry = getEntryForDate(item.date, using: lookup)
           let hasEntry = dayEntry?.hasEntry ?? false
+          let month = Calendar.current.component(.month, from: item.date)
+          // Rainbow tints empty days by month too; future keeps its faded opacity
+          // (applied by the renderer's `dotStyle.opacity`) as a faint month tint.
+          let emptyDotColor = WidgetDataManager.shared.emptyDotColor(forMonth: month)
 
           DoodleRendererView(
             size: dotSize,
             hasEntry: hasEntry,
             dotStyle: dotStyle,
             thumbnail: showJoodles ? dayEntry?.thumbnail : nil,
-            strokeColor: WidgetDataManager.shared.doodleStrokeColor(
-              forMonth: Calendar.current.component(.month, from: item.date)
-            ),
+            strokeColor: WidgetDataManager.shared.doodleStrokeColor(forMonth: month),
             strokeMultiplier: 1.0,
             renderScale: showJoodles ? 2.0 : 3.0,
-            showEmptyDot: showEmptyDots
+            showEmptyDot: showEmptyDots,
+            emptyDotColor: emptyDotColor
           )
           .frame(width: dotSize, height: dotSize)
         }

@@ -234,6 +234,14 @@ struct WidgetDataManager {
     isRainbowSelected ? RainbowPalette.color(forMonth: month) : loadThemeColor()
   }
 
+  /// The color for an empty (no-entry) placeholder dot in `month` (1-12): the
+  /// month's rainbow color under the rainbow theme, otherwise `nil` to keep the
+  /// default monochrome dot. Lets the year grid read apart by month even on days
+  /// that hold no entry.
+  func emptyDotColor(forMonth month: Int) -> Color? {
+    isRainbowSelected ? RainbowPalette.color(forMonth: month) : nil
+  }
+
   /// Parses the 1-12 month out of a "yyyy-MM-dd" date string, defaulting to the
   /// current month when malformed.
   func month(fromDateString dateString: String) -> Int {

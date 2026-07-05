@@ -151,6 +151,12 @@ struct YearGridJoodlesView: View {
           let dotStyle = getDotStyle(for: item.date)
           let dayEntry = getEntryForDate(item.date)
           let hasEntry = dayEntry?.hasEntry ?? false
+          // Match the live grid: rainbow tints empty days by month so the year
+          // reads apart by month. Future days keep their faded opacity (applied
+          // by the renderer's `dotStyle.opacity`) — a faint month tint.
+          let emptyDotColor: Color? = UserPreferences.shared.accentColor.isRainbow
+            ? .appDrawingColor(for: item.date)
+            : nil
 
           ShareCardDotView(
             size: dotSize,
@@ -158,7 +164,8 @@ struct YearGridJoodlesView: View {
             dotStyle: dotStyle,
             drawingData: dayEntry?.drawingData, // Render directly with current theme color
             strokeColor: .appDrawingColor(for: item.date),
-            showEmpty: showEmptyDots
+            showEmpty: showEmptyDots,
+            emptyDotColor: emptyDotColor
           )
         }
 

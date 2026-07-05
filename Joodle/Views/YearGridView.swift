@@ -137,6 +137,7 @@ struct YearGridView: View {
               let dateString = CalendarDate.from(item.date).dateString
               let isSourceDate = isInMoveMode && moveSourceDateString == dateString
               let isAvailableForMove = isInMoveMode && !hasDrawing && !isSourceDate
+              let month = Calendar.current.component(.month, from: item.date)
 
               YearGridDotCell(
                 viewMode: viewMode,
@@ -151,7 +152,8 @@ struct YearGridView: View {
                 animationDelay: animationDelay,
                 isInMoveMode: isInMoveMode,
                 isAvailableForMove: isAvailableForMove,
-                isSourceDate: isSourceDate
+                isSourceDate: isSourceDate,
+                month: month
               )
               .equatable()
               .id(scrollId)
@@ -346,6 +348,7 @@ private struct YearGridDotCell: View, Equatable {
   let isInMoveMode: Bool
   let isAvailableForMove: Bool
   let isSourceDate: Bool
+  let month: Int
 
   nonisolated static func == (lhs: Self, rhs: Self) -> Bool {
     lhs.isHighlighted == rhs.isHighlighted &&
@@ -358,7 +361,8 @@ private struct YearGridDotCell: View, Equatable {
     lhs.viewMode == rhs.viewMode &&
     lhs.isInMoveMode == rhs.isInMoveMode &&
     lhs.isAvailableForMove == rhs.isAvailableForMove &&
-    lhs.isSourceDate == rhs.isSourceDate
+    lhs.isSourceDate == rhs.isSourceDate &&
+    lhs.month == rhs.month
   }
 
   var body: some View {
@@ -401,7 +405,8 @@ private struct YearGridDotCell: View, Equatable {
         withEntry: hasEntry,
         dotStyle: dotStyle,
         scale: scale,
-        isAvailableForMove: isAvailableForMove
+        isAvailableForMove: isAvailableForMove,
+        month: month
       )
       .frame(width: viewMode.dotSize, height: viewMode.dotSize)
     }
