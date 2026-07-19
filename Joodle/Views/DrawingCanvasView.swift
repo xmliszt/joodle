@@ -293,6 +293,9 @@ struct DrawingCanvasView: View {
           canvasCornerRadius: canvasCornerRadius,
           strokeColor: Color.appDrawingColor(for: date),
           backdropImage: cameraBackdropImage,
+          backdropZoom: isCameraFeatureActive ? cameraContext.backdropZoom : 1.0,
+          backdropOffset: isCameraFeatureActive ? cameraContext.backdropOffset : .zero,
+          backdropRotation: isCameraFeatureActive ? cameraContext.backdropRotation : .zero,
           liveCameraSession: cameraSession,
           liveCameraDevice: cameraDevice,
           isCameraLive: isCameraLive,
@@ -544,6 +547,7 @@ struct DrawingCanvasView: View {
            let raw = UIImage(data: data) {
           let cropped = centerCroppedSquare(raw)
           await MainActor.run {
+            cameraContext.resetBackdropTransform()
             cameraContext.backdropImage = cropped
             cameraContext.cancelLive()
           }

@@ -454,6 +454,68 @@ struct ContentView: View {
       // overshoot would pull the panel inward off the edge and break the morph.
       .animation(.easeOut(duration: 0.28), value: showZoomSlider)
 
+      // Reference-photo adjustment controls — shown once a tracing photo has
+      // been captured/imported (idle mode with a backdrop). They let the user
+      // zoom (the same edge ruler as the live camera), translate (2-axis pad)
+      // and rotate (arc) the reference to line it up for tracing. Grouped so the
+      // two overlays count as a single child of the root ZStack.
+      Group {
+      let showPhotoAdjust = cameraContext.backdropImage != nil
+        && showDrawingCanvas
+        && !hideDynamicIslandView
+        && cameraContext.mode != .live
+
+      // Photo-zoom slider — reuses the camera zoom ruler at the handedness edge,
+      // driving the reference-photo scale instead of the live optical zoom.
+      HStack(spacing: 0) {
+        if zoomSliderEdge == .leading {
+          CameraZoomSlider(
+            zoomFactor: cameraContext.backdropZoom,
+            range: CameraReferenceContext.photoZoomRange,
+            keyFactors: CameraReferenceContext.photoZoomKeyFactors,
+            edge: .leading,
+            onChange: { cameraContext.setBackdropZoom($0) }
+          )
+        }
+        Spacer(minLength: 0)
+        if zoomSliderEdge == .trailing {
+          CameraZoomSlider(
+            zoomFactor: cameraContext.backdropZoom,
+            range: CameraReferenceContext.photoZoomRange,
+            keyFactors: CameraReferenceContext.photoZoomKeyFactors,
+            edge: .trailing,
+            onChange: { cameraContext.setBackdropZoom($0) }
+          )
+        }
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+      .padding(.bottom, 80)
+      .ignoresSafeArea()
+      .opacity(showPhotoAdjust ? 1 : 0)
+      .offset(x: showPhotoAdjust ? 0 : (zoomSliderEdge == .trailing ? 140 : -140))
+      .allowsHitTesting(showPhotoAdjust)
+      .animation(.easeOut(duration: 0.28), value: showPhotoAdjust)
+
+      // 2-axis translation pad + rotation arc, centered above the bottom edge
+      // (the same footprint the live shutter occupies).
+      VStack {
+        Spacer()
+        PhotoTransformPad(
+          offset: cameraContext.backdropOffset,
+          rotation: cameraContext.backdropRotation,
+          translationRange: CANVAS_SIZE * 0.6,
+          rotationLimit: CameraReferenceContext.photoRotationLimit,
+          onOffsetChange: { cameraContext.backdropOffset = $0 },
+          onRotationChange: { cameraContext.backdropRotation = $0 }
+        )
+        .padding(.bottom, 24)
+      }
+      .ignoresSafeArea(.container, edges: .bottom)
+      .opacity(showPhotoAdjust ? 1 : 0)
+      .allowsHitTesting(showPhotoAdjust)
+      .animation(.easeInOut(duration: 0.25), value: showPhotoAdjust)
+      }
+
       // Move drawing mode — floating instruction bar (interactive)
       if isMovingDrawing {
         VStack {
