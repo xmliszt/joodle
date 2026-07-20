@@ -496,17 +496,15 @@ struct ContentView: View {
       .allowsHitTesting(showPhotoAdjust)
       .animation(.easeOut(duration: 0.28), value: showPhotoAdjust)
 
-      // 2-axis translation pad + rotation arc, centered above the bottom edge
-      // (the same footprint the live shutter occupies).
+      // Native-Camera-style 2-axis translation pad, centered above the bottom
+      // edge (the same footprint the live shutter occupies). Rotation now lives
+      // in its own ruler flush under the canvas (see DrawingCanvasView).
       VStack {
         Spacer()
-        PhotoTransformPad(
+        PhotoTranslationPad(
           offset: cameraContext.backdropOffset,
-          rotation: cameraContext.backdropRotation,
           translationRange: CANVAS_SIZE * 0.6,
-          rotationLimit: CameraReferenceContext.photoRotationLimit,
-          onOffsetChange: { cameraContext.backdropOffset = $0 },
-          onRotationChange: { cameraContext.backdropRotation = $0 }
+          onOffsetChange: { cameraContext.backdropOffset = $0 }
         )
         .padding(.bottom, 24)
       }

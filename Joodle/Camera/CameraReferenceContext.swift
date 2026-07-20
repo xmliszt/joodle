@@ -260,8 +260,6 @@ final class CameraReferenceContext: ObservableObject {
   static let photoZoomRange: ClosedRange<CGFloat> = 1...4
   /// Key detents the photo-zoom slider marks as major ticks.
   static let photoZoomKeyFactors: [CGFloat] = [1, 2, 3]
-  /// Maximum rotation, in each direction, the rotation arc can apply to the photo.
-  static let photoRotationLimit: Angle = .degrees(45)
 
   /// Clamps and stores the reference-photo zoom (the slider's `onChange` target).
   func setBackdropZoom(_ zoom: CGFloat) {
