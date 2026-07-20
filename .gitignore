@@ -103,7 +103,7 @@ buildServer.json
 .rules
 
 # Secrets - API keys and sensitive configuration
-# Secrets.xcconfig
+Secrets.xcconfig
 
 # Agent tooling installed by `npx @swmansion/argent init` (local only)
 .agents/
