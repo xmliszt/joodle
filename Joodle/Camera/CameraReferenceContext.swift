@@ -22,6 +22,15 @@ enum CameraReferenceMode: Equatable {
 final class CameraReferenceContext: ObservableObject {
   @Published var mode: CameraReferenceMode = .idle
   @Published var backdropImage: UIImage? = nil
+  /// Zoom applied to the captured tracing-reference photo (`backdropImage`) — the
+  /// 1.0-based scale the photo-zoom slider drives once a reference is placed.
+  /// Independent of `displayZoomFactor` (the live-camera optical zoom).
+  @Published var backdropZoom: CGFloat = 1.0
+  /// Translation applied to the reference photo, in canvas points. Driven by the
+  /// 2-axis scrub pad so the user can nudge the reference left/right/up/down.
+  @Published var backdropOffset: CGSize = .zero
+  /// Rotation applied to the reference photo. Driven by the rotation arc.
+  @Published var backdropRotation: Angle = .zero
   @Published var showPermissionDeniedAlert: Bool = false
   /// Set when a capture couldn't be saved to the album because Photos add-only
   /// access was denied. Views observing the context surface a one-shot message
@@ -245,6 +254,26 @@ final class CameraReferenceContext: ObservableObject {
     #endif
   }
 
+  /// Display-zoom range the reference-photo zoom slider spans (magnify only — the
+  /// photo already fills the square at 1.0, so zooming below would reveal the
+  /// white base).
+  static let photoZoomRange: ClosedRange<CGFloat> = 1...4
+  /// Key detents the photo-zoom slider marks as major ticks.
+  static let photoZoomKeyFactors: [CGFloat] = [1, 2, 3]
+
+  /// Clamps and stores the reference-photo zoom (the slider's `onChange` target).
+  func setBackdropZoom(_ zoom: CGFloat) {
+    backdropZoom = min(max(zoom, Self.photoZoomRange.lowerBound), Self.photoZoomRange.upperBound)
+  }
+
+  /// Recenters the reference photo — 1.0 zoom, no offset, no rotation. Called
+  /// whenever a fresh reference is installed so each capture/import starts clean.
+  func resetBackdropTransform() {
+    backdropZoom = 1.0
+    backdropOffset = .zero
+    backdropRotation = .zero
+  }
+
   func setZoom(_ display: CGFloat) {
     #if targetEnvironment(simulator)
     // No device to drive, so reflect the slider's value directly.
@@ -261,6 +290,7 @@ final class CameraReferenceContext: ObservableObject {
     // No camera to capture from — synthesize a placeholder reference photo so
     // the "trace over your reference" step is reachable on the simulator.
     isCapturing = true
+    resetBackdropTransform()
     self.backdropImage = Self.makeSimulatorPlaceholderImage(zoom: displayZoomFactor)
     isCapturing = false
     withAnimation(.easeInOut(duration: 0.2)) { self.mode = .idle }
@@ -280,6 +310,7 @@ final class CameraReferenceContext: ObservableObject {
     isCapturing = true
     let rendered = await controller.latestSquareFrame(maxPixelDimension: shouldSave ? 2048 : 1024)
     if let rendered {
+      resetBackdropTransform()
       self.backdropImage = rendered.backdrop
     }
     isCapturing = false
@@ -379,6 +410,9 @@ final class CameraReferenceContext: ObservableObject {
     withTransaction(tx) {
       mode = .idle
       backdropImage = nil
+      backdropZoom = 1.0
+      backdropOffset = .zero
+      backdropRotation = .zero
       suppressPreview = false
       isCapturing = false
     }
