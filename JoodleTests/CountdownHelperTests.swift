@@ -9,9 +9,11 @@ import Testing
 
 struct CountdownHelperTests {
 
+  // Dates are built in the local calendar because CountdownHelper deliberately
+  // works in the user's timezone (Joodle tracks perceived days, not timestamps).
+  // A fixed-GMT calendar here makes the tests fail on any non-UTC machine.
   private func makeDate(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: Int) -> Date {
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+    let calendar = Calendar.autoupdatingCurrent
 
     var components = DateComponents()
     components.year = year
