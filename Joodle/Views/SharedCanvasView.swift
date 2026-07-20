@@ -90,6 +90,12 @@ struct SharedCanvasView<TrailingHeader: View>: View {
 
   /// Optional tracing-reference image rendered as a 30% backdrop inside the canvas.
   var backdropImage: UIImage? = nil
+  /// Zoom / translation / rotation applied to `backdropImage` so the user can
+  /// position the reference for tracing. Identity values (1, .zero, .zero) render
+  /// the photo centered and filling the square, unchanged from before.
+  var backdropZoom: CGFloat = 1.0
+  var backdropOffset: CGSize = .zero
+  var backdropRotation: Angle = .zero
   /// When set and `isCameraLive` is true, shows a live camera preview filling the canvas.
   var liveCameraSession: AVCaptureSession? = nil
   /// Active capture device — drives the preview's rotation coordinator so
@@ -190,6 +196,9 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     canvasCornerRadius: CGFloat = 32,
     strokeColor: Color = .appAccent,
     backdropImage: UIImage? = nil,
+    backdropZoom: CGFloat = 1.0,
+    backdropOffset: CGSize = .zero,
+    backdropRotation: Angle = .zero,
     liveCameraSession: AVCaptureSession? = nil,
     liveCameraDevice: AVCaptureDevice? = nil,
     isCameraLive: Bool = false,
@@ -219,6 +228,9 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.canvasCornerRadius = canvasCornerRadius
     self.strokeColor = strokeColor
     self.backdropImage = backdropImage
+    self.backdropZoom = backdropZoom
+    self.backdropOffset = backdropOffset
+    self.backdropRotation = backdropRotation
     self.liveCameraSession = liveCameraSession
     self.liveCameraDevice = liveCameraDevice
     self.isCameraLive = isCameraLive
@@ -426,10 +438,17 @@ struct SharedCanvasView<TrailingHeader: View>: View {
           if !isCameraLive, let backdrop = backdropImage {
             ZStack {
               Color.white
+              // Zoom / rotate / translate the reference so the user can position
+              // it for tracing. scaleEffect + rotationEffect + offset are pure
+              // geometry effects (no layout change), and the container's mask
+              // (applied below) clips whatever spills past the square.
               Image(uiImage: backdrop)
                 .resizable()
                 .scaledToFill()
                 .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
+                .scaleEffect(backdropZoom)
+                .rotationEffect(backdropRotation)
+                .offset(backdropOffset)
                 .opacity(0.3)
             }
             .allowsHitTesting(false)
