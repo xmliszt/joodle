@@ -12,15 +12,21 @@ import StoreKit
 
 /// The surface a paywall is being shown in. Drives which sections render.
 enum PaywallContext: Equatable {
-  /// Informative intro shown during onboarding: value + trial timeline, no purchase.
+  /// Purchasable paywall at the end of onboarding: value + comparison + plans,
+  /// with a floating "Continue with Free" skip. No trial framing here — the
+  /// claimable 7-day trial is only offered later, at the free doodle limit.
   case onboarding
   /// Shown mid-trial from the Settings banner. Timeline reflects `daysLeft`; offers optional early upgrade.
   case trialStatus(daysLeft: Int)
-  /// The real pay screen, shown once the trial has ended: Free-vs-Pro comparison + plans.
+  /// The generic pay screen: Free-vs-Pro comparison + plans.
   case expired
   /// Limited-time offer surface: countdown header + discounted plans. Driven by
   /// `LimitedTimeOfferManager`; presented as a sheet and from the Settings banner.
   case limitedTimeOffer
+  /// Post-trial bottom sheet on next app open: loss-framed header + comparison
+  /// + plans, quoting the 50%-off lifetime window while it's live.
+  /// `offerExpired` distinguishes "your trial ended" from "you never claimed it".
+  case trialEnded(offerExpired: Bool)
 }
 
 /// Configuration for PaywallContentView behavior and appearance
@@ -336,7 +342,7 @@ struct PaywallContentView: View {
             contextBody
           }
           .frame(maxWidth: .infinity, alignment: .top)
-          .padding(.bottom, 96)
+          .padding(.bottom, 140)
         }
         .overlay(alignment: .bottom) {
           onboardingContinueButton
@@ -403,6 +409,16 @@ struct PaywallContentView: View {
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: isOnboarding ? .leading : .center)
 
+      if let headerSubtitle {
+        Text(headerSubtitle)
+          .font(.appSubheadline())
+          .foregroundColor(.secondary)
+          .multilineTextAlignment(.center)
+          .fixedSize(horizontal: false, vertical: true)
+          .frame(maxWidth: .infinity)
+          .padding(.horizontal, 16)
+      }
+
       // Countdown drives the urgency and stays honest — it counts to the same
       // instant the App Store Connect price reverts and the campaign flag flips.
       // Only the offer sheet carries it in the header; regular pay surfaces
@@ -427,7 +443,7 @@ struct PaywallContentView: View {
   private var headerTitle: LocalizedStringResource {
     switch configuration.context {
     case .onboarding:
-      return "The next 7 days of Joodle Pro are on us"
+      return "Doodle without limits"
     case .trialStatus(let daysLeft):
       return "You're on Pro — \(daysLeft) days to enjoy"
     case .expired:
@@ -435,6 +451,21 @@ struct PaywallContentView: View {
     case .limitedTimeOffer:
       // Overridden in headerTitleDisplay by the runtime campaign headline.
       return "Limited Time Offer"
+    case .trialEnded(let offerExpired):
+      return offerExpired ? "Your free-trial offer has expired" : "Your free trial has ended"
+    }
+  }
+
+  /// Loss-framed subheadline under the post-trial header; nil elsewhere.
+  private var headerSubtitle: LocalizedStringResource? {
+    switch configuration.context {
+    case .trialEnded(let offerExpired):
+      if offerExpired {
+        return "Your chance to claim 7 free days of Pro has passed. But here's something better while it lasts:"
+      }
+      return "You're back on the Free plan — unlimited doodles, widgets and Pro extras are locked again. If you want to keep Pro, this is the best chance we'll ever offer:"
+    default:
+      return nil
     }
   }
 
@@ -456,11 +487,6 @@ struct PaywallContentView: View {
   @ViewBuilder
   private var contextBody: some View {
     switch configuration.context {
-    case .onboarding:
-      ProFeatureCarousel()
-      TrialTimelineView(style: .onboarding, progress: 0)
-      ProComparisonTable()
-
     case .trialStatus:
       ProFeatureCarousel()
       TrialTimelineView(style: .trial, progress: GracePeriodManager.shared.gracePeriodProgress)
@@ -473,14 +499,10 @@ struct PaywallContentView: View {
         earlyUpgradeButton
       }
 
-    case .expired:
-      ProFeatureCarousel()
-      ProComparisonTable()
-      pricingSection
-      ctaSection
-      legalLinksSection
-
-    case .limitedTimeOffer:
+    case .onboarding, .expired, .limitedTimeOffer, .trialEnded:
+      // The pay surfaces all share the same skeleton: value carousel,
+      // Free-vs-Pro comparison, plans, CTA. Header copy (and the floating
+      // skip button in onboarding) carry the contextual differences.
       ProFeatureCarousel()
       ProComparisonTable()
       pricingSection
@@ -489,10 +511,18 @@ struct PaywallContentView: View {
     }
   }
 
-  /// No-commitment continue button used in the onboarding context (shared glass style).
+  /// Skip affordance for the onboarding paywall (shared glass style).
+  /// Free is a real plan, not a punishment — the footnote keeps it honest.
   private var onboardingContinueButton: some View {
-    OnboardingButtonView(label: "Continue") {
-      configuration.onContinueFree?()
+    VStack(spacing: 6) {
+      OnboardingButtonView(label: "Continue with Free") {
+        configuration.onContinueFree?()
+      }
+      Text("Free includes \(SubscriptionManager.freeJoodlesAllowed, format: .number.grouping(.never)) doodles and all core journaling. No time limit.")
+        .font(.appCaption2())
+        .foregroundColor(.secondary)
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 24)
     }
     .padding(.top, 8)
   }

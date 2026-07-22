@@ -241,8 +241,11 @@ struct JoodleApp: App {
     // Restore daily reminder if it was enabled
     ReminderManager.shared.restoreDailyReminderIfNeeded()
 
-    // Start grace period tracking for new users (stores start date on first launch)
-    GracePeriodManager.shared.startGracePeriodIfNeeded()
+    // Resolve the conversion-funnel cohort (legacy 30-doodle installs vs new
+    // 7-doodle installs) before anything reads the free limit, then reconcile
+    // trial state. Trials are claim-based now — nothing auto-starts here.
+    TrialOfferManager.migrateFunnelStateIfNeeded()
+    GracePeriodManager.shared.onAppLaunch()
 
     // DEBUG: Seed test entries for 2023 and 2024
     #if DEBUG
@@ -585,10 +588,11 @@ struct JoodleApp: App {
                 // any changelog so we never stack two sheets on the same launch.
                 await LimitedTimeOfferManager.shared.refresh()
                 guard hasCompletedOnboarding, changelogEntry == nil else { return }
-                // A pending trial-expired paywall owns the launch (ContentView
-                // presents it and consumes our auto-present); racing it here
-                // would stack two sheets from different presenters.
-                guard !GracePeriodManager.shared.shouldShowGraceExpiredPaywall else { return }
+                // A pending post-trial sheet or claim-offer auto-present owns
+                // the launch (ContentView presents those and consumes our
+                // auto-present); racing them here would stack two sheets from
+                // different presenters.
+                guard !TrialOfferManager.shared.shouldPresentPostTrialSheet else { return }
                 if LimitedTimeOfferManager.shared.shouldAutoPresent {
                   try? await Task.sleep(for: .milliseconds(400))
                   if changelogEntry == nil && !showPaywallFromWidget {

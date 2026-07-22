@@ -15,6 +15,7 @@
 		FA8A958E2EE5CCF300FF871C /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA8A958D2EE5CCF300FF871C /* StoreKit.framework */; };
 		FAB12DE32ED57E2F00F6006A /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FA85D4512EB7AECA007D82EE /* SwiftUI.framework */; };
 		FABBB5B92F1BB53300B0C947 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = FABBB5B82F1BB53300B0C947 /* PostHog */; };
+		FA11AACE2F1C000100C0FE77 /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = FA11AACF2F1C000200C0FE77 /* ConfettiSwiftUI */; };
 		FAC5DDDE2F6110B300751BF5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FAC5DDDD2F6110B300751BF5 /* Localizable.xcstrings */; };
 /* End PBXBuildFile section */
 
@@ -151,6 +152,7 @@
 				FABBB5B92F1BB53300B0C947 /* PostHog in Frameworks */,
 				FA8A958E2EE5CCF300FF871C /* StoreKit.framework in Frameworks */,
 				FA34C5092F08CE93000C510E /* MarkdownUI in Frameworks */,
+				FA11AACE2F1C000100C0FE77 /* ConfettiSwiftUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -259,6 +261,7 @@
 			packageProductDependencies = (
 				FA34C5082F08CE93000C510E /* MarkdownUI */,
 				FABBB5B82F1BB53300B0C947 /* PostHog */,
+				FA11AACF2F1C000200C0FE77 /* ConfettiSwiftUI */,
 			);
 			productName = Joodle;
 			productReference = FA88AA2D2EE41776009AEFEB /* Joodle.app */;
@@ -354,6 +357,7 @@
 			packageReferences = (
 				FA34C5072F08CE93000C510E /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 				FABBB5B72F1BB4BD00B0C947 /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				FA11AAD02F1C000300C0FE77 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FADC35842E48C2E1007AE111 /* Products */;
@@ -868,6 +872,14 @@
 				minimumVersion = 3.37.2;
 			};
 		};
+		FA11AAD02F1C000300C0FE77 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/simibac/ConfettiSwiftUI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -880,6 +892,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FABBB5B72F1BB4BD00B0C947 /* XCRemoteSwiftPackageReference "posthog-ios" */;
 			productName = PostHog;
+		};
+		FA11AACF2F1C000200C0FE77 /* ConfettiSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA11AAD02F1C000300C0FE77 /* XCRemoteSwiftPackageReference "ConfettiSwiftUI" */;
+			productName = ConfettiSwiftUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

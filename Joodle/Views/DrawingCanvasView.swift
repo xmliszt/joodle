@@ -51,7 +51,9 @@ struct DrawingCanvasView: View {
   @State private var showClearConfirmation = false
   @State private var isDrawing = false
   @State private var showPaywall = false
+  @State private var showTrialClaim = false
   @State private var accessState: JoodleAccessState = .canCreate
+  @StateObject private var trialOfferManager = TrialOfferManager.shared
 
   // Undo/Redo state management
   @State private var undoStack: [([Path], [PathMetadata])] = []
@@ -523,6 +525,9 @@ struct DrawingCanvasView: View {
     .sheet(isPresented: $showPaywall) {
       StandalonePaywallView(source: "entry_limit")
     }
+    .sheet(isPresented: $showTrialClaim) {
+      TrialClaimPaywallView(source: "entry_limit")
+    }
     .alert("Camera Access Needed", isPresented: cameraPermissionAlertBinding) {
       Button("Cancel", role: .cancel) {}
       Button("Open Settings") {
@@ -586,6 +591,13 @@ struct DrawingCanvasView: View {
   }
 
   // MARK: - Access Control UI
+
+  /// Whether the limit gate should merchandise the claimable free trial
+  /// instead of the purchase paywall.
+  private var canOfferTrialClaim: Bool {
+    trialOfferManager.isClaimOfferAvailable
+  }
+
   private var accessDeniedOverlay: some View {
     VStack(spacing: 16) {
       Image(systemName: "lock.fill")
@@ -599,10 +611,17 @@ struct DrawingCanvasView: View {
           .foregroundColor(.appTextPrimary)
           .multilineTextAlignment(.center)
 
-        Text("Upgrade to Joodle Pro for unlimited Joodles")
-          .font(.appSubheadline())
-          .foregroundColor(.appTextPrimary.opacity(0.8))
-          .multilineTextAlignment(.center)
+        if canOfferTrialClaim {
+          Text("Your next 7 days of doodling can be free — Joodle Pro, on us")
+            .font(.appSubheadline())
+            .foregroundColor(.appTextPrimary.opacity(0.8))
+            .multilineTextAlignment(.center)
+        } else {
+          Text("Upgrade to Joodle Pro for unlimited Joodles")
+            .font(.appSubheadline())
+            .foregroundColor(.appTextPrimary.opacity(0.8))
+            .multilineTextAlignment(.center)
+        }
 
       case .editingLocked(let reason):
         Text("Editing Locked")
@@ -618,19 +637,36 @@ struct DrawingCanvasView: View {
         EmptyView()
       }
 
-      Button {
-        showPaywall = true
-      } label: {
-        HStack {
-          Image(systemName: "crown.fill")
-          Text("Upgrade")
+      if canOfferTrialClaim, case .limitReached = accessState {
+        Button {
+          showTrialClaim = true
+        } label: {
+          HStack {
+            Image(systemName: "gift.fill")
+            Text("Claim 7 free days of Pro")
+          }
+          .font(.appHeadline())
+          .foregroundColor(.appAccentContrast)
+          .padding(.horizontal, 24)
+          .padding(.vertical, 12)
+          .background(.appAccent)
+          .cornerRadius(32)
         }
-        .font(.appHeadline())
-        .foregroundColor(.appAccentContrast)
-        .padding(.horizontal, 24)
-        .padding(.vertical, 12)
-        .background(.appAccent)
-        .cornerRadius(32)
+      } else {
+        Button {
+          showPaywall = true
+        } label: {
+          HStack {
+            Image(systemName: "crown.fill")
+            Text("Upgrade")
+          }
+          .font(.appHeadline())
+          .foregroundColor(.appAccentContrast)
+          .padding(.horizontal, 24)
+          .padding(.vertical, 12)
+          .background(.appAccent)
+          .cornerRadius(32)
+        }
       }
     }
     .padding(32)

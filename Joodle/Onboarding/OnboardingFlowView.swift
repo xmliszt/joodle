@@ -27,8 +27,8 @@ struct OnboardingFlowView: View {
                         iCloudConfigView(viewModel: viewModel)
                     case .dailyReminder:
                         DailyReminderConfigView(viewModel: viewModel)
-                    case .proIntro:
-                        ProIntroStepView(viewModel: viewModel)
+                    case .proPaywall:
+                        ProPaywallStepView(viewModel: viewModel)
                     case .onboardingCompletion:
                         OnboardingCompletionView(viewModel: viewModel)
                     }
@@ -47,21 +47,32 @@ struct OnboardingFlowView: View {
     }
 }
 
-// MARK: - Pro Intro Step
+// MARK: - Pro Paywall Step
 
-/// Onboarding step that shows the informative Joodle Pro trial intro
-/// (value + 7-day trial timeline, no purchase). "Continue" advances without commitment.
-struct ProIntroStepView: View {
+/// Onboarding step that shows the purchasable Joodle Pro paywall.
+/// Buying advances as a Pro user; "Continue with Free" skips to a free
+/// account with the 7-doodle allowance. No trial framing at this stage —
+/// the claimable 7-day trial is offered later, at the doodle limit.
+struct ProPaywallStepView: View {
     @ObservedObject var viewModel: OnboardingViewModel
 
     var body: some View {
         PaywallContentView(configuration: PaywallConfiguration(
             context: .onboarding,
-            paywallSource: "onboarding_pro_intro",
+            useOnboardingStyle: true,
+            paywallSource: "onboarding_paywall",
+            onPurchaseComplete: {
+                AnalyticsManager.shared.trackPaywallDismissed(source: "onboarding_paywall", didPurchase: true)
+                viewModel.completeStep(.proPaywall)
+            },
             onContinueFree: {
-                viewModel.completeStep(.proIntro)
+                AnalyticsManager.shared.trackPaywallDismissed(source: "onboarding_paywall", didPurchase: false)
+                viewModel.completeStep(.proPaywall)
             }
         ))
-        .postHogScreenView("Onboarding Pro Intro")
+        .postHogScreenView("Onboarding Paywall")
+        .onAppear {
+            AnalyticsManager.shared.trackPaywallViewed(source: "onboarding_paywall")
+        }
     }
 }

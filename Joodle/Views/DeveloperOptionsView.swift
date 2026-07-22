@@ -159,7 +159,7 @@ struct DeveloperOptionsView: View {
     Section {
       Button {
         GracePeriodManager.shared.resetGracePeriod()
-        GracePeriodManager.shared.startGracePeriodIfNeeded()
+        GracePeriodManager.shared.setGracePeriodStart(Date())
         print("🎉 Grace period reset to 7 days from now")
       } label: {
         row(icon: "hourglass", color: .orange, title: "Reset Grace Period (7 Days)")
