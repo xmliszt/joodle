@@ -47,6 +47,14 @@ final class ReviewRequestManager {
     requestReview()
   }
 
+  /// Clears the one-shot flags so the Developer console can replay the
+  /// trial-end review flow. Runtime-gated for non-production builds only.
+  func resetForTesting() {
+    guard AppEnvironment.isActuallyNonProduction else { return }
+    defaults.removeObject(forKey: Self.hasRequestedTrialEndReviewKey)
+    defaults.removeObject(forKey: Self.legacyRequestedReviewKey)
+  }
+
   // MARK: - Private
 
   private var hasRequestedReview: Bool {

@@ -380,4 +380,19 @@ class GracePeriodManager: ObservableObject {
         hasAttemptedStart = true
         updateState()
     }
+
+    /// Set a custom claimed-trial start date for testing (Developer console).
+    /// Available in all builds so TestFlight/sandbox can run reviewer flows.
+    func setClaimedTrialStart(_ date: Date) {
+        guard AppEnvironment.isActuallyNonProduction else {
+            return
+        }
+
+        UserDefaults.standard.set(date, forKey: Self.claimedStartDateKey)
+        cloudStore.set(date, forKey: Self.claimedStartDateKey)
+        cloudStore.synchronize()
+        hasAttemptedStart = true
+        updateState()
+        scheduleTrialReminderIfNeeded()
+    }
 }

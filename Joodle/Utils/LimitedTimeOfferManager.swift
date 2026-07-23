@@ -228,6 +228,19 @@ final class LimitedTimeOfferManager: ObservableObject {
 
   // MARK: - Debug
 
+  /// Wipes all local + CloudKit offer state, as if the user never saw it.
+  /// Runtime-gated (not #if DEBUG) so the Developer console's funnel
+  /// scenarios can reset the offer in TestFlight builds too.
+  func debugClearAllState() {
+    guard AppEnvironment.isActuallyNonProduction else { return }
+    Task { try? await CKContainer.default().privateCloudDatabase.deleteRecord(withID: anchorRecordID) }
+    UserDefaults.standard.removeObject(forKey: anchorCacheKey)
+    dismissedCampaignId = nil
+    anchorDate = nil
+    expiryTimer?.invalidate()
+    expiryTimer = nil
+  }
+
   #if DEBUG
   /// Restarts a fresh window and re-arms the auto-present sheet.
   func debugRestartWindow() {
@@ -244,16 +257,6 @@ final class LimitedTimeOfferManager: ObservableObject {
   /// Clears the seen flag so the auto-present fires again on next launch.
   func debugResetSeenCampaign() {
     dismissedCampaignId = nil
-  }
-
-  /// Wipes all local + CloudKit offer state, as if the user never saw it.
-  func debugClearAllState() {
-    Task { try? await CKContainer.default().privateCloudDatabase.deleteRecord(withID: anchorRecordID) }
-    UserDefaults.standard.removeObject(forKey: anchorCacheKey)
-    dismissedCampaignId = nil
-    anchorDate = nil
-    expiryTimer?.invalidate()
-    expiryTimer = nil
   }
   #endif
 }

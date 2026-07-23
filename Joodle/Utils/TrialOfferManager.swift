@@ -46,6 +46,76 @@ enum TrialFunnelPhase: Equatable {
   case converted
 }
 
+/// One-tap canonical funnel states for the Developer console, so every branch
+/// of the conversion funnel can be exercised end-to-end in debug/TestFlight
+/// builds without waiting out real clocks. Labels are verbatim developer-UI
+/// strings and intentionally bypass localization.
+enum FunnelDebugScenario: String, CaseIterable, Identifiable {
+  case freshNewInstall
+  case atDoodleLimit
+  case claimWindowActive
+  case claimWindowExpired
+  case trialActiveDay2
+  case trialEndingSoon
+  case trialEnded
+  case legacyWinback
+  case legacyMidTrial
+
+  var id: String { rawValue }
+
+  var title: String {
+    switch self {
+    case .freshNewInstall: return "Fresh new install (dormant)"
+    case .atDoodleLimit: return "At doodle limit → claim offer due"
+    case .claimWindowActive: return "Claim window running (12h left)"
+    case .claimWindowExpired: return "Claim window expired (offer lost)"
+    case .trialActiveDay2: return "Claimed trial active — day 2"
+    case .trialEndingSoon: return "Claimed trial ends in 2 minutes"
+    case .trialEnded: return "Claimed trial ended"
+    case .legacyWinback: return "Legacy install — winback offer"
+    case .legacyMidTrial: return "Legacy install — auto-trial day 3"
+    }
+  }
+
+  /// What the tester should do/expect after applying the scenario.
+  var hint: String {
+    switch self {
+    case .freshNewInstall:
+      return "New cohort, 7-doodle limit, nothing offered. Draw doodles to walk the funnel naturally."
+    case .atDoodleLimit:
+      return "Free limit set to your current doodle count (min 1). Relaunch to auto-present the claim paywall; the canvas gate and Settings routes offer the claim too."
+    case .claimWindowActive:
+      return "Claim countdown ends in 12h. Check the Settings banner; tapping it reopens the claim paywall."
+    case .claimWindowExpired:
+      return "Offer forfeited. Relaunch to see the post-trial sheet (offer-expired copy) and the 50%-off window arm."
+    case .trialActiveDay2:
+      return "Pro is on via the claimed trial (day 2 of 7). Settings banner shows trial status."
+    case .trialEndingSoon:
+      return "Trial expires in ~2 minutes — keep the app open to watch Pro switch off live, or relaunch after it lapses for the post-trial sheet."
+    case .trialEnded:
+      return "Trial is over. Relaunch to see the trial-ended sheet, the 50%-off window, and the review prompt after dismissing the sheet."
+    case .legacyWinback:
+      return "Legacy cohort (30-doodle limit), auto-trial expired a month ago. Relaunch to auto-present the winback claim paywall."
+    case .legacyMidTrial:
+      return "Legacy cohort mid auto-trial (day 3). No claim offer while it runs; it becomes a winback when the trial ends."
+    }
+  }
+
+  var icon: String {
+    switch self {
+    case .freshNewInstall: return "sparkles"
+    case .atDoodleLimit: return "scribble.variable"
+    case .claimWindowActive: return "timer"
+    case .claimWindowExpired: return "timer.slash"
+    case .trialActiveDay2: return "crown"
+    case .trialEndingSoon: return "hourglass.tophalf.filled"
+    case .trialEnded: return "hourglass.bottomhalf.filled"
+    case .legacyWinback: return "gift"
+    case .legacyMidTrial: return "clock.arrow.circlepath"
+    }
+  }
+}
+
 /// Raw inputs for phase resolution, separated out so the transition logic is
 /// a pure function the unit tests can drive without singletons or clocks.
 struct TrialFunnelSnapshot {
@@ -379,21 +449,81 @@ final class TrialOfferManager: ObservableObject {
     print("🔄 [Funnel] Trial offer state reset")
   }
 
-  #if DEBUG
-  /// Moves the claim window so it expires in ~2 minutes.
-  func debugExpireClaimWindowSoon() {
-    claimWindowEnd = Date().addingTimeInterval(120)
+  /// Applies a canonical funnel state for the Developer console: wipes all
+  /// trial/claim/review state first, then layers exactly what the scenario
+  /// needs. Runtime-gated (not #if DEBUG) so TestFlight builds can run
+  /// reviewer flows, mirroring GracePeriodManager.resetGracePeriod().
+  ///
+  /// Launch-time sheets (claim auto-present, post-trial sheet) fire on the
+  /// next cold launch — the console's footer tells the tester to relaunch.
+  func applyDebugScenario(_ scenario: FunnelDebugScenario, currentDoodleCount: Int) {
+    guard AppEnvironment.isActuallyNonProduction else { return }
+    let defaults = UserDefaults.standard
+    let grace = GracePeriodManager.shared
+    let day: TimeInterval = 24 * 60 * 60
+
+    // Clean slate: trial dates, claim window, one-shots, review flags.
+    grace.resetGracePeriod()
+    resetFunnelState()
+    ReviewRequestManager.shared.resetForTesting()
+    defaults.set(true, forKey: "hasCompletedOnboarding")
+
+    switch scenario {
+    case .freshNewInstall:
+      applyDebugCohort(legacy: false)
+
+    case .atDoodleLimit:
+      // Lower the limit to the doodles already drawn so the offer is due
+      // immediately (or after the very next doodle when none exist yet) —
+      // this exercises the real limit-hit trigger, not a shortcut.
+      applyDebugCohort(legacy: false, limitOverride: max(1, currentDoodleCount))
+
+    case .claimWindowActive:
+      applyDebugCohort(legacy: false, limitOverride: max(1, currentDoodleCount))
+      defaults.set(true, forKey: Self.offerAutoPresentedKey)
+      claimWindowEnd = Date().addingTimeInterval(12 * 60 * 60)
+
+    case .claimWindowExpired:
+      applyDebugCohort(legacy: false, limitOverride: max(1, currentDoodleCount))
+      defaults.set(true, forKey: Self.offerAutoPresentedKey)
+      claimWindowEnd = Date().addingTimeInterval(-60)
+
+    case .trialActiveDay2:
+      applyDebugCohort(legacy: false)
+      grace.setClaimedTrialStart(Date().addingTimeInterval(-1 * day))
+
+    case .trialEndingSoon:
+      applyDebugCohort(legacy: false)
+      grace.setClaimedTrialStart(Date().addingTimeInterval(-(GracePeriodManager.gracePeriodDuration - 120)))
+
+    case .trialEnded:
+      applyDebugCohort(legacy: false)
+      grace.setClaimedTrialStart(Date().addingTimeInterval(-8 * day))
+
+    case .legacyWinback:
+      applyDebugCohort(legacy: true)
+      grace.setGracePeriodStart(Date().addingTimeInterval(-30 * day))
+
+    case .legacyMidTrial:
+      applyDebugCohort(legacy: true)
+      grace.setGracePeriodStart(Date().addingTimeInterval(-2 * day))
+    }
+
     scheduleWindowExpiryTick()
     bumpState()
+    print("🧪 [Funnel] Debug scenario applied: \(scenario.rawValue)")
   }
 
-  /// Re-arms the one-shot auto-presentations.
-  func debugRearmAutoPresents() {
-    UserDefaults.standard.removeObject(forKey: Self.offerAutoPresentedKey)
-    UserDefaults.standard.removeObject(forKey: Self.postTrialSheetShownKey)
-    cloudStore.removeObject(forKey: Self.postTrialSheetShownKey)
+  /// Writes the cohort flags (legacy vs new install) and the free doodle
+  /// limit to both stores, as the real migration would have.
+  private func applyDebugCohort(legacy: Bool, limitOverride: Int? = nil) {
+    let limit = limitOverride
+      ?? (legacy ? SubscriptionManager.legacyFreeJoodlesAllowed : SubscriptionManager.baseFreeJoodlesAllowed)
+    let defaults = UserDefaults.standard
+    defaults.set(legacy, forKey: Self.legacyInstallKey)
+    defaults.set(limit, forKey: Self.freeJoodleLimitKey)
+    defaults.set(2, forKey: Self.migrationVersionKey)
+    cloudStore.set(Int64(limit), forKey: Self.freeJoodleLimitKey)
     cloudStore.synchronize()
-    bumpState()
   }
-  #endif
 }
