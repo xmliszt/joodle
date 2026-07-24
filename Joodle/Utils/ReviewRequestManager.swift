@@ -13,7 +13,9 @@ import SwiftUI
 /// Manages when to request an App Store review using Apple's native API.
 ///
 /// Apple controls actual display (max 3 times/year), so we only gate *when* to ask.
-/// The prompt triggers when the user creates their 10th Joodle entry.
+/// The prompt fires once, right after the 7-day Pro trial ends — the moment
+/// perceived value peaks (the user just lived with full Pro for a week),
+/// rather than at an arbitrary entry-count milestone weeks later.
 @MainActor
 final class ReviewRequestManager {
 
@@ -23,8 +25,12 @@ final class ReviewRequestManager {
 
   // MARK: - Keys
 
-  /// Whether the review prompt has already been requested for the 10-entry milestone
-  private static let hasRequestedReviewKey = "has_requested_review_for_10_entries"
+  /// Legacy one-shot flag from the entry-count era — respected so users who
+  /// were already prompted never get asked twice.
+  private static let legacyRequestedReviewKey = "has_requested_review_for_10_entries"
+
+  /// Whether the review prompt has been requested for the trial-end milestone
+  private static let hasRequestedTrialEndReviewKey = "has_requested_review_trial_end"
 
   // MARK: - Init
 
@@ -32,26 +38,32 @@ final class ReviewRequestManager {
 
   // MARK: - Public
 
-  /// Checks whether the review prompt should be shown based on entry count,
-  /// and requests it if conditions are met.
-  ///
-  /// - Parameter entryCount: The total number of entries with meaningful content (drawing or text).
-  func checkAndRequestReviewIfNeeded(entryCount: Int) {
-    guard entryCount >= 30 else { return }
+  /// Requests the review once, after the user's 7-day trial has ended.
+  /// Call after the trial-ended sheet is dismissed so the two never stack.
+  func requestReviewAfterTrialEnded() {
     guard !hasRequestedReview else { return }
 
     markReviewRequested()
     requestReview()
   }
 
+  /// Clears the one-shot flags so the Developer console can replay the
+  /// trial-end review flow. Runtime-gated for non-production builds only.
+  func resetForTesting() {
+    guard AppEnvironment.isActuallyNonProduction else { return }
+    defaults.removeObject(forKey: Self.hasRequestedTrialEndReviewKey)
+    defaults.removeObject(forKey: Self.legacyRequestedReviewKey)
+  }
+
   // MARK: - Private
 
   private var hasRequestedReview: Bool {
-    defaults.bool(forKey: Self.hasRequestedReviewKey)
+    defaults.bool(forKey: Self.hasRequestedTrialEndReviewKey)
+      || defaults.bool(forKey: Self.legacyRequestedReviewKey)
   }
 
   private func markReviewRequested() {
-    defaults.set(true, forKey: Self.hasRequestedReviewKey)
+    defaults.set(true, forKey: Self.hasRequestedTrialEndReviewKey)
   }
 
   private func requestReview() {

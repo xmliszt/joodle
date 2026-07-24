@@ -2,9 +2,11 @@
 //  GracePeriodManager.swift
 //  Joodle
 //
-//  Manages the 7-day grace period for new users.
-//  All new users get full Pro features for 7 days from first launch.
-//  After expiry, a one-time paywall is shown, then users fall to free tier.
+//  Manages the 7-day Pro trial window.
+//  Historically the trial auto-started for every new user at first launch
+//  (the "grace period"). Under the claim funnel (TrialOfferManager) the trial
+//  starts only when the user claims it; legacy installs whose auto-started
+//  window predates the funnel keep working off the original start date.
 //
 
 import Foundation
@@ -23,7 +25,11 @@ class GracePeriodManager: ObservableObject {
     // MARK: - Storage Keys
 
     private static let startDateKey = "grace_period_start_date"
-    private static let paywallShownKey = "has_shown_grace_expired_paywall"
+    /// Start date of a trial the user explicitly claimed (claim funnel).
+    /// Separate from `startDateKey` because that key's earliest-wins iCloud
+    /// reconciliation would snap a newly claimed trial back to a legacy
+    /// install's long-expired auto-start date.
+    private static let claimedStartDateKey = "claimed_trial_start_date"
 
     /// Identifier for the gentle "trial ending soon" local notification.
     private static let trialReminderIdentifier = "joodle_trial_reminder"
@@ -79,58 +85,43 @@ class GracePeriodManager: ObservableObject {
 
     // MARK: - Public Methods
 
-    /// Start the grace period if not already started.
-    /// Called on every app launch — only sets the start date once.
-    /// Safe to call multiple times (idempotent).
-    func startGracePeriodIfNeeded() {
+    /// Reconciles stored trial state and reschedules the reminder on launch.
+    /// Never creates a start date — trials start only via `claimTrial()`
+    /// (or, for legacy installs, started under the old auto-grant behavior).
+    func onAppLaunch() {
         guard !hasAttemptedStart else { return }
         hasAttemptedStart = true
-
-        // Check if a start date already exists (in either store)
-        if gracePeriodStartDate != nil {
-            updateState()
-            scheduleTrialReminderIfNeeded()
-            return
-        }
-
-        // No start date anywhere — this is a brand new user (or first launch after update)
-        let now = Date()
-        setStartDate(now)
         updateState()
         scheduleTrialReminderIfNeeded()
-
-        // Track analytics
-        AnalyticsManager.shared.trackGracePeriodStarted(startDate: now)
-
-        print("🎉 Grace period started: \(now) — expires \(now.addingTimeInterval(Self.gracePeriodDuration))")
     }
 
-    /// Whether the one-time grace-expired paywall should be shown
-    var shouldShowGraceExpiredPaywall: Bool {
-        // Only show if grace period has expired, not yet shown, and user is not subscribed
-        guard hasGracePeriodExpired else { return false }
-        guard !hasShownGraceExpiredPaywall else { return false }
-        guard !SubscriptionManager.shared.hasPremiumAccess else { return false }
-        return true
-    }
-
-    /// Mark the grace-expired paywall as shown (call after dismissing the sheet)
-    func markGraceExpiredPaywallShown() {
-        UserDefaults.standard.set(true, forKey: Self.paywallShownKey)
-        cloudStore.set(true, forKey: Self.paywallShownKey)
+    /// Starts the 7-day trial the user just claimed. Idempotent: a second
+    /// claim (e.g. from another device racing KVS) keeps the earliest date.
+    func claimTrial() {
+        guard claimedTrialStartDate == nil else {
+            updateState()
+            return
+        }
+        let now = Date()
+        UserDefaults.standard.set(now, forKey: Self.claimedStartDateKey)
+        cloudStore.set(now, forKey: Self.claimedStartDateKey)
         cloudStore.synchronize()
+        updateState()
+        scheduleTrialReminderIfNeeded()
+        AnalyticsManager.shared.trackGracePeriodStarted(startDate: now)
+        print("🎉 Claimed trial started: \(now) — expires \(now.addingTimeInterval(Self.gracePeriodDuration))")
     }
 
-    /// The date when the grace period expires (nil if not started)
+    /// The date when the trial expires (nil if never started/claimed)
     var gracePeriodExpirationDate: Date? {
-        guard let startDate = gracePeriodStartDate else { return nil }
+        guard let startDate = effectiveTrialStartDate else { return nil }
         return startDate.addingTimeInterval(Self.gracePeriodDuration)
     }
 
     /// Fraction (0...1) of the trial elapsed, for the timeline progress fill.
     /// 0 when not started; 1 once expired.
     var gracePeriodProgress: Double {
-        guard let startDate = gracePeriodStartDate else { return 0 }
+        guard let startDate = effectiveTrialStartDate else { return 0 }
         let elapsed = Date().timeIntervalSince(startDate)
         return min(max(elapsed / Self.gracePeriodDuration, 0), 1)
     }
@@ -138,7 +129,7 @@ class GracePeriodManager: ObservableObject {
     /// 1-based day of the trial (Day 1 starts at the trial start date), or nil
     /// if the trial never started. Keeps counting past the trial's end.
     var currentTrialDay: Int? {
-        guard let startDate = gracePeriodStartDate else { return nil }
+        guard let startDate = effectiveTrialStartDate else { return nil }
         let elapsed = Date().timeIntervalSince(startDate)
         guard elapsed >= 0 else { return 1 }
         return Int(elapsed / (24 * 60 * 60)) + 1
@@ -146,7 +137,8 @@ class GracePeriodManager: ObservableObject {
 
     // MARK: - Private Helpers
 
-    /// Read the grace period start date from UserDefaults (cache) or iCloud KVS (primary)
+    /// Read the legacy (auto-started) grace period start date from
+    /// UserDefaults (cache) or iCloud KVS (primary)
     private var gracePeriodStartDate: Date? {
         // Check local cache first (faster)
         if let localDate = UserDefaults.standard.object(forKey: Self.startDateKey) as? Date {
@@ -161,10 +153,23 @@ class GracePeriodManager: ObservableObject {
         return nil
     }
 
-    /// Whether the grace-expired paywall has already been shown
-    private var hasShownGraceExpiredPaywall: Bool {
-        UserDefaults.standard.bool(forKey: Self.paywallShownKey) ||
-        cloudStore.bool(forKey: Self.paywallShownKey)
+    /// Start date of an explicitly claimed trial, if any. Same two-store read
+    /// pattern as the legacy key.
+    var claimedTrialStartDate: Date? {
+        if let localDate = UserDefaults.standard.object(forKey: Self.claimedStartDateKey) as? Date {
+            return localDate
+        }
+        if let cloudDate = cloudStore.object(forKey: Self.claimedStartDateKey) as? Date {
+            UserDefaults.standard.set(cloudDate, forKey: Self.claimedStartDateKey)
+            return cloudDate
+        }
+        return nil
+    }
+
+    /// The start date the trial state runs off: a claimed trial wins over a
+    /// legacy auto-started one (which, if both exist, has long expired).
+    var effectiveTrialStartDate: Date? {
+        claimedTrialStartDate ?? gracePeriodStartDate
     }
 
     /// Write the start date to both stores
@@ -175,36 +180,34 @@ class GracePeriodManager: ObservableObject {
     }
 
     /// Reconcile trial state between UserDefaults and iCloud KVS, keeping the
-    /// earliest start date seen anywhere. On the first launch after a
-    /// reinstall, both stores look empty and a fresh date gets written before
-    /// the old one syncs down from iCloud — taking the minimum lets the
-    /// late-arriving original win, so reinstalling never restarts the trial.
+    /// earliest start date seen anywhere (per key). On the first launch after
+    /// a reinstall, both stores look empty and a fresh date gets written
+    /// before the old one syncs down from iCloud — taking the minimum lets
+    /// the late-arriving original win, so reinstalling never restarts a trial.
     private func reconcileWithCloud() {
-        let localDate = UserDefaults.standard.object(forKey: Self.startDateKey) as? Date
-        let cloudDate = cloudStore.object(forKey: Self.startDateKey) as? Date
+        reconcileEarliestDate(forKey: Self.startDateKey)
+        reconcileEarliestDate(forKey: Self.claimedStartDateKey)
+    }
+
+    private func reconcileEarliestDate(forKey key: String) {
+        let localDate = UserDefaults.standard.object(forKey: key) as? Date
+        let cloudDate = cloudStore.object(forKey: key) as? Date
 
         if let earliest = [localDate, cloudDate].compactMap({ $0 }).min() {
             if localDate != earliest {
-                UserDefaults.standard.set(earliest, forKey: Self.startDateKey)
-                print("☁️ Grace period start snapped back to earliest known date: \(earliest)")
+                UserDefaults.standard.set(earliest, forKey: key)
+                print("☁️ Trial date \(key) snapped back to earliest known date: \(earliest)")
             }
             if cloudDate != earliest {
-                cloudStore.set(earliest, forKey: Self.startDateKey)
+                cloudStore.set(earliest, forKey: key)
                 cloudStore.synchronize()
             }
-        }
-
-        // Paywall-shown is shown-anywhere-wins, mirroring the same idea.
-        if !UserDefaults.standard.bool(forKey: Self.paywallShownKey) &&
-            cloudStore.bool(forKey: Self.paywallShownKey) {
-            UserDefaults.standard.set(true, forKey: Self.paywallShownKey)
-            print("☁️ Restored grace expired paywall flag from iCloud KVS")
         }
     }
 
     /// Recalculate the published state from the stored start date
     private func updateState() {
-        guard let startDate = gracePeriodStartDate else {
+        guard let startDate = effectiveTrialStartDate else {
             isInGracePeriod = false
             hasGracePeriodExpired = false
             gracePeriodDaysRemaining = 0
@@ -238,6 +241,10 @@ class GracePeriodManager: ObservableObject {
                     SubscriptionManager.shared.resetPremiumFeaturesToDefaults()
                     print("   Premium features reset to free tier defaults")
                 }
+
+                // The funnel phase just moved (trial → post-trial); let the
+                // offer manager re-derive its state and arm the 50%-off flow.
+                TrialOfferManager.shared.refresh()
             }
         }
     }
@@ -275,7 +282,7 @@ class GracePeriodManager: ObservableObject {
             cancelTrialReminder()
             return
         }
-        guard let startDate = gracePeriodStartDate else { return }
+        guard let startDate = effectiveTrialStartDate else { return }
 
         let fireDate = startDate.addingTimeInterval(Self.gracePeriodDuration - Self.trialReminderLeadTime)
         guard fireDate > Date() else { return }  // day 5 already passed — nothing to schedule
@@ -332,9 +339,9 @@ class GracePeriodManager: ObservableObject {
         }
 
         UserDefaults.standard.removeObject(forKey: Self.startDateKey)
-        UserDefaults.standard.removeObject(forKey: Self.paywallShownKey)
+        UserDefaults.standard.removeObject(forKey: Self.claimedStartDateKey)
         cloudStore.removeObject(forKey: Self.startDateKey)
-        cloudStore.removeObject(forKey: Self.paywallShownKey)
+        cloudStore.removeObject(forKey: Self.claimedStartDateKey)
         cloudStore.synchronize()
         hasAttemptedStart = false
         cancelTrialReminder()
@@ -372,5 +379,20 @@ class GracePeriodManager: ObservableObject {
         setStartDate(date)
         hasAttemptedStart = true
         updateState()
+    }
+
+    /// Set a custom claimed-trial start date for testing (Developer console).
+    /// Available in all builds so TestFlight/sandbox can run reviewer flows.
+    func setClaimedTrialStart(_ date: Date) {
+        guard AppEnvironment.isActuallyNonProduction else {
+            return
+        }
+
+        UserDefaults.standard.set(date, forKey: Self.claimedStartDateKey)
+        cloudStore.set(date, forKey: Self.claimedStartDateKey)
+        cloudStore.synchronize()
+        hasAttemptedStart = true
+        updateState()
+        scheduleTrialReminderIfNeeded()
     }
 }

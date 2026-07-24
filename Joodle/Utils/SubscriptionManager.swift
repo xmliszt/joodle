@@ -167,8 +167,27 @@ class SubscriptionManager: ObservableObject {
         hasPremiumAccess
     }
 
-    // Free plan limits - maximum total Joodles allowed for free users
-    nonisolated static let freeJoodlesAllowed = 30
+    // Free plan limits - maximum total Joodles allowed for free users.
+    // 7 for installs on the claim funnel; 30 stays grandfathered for legacy
+    // installs whose auto-started trial predates it. Resolved once by
+    // TrialOfferManager.migrateFunnelStateIfNeeded and stored; before that
+    // (or on a fresh reinstall racing iCloud KVS) the presence of a legacy
+    // grace-period start date decides.
+    nonisolated static let baseFreeJoodlesAllowed = 7
+    nonisolated static let legacyFreeJoodlesAllowed = 30
+
+    nonisolated static var freeJoodlesAllowed: Int {
+        resolveFreeJoodleLimit(
+            storedLimit: UserDefaults.standard.integer(forKey: TrialOfferManager.freeJoodleLimitKey),
+            legacyGraceExists: UserDefaults.standard.object(forKey: "grace_period_start_date") != nil
+        )
+    }
+
+    /// Pure limit resolution, unit-testable without UserDefaults.
+    nonisolated static func resolveFreeJoodleLimit(storedLimit: Int, legacyGraceExists: Bool) -> Int {
+        if storedLimit > 0 { return storedLimit }
+        return legacyGraceExists ? legacyFreeJoodlesAllowed : baseFreeJoodlesAllowed
+    }
 
     // Free plan limits - maximum anniversary alarms allowed for free users
     nonisolated static let freeAnniversaryAlarmsAllowed = 5

@@ -51,6 +51,7 @@ struct CalendarDate: Hashable, Comparable, Codable, Sendable {
   init?(dateString: String) {
     let components = dateString.split(separator: "-")
     guard components.count == 3,
+          components[0].count == 4,
           let year = Int(components[0]),
           let month = Int(components[1]),
           let day = Int(components[2]),

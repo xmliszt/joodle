@@ -423,7 +423,7 @@ struct RemainingJoodlesIndicator: View {
                         .font(.appCaption())
                 }
             }
-            .foregroundColor(remaining > 10 ? .secondary : (remaining > 0 ? .appAccent : .red))
+            .foregroundColor(remaining > max(2, SubscriptionManager.freeJoodlesAllowed / 3) ? .secondary : (remaining > 0 ? .appAccent : .red))
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(

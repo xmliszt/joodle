@@ -18,9 +18,6 @@ struct ContentView: View {
   @Query private var entries: [DayEntry]
   @StateObject private var subscriptionManager = SubscriptionManager.shared
 
-  /// Grace period manager for one-time expired paywall
-  @StateObject private var gracePeriodManager = GracePeriodManager.shared
-
   /// Data provider for the grid (abstracts data source for shared JoodleGridInteractionView)
   @StateObject private var dataProvider = AppDataProvider()
 
@@ -69,7 +66,17 @@ struct ContentView: View {
   @State private var navigateToSettings = false
   @State private var navigateToNotePromptSetting = false
   @State private var hideDynamicIslandView = false
-  @State private var showGraceExpiredPaywall = false
+
+  // --- CONVERSION FUNNEL STATE ---
+  /// One-time post-trial comparison sheet (trial ended / claim offer expired)
+  @State private var showPostTrialSheet = false
+  /// Which post-trial copy variant the sheet shows
+  @State private var postTrialOfferExpired = false
+  /// The "7 days on us" claim paywall (auto-presented at the doodle limit,
+  /// or as a winback for legacy installs)
+  @State private var showTrialClaimSheet = false
+  @StateObject private var trialOfferManager = TrialOfferManager.shared
+  // --- END CONVERSION FUNNEL STATE ---
 
   /// Shared camera-reference state. Consumed by DrawingCanvasView for the
   /// in-canvas preview / top-row controls, and by this view for the
@@ -537,8 +544,22 @@ struct ContentView: View {
     } message: {
       Text("Your Joodle Pro subscription has ended. Some features are now limited.")
     }
-    .sheet(isPresented: $showGraceExpiredPaywall) {
-      StandalonePaywallView(source: "grace_expired", context: .expired)
+    .sheet(isPresented: $showPostTrialSheet, onDismiss: {
+      // Ask for the App Store review right after the trial-ended sheet goes
+      // away — the user just lived a week with full Pro, so perceived value
+      // peaks here. Never for the never-claimed path, and never stacked on
+      // top of the sheet itself.
+      if !postTrialOfferExpired {
+        ReviewRequestManager.shared.requestReviewAfterTrialEnded()
+      }
+    }) {
+      StandalonePaywallView(
+        source: postTrialOfferExpired ? "trial_offer_expired" : "trial_ended",
+        context: .trialEnded(offerExpired: postTrialOfferExpired)
+      )
+    }
+    .sheet(isPresented: $showTrialClaimSheet) {
+      TrialClaimPaywallView(source: "doodle_limit")
     }
     .alert(String(localized: "Move Doodle"), isPresented: $showMoveConfirmation) {
       Button(String(localized: "Move"), role: .none) {
@@ -558,22 +579,35 @@ struct ContentView: View {
       WidgetHelper.shared.updateSubscriptionStatus(reload: false)
       WidgetHelper.shared.updateWidgetData(in: modelContext)
 
-      // Refresh subscription status FIRST, then check grace period paywall
+      // Refresh subscription status FIRST, then run the funnel's launch check
       Task {
         await subscriptionManager.updateSubscriptionStatus()
 
-        // Show one-time paywall after grace period expires
-        // Must run AFTER subscription status is refreshed to avoid showing paywall to active subscribers
-        if gracePeriodManager.shouldShowGraceExpiredPaywall && !subscriptionManager.hasPremiumAccess {
-          showGraceExpiredPaywall = true
-          gracePeriodManager.markGraceExpiredPaywallShown()
-          // This launch belongs to the trial-expired paywall; it already quotes
+        // Post-trial sheet: one-time, on the next open after the trial ended
+        // or the claim window lapsed. Must run AFTER the subscription refresh
+        // so active subscribers never see it.
+        if trialOfferManager.shouldPresentPostTrialSheet, !subscriptionManager.hasPremiumAccess {
+          postTrialOfferExpired = trialOfferManager.postTrialReason == .offerExpired
+          // Arm the 50%-off window first so the sheet renders with the live
+          // promo price and countdown.
+          await LimitedTimeOfferManager.shared.refresh()
+          showPostTrialSheet = true
+          trialOfferManager.markPostTrialSheetShown()
+          AnalyticsManager.shared.track(
+            .trialEndedSheetShown,
+            properties: [.source: postTrialOfferExpired ? "offer_expired" : "trial_ended"]
+          )
+          // This launch belongs to the post-trial sheet; it already quotes
           // the promo price and countdown while the offer window is live, so
-          // consume the offer sheet's auto-present instead of stacking a second
-          // sheet. The Settings banner stays as the offer's re-entry point.
+          // consume the offer sheet's auto-present instead of stacking a
+          // second sheet. The Settings banner stays as the re-entry point.
           if LimitedTimeOfferManager.shared.shouldAutoPresent {
             LimitedTimeOfferManager.shared.markCurrentCampaignSeen()
           }
+        } else {
+          // Claim-offer auto-present: new installs at the doodle limit, and
+          // legacy installs (winback) on their first open after the update.
+          maybeAutoPresentClaimOffer()
         }
       }
     }
@@ -595,14 +629,14 @@ struct ContentView: View {
         break
       }
     }
-    .onChange(of: entries.count) { _, newCount in
-      // Check if we should prompt for App Store review after reaching 10 entries
-      let meaningfulCount = entries.filter { entry in
-        let hasDrawing = entry.drawingData != nil && !(entry.drawingData?.isEmpty ?? true)
-        let hasText = !entry.body.isEmpty
-        return hasDrawing || hasText
-      }.count
-      ReviewRequestManager.shared.checkAndRequestReviewIfNeeded(entryCount: meaningfulCount)
+    .onChange(of: showDrawingCanvas) { _, isShowing in
+      // The 7th-doodle moment: the canvas just closed, possibly having saved
+      // the doodle that used up the free allowance. Give the collapse
+      // animation room, then offer the trial claim.
+      guard !isShowing else { return }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        maybeAutoPresentClaimOffer()
+      }
     }
     .onChange(of: selectedDateFromWidget) { _, newDate in
       // Handle deep link from widget
@@ -651,6 +685,20 @@ struct ContentView: View {
       } else {
         pendingOpenCanvasFromShortcut = true
       }
+    }
+  }
+
+  // MARK: - Conversion Funnel
+
+  /// Auto-presents the "7 days on us" claim paywall once, when the funnel
+  /// says the offer is due (doodle limit reached, or legacy winback). Skipped
+  /// while another surface owns the screen.
+  private func maybeAutoPresentClaimOffer() {
+    guard !showPostTrialSheet, !showTrialClaimSheet, !showDrawingCanvas else { return }
+    let doodleCount = entries.filter { $0.drawingData?.isEmpty == false }.count
+    if trialOfferManager.shouldAutoPresentClaimOffer(doodleCount: doodleCount) {
+      trialOfferManager.markClaimOfferAutoPresented()
+      showTrialClaimSheet = true
     }
   }
 

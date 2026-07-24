@@ -78,12 +78,14 @@ struct CountdownTimerView: View {
 
 // MARK: - Settings Banner
 
-/// The persistent re-entry point shown in Settings while a campaign is live.
-/// Tapping reopens the offer sheet; the live countdown keeps the urgency honest.
+/// The persistent re-entry point shown in Settings while a campaign is live —
+/// either the 50%-off lifetime offer or the 7-day trial claim window (they
+/// are mutually exclusive states, so only one banner ever renders).
+/// Tapping reopens the matching sheet; the live countdown keeps the urgency honest.
 struct LimitedTimeOfferBanner: View {
+  var icon: String = "bolt.fill"
   let headline: String
   let endDate: Date
-  let discountPercent: Int
   let onTap: () -> Void
 
   var body: some View {
@@ -91,7 +93,7 @@ struct LimitedTimeOfferBanner: View {
       VStack(spacing: 18) {
         HStack(spacing: 12) {
           HStack(spacing: 6) {
-            Image(systemName: "bolt.fill")
+            Image(systemName: icon)
               .font(.appCaption())
             Text(headline)
               .font(.appHeadline())
@@ -133,7 +135,13 @@ struct LimitedTimeOfferBanner: View {
     LimitedTimeOfferBanner(
       headline: "Lifetime - 50% off",
       endDate: Date().addingTimeInterval(3600 * 26 + 125),
-      discountPercent: 50,
+      onTap: {}
+    )
+    .padding(.horizontal, 20)
+    LimitedTimeOfferBanner(
+      icon: "crown.fill",
+      headline: "Your 7 free days are waiting",
+      endDate: Date().addingTimeInterval(3600 * 50 + 125),
       onTap: {}
     )
     .padding(.horizontal, 20)

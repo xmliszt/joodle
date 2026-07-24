@@ -80,9 +80,14 @@ struct StandalonePaywallView: View {
             // The pay screen is pointless for someone who already has premium — dismiss it.
             // The trial-status sheet is the exception: a trial user DOES have premium access
             // (via the grace period), and seeing their own trial status is the whole point.
-            if context == .expired, subscriptionManager.hasPremiumAccess {
-                dismiss()
-                return
+            switch context {
+            case .expired, .trialEnded:
+                if subscriptionManager.hasPremiumAccess {
+                    dismiss()
+                    return
+                }
+            default:
+                break
             }
 
             // The offer sheet stays for grace-period trial users — the trial

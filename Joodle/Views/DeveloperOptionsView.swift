@@ -11,8 +11,12 @@ import SwiftUI
 struct DeveloperOptionsView: View {
   @Binding var simulateProductionEnvironment: Bool
 
+  @Environment(\.modelContext) private var modelContext
   @StateObject private var subscriptionManager = SubscriptionManager.shared
+  @StateObject private var trialOfferManager = TrialOfferManager.shared
+  @StateObject private var gracePeriodManager = GracePeriodManager.shared
 
+  @State private var funnelStatusMessage: String?
   @State private var showAppStats = false
   @State private var showPlaceholderGenerator = false
   @State private var showSubscriptionTesting = false
@@ -31,7 +35,7 @@ struct DeveloperOptionsView: View {
         monetizationSection
       }
       if !AppEnvironment.isAppStore {
-        gracePeriodSection
+        conversionFunnelSection
       }
       if AppEnvironment.isDebug {
         userSimulationSection
@@ -153,29 +157,73 @@ struct DeveloperOptionsView: View {
     }
   }
 
-  // MARK: - Grace Period
+  // MARK: - Conversion Funnel
 
-  private var gracePeriodSection: some View {
+  /// One-tap scenario console: reset everything and jump the funnel to any
+  /// canonical state so the whole reverse-trial flow can be verified
+  /// end-to-end in debug/TestFlight builds.
+  private var conversionFunnelSection: some View {
     Section {
-      Button {
-        GracePeriodManager.shared.resetGracePeriod()
-        GracePeriodManager.shared.startGracePeriodIfNeeded()
-        print("🎉 Grace period reset to 7 days from now")
-      } label: {
-        row(icon: "hourglass", color: .orange, title: "Reset Grace Period (7 Days)")
+      HStack {
+        Text(verbatim: "Phase")
+        Spacer()
+        Text(verbatim: funnelPhaseDescription)
+          .foregroundStyle(.secondary)
+      }
+
+      HStack {
+        Text(verbatim: "Cohort · free limit")
+        Spacer()
+        Text(verbatim: "\(trialOfferManager.isLegacyInstall ? "Legacy" : "New") · \(SubscriptionManager.freeJoodlesAllowed)")
+          .foregroundStyle(.secondary)
+      }
+
+      ForEach(FunnelDebugScenario.allCases) { scenario in
+        Button {
+          applyFunnelScenario(scenario)
+        } label: {
+          row(icon: scenario.icon, color: .orange, title: scenario.title)
+        }
       }
 
       Button(role: .destructive) {
-        // Set grace period start to 8 days ago so it's already expired
-        let expiredDate = Date().addingTimeInterval(-8 * 24 * 60 * 60)
-        GracePeriodManager.shared.setGracePeriodStart(expiredDate)
-        print("⏰ Grace period force-expired (start set to \(expiredDate))")
+        applyFunnelScenario(.freshNewInstall)
+        funnelStatusMessage = "Everything wiped: trial dates, claim window, one-shot sheets, review flags, and the 50%-off offer state. Cohort is now a fresh install (7-doodle limit)."
       } label: {
-        row(icon: "hourglass.bottomhalf.filled", color: .red, title: "Expire Grace Period Now")
+        row(icon: "trash", color: .red, title: "Full Funnel Reset")
       }
     } header: {
-      Text(verbatim: "Grace Period")
+      Text(verbatim: "Conversion Funnel Scenarios")
+    } footer: {
+      Text(verbatim: (funnelStatusMessage.map { $0 + "\n\n" } ?? "")
+           + "Each scenario wipes trial/claim/review/offer state first, then applies its setup. Launch-time sheets (claim offer, post-trial) appear on the next cold launch — quit and reopen the app to see them.")
     }
+  }
+
+  private var funnelPhaseDescription: String {
+    switch trialOfferManager.phase {
+    case .dormant:
+      return "Dormant"
+    case .offerAvailable:
+      return "Claim offer available"
+    case .claimWindow(let end):
+      return "Claim window · ends \(end.formatted(date: .abbreviated, time: .shortened))"
+    case .trialActive:
+      return "Trial active · \(gracePeriodManager.gracePeriodDaysRemaining)d left"
+    case .postTrial(let reason):
+      return reason == .trialEnded ? "Post-trial · trial ended" : "Post-trial · offer expired"
+    case .converted:
+      return "Converted (owner)"
+    }
+  }
+
+  private func applyFunnelScenario(_ scenario: FunnelDebugScenario) {
+    let doodleCount = subscriptionManager.fetchTotalJoodleCount(in: modelContext)
+    // Clear the 50%-off offer state alongside, so post-trial scenarios anchor
+    // a genuinely fresh window on the next launch/foreground.
+    LimitedTimeOfferManager.shared.debugClearAllState()
+    trialOfferManager.applyDebugScenario(scenario, currentDoodleCount: doodleCount)
+    funnelStatusMessage = scenario.hint
   }
 
   // MARK: - User Simulation

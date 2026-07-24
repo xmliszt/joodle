@@ -11,7 +11,7 @@ enum OnboardingStep: Hashable, CaseIterable {
     case featureIntroWidgets       // Feature intro: Widgets (kept - can't be interactive)
     case icloudConfig              // iCloud sync configuration
     case dailyReminder             // Daily reminder configuration
-    case proIntro                  // Informative Joodle Pro trial intro (timeline, no purchase)
+    case proPaywall                // Purchasable Joodle Pro paywall (buy now, or skip to Free)
     case onboardingCompletion      // Completion step
 }
 
@@ -58,17 +58,17 @@ class OnboardingViewModel: ObservableObject {
         !isReturnUser
     }
 
-    /// Whether to show the informative Joodle Pro trial intro.
-    /// Only genuine first-time users see it — skip for revisits and users who already subscribe,
-    /// since the "your 7 days of Pro starts now" framing only holds for a fresh grace period.
-    var shouldShowProIntro: Bool {
+    /// Whether to show the purchasable Joodle Pro paywall.
+    /// Only genuine first-time users see it — revisits already know the offer,
+    /// and subscribers have nothing to buy.
+    var shouldShowProPaywall: Bool {
         !isRevisitingOnboarding && !StoreKitManager.shared.hasActiveSubscription
     }
 
-    /// Advance from the final setup step to the Pro intro (if eligible) or straight to completion.
+    /// Advance from the final setup step to the Pro paywall (if eligible) or straight to completion.
     private func advanceAfterSetup() {
-        if shouldShowProIntro {
-            navigationPath.append(OnboardingStep.proIntro)
+        if shouldShowProPaywall {
+            navigationPath.append(OnboardingStep.proPaywall)
         } else {
             navigationPath.append(OnboardingStep.onboardingCompletion)
         }
@@ -127,11 +127,11 @@ class OnboardingViewModel: ObservableObject {
             navigationPath.append(OnboardingStep.dailyReminder)
 
         case .dailyReminder:
-            // After daily reminder config, show the Pro trial intro (or skip to completion)
+            // After daily reminder config, show the Pro paywall (or skip to completion)
             advanceAfterSetup()
 
-        case .proIntro:
-            // After the informative Pro intro, finish up
+        case .proPaywall:
+            // After the paywall (purchased or skipped to Free), finish up
             navigationPath.append(OnboardingStep.onboardingCompletion)
 
         case .onboardingCompletion:
@@ -178,8 +178,6 @@ class OnboardingViewModel: ObservableObject {
 
         // Clear the revisit from settings flag
         UserDefaults.standard.removeObject(forKey: "isRevisitFromSettings")
-
-        // Update subscription status if premium was set during onboarding\n        #if DEBUG\n        // No longer needed - grace period handles free Pro access\n        #endif
 
         // Always save the drawing immediately to local database
         // This ensures the drawing is never lost, regardless of sync state
@@ -348,7 +346,7 @@ class OnboardingViewModel: ObservableObject {
         case .featureIntroWidgets: return "feature_intro_widgets"
         case .icloudConfig: return "icloud_config"
         case .dailyReminder: return "daily_reminder"
-        case .proIntro: return "pro_intro"
+        case .proPaywall: return "pro_paywall"
         case .onboardingCompletion: return "completion"
         }
     }

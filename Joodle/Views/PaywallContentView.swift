@@ -12,15 +12,22 @@ import StoreKit
 
 /// The surface a paywall is being shown in. Drives which sections render.
 enum PaywallContext: Equatable {
-  /// Informative intro shown during onboarding: value + trial timeline, no purchase.
+  /// Purchasable paywall at the end of onboarding: value + comparison + plans,
+  /// with a muted "Skip" in the navigation bar's trailing slot, level with the
+  /// back button. No trial framing here — the claimable 7-day trial is only
+  /// offered later, at the free doodle limit.
   case onboarding
   /// Shown mid-trial from the Settings banner. Timeline reflects `daysLeft`; offers optional early upgrade.
   case trialStatus(daysLeft: Int)
-  /// The real pay screen, shown once the trial has ended: Free-vs-Pro comparison + plans.
+  /// The generic pay screen: Free-vs-Pro comparison + plans.
   case expired
   /// Limited-time offer surface: countdown header + discounted plans. Driven by
   /// `LimitedTimeOfferManager`; presented as a sheet and from the Settings banner.
   case limitedTimeOffer
+  /// Post-trial bottom sheet on next app open: loss-framed header + comparison
+  /// + plans, quoting the 50%-off lifetime window while it's live.
+  /// `offerExpired` distinguishes "your trial ended" from "you never claimed it".
+  case trialEnded(offerExpired: Bool)
 }
 
 /// Configuration for PaywallContentView behavior and appearance
@@ -327,19 +334,22 @@ struct PaywallContentView: View {
   var body: some View {
     VStack(spacing: 0) {
       if case .onboarding = configuration.context {
-        // The continue button floats over the bottom so the overflow content
-        // scrolls underneath it — no opaque bar behind the button. Bottom
-        // padding reserves room so the last content can scroll clear of it.
+        // The slider inside the pricing section is the single purchase CTA.
+        // Skipping lives as a muted "Skip" in the navigation bar's trailing
+        // slot, so it sits on the same row as the back button rather than
+        // floating lower over the scroll content.
         ScrollView {
           VStack(spacing: 32) {
             headerSection
             contextBody
           }
           .frame(maxWidth: .infinity, alignment: .top)
-          .padding(.bottom, 96)
+          .padding(.bottom, 40)
         }
-        .overlay(alignment: .bottom) {
-          onboardingContinueButton
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            onboardingSkipButton
+          }
         }
       } else {
         ScrollView {
@@ -403,6 +413,16 @@ struct PaywallContentView: View {
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: isOnboarding ? .leading : .center)
 
+      if let headerSubtitle {
+        Text(headerSubtitle)
+          .font(.appSubheadline())
+          .foregroundColor(.secondary)
+          .multilineTextAlignment(.center)
+          .fixedSize(horizontal: false, vertical: true)
+          .frame(maxWidth: .infinity)
+          .padding(.horizontal, 16)
+      }
+
       // Countdown drives the urgency and stays honest — it counts to the same
       // instant the App Store Connect price reverts and the campaign flag flips.
       // Only the offer sheet carries it in the header; regular pay surfaces
@@ -427,7 +447,7 @@ struct PaywallContentView: View {
   private var headerTitle: LocalizedStringResource {
     switch configuration.context {
     case .onboarding:
-      return "The next 7 days of Joodle Pro are on us"
+      return "Doodle without limits"
     case .trialStatus(let daysLeft):
       return "You're on Pro — \(daysLeft) days to enjoy"
     case .expired:
@@ -435,6 +455,21 @@ struct PaywallContentView: View {
     case .limitedTimeOffer:
       // Overridden in headerTitleDisplay by the runtime campaign headline.
       return "Limited Time Offer"
+    case .trialEnded(let offerExpired):
+      return offerExpired ? "Your free-trial offer has expired" : "Your free trial has ended"
+    }
+  }
+
+  /// Loss-framed subheadline under the post-trial header; nil elsewhere.
+  private var headerSubtitle: LocalizedStringResource? {
+    switch configuration.context {
+    case .trialEnded(let offerExpired):
+      if offerExpired {
+        return "Your chance to claim 7 free days of Pro has passed. But here's something better while it lasts:"
+      }
+      return "You're back on the Free plan — unlimited doodles, widgets and Pro extras are locked again. If you want to keep Pro, this is the best chance we'll ever offer:"
+    default:
+      return nil
     }
   }
 
@@ -456,11 +491,6 @@ struct PaywallContentView: View {
   @ViewBuilder
   private var contextBody: some View {
     switch configuration.context {
-    case .onboarding:
-      ProFeatureCarousel()
-      TrialTimelineView(style: .onboarding, progress: 0)
-      ProComparisonTable()
-
     case .trialStatus:
       ProFeatureCarousel()
       TrialTimelineView(style: .trial, progress: GracePeriodManager.shared.gracePeriodProgress)
@@ -473,14 +503,10 @@ struct PaywallContentView: View {
         earlyUpgradeButton
       }
 
-    case .expired:
-      ProFeatureCarousel()
-      ProComparisonTable()
-      pricingSection
-      ctaSection
-      legalLinksSection
-
-    case .limitedTimeOffer:
+    case .onboarding, .expired, .limitedTimeOffer, .trialEnded:
+      // The pay surfaces all share the same skeleton: value carousel,
+      // Free-vs-Pro comparison, plans, CTA. Header copy (and the floating
+      // skip button in onboarding) carry the contextual differences.
       ProFeatureCarousel()
       ProComparisonTable()
       pricingSection
@@ -489,12 +515,17 @@ struct PaywallContentView: View {
     }
   }
 
-  /// No-commitment continue button used in the onboarding context (shared glass style).
-  private var onboardingContinueButton: some View {
-    OnboardingButtonView(label: "Continue") {
+  /// Muted skip affordance pinned to the onboarding paywall's top-right
+  /// corner. Deliberately quiet next to the slider CTA: skipping stays
+  /// available without competing with the purchase action.
+  private var onboardingSkipButton: some View {
+    Button {
       configuration.onContinueFree?()
+    } label: {
+      Text("Skip")
+        .font(.appSubheadline(weight: .medium))
+        .foregroundColor(.secondary)
     }
-    .padding(.top, 8)
   }
 
   /// Secondary affordance in the trial-status context that reveals the pricing/purchase section.

@@ -219,9 +219,9 @@
             {
               "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
-                "existing",
+                "new",
                 "expired",
-                "new"
+                "existing"
               ],
               "internalID" : "8ab414ac-7421-4ec9-8300-9f4e9525393c",
               "isStackable" : false,
@@ -301,9 +301,9 @@
             {
               "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
-                "new",
                 "existing",
-                "expired"
+                "expired",
+                "new"
               ],
               "internalID" : "161c3161-2bf7-4998-9757-d404a2c7fdd8",
               "isStackable" : true,
@@ -315,9 +315,9 @@
             {
               "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
+                "new",
                 "expired",
-                "existing",
-                "new"
+                "existing"
               ],
               "internalID" : "872815b9-2444-43d3-975d-b0a6f37e8dcc",
               "isStackable" : true,
@@ -330,8 +330,8 @@
               "billingPlanType" : "BILLED_UPFRONT",
               "eligibility" : [
                 "expired",
-                "new",
-                "existing"
+                "existing",
+                "new"
               ],
               "internalID" : "4b6a062c-845f-454d-aa04-c0596c7703ba",
               "isStackable" : false,

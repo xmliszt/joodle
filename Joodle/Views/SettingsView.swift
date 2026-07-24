@@ -188,6 +188,7 @@ struct SettingsView: View {
   @StateObject private var storeKitManager = StoreKitManager.shared
   @StateObject private var reminderManager = ReminderManager.shared
   @StateObject private var ltoManager = LimitedTimeOfferManager.shared
+  @StateObject private var trialOfferManager = TrialOfferManager.shared
   
   /// When true, auto-navigates to Customization and scrolls to note prompt setting
   @Binding var navigateToNotePromptSetting: Bool
@@ -202,6 +203,7 @@ struct SettingsView: View {
   @State private var showSubscriptions = false
   @State private var showTrialStatus = false
   @State private var showLimitedTimeOffer = false
+  @State private var showTrialClaim = false
   @State private var currentJoodleCount: Int = 0
 
   @State private var showRedeemCode = false
@@ -371,6 +373,10 @@ struct SettingsView: View {
       StandalonePaywallView(source: "lto_settings", context: .limitedTimeOffer)
         .presentationDetents([.large])
     }
+    .sheet(isPresented: $showTrialClaim) {
+      TrialClaimPaywallView(source: "settings_claim_banner")
+        .presentationDetents([.large])
+    }
     .navigationDestination(isPresented: $showSubscriptions) {
       SubscriptionsView()
         .postHogScreenView("Subscriptions")
@@ -466,13 +472,20 @@ struct SettingsView: View {
   @ViewBuilder
   private var membershipBannerSection: some View {
     Section {
-      // Limited-time offer banner — the persistent re-entry point while a
-      // campaign is live. Stays even after the auto-sheet is dismissed.
-      if ltoManager.isActive, let endDate = ltoManager.endDate, let percent = ltoManager.discountPercent {
+      // Countdown banner slot — the persistent re-entry point while a clock
+      // is running. The claim window and the 50%-off offer are mutually
+      // exclusive funnel phases, so at most one banner renders here.
+      if case .claimWindow(let end) = trialOfferManager.phase {
+        LimitedTimeOfferBanner(
+          icon: "crown.fill",
+          headline: String(localized: "Your 7 free days are waiting"),
+          endDate: end,
+          onTap: { showTrialClaim = true }
+        )
+      } else if ltoManager.isActive, let endDate = ltoManager.endDate {
         LimitedTimeOfferBanner(
           headline: ltoManager.headline,
           endDate: endDate,
-          discountPercent: percent,
           onTap: { showLimitedTimeOffer = true }
         )
       }
@@ -2830,7 +2843,7 @@ struct DebugDataSeederView: View {
 
           Button {
             GracePeriodManager.shared.resetGracePeriod()
-            GracePeriodManager.shared.startGracePeriodIfNeeded()
+            TrialOfferManager.shared.resetFunnelState()
             UserDefaults.standard.removeObject(forKey: "isRevisitFromSettings")
             hasCompletedOnboarding = false
             dismiss()
@@ -2871,7 +2884,7 @@ struct DebugDataSeederView: View {
         } header: {
           Text("Paywall & Onboarding")
         } footer: {
-          Text("Restart Onboarding resets the trial to day 0 and replays the first-time flow including the Pro intro step. Trial simulations set the grace-period clock — return to Settings to see the banner/sheet; relaunch to see the expired auto-paywall. \"Send Trial Reminder Now\" fires the day-5 reminder notification in 5s — background the app to see it on the lock screen.")
+          Text("Restart Onboarding wipes the trial + claim-funnel state and replays the first-time flow including the paywall step. Trial simulations set the trial clock — return to Settings to see the banner/sheet; relaunch to see the post-trial sheet. \"Send Trial Reminder Now\" fires the day-5 reminder notification in 5s — background the app to see it on the lock screen.")
         }
 
         // MARK: Danger Zone

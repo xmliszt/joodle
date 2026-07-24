@@ -97,6 +97,13 @@ final class AnalyticsManager {
         case gracePeriodStarted = "grace_period_started"
         case gracePeriodExpired = "grace_period_expired"
 
+        // Trial Claim Funnel
+        case trialOfferShown = "trial_offer_shown"
+        case trialClaimed = "trial_claimed"
+        case trialOfferDismissed = "trial_offer_dismissed"
+        case trialOfferExpired = "trial_offer_expired"
+        case trialEndedSheetShown = "trial_ended_sheet_shown"
+
         // Drawing
         case drawingMoved = "drawing_moved"
     }

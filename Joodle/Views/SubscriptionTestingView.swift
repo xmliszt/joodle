@@ -103,15 +103,11 @@ struct SubscriptionTestingView: View {
         #if DEBUG
         Section {
           statusRow("Offer Active", value: ltoManager.isActive ? "Yes ✓" : "No", isActive: ltoManager.isActive)
-          if GracePeriodManager.shared.isInGracePeriod, let day = GracePeriodManager.shared.currentTrialDay {
-            statusRow(
-              "Trial Day Gate",
-              value: day >= LimitedTimeOfferManager.offerStartTrialDay
-                ? "Day \(day) — open"
-                : "Day \(day) — opens Day \(LimitedTimeOfferManager.offerStartTrialDay)",
-              isActive: day >= LimitedTimeOfferManager.offerStartTrialDay
-            )
-          }
+          statusRow(
+            "Post-Trial Gate",
+            value: TrialOfferManager.shared.isEligibleForPostTrialOffer ? "Open" : "Closed (trial not settled)",
+            isActive: TrialOfferManager.shared.isEligibleForPostTrialOffer
+          )
           if let anchor = ltoManager.anchorDate {
             statusRow("Window Started", value: anchor.formatted(date: .abbreviated, time: .shortened), isActive: true)
           } else {

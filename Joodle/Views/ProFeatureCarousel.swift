@@ -30,7 +30,7 @@ struct ProFeatureCarousel: View {
 
     var subtitle: LocalizedStringResource {
       switch self {
-      case .unlimited: return "Free stops at 30 doodles. Pro keeps your whole year — and every year after."
+      case .unlimited: return "Free stops at \(SubscriptionManager.freeJoodlesAllowed) doodles. Pro keeps your whole year — and every year after."
       case .rainbow:   return "Let your year bloom into more vibrant colors, or all twelve shades of the rainbow theme."
       case .wiggly:    return "Give every stroke a lively, hand-drawn wiggle."
       case .watermark: return "Free adds a small Joodle mark. Pro exports are clean — just your doodle."
