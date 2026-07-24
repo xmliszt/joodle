@@ -17,6 +17,7 @@
 		FABBB5B92F1BB53300B0C947 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = FABBB5B82F1BB53300B0C947 /* PostHog */; };
 		FA11AACE2F1C000100C0FE77 /* ConfettiSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = FA11AACF2F1C000200C0FE77 /* ConfettiSwiftUI */; };
 		FAC5DDDE2F6110B300751BF5 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FAC5DDDD2F6110B300751BF5 /* Localizable.xcstrings */; };
+		FAD9C5E0300D0E5600B32978 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = FAD9C5DF300D0E5600B32978 /* Secrets.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,7 +59,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		FA078E81300D190100FCF646 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		FA80CBF12EE9D05200E3BD1E /* Store.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Store.storekit; sourceTree = "<group>"; };
 		FA85D44D2EB7AECA007D82EE /* WidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA85D44F2EB7AECA007D82EE /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -67,6 +67,7 @@
 		FA88AA2D2EE41776009AEFEB /* Joodle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Joodle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA8A958D2EE5CCF300FF871C /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		FAC5DDDD2F6110B300751BF5 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		FAD9C5DF300D0E5600B32978 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		FADC35942E48C2E2007AE111 /* JoodleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JoodleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FADC359E2E48C2E2007AE111 /* JoodleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = JoodleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -197,7 +198,7 @@
 				FA85D44E2EB7AECA007D82EE /* Frameworks */,
 				FADC35842E48C2E1007AE111 /* Products */,
 				FAFABCCE2F01268C0018FA14 /* Videos */,
-				FA078E81300D190100FCF646 /* Secrets.xcconfig */,
+				FAD9C5DF300D0E5600B32978 /* Secrets.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -385,7 +386,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FAC5DDDE2F6110B300751BF5 /* Localizable.xcstrings in Resources */,
-				FA078E82300D190100FCF646 /* Secrets.xcconfig in Resources */,
+				FAD9C5E0300D0E5600B32978 /* Secrets.xcconfig in Resources */,
 				FA80CBF22EE9D05200E3BD1E /* Store.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

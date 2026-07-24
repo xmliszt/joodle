@@ -112,3 +112,8 @@ Secrets.xcconfig
 .zed/
 .mcp.json
 skills-lock.json
+.claude/settings.json
+.claude/rules/argent.md
+.claude/agents/argent-*
+.claude/agents/references/
+.claude/skills/argent-*
