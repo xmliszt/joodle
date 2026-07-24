@@ -50,7 +50,7 @@ struct OnboardingFlowView: View {
 // MARK: - Pro Paywall Step
 
 /// Onboarding step that shows the purchasable Joodle Pro paywall.
-/// Buying advances as a Pro user; "Continue with Free" skips to a free
+/// Buying advances as a Pro user; the muted "Skip" affordance skips to a free
 /// account with the 7-doodle allowance. No trial framing at this stage —
 /// the claimable 7-day trial is offered later, at the doodle limit.
 struct ProPaywallStepView: View {

@@ -1,42 +1,148 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Free stops at %lld doodles. Pro keeps your whole year — and every year after." : {
+    "7 days of unlimited doodles, every widget, and many more exclusive features, start right now!" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La version gratuite s'arrête à %lld doodles. Pro conserve toute votre année — et chaque année suivante."
+            "value" : "7 jours de doodles illimités, tous les widgets et bien d'autres fonctions exclusives — ça commence maintenant !"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "無料版は%lld個の落書きで止まります。Pro なら一年分すべて、そして毎年ずっと残せます。"
+            "value" : "無制限のドゥードル、すべてのウィジェット、その他たくさんの限定機能が使える7日間が、今始まります！"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "무료는 낙서 %lld개에서 멈춰요. Pro는 한 해 전체를, 그리고 그 뒤로도 매년 담아둡니다."
+            "value" : "무제한 두들, 모든 위젯, 그리고 다양한 독점 기능까지 — 7일이 지금 시작됩니다!"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ücretsiz %lld karalamada durur. Pro tüm yılını — ve sonraki her yılı — saklar."
+            "value" : "7 gün boyunca sınırsız doodle, tüm widget'lar ve daha birçok özel özellik — şimdi başlıyor!"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "免费版止步于 %lld 个涂鸦。Pro 保留你的一整年 — 以及之后的每一年。"
+            "value" : "7 天无限涂鸦、全部小组件，以及更多专属功能，现在开始！"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "免費版止步於 %lld 個塗鴉。Pro 保留你的一整年 — 以及之後的每一年。"
+            "value" : "7 天無限塗鴉、全部小工具，以及更多專屬功能，現在開始！"
+          }
+        }
+      }
+    },
+    "Free stops at %lld doodles. Pro keeps your whole year — and every year after." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Free stops at %lld doodle. Pro keeps your whole year — and every year after."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Free stops at %lld doodles. Pro keeps your whole year — and every year after."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "La version gratuite s'arrête à %lld doodle. Pro conserve toute votre année — et chaque année suivante."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "La version gratuite s'arrête à %lld doodles. Pro conserve toute votre année — et chaque année suivante."
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "無料版は%lld個の落書きで止まります。Pro なら一年分すべて、そして毎年ずっと残せます。"
+                }
+              }
+            }
+          }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "무료는 낙서 %lld개에서 멈춰요. Pro는 한 해 전체를, 그리고 그 뒤로도 매년 담아둡니다."
+                }
+              }
+            }
+          }
+        },
+        "tr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ücretsiz %lld karalamada durur. Pro tüm yılını — ve sonraki her yılı — saklar."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ücretsiz %lld karalamada durur. Pro tüm yılını — ve sonraki her yılı — saklar."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "免费版止步于 %lld 个涂鸦。Pro 保留你的一整年 — 以及之后的每一年。"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "免費版止步於 %lld 個塗鴉。Pro 保留你的一整年 — 以及之後的每一年。"
+                }
+              }
+            }
           }
         }
       }
@@ -973,46 +1079,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Joodle Pro 還有 2 天 ✨"
-          }
-        }
-      }
-    },
-    "7 days of unlimited doodles start right now. Make them count." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "7 jours de doodles illimités commencent maintenant. Profitez-en à fond."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "無制限ドゥードルの7日間が今始まります。思いきり楽しんで。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "무제한 두들 7일이 지금 시작됩니다. 마음껏 즐기세요."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "7 günlük sınırsız doodle şimdi başlıyor. Tadını çıkarın."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "7 天无限涂鸦现在开始，好好享受吧。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "7 天無限塗鴉現在開始，好好享受吧。"
           }
         }
       }
@@ -4655,46 +4721,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "繼續"
-          }
-        }
-      }
-    },
-    "Continue with Free" : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continuer avec la version gratuite"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "無料版で続ける"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "무료 버전으로 계속하기"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ücretsiz sürümle devam et"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "继续使用免费版"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "繼續使用免費版"
           }
         }
       }
@@ -8531,46 +8557,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "免費版會加上小小的 Joodle 標記。Pro 匯出乾乾淨淨 — 只有你的塗鴉。"
-          }
-        }
-      }
-    },
-    "Free includes %@ doodles and all core journaling. No time limit." : {
-      "localizations" : {
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La version gratuite inclut %@ doodles et toutes les fonctions de journal essentielles. Sans limite de temps."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "無料版では%@個のドゥードルとすべての基本ジャーナル機能が使えます。期限はありません。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "무료 버전에는 두들 %@개와 모든 핵심 저널 기능이 포함됩니다. 기간 제한이 없습니다."
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ücretsiz sürüm %@ doodle ve tüm temel günlük özelliklerini içerir. Süre sınırı yok."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "免费版包含 %@ 幅涂鸦和全部核心手账功能，永久可用。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "免費版包含 %@ 幅塗鴉和全部核心手帳功能，永久可用。"
           }
         }
       }

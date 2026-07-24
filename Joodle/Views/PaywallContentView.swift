@@ -13,8 +13,8 @@ import StoreKit
 /// The surface a paywall is being shown in. Drives which sections render.
 enum PaywallContext: Equatable {
   /// Purchasable paywall at the end of onboarding: value + comparison + plans,
-  /// with a floating "Continue with Free" skip. No trial framing here — the
-  /// claimable 7-day trial is only offered later, at the free doodle limit.
+  /// with a muted "Skip" pinned to the top-right corner. No trial framing here —
+  /// the claimable 7-day trial is only offered later, at the free doodle limit.
   case onboarding
   /// Shown mid-trial from the Settings banner. Timeline reflects `daysLeft`; offers optional early upgrade.
   case trialStatus(daysLeft: Int)
@@ -333,19 +333,20 @@ struct PaywallContentView: View {
   var body: some View {
     VStack(spacing: 0) {
       if case .onboarding = configuration.context {
-        // The continue button floats over the bottom so the overflow content
-        // scrolls underneath it — no opaque bar behind the button. Bottom
-        // padding reserves room so the last content can scroll clear of it.
+        // The slider inside the pricing section is the single purchase CTA.
+        // Skipping lives as a muted "Skip" pinned to the top-right corner —
+        // overlaid on the scroll container, so it stays visible while the
+        // content scrolls underneath it.
         ScrollView {
           VStack(spacing: 32) {
             headerSection
             contextBody
           }
           .frame(maxWidth: .infinity, alignment: .top)
-          .padding(.bottom, 140)
+          .padding(.bottom, 40)
         }
-        .overlay(alignment: .bottom) {
-          onboardingContinueButton
+        .overlay(alignment: .topTrailing) {
+          onboardingSkipButton
         }
       } else {
         ScrollView {
@@ -511,20 +512,20 @@ struct PaywallContentView: View {
     }
   }
 
-  /// Skip affordance for the onboarding paywall (shared glass style).
-  /// Free is a real plan, not a punishment — the footnote keeps it honest.
-  private var onboardingContinueButton: some View {
-    VStack(spacing: 6) {
-      OnboardingButtonView(label: "Continue with Free") {
-        configuration.onContinueFree?()
-      }
-      Text("Free includes \(SubscriptionManager.freeJoodlesAllowed, format: .number.grouping(.never)) doodles and all core journaling. No time limit.")
-        .font(.appCaption2())
+  /// Muted skip affordance pinned to the onboarding paywall's top-right
+  /// corner. Deliberately quiet next to the slider CTA: skipping stays
+  /// available without competing with the purchase action.
+  private var onboardingSkipButton: some View {
+    Button {
+      configuration.onContinueFree?()
+    } label: {
+      Text("Skip")
+        .font(.appSubheadline(weight: .medium))
         .foregroundColor(.secondary)
-        .multilineTextAlignment(.center)
-        .padding(.horizontal, 24)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
     }
-    .padding(.top, 8)
   }
 
   /// Secondary affordance in the trial-status context that reveals the pricing/purchase section.

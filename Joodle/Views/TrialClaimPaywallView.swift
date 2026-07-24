@@ -184,7 +184,7 @@ struct TrialClaimPaywallView: View {
           .font(.appFont(size: 40, weight: .bold))
           .multilineTextAlignment(.center)
 
-        Text("7 days of unlimited doodles start right now. Make them count.")
+        Text("7 days of unlimited doodles, every widget, and many more exclusive features, start right now!")
           .font(.appSubheadline())
           .foregroundColor(.secondary)
           .multilineTextAlignment(.center)
