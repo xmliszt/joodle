@@ -13,8 +13,9 @@ import StoreKit
 /// The surface a paywall is being shown in. Drives which sections render.
 enum PaywallContext: Equatable {
   /// Purchasable paywall at the end of onboarding: value + comparison + plans,
-  /// with a muted "Skip" pinned to the top-right corner. No trial framing here —
-  /// the claimable 7-day trial is only offered later, at the free doodle limit.
+  /// with a muted "Skip" in the navigation bar's trailing slot, level with the
+  /// back button. No trial framing here — the claimable 7-day trial is only
+  /// offered later, at the free doodle limit.
   case onboarding
   /// Shown mid-trial from the Settings banner. Timeline reflects `daysLeft`; offers optional early upgrade.
   case trialStatus(daysLeft: Int)
@@ -334,9 +335,9 @@ struct PaywallContentView: View {
     VStack(spacing: 0) {
       if case .onboarding = configuration.context {
         // The slider inside the pricing section is the single purchase CTA.
-        // Skipping lives as a muted "Skip" pinned to the top-right corner —
-        // overlaid on the scroll container, so it stays visible while the
-        // content scrolls underneath it.
+        // Skipping lives as a muted "Skip" in the navigation bar's trailing
+        // slot, so it sits on the same row as the back button rather than
+        // floating lower over the scroll content.
         ScrollView {
           VStack(spacing: 32) {
             headerSection
@@ -345,8 +346,10 @@ struct PaywallContentView: View {
           .frame(maxWidth: .infinity, alignment: .top)
           .padding(.bottom, 40)
         }
-        .overlay(alignment: .topTrailing) {
-          onboardingSkipButton
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            onboardingSkipButton
+          }
         }
       } else {
         ScrollView {
@@ -522,9 +525,6 @@ struct PaywallContentView: View {
       Text("Skip")
         .font(.appSubheadline(weight: .medium))
         .foregroundColor(.secondary)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
     }
   }
 
