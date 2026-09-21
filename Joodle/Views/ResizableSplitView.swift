@@ -166,8 +166,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         transaction.animation = dragOffset != 0 ? nil : transaction.animation
       }
       // A change of split axis (fold, rotation) slides both panels to their new
-      // places instead of rebuilding them.
-      .animation(.springFkingSatifying, value: axis)
+      // places instead of rebuilding them, on the spec's transition spring.
+      .animation(layoutSpec.transitionAnimation, value: axis)
       .onAppear {
         // When appeared, update splitPosition:
         // If we don't have bottomView, then show full topView

@@ -31,12 +31,15 @@ enum LayoutToken: String, CaseIterable, Identifiable {
   case shutterBottomInset
   case moveBarBottomInset
   case cornerButtonMinInset
+  case transitionResponse
+  case transitionDampingFraction
 
   enum Group: String, CaseIterable, Identifiable {
     case split = "Split"
     case grid = "Grid"
     case canvas = "Canvas"
     case overlays = "Overlays"
+    case motion = "Motion"
 
     var id: String { rawValue }
 
@@ -81,6 +84,8 @@ enum LayoutToken: String, CaseIterable, Identifiable {
     case .shutterBottomInset: \.shutterBottomInset
     case .moveBarBottomInset: \.moveBarBottomInset
     case .cornerButtonMinInset: \.cornerButtonMinInset
+    case .transitionResponse: \.transitionResponse
+    case .transitionDampingFraction: \.transitionDampingFraction
     }
   }
 
@@ -105,6 +110,8 @@ enum LayoutToken: String, CaseIterable, Identifiable {
     case .shutterBottomInset: Control(range: 0...160, step: 2, group: .overlays)
     case .moveBarBottomInset: Control(range: 0...160, step: 2, group: .overlays)
     case .cornerButtonMinInset: Control(range: 30...160, step: 2, group: .overlays)
+    case .transitionResponse: Control(range: 0.1...1.0, step: 0.01, group: .motion)
+    case .transitionDampingFraction: Control(range: 0.3...1.0, step: 0.01, group: .motion)
     }
   }
 
@@ -127,6 +134,8 @@ enum LayoutToken: String, CaseIterable, Identifiable {
     case .shutterBottomInset: "Shutter bottom"
     case .moveBarBottomInset: "Move bar bottom"
     case .cornerButtonMinInset: "Corner button min inset"
+    case .transitionResponse: "Transition response (s)"
+    case .transitionDampingFraction: "Transition damping"
     }
   }
 

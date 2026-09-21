@@ -90,6 +90,15 @@ struct LayoutSpec: Equatable {
   /// are held back by the system and feel laggy.
   var cornerButtonMinInset: CGFloat = 80
 
+  /// Spring every layout-class change rides: a fold, an unfold, a rotation
+  /// into a different class. Same-class resizes (a multitasking drag) snap.
+  var transitionResponse: CGFloat = 0.36
+  var transitionDampingFraction: CGFloat = 0.8
+
+  var transitionAnimation: Animation {
+    .spring(response: transitionResponse, dampingFraction: transitionDampingFraction)
+  }
+
   static func resolve(_ context: LayoutContext) -> LayoutSpec {
     var spec = LayoutSpec()
     switch context.layoutClass {

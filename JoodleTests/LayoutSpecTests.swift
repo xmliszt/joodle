@@ -183,6 +183,16 @@ struct LayoutSpecTests {
     #expect(CalendarGridHelper.itemIndex(forRow: 1, col: 6, viewMode: .year, columns: 24, year: 2026) == 30)
   }
 
+  // MARK: - Motion
+
+  @Test func everyClassSharesTheDefaultTransitionSpring() {
+    for preset in LayoutPreset.all {
+      let spec = LayoutSpec.resolve(preset.context)
+      #expect(spec.transitionResponse == 0.36, "\(preset.name)")
+      #expect(spec.transitionDampingFraction == 0.8, "\(preset.name)")
+    }
+  }
+
   // MARK: - Grid padding cap
 
   @Test func gridPaddingIsUncappedOnPhones() {

@@ -87,7 +87,9 @@ struct LayoutLabView: View {
     )
     .scaleEffect(scale, anchor: .center)
     .frame(width: available.width, height: available.height)
-    .animation(.springFkingSatifying, value: context.size)
+    // The stage changes shape on the same spring the app uses for a real
+    // fold or rotation, so the Motion tokens are tuned against the real thing.
+    .animation(stageSpec.transitionAnimation, value: context.size)
     .animation(.springFkingSatifying, value: drawerCollapsed)
   }
 
@@ -132,7 +134,7 @@ struct LayoutLabView: View {
       HStack(spacing: 4) {
         labAction("Rotate", systemImage: "rotate.right", enabled: preset != nil) {
           guard let current = preset else { return }
-          withAnimation(.springFkingSatifying) { preset = current.rotated() }
+          withAnimation(stageSpec.transitionAnimation) { preset = current.rotated() }
         }
         labAction(
           preset == LayoutPreset.duoCover ? "Unfold" : "Fold",
@@ -140,7 +142,7 @@ struct LayoutLabView: View {
             ? "rectangle.expand.vertical" : "rectangle.compress.vertical",
           enabled: canFold
         ) {
-          withAnimation(.springFkingSatifying) {
+          withAnimation(stageSpec.transitionAnimation) {
             preset = preset == LayoutPreset.duoCover
               ? LayoutPreset.duoInnerLandscape : LayoutPreset.duoCover
           }
@@ -175,7 +177,7 @@ struct LayoutLabView: View {
   private func presetChip(_ candidate: LayoutPreset?) -> some View {
     let selected = candidate == preset
     return Button {
-      withAnimation(.springFkingSatifying) { preset = candidate }
+      withAnimation(stageSpec.transitionAnimation) { preset = candidate }
     } label: {
       HStack(spacing: 4) {
         Text(verbatim: candidate?.name ?? "This device")

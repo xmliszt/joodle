@@ -38,12 +38,23 @@ private struct LayoutContextProviderModifier: ViewModifier {
         // Zero shows up before the first layout and during scene teardown;
         // keep the last real measurement.
         guard newProbe.size.width > 0, newProbe.size.height > 0 else { return }
-        // The scene moved to a screen with a different answer (Duo fold /
-        // unfold): let UIKit ask the orientation policy again.
-        if LayoutClass(size: newProbe.size) != LayoutClass(size: probe.size) {
+        // A change of class (fold, unfold, rotation into another class) is a
+        // change of shape: animate every dependent layout on the new class's
+        // transition spring. A same-class resize (a multitasking drag) just
+        // tracks the finger. The fold also moves the scene to a screen with a
+        // different orientation answer, so UIKit is asked again.
+        let previousClass = LayoutClass(size: probe.size)
+        let newContext = LayoutContext.resolve(
+          probe: newProbe, hardware: .current(),
+          horizontalSizeClass: horizontalSizeClass, verticalSizeClass: verticalSizeClass)
+        if newContext.layoutClass != previousClass {
           LayoutOrientationPolicy.refresh()
+          withAnimation(spec(for: newContext).transitionAnimation) {
+            probe = newProbe
+          }
+        } else {
+          probe = newProbe
         }
-        probe = newProbe
 #if DEBUG
         let insets = newProbe.safeArea
         print(
