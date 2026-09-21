@@ -11,12 +11,18 @@
 import SwiftUI
 import UIKit
 
-/// The physical cutout at the top of the display, resolved for the current scene.
+/// The physical cutout in the display, resolved for the current scene.
 enum ScreenCutout: Equatable {
+  /// Nothing to hide behind: flat phones, iPads, the iPhone Duo inner display
+  /// (its camera sits under the screen).
   case none
   case notch
   /// The Dynamic Island capsule, in scene coordinates.
   case dynamicIsland(CGRect)
+  /// A round camera hole off to one side, in scene coordinates: the iPhone Duo
+  /// cover display carries one in its trailing sensor bar. The floating canvas
+  /// tucks into it the way it tucks behind an island.
+  case cameraHole(CGRect)
 
   var dynamicIslandFrame: CGRect? {
     if case .dynamicIsland(let frame) = self { return frame }
@@ -24,6 +30,14 @@ enum ScreenCutout: Equatable {
   }
 
   var hasDynamicIsland: Bool { dynamicIslandFrame != nil }
+
+  /// The opaque region a collapsed floating container can hide in, if any.
+  var concealingFrame: CGRect? {
+    switch self {
+    case .dynamicIsland(let frame), .cameraHole(let frame): return frame
+    case .none, .notch: return nil
+    }
+  }
 }
 
 enum ScreenHardware {
@@ -107,10 +121,28 @@ enum ScreenHardware {
     return radius
   }
 
+  // MARK: - iPhone Duo
+
+  /// Measured on the iOS 27.1 simulator. The cover display is 466×678pt with a
+  /// trailing sensor bar the system keeps as an 84pt safe-area inset (top inset
+  /// 0); the camera hole sits in that bar. The inner display has no cutout.
+  enum Duo {
+    static let modelName = "iPhone Duo"
+    static let coverCameraHole = CGRect(x: 396.3, y: 29.3, width: 43, height: 43)
+    static let coverSafeArea = EdgeInsets(top: 0, leading: 0, bottom: 34, trailing: 84)
+
+    /// Anything with a short side under 600pt is the cover; the inner display
+    /// is 951×669pt.
+    static func isCoverDisplay(sceneSize: CGSize) -> Bool {
+      min(sceneSize.width, sceneSize.height) < 600
+    }
+  }
+
   // MARK: - Cutout
 
   /// Island devices report a top safe-area inset of at least 51pt, notch
-  /// devices 44–50pt.
+  /// devices 44–50pt. The Duo is keyed by model: its cover has a camera hole
+  /// in the sensor bar, its inner display nothing at all.
   static func cutout(
     topSafeAreaInset: CGFloat,
     sceneWidth: CGFloat,
@@ -118,6 +150,12 @@ enum ScreenHardware {
   ) -> ScreenCutout {
     if let override = snapshot.dynamicIslandOverride {
       return .dynamicIsland(override)
+    }
+    if snapshot.modelName == Duo.modelName {
+      // Only the cover has a cutout; `sceneWidth` alone can't tell the inner
+      // display's portrait (669 wide) from a phone, so use the size class of
+      // the width: the cover is 466pt across, the inner display never under 669.
+      return sceneWidth < 600 ? .cameraHole(Duo.coverCameraHole) : .none
     }
     if topSafeAreaInset >= 51 {
       let metrics = dynamicIslandMetrics(modelName: snapshot.modelName)
@@ -151,7 +189,7 @@ enum ScreenHardware {
     topSafeAreaInset: CGFloat,
     snapshot: Snapshot
   ) -> RectangleCornerRadii {
-    if snapshot.modelName == "iPhone Duo" {
+    if snapshot.modelName == Duo.modelName {
       return duoCornerRadii(sceneSize: sceneSize)
     }
     return RectangleCornerRadii(
@@ -164,8 +202,7 @@ enum ScreenHardware {
   /// 59pt on the outer side; inner display 55pt all round. The cover is told
   /// apart by its size — anything larger is the inner display.
   private static func duoCornerRadii(sceneSize: CGSize) -> RectangleCornerRadii {
-    let isCoverDisplay = min(sceneSize.width, sceneSize.height) < 600
-    guard isCoverDisplay else { return RectangleCornerRadii(uniform: 55) }
+    guard Duo.isCoverDisplay(sceneSize: sceneSize) else { return RectangleCornerRadii(uniform: 55) }
     return RectangleCornerRadii(topLeading: 8, bottomLeading: 8, bottomTrailing: 59, topTrailing: 59)
   }
 

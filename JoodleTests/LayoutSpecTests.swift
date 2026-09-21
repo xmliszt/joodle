@@ -62,6 +62,12 @@ struct LayoutSpecTests {
     #expect(LayoutPreset.iPhoneSE.context.cutout == .none)
   }
 
+  @Test func duoCoverHasACameraHoleAndTheInnerDisplayNothing() {
+    #expect(LayoutPreset.duoCover.context.cutout == .cameraHole(ScreenHardware.Duo.coverCameraHole))
+    #expect(LayoutPreset.duoInnerLandscape.context.cutout == .none)
+    #expect(LayoutPreset.duoInnerPortrait.context.cutout == .none)
+  }
+
   @Test func debugOverrideWinsOverTheTable() {
     var snapshot = LayoutPreset.iPhoneSE.hardware
     let override = CGRect(x: 100, y: 12, width: 90, height: 36)
@@ -186,13 +192,30 @@ struct LayoutSpecTests {
     #expect(metrics.contentCornerRadius == 12)  // 30 - 10 - 8
   }
 
-  @Test func duoCoverContainerFollowsEachCorner() {
+  @Test func duoCoverContainerHidesInTheCameraHoleAndExpandsInTheSafeRegion() {
     let context = LayoutPreset.duoCover.context
     let metrics = LayoutSpec.resolve(context).canvasContainer(in: context)
-    // The Duo has no row in the island table yet, so the baseline 11pt offset
-    // is the inset: the 8pt hinge corner collapses, the 59pt outer corner keeps 48.
+    // No island: the plain 10pt inset. The 8pt hinge corner collapses, the
+    // 59pt outer corner keeps 49.
+    #expect(metrics.horizontalInset == 10)
     #expect(metrics.cornerRadii.topLeading == 0)
-    #expect(metrics.cornerRadii.topTrailing == 48)
+    #expect(metrics.cornerRadii.topTrailing == 49)
+    #expect(metrics.collapsedFrame == ScreenHardware.Duo.coverCameraHole)
+    #expect(metrics.collapsedSize == CGSize(width: 43, height: 43))
+    #expect(metrics.topContentInset == 0)
+    // Status bar lives in the sensor bar, so the top inset is 0: seat the
+    // container 10pt down rather than flush with the edge.
+    #expect(metrics.topOffset == 10)
+    // Expanded, it spans the region left of the 84pt sensor bar.
+    #expect(metrics.expandedWidth == 362)  // 466 - 84 - 2 × 10
+    #expect(metrics.expandedCenterX == 191)  // (466 - 84) / 2
+  }
+
+  @Test func islandDevicesCollapseIntoTheIslandFrame() {
+    let context = LayoutPreset.iPhone17.context
+    let metrics = LayoutSpec.resolve(context).canvasContainer(in: context)
+    #expect(metrics.collapsedFrame == context.cutout.dynamicIslandFrame)
+    #expect(metrics.expandedCenterX == 201)
   }
 
   @Test func wideContainerFloatsCenteredAtTheCap() {

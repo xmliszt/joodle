@@ -95,27 +95,39 @@ struct LayoutSpec: Equatable {
 /// Geometry of the floating canvas container, shared by the container view and
 /// the canvas it hosts so both agree on insets and concentric rounding.
 struct CanvasContainerMetrics: Equatable {
-  /// Symmetric inset from the scene's side edges.
+  /// Inset from the safe region's side edges while expanded.
   var horizontalInset: CGFloat
-  /// Y where the container's top edge sits.
+  /// Y where the container's top edge sits while expanded.
   var topOffset: CGFloat
   /// Height reserved at the top so content never draws under the cutout.
   var topContentInset: CGFloat
-  /// Size while collapsed: the island capsule, or zero without one.
-  var collapsedSize: CGSize
+  /// Where the collapsed container hides, in scene coordinates: the island
+  /// capsule, the Duo cover's camera hole, or nil when there is nothing to hide
+  /// behind and it collapses to a point.
+  var collapsedFrame: CGRect?
   /// Container corners, concentric with the screen's.
   var cornerRadii: RectangleCornerRadii
   /// Corner radius of the content clipped inside the container's padding.
   var contentCornerRadius: CGFloat
   /// Container width while expanded.
   var expandedWidth: CGFloat
+  /// Horizontal center of the expanded container, in scene coordinates: the
+  /// middle of the safe region, so a side sensor bar pushes it over.
+  var expandedCenterX: CGFloat
+
+  var collapsedSize: CGSize { collapsedFrame?.size ?? .zero }
 }
 
 extension LayoutSpec {
   func canvasContainer(in context: LayoutContext) -> CanvasContainerMetrics {
     let island = context.cutout.dynamicIslandFrame
+    let concealing = context.cutout.concealingFrame
     let edgeInset = island?.origin.y ?? canvasContainerInsetWithoutIsland
-    let spanningWidth = max(context.size.width - edgeInset * 2, 0)
+    // The container lives in the horizontally safe region: on the Duo cover
+    // the trailing sensor bar is a safe-area inset, not usable width.
+    let safeWidth = max(context.size.width - context.safeArea.leading - context.safeArea.trailing, 0)
+    let safeCenterX = context.safeArea.leading + safeWidth / 2
+    let spanningWidth = max(safeWidth - edgeInset * 2, 0)
     // Capped: the container floats centered, narrower than the scene, with its
     // own rounding since it no longer hugs the screen corners.
     let isCapped = canvasContainerMaxWidth > 0 && canvasContainerMaxWidth < spanningWidth
@@ -124,13 +136,16 @@ extension LayoutSpec {
       ? RectangleCornerRadii(uniform: canvasContainerFloatingCornerRadius)
       : context.cornerRadii.inset(by: edgeInset)
     return CanvasContainerMetrics(
-      horizontalInset: isCapped ? (context.size.width - expandedWidth) / 2 : edgeInset,
-      topOffset: island?.origin.y ?? context.safeArea.top,
+      horizontalInset: isCapped ? (safeWidth - expandedWidth) / 2 : edgeInset,
+      // Below the island, else just under the top safe area; never flush with
+      // the top edge on a screen whose status bar lives elsewhere.
+      topOffset: island?.origin.y ?? max(context.safeArea.top, canvasContainerInsetWithoutIsland),
       topContentInset: island?.height ?? 0,
-      collapsedSize: island?.size ?? .zero,
+      collapsedFrame: concealing,
       cornerRadii: cornerRadii,
       contentCornerRadius: max(cornerRadii.maxRadius - canvasContainerContentPadding, 0),
-      expandedWidth: expandedWidth
+      expandedWidth: expandedWidth,
+      expandedCenterX: safeCenterX
     )
   }
 }

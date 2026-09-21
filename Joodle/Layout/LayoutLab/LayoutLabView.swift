@@ -36,25 +36,25 @@ struct LayoutLabView: View {
   private var canFold: Bool { preset?.modelName == "iPhone Duo" }
 
   var body: some View {
-    GeometryReader { geo in
-      ZStack {
-        Color(white: 0.07)
+    ZStack {
+      Color(white: 0.07)
 
-        stage(in: geo.size)
-
-        VStack(spacing: 0) {
-          topBar
-            .padding(.top, hostContext.safeArea.top + 6)
-          Spacer(minLength: 0)
-          LayoutTokenDrawer(
-            layoutClass: stageContext.layoutClass,
-            resolved: resolvedSpec,
-            tuning: tuning,
-            collapsed: $drawerCollapsed,
-            agentBlock: { agentBlock() }
-          )
-          .padding(.bottom, hostContext.safeArea.bottom + 8)
+      // The stage takes whatever the chips and the drawer leave, so the
+      // frame scales to fit between them instead of sliding under either.
+      VStack(spacing: 8) {
+        topBar
+          .padding(.top, hostContext.safeArea.top + 6)
+        GeometryReader { geo in
+          stage(in: geo.size)
         }
+        LayoutTokenDrawer(
+          layoutClass: stageContext.layoutClass,
+          resolved: resolvedSpec,
+          tuning: tuning,
+          collapsed: $drawerCollapsed,
+          agentBlock: { agentBlock() }
+        )
+        .padding(.bottom, hostContext.safeArea.bottom + 8)
       }
     }
     .ignoresSafeArea()
@@ -63,16 +63,12 @@ struct LayoutLabView: View {
 
   // MARK: - Stage
 
-  /// Reserved for the chips and the drawer; the frame scales to fit between.
-  private var chromeTopHeight: CGFloat { hostContext.safeArea.top + 118 }
-  private var chromeBottomHeight: CGFloat {
-    hostContext.safeArea.bottom + (drawerCollapsed ? 64 : 332)
-  }
-
   private func stage(in available: CGSize) -> some View {
     let context = stageContext
-    let bandHeight = max(available.height - chromeTopHeight - chromeBottomHeight, 160)
-    let scale = min(1, available.width / context.size.width, bandHeight / context.size.height)
+    let scale = min(
+      1,
+      max(available.width - 16, 1) / context.size.width,
+      max(available.height - 8, 1) / context.size.height)
     return DeviceFrame(context: context, spec: stageSpec, showSafeAreas: showSafeAreas) {
       NavigationStack {
         ContentView(selectedDateFromWidget: .constant(nil))
@@ -91,7 +87,6 @@ struct LayoutLabView: View {
     )
     .scaleEffect(scale, anchor: .center)
     .frame(width: available.width, height: available.height)
-    .offset(y: (chromeTopHeight - chromeBottomHeight) / 2)
     .animation(.springFkingSatifying, value: context.size)
     .animation(.springFkingSatifying, value: drawerCollapsed)
   }
@@ -99,36 +94,28 @@ struct LayoutLabView: View {
   // MARK: - Top bar
 
   private var topBar: some View {
-    VStack(alignment: .leading, spacing: 10) {
-      HStack(spacing: 10) {
-        VStack(alignment: .leading, spacing: 1) {
+    VStack(alignment: .leading, spacing: 12) {
+      HStack(alignment: .firstTextBaseline, spacing: 12) {
+        VStack(alignment: .leading, spacing: 2) {
           Text(verbatim: "Layout Lab")
             .font(.headline)
           Text(verbatim: stageSummary)
             .font(.caption.monospaced())
             .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
         }
-        Spacer()
-        Button {
-          tuning.overlayVisible = true
-          dismiss()
-        } label: {
-          Label {
-            Text(verbatim: "Overlay")
-          } icon: {
-            Image(systemName: "rectangle.bottomhalf.inset.filled")
-          }
-          .font(.caption.weight(.semibold))
-        }
-        .buttonStyle(.bordered)
-        .help(Text(verbatim: "Float the drawer over the live app"))
+        Spacer(minLength: 8)
         Button {
           dismiss()
         } label: {
-          Image(systemName: "xmark.circle.fill")
-            .font(.title2)
-            .foregroundStyle(.secondary)
+          Image(systemName: "xmark")
+            .font(.subheadline.weight(.semibold))
+            .frame(width: 32, height: 32)
+            .background(Color.white.opacity(0.12), in: Circle())
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(verbatim: "Close the lab"))
       }
       .padding(.horizontal, 16)
 
@@ -142,44 +129,33 @@ struct LayoutLabView: View {
         .padding(.horizontal, 16)
       }
 
-      HStack(spacing: 8) {
-        labButton("Rotate", systemImage: "rotate.right", enabled: preset != nil) {
+      HStack(spacing: 4) {
+        labAction("Rotate", systemImage: "rotate.right", enabled: preset != nil) {
           guard let current = preset else { return }
           withAnimation(.springFkingSatifying) { preset = current.rotated() }
         }
-        labButton(
+        labAction(
           preset == LayoutPreset.duoCover ? "Unfold" : "Fold",
-          systemImage: preset == LayoutPreset.duoCover ? "rectangle.expand.vertical" : "rectangle.compress.vertical",
+          systemImage: preset == LayoutPreset.duoCover
+            ? "rectangle.expand.vertical" : "rectangle.compress.vertical",
           enabled: canFold
         ) {
           withAnimation(.springFkingSatifying) {
-            preset = preset == LayoutPreset.duoCover ? LayoutPreset.duoInnerLandscape : LayoutPreset.duoCover
+            preset = preset == LayoutPreset.duoCover
+              ? LayoutPreset.duoInnerLandscape : LayoutPreset.duoCover
           }
         }
-        Toggle(isOn: $showBlueprint) {
-          Label {
-            Text(verbatim: "Blueprint")
-          } icon: {
-            Image(systemName: "ruler")
-          }
+        labToggle("Blueprint", systemImage: "ruler", isOn: $showBlueprint)
+        labToggle("Safe areas", systemImage: "rectangle.inset.filled", isOn: $showSafeAreas)
+        Spacer(minLength: 0)
+        labAction("Overlay", systemImage: "rectangle.bottomhalf.inset.filled", enabled: true) {
+          tuning.overlayVisible = true
+          dismiss()
         }
-        .toggleStyle(.button)
-        .font(.caption.weight(.semibold))
-        Toggle(isOn: $showSafeAreas) {
-          Label {
-            Text(verbatim: "Safe areas")
-          } icon: {
-            Image(systemName: "rectangle.inset.filled")
-          }
-        }
-        .toggleStyle(.button)
-        .font(.caption.weight(.semibold))
-        Spacer()
       }
-      .padding(.horizontal, 16)
+      .padding(.horizontal, 12)
     }
     .foregroundStyle(.white)
-    .tint(.white)
   }
 
   private var stageSummary: String {
@@ -203,33 +179,63 @@ struct LayoutLabView: View {
     } label: {
       HStack(spacing: 4) {
         Text(verbatim: candidate?.name ?? "This device")
+          .lineLimit(1)
         if let candidate, !candidate.verified {
           Image(systemName: "questionmark.circle")
             .imageScale(.small)
+            .accessibilityLabel(Text(verbatim: "Unverified preset"))
         }
       }
       .font(.caption.weight(selected ? .semibold : .regular))
-      .padding(.horizontal, 10)
-      .padding(.vertical, 6)
+      .padding(.horizontal, 12)
+      .frame(height: 32)
       .background(selected ? Color.appAccent : Color.white.opacity(0.12), in: Capsule())
       .foregroundStyle(selected ? Color.appAccentContrast : .white)
+      .fixedSize()
     }
     .buttonStyle(.plain)
   }
 
-  private func labButton(
+  /// Icon over a one-line caption in a fixed cell: every action reads the same
+  /// width and nothing wraps as the labels change.
+  private func labActionLabel(_ title: String, systemImage: String, active: Bool = false) -> some View {
+    VStack(spacing: 3) {
+      Image(systemName: systemImage)
+        .font(.body.weight(.medium))
+        .frame(height: 22)
+      Text(verbatim: title)
+        .font(.caption2)
+        .lineLimit(1)
+        .fixedSize()
+    }
+    .frame(width: 68, height: 52)
+    .background(
+      active ? Color.appAccent.opacity(0.9) : Color.white.opacity(0.08),
+      in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    .foregroundStyle(active ? Color.appAccentContrast : .white)
+  }
+
+  private func labAction(
     _ title: String, systemImage: String, enabled: Bool, action: @escaping () -> Void
   ) -> some View {
     Button(action: action) {
-      Label {
-        Text(verbatim: title)
-      } icon: {
-        Image(systemName: systemImage)
-      }
-      .font(.caption.weight(.semibold))
+      labActionLabel(title, systemImage: systemImage)
     }
-    .buttonStyle(.bordered)
+    .buttonStyle(.plain)
     .disabled(!enabled)
+    .opacity(enabled ? 1 : 0.35)
+    .accessibilityLabel(Text(verbatim: title))
+  }
+
+  private func labToggle(_ title: String, systemImage: String, isOn: Binding<Bool>) -> some View {
+    Button {
+      withAnimation(.springFkingSatifying) { isOn.wrappedValue.toggle() }
+    } label: {
+      labActionLabel(title, systemImage: systemImage, active: isOn.wrappedValue)
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(Text(verbatim: title))
+    .accessibilityAddTraits(isOn.wrappedValue ? .isSelected : [])
   }
 
   // MARK: - Hand-off
@@ -260,73 +266,75 @@ struct LayoutTokenDrawer: View {
 
   @State private var didCopy = false
 
+  /// Outer radius of the drawer; nested controls derive theirs from it.
+  private let drawerRadius: CGFloat = 22
+  private let drawerPadding: CGFloat = 14
+
   var body: some View {
     VStack(spacing: 0) {
       header
-        .padding(.horizontal, 14)
+        .padding(.horizontal, drawerPadding)
         .padding(.vertical, 10)
 
       if !collapsed {
         Divider()
+        candidateBar
+          .padding(.horizontal, drawerPadding)
+          .padding(.vertical, 10)
+        Divider()
         ScrollView {
-          VStack(alignment: .leading, spacing: 14) {
+          VStack(alignment: .leading, spacing: 16) {
             ForEach(LayoutToken.Group.allCases) { group in
-              VStack(alignment: .leading, spacing: 6) {
-                Text(verbatim: group.rawValue.uppercased())
+              VStack(alignment: .leading, spacing: 10) {
+                Text(verbatim: group.rawValue)
                   .font(.caption2.weight(.semibold))
-                  .foregroundStyle(.secondary)
+                  .textCase(.uppercase)
                   .kerning(0.6)
+                  .foregroundStyle(.secondary)
                 ForEach(group.tokens) { token in
                   tokenRow(token)
                 }
               }
             }
           }
-          .padding(.horizontal, 14)
+          .padding(.horizontal, drawerPadding)
           .padding(.vertical, 12)
         }
-        .frame(maxHeight: 250)
+        .frame(maxHeight: 260)
       }
     }
-    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: drawerRadius, style: .continuous))
     .padding(.horizontal, 12)
   }
 
+  // MARK: Header
+
   private var header: some View {
-    HStack(spacing: 8) {
+    HStack(spacing: 10) {
       Button {
         withAnimation(.springFkingSatifying) { collapsed.toggle() }
       } label: {
-        Image(systemName: collapsed ? "chevron.up" : "chevron.down")
+        Image(systemName: "chevron.down")
           .font(.caption.weight(.bold))
-          .frame(width: 24, height: 24)
+          .rotationEffect(.degrees(collapsed ? 180 : 0))
+          .frame(width: 32, height: 32)
+          .background(Color.primary.opacity(0.06), in: Circle())
       }
       .buttonStyle(.plain)
+      .accessibilityLabel(Text(verbatim: collapsed ? "Show tokens" : "Hide tokens"))
 
-      VStack(alignment: .leading, spacing: 0) {
-        Text(verbatim: "Tokens · .\(layoutClass.rawValue)")
-          .font(.subheadline.weight(.semibold))
+      VStack(alignment: .leading, spacing: 1) {
+        Text(verbatim: ".\(layoutClass.rawValue)")
+          .font(.subheadline.weight(.semibold).monospaced())
         let count = tuning.overrideCount(for: layoutClass)
-        Text(verbatim: count == 0 ? "matches resolver" : "\(count) changed")
-          .font(.caption2.monospaced())
+        Text(verbatim: count == 0 ? "Matches the resolver" : "\(count) changed")
+          .font(.caption2)
           .foregroundStyle(count == 0 ? .secondary : Color.appAccent)
       }
+      .lineLimit(1)
+      .fixedSize()
 
-      Spacer(minLength: 4)
-
-      candidateSlots
-
-      Button {
-        tuning.reset(layoutClass)
-      } label: {
-        Image(systemName: "arrow.counterclockwise")
-      }
-      .disabled(tuning.overrideCount(for: layoutClass) == 0)
-      .help(Text(verbatim: "Reset this class to the resolver"))
-
-      ShareLink(item: tuning.exportJSON()) {
-        Image(systemName: "square.and.arrow.up")
-      }
+      Spacer(minLength: 8)
 
       Button {
         let block = agentBlock()
@@ -335,56 +343,94 @@ struct LayoutTokenDrawer: View {
         didCopy = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { didCopy = false }
       } label: {
-        Label {
-          Text(verbatim: didCopy ? "Copied" : "Copy")
-        } icon: {
+        HStack(spacing: 6) {
           Image(systemName: didCopy ? "checkmark" : "doc.on.doc")
+          Text(verbatim: didCopy ? "Copied" : "Copy for agent")
+            .lineLimit(1)
         }
         .font(.caption.weight(.semibold))
+        .padding(.horizontal, 12)
+        .frame(height: 32)
+        .fixedSize()
       }
       .buttonStyle(.borderedProminent)
-      .help(Text(verbatim: "Copy the changed tokens as Swift for the agent"))
+      .buttonBorderShape(.capsule)
+      .accessibilityHint(Text(verbatim: "Copies the changed tokens as Swift"))
 
       if let onClose {
         Button(action: onClose) {
-          Image(systemName: "xmark.circle.fill")
-            .foregroundStyle(.secondary)
+          Image(systemName: "xmark")
+            .font(.caption.weight(.bold))
+            .frame(width: 32, height: 32)
+            .background(Color.primary.opacity(0.06), in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(verbatim: "Close the drawer"))
+      }
+    }
+  }
+
+  // MARK: Candidates
+
+  /// Tap loads a saved candidate; hold saves the current tokens into the
+  /// slot. The active slot is filled.
+  private var candidateBar: some View {
+    HStack(spacing: 10) {
+      Text(verbatim: "Candidates")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize()
+      HStack(spacing: 4) {
+        ForEach(LayoutTuning.candidateSlots, id: \.self) { slot in
+          candidateSlot(slot)
         }
       }
+      Spacer(minLength: 8)
+      Button {
+        tuning.reset(layoutClass)
+      } label: {
+        Image(systemName: "arrow.counterclockwise")
+          .frame(width: 32, height: 32)
+      }
+      .disabled(tuning.overrideCount(for: layoutClass) == 0)
+      .accessibilityLabel(Text(verbatim: "Reset this class to the resolver"))
+      ShareLink(item: tuning.exportJSON()) {
+        Image(systemName: "square.and.arrow.up")
+          .frame(width: 32, height: 32)
+      }
+      .accessibilityLabel(Text(verbatim: "Share every class as JSON"))
     }
     .imageScale(.medium)
   }
 
-  /// Tap loads a saved candidate; long-press saves the current overrides into
-  /// the slot. The active slot is filled.
-  private var candidateSlots: some View {
-    HStack(spacing: 2) {
-      ForEach(LayoutTuning.candidateSlots, id: \.self) { slot in
-        let saved = tuning.hasCandidate(slot, for: layoutClass)
-        let active = tuning.activeCandidate[layoutClass] == slot
-        Text(verbatim: slot)
-          .font(.caption2.weight(.bold))
-          .frame(width: 22, height: 22)
-          .background(
-            active ? Color.appAccent : (saved ? Color.primary.opacity(0.12) : .clear),
-            in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-          .overlay(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-              .strokeBorder(saved ? .clear : Color.primary.opacity(0.25), lineWidth: 1))
-          .foregroundStyle(active ? Color.appAccentContrast : .primary)
-          .contentShape(Rectangle())
-          .onTapGesture {
-            tuning.loadCandidate(slot, for: layoutClass)
-          }
-          .onLongPressGesture {
-            tuning.saveCandidate(slot, for: layoutClass)
-            Haptic.play()
-          }
+  private func candidateSlot(_ slot: String) -> some View {
+    let saved = tuning.hasCandidate(slot, for: layoutClass)
+    let active = tuning.activeCandidate[layoutClass] == slot
+    return Text(verbatim: slot)
+      .font(.caption.weight(.bold))
+      .frame(width: 32, height: 28)
+      .background(
+        active ? Color.appAccent : (saved ? Color.primary.opacity(0.1) : .clear),
+        in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+      .overlay(
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+          .strokeBorder(saved || active ? .clear : Color.primary.opacity(0.25), lineWidth: 1))
+      .foregroundStyle(active ? Color.appAccentContrast : .primary)
+      .contentShape(Rectangle())
+      .onTapGesture {
+        tuning.loadCandidate(slot, for: layoutClass)
       }
-    }
-    .help(Text(verbatim: "Tap to load a candidate, hold to save the current tokens into it"))
+      .onLongPressGesture {
+        tuning.saveCandidate(slot, for: layoutClass)
+        Haptic.play()
+      }
+      .accessibilityLabel(Text(verbatim: "Candidate \(slot)\(saved ? ", saved" : "")\(active ? ", active" : "")"))
   }
 
+  // MARK: Token rows
+
+  /// Label and value on one line, the control on the next: nothing has to
+  /// share a row with a long label, so nothing wraps or shrinks.
   @ViewBuilder
   private func tokenRow(_ token: LayoutToken) -> some View {
     let control = token.control
@@ -393,12 +439,33 @@ struct LayoutTokenDrawer: View {
       get: { tuning.value(of: token, for: layoutClass, resolved: resolved) },
       set: { tuning.set(token, to: $0, for: layoutClass) }
     )
-    HStack(spacing: 8) {
-      Text(verbatim: token.label)
-        .font(.caption)
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
-        .frame(width: 118, alignment: .leading)
+    VStack(alignment: .leading, spacing: 4) {
+      HStack(alignment: .firstTextBaseline, spacing: 8) {
+        Text(verbatim: token.label)
+          .font(.caption)
+          .lineLimit(1)
+        Spacer(minLength: 8)
+        Button {
+          tuning.clear(token, for: layoutClass)
+        } label: {
+          HStack(spacing: 4) {
+            if control.kind == .slider {
+              Text(verbatim: LayoutToken.format(binding.wrappedValue))
+                .monospacedDigit()
+            }
+            if overridden {
+              Image(systemName: "arrow.uturn.backward")
+                .imageScale(.small)
+            }
+          }
+          .font(.caption.weight(overridden ? .semibold : .regular))
+          .foregroundStyle(overridden ? Color.appAccent : .secondary)
+          .frame(minWidth: 44, minHeight: 20, alignment: .trailing)
+        }
+        .buttonStyle(.plain)
+        .disabled(!overridden)
+        .accessibilityLabel(Text(verbatim: overridden ? "Return \(token.label) to the resolver" : token.label))
+      }
       switch control.kind {
       case .slider:
         Slider(value: binding, in: control.range, step: control.step)
@@ -411,19 +478,6 @@ struct LayoutTokenDrawer: View {
         }
         .pickerStyle(.segmented)
       }
-      Button {
-        tuning.clear(token, for: layoutClass)
-      } label: {
-        Text(verbatim: control.kind == .axis
-             ? (overridden ? "reset" : "")
-             : LayoutToken.format(binding.wrappedValue))
-          .font(.caption.monospaced().weight(overridden ? .semibold : .regular))
-          .foregroundStyle(overridden ? Color.appAccent : .secondary)
-          .frame(width: 44, alignment: .trailing)
-      }
-      .buttonStyle(.plain)
-      .disabled(!overridden)
-      .help(Text(verbatim: "Tap the value to return it to the resolver"))
     }
   }
 }
@@ -554,7 +608,7 @@ struct LayoutBlueprintView: View {
       // Floating canvas container.
       let container = spec.canvasContainer(in: context)
       let containerRect = CGRect(
-        x: container.horizontalInset, y: container.topOffset,
+        x: container.expandedCenterX - container.expandedWidth / 2, y: container.topOffset,
         width: container.expandedWidth, height: CANVAS_SIZE + container.topContentInset + 96)
       canvas.stroke(
         UnevenRoundedRectangle(cornerRadii: container.cornerRadii, style: .continuous)

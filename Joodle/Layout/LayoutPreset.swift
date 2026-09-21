@@ -85,15 +85,16 @@ struct LayoutPreset: Identifiable, Equatable {
     modelName: "iPhone 17 Pro Max", idiom: .phone, reportedCornerRadius: 62,
     verified: false)
 
-  /// Cover display. Corner radii are asymmetric: 8pt on the hinge side, 59pt
-  /// on the outer side (`ScreenHardware` knows this by model). Whether it has
-  /// a cutout is unconfirmed; the safe areas assume an island until checked.
+  /// Cover display, measured on the simulator: no top inset, an 84pt trailing
+  /// sensor bar holding the status items and a round camera hole, corners 8pt
+  /// on the hinge side and 59pt on the outer side (`ScreenHardware` knows
+  /// both by model).
   static let duoCover = LayoutPreset(
     id: "duo-cover", name: "iPhone Duo · cover",
     size: CGSize(width: 466, height: 678),
-    safeArea: EdgeInsets(top: 59, leading: 0, bottom: 34, trailing: 0),
-    modelName: "iPhone Duo", idiom: .phone, reportedCornerRadius: 59,
-    verified: false)
+    safeArea: ScreenHardware.Duo.coverSafeArea,
+    modelName: ScreenHardware.Duo.modelName, idiom: .phone, reportedCornerRadius: 59,
+    verified: true)
 
   /// Inner display in its native landscape posture.
   static let duoInnerLandscape = LayoutPreset(

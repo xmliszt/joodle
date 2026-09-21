@@ -44,6 +44,15 @@ private struct LayoutContextProviderModifier: ViewModifier {
           LayoutOrientationPolicy.refresh()
         }
         probe = newProbe
+#if DEBUG
+        let insets = newProbe.safeArea
+        print(
+          "[Layout] scene \(Int(newProbe.size.width))×\(Int(newProbe.size.height))pt"
+            + " safe(top \(Int(insets.top)) leading \(Int(insets.leading))"
+            + " bottom \(Int(insets.bottom)) trailing \(Int(insets.trailing)))"
+            + " class .\(LayoutClass(size: newProbe.size).rawValue)"
+            + " model \(UIDevice.normalizedModelName)")
+#endif
       }
       .environment(\.layoutContext, context)
       .environment(\.layoutSpec, spec(for: context))

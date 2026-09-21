@@ -163,18 +163,31 @@ struct DynamicIslandExpandedView<Content: View>: View {
     layoutSpec.canvasContainer(in: layoutContext)
   }
 
-  /// Y offset where the top edge of the floating container starts.
-  private var containerTopOffset: CGFloat { metrics.topOffset }
-
   /// Height reserved at the top of the container so the content doesn't draw
   /// under the DI cutout. Zero on non-DI devices since the container starts
   /// below the notch.
   private var topContentInset: CGFloat { metrics.topContentInset }
 
-  /// Size of the collapsed container. On DI devices this matches the DI
-  /// capsule so it tucks behind the cutout. On non-DI devices we collapse
-  /// to zero — there's no cutout to align with.
+  /// Size of the collapsed container. Matches the cutout it hides in (the DI
+  /// capsule, or the Duo cover's camera hole); zero where there is none.
   private var collapsedSize: CGSize { metrics.collapsedSize }
+
+  /// How far the container sits from the scene's horizontal center: over the
+  /// cutout while collapsed (the Duo's hole is off in its sensor bar), centered
+  /// in the safe region while expanded.
+  private var containerXOffset: CGFloat {
+    let sceneCenterX = layoutContext.size.width / 2
+    if isExpanded { return metrics.expandedCenterX - sceneCenterX }
+    guard let hiding = metrics.collapsedFrame else { return metrics.expandedCenterX - sceneCenterX }
+    return hiding.midX - sceneCenterX
+  }
+
+  /// Y of the container's top edge: the cutout's while collapsed, the
+  /// expanded seat otherwise (the same value on island devices).
+  private var containerYOffset: CGFloat {
+    if isExpanded { return metrics.topOffset }
+    return metrics.collapsedFrame?.minY ?? metrics.topOffset
+  }
 
   /// Liquid Glass rendered inside a zero-size frame aborts the entire view's
   /// render on iOS 26 — on non-DI devices (e.g. iPhone SE) the collapsed
@@ -477,10 +490,13 @@ struct DynamicIslandExpandedView<Content: View>: View {
         Spacer()
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-      // Move it so that it is at the position of dynamic island / below the notch
-      .offset(y: containerTopOffset)
+      // Seat it over the cutout while collapsed, in the safe region's center
+      // below it while expanded.
+      .offset(x: containerXOffset, y: containerYOffset)
     }
-    .ignoresSafeArea(.all, edges: .vertical)
+    // The whole scene, side insets included, so a cutout in a side sensor bar
+    // (Duo cover) is reachable in scene coordinates.
+    .ignoresSafeArea()
     // Define hit zone
     .contentShape(UnevenRoundedRectangle(cornerRadii: layoutContext.cornerRadii, style: .continuous))
     // Only receive hit test when expanded. This must stay enabled even when

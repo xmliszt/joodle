@@ -38,11 +38,11 @@ struct DeviceFrame<Content: View>: View {
         safeAreaBands
       }
 
-      if let pill = context.cutout.dynamicIslandFrame {
+      if let cutout = context.cutout.concealingFrame {
         Capsule()
           .fill(.black)
-          .frame(width: pill.width, height: pill.height)
-          .offset(x: pill.minX, y: pill.minY)
+          .frame(width: cutout.width, height: cutout.height)
+          .offset(x: cutout.minX, y: cutout.minY)
           .allowsHitTesting(false)
       }
     }

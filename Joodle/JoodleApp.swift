@@ -631,6 +631,16 @@ struct JoodleApp: App {
           .overlay {
             FeatureTipOverlayView()
           }
+#if DEBUG
+          // Layout Lab "overlay mode": the token drawer floating over the live
+          // app, so the device in hand can be tuned at 1:1. Mounted here, not
+          // as a root child: an extra root-level view present from the first
+          // frame blanks the whole window on iOS 26+ cold launch (same class
+          // of render abort as the launch-screen gating above).
+          .overlay {
+            LayoutTuningOverlay()
+          }
+#endif
           }
         }
 
@@ -645,12 +655,6 @@ struct JoodleApp: App {
               }
             }
         }
-
-#if DEBUG
-        // Layout Lab "overlay mode": the token drawer floating over the live
-        // app, so the device in hand can be tuned at 1:1.
-        LayoutTuningOverlay()
-#endif
       }
       // Publishes the scene's geometry (size, safe area, cutout, corner radii)
       // as `layoutContext` / `layoutSpec` for every branch above — onboarding,
@@ -784,6 +788,19 @@ struct JoodleApp: App {
 
   private func handleWidgetURL(_ url: URL) {
     guard url.scheme == "joodle" else { return }
+
+#if DEBUG
+    // joodle://debug/open-canvas — opens today's canvas without a tap, for
+    // driving simulators whose touch input tooling can't reach the UI
+    // (the iPhone Duo's two displays, at the time of writing).
+    if url.host == "debug", url.path == "/open-canvas" {
+      NotificationCenter.default.post(name: .navigateToDateFromShortcut, object: nil, userInfo: ["date": Date()])
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        NotificationCenter.default.post(name: .openDrawingCanvasFromShortcut, object: nil)
+      }
+      return
+    }
+#endif
 
     // Track deep link opened
     AnalyticsManager.shared.trackDeepLinkOpened(url: url.absoluteString, source: "widget")
