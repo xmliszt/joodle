@@ -14,6 +14,8 @@ struct ContentView: View {
   @Environment(\.scenePhase) private var scenePhase
   @Environment(\.userPreferences) private var userPreferences
   @Environment(\.cloudSyncManager) private var cloudSyncManager
+  @Environment(\.layoutContext) private var layoutContext
+  @Environment(\.layoutSpec) private var layoutSpec
 
   @Query private var entries: [DayEntry]
   @StateObject private var subscriptionManager = SubscriptionManager.shared
@@ -115,7 +117,7 @@ struct ContentView: View {
   /// so the button always returns to the handedness side (JOO relocate spec).
   @State private var autoTraceCornerOverride: AutoTraceButton.Corner?
 
-  private let headerHeight: CGFloat = 100.0
+  private var headerHeight: CGFloat { layoutSpec.headerHeight }
 
   // Hit testing optimization (O(1) lookup)
   @State private var hitTestingGrid: [[String?]] = []
@@ -222,6 +224,13 @@ struct ContentView: View {
           scrollToTodayOrTop(scrollProxy: scrollProxy)
         }
       }
+      // A resize (fold / unfold, rotation, multitasking) moves every dot; the
+      // cached hit-test grid would keep resolving taps against the old layout.
+      .onChange(of: geometry.size) { _, newSize in
+        hitTestingGrid = []
+        gridMetrics = nil
+        yearGridViewSize.width = newSize.width
+      }
       // Initial scroll to today's dot for both modes
       .onAppear {
         yearGridViewSize = geometry.size
@@ -315,7 +324,7 @@ struct ContentView: View {
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-      .padding(.bottom, 80)
+      .padding(.bottom, layoutSpec.edgeControlBottomInset)
       .ignoresSafeArea()
       .opacity(isShowing && tempZoomReveal > 0.001 ? 1 : 0)
       // The emerged ruler owns its own zoom drag only once committed; until
@@ -372,7 +381,7 @@ struct ContentView: View {
       .frame(width: 44, height: CameraZoomSlider.tabHeight)
       .frame(maxWidth: .infinity, maxHeight: .infinity,
              alignment: tempEdge == .leading ? .bottomLeading : .bottomTrailing)
-      .padding(.bottom, 80)
+      .padding(.bottom, layoutSpec.edgeControlBottomInset)
       .ignoresSafeArea()
       .allowsHitTesting(isShowing && !tempZoomCommitted)
 
@@ -395,7 +404,7 @@ struct ContentView: View {
           resolution: .none)
         .frame(maxWidth: .infinity, maxHeight: .infinity,
                alignment: tempEdge == .leading ? .bottomLeading : .bottomTrailing)
-        .padding(.bottom, 80)
+        .padding(.bottom, layoutSpec.edgeControlBottomInset)
         .ignoresSafeArea()
         .allowsHitTesting(false)
     }
@@ -624,7 +633,7 @@ struct ContentView: View {
           Task { await cameraContext.capture() }
         }
         .disabled(cameraContext.isShutterCycling || cameraContext.isCapturing)
-        .padding(.bottom, 32)
+        .padding(.bottom, layoutSpec.shutterBottomInset)
       }
       .ignoresSafeArea(.container, edges: .bottom)
       // Hidden while the iPhone 16 Camera Control system overlay is up — the
@@ -686,7 +695,7 @@ struct ContentView: View {
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-      .padding(.bottom, 80)
+      .padding(.bottom, layoutSpec.edgeControlBottomInset)
       .ignoresSafeArea()
       .opacity(showZoomSlider ? 1 : 0)
       .allowsHitTesting(showZoomSlider)
@@ -777,7 +786,7 @@ struct ContentView: View {
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-      .padding(.bottom, 80)
+      .padding(.bottom, layoutSpec.edgeControlBottomInset)
       .ignoresSafeArea()
       .opacity(showPhotoAdjust ? 1 : 0)
       .allowsHitTesting(showPhotoAdjust)
@@ -792,8 +801,9 @@ struct ContentView: View {
       // takes priority and pushes the console down out of that alignment.
       GeometryReader { geo in
         let consoleSide = PhotoTranslationPad.containerSide + PhotoRotationDial.defaultBandWidth * 2
-        // Zoom ruler is `tabHeight` tall, bottom-anchored 80pt above the edge.
-        let zoomCenterY = geo.size.height - (80 + CameraZoomSlider.tabHeight / 2)
+        // Zoom ruler is `tabHeight` tall, bottom-anchored above the edge.
+        let zoomCenterY =
+          geo.size.height - (layoutSpec.edgeControlBottomInset + CameraZoomSlider.tabHeight / 2)
         // Floor: keep the whole console at least 24pt below the canvas container.
         let minCenterY = canvasContainerBottomY + 24 + consoleSide / 2
         let centerY = max(zoomCenterY, minCenterY)
@@ -839,7 +849,7 @@ struct ContentView: View {
       // three detail levels to swipe through; a press dragged across the screen
       // flings it to the opposite corner for the session. Seated so its center
       // sits at the screen's corner-arc center — concentric with the rounded
-      // corner, and thus equidistant from the two edges it hugs. Floored well
+      // corner it hugs, and thus equidistant from the two edges. Floored well
       // above any display radius (iPhone X ≈ 39pt, Pro models 55–62pt) because a
       // stationary touch that starts near the home indicator is held back by
       // the system for ~0.8s before the app sees it — at the raw radius the
@@ -850,7 +860,10 @@ struct ContentView: View {
         let handednessCorner: AutoTraceButton.Corner =
           userPreferences.cameraZoomSliderHandedness == .right ? .bottomTrailing : .bottomLeading
         let resolvedCorner = autoTraceCornerOverride ?? handednessCorner
-        let inset = max(UIScreen.joodleDisplayCornerRadius, 80)
+        let huggedCornerRadius = resolvedCorner == .bottomTrailing
+          ? layoutContext.cornerRadii.bottomTrailing
+          : layoutContext.cornerRadii.bottomLeading
+        let inset = max(huggedCornerRadius, layoutSpec.cornerButtonMinInset)
         AutoTraceButton(
           corner: resolvedCorner,
           activeDetail: $cameraContext.autoTraceDetail,
@@ -903,7 +916,7 @@ struct ContentView: View {
         }
         .ignoresSafeArea(.container, edges: .bottom)
         .padding(.horizontal, 20)
-        .padding(.bottom, 40)
+        .padding(.bottom, layoutSpec.moveBarBottomInset)
         .zIndex(51)
         .transition(.move(edge: .bottom).combined(with: .opacity))
       }
@@ -1147,7 +1160,10 @@ struct ContentView: View {
 
   /// Calculate spacing between dots based on view mode
   private func calculateSpacing(containerWidth: CGFloat, viewMode: ViewMode) -> CGFloat {
-    CalendarGridHelper.calculateSpacing(containerWidth: containerWidth, viewMode: viewMode)
+    CalendarGridHelper.calculateSpacing(
+      containerWidth: containerWidth,
+      viewMode: viewMode,
+      horizontalPadding: layoutSpec.gridHorizontalPadding)
   }
 
   // MARK: User interactions
@@ -1216,7 +1232,7 @@ struct ContentView: View {
   /// Build hit testing grid for fast lookups
   private func buildHitTestingGrid(for geometry: GeometryProxy) {
     let spacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: dataProvider.viewMode)
-    let containerWidth = geometry.size.width - (2 * GRID_HORIZONTAL_PADDING)
+    let containerWidth = geometry.size.width - (2 * layoutSpec.gridHorizontalPadding)
     let totalSpacingWidth = CGFloat(dataProvider.viewMode.dotsPerRow - 1) * spacing
     let totalDotWidth = containerWidth - totalSpacingWidth
     let itemSpacing = totalDotWidth / CGFloat(dataProvider.viewMode.dotsPerRow)
@@ -1263,6 +1279,7 @@ struct ContentView: View {
       at: adjustedLocation,
       containerWidth: geometry.size.width,
       viewMode: dataProvider.viewMode,
+      horizontalPadding: layoutSpec.gridHorizontalPadding,
       year: dataProvider.selectedYear,
       items: dataProvider.itemsInYear,
       horizontalPaddingAdjustment: false  // Already adjusted by adjustTouchLocationForGrid
@@ -1318,8 +1335,7 @@ struct ContentView: View {
       withAnimation(.springFkingSatifying) {
         isMovingDrawing = true
       }
-      let bounds = UIScreen.main.bounds
-      rippleOrigin = CGPoint(x: bounds.width / 2, y: bounds.height / 2)
+      rippleOrigin = CGPoint(x: layoutContext.size.width / 2, y: layoutContext.size.height / 2)
       rippleTrigger += 1
     }
 
@@ -1576,7 +1592,7 @@ struct ContentView: View {
   private func adjustTouchLocationForGrid(_ location: CGPoint) -> CGPoint {
     // Adjust for the header height and horizontal padding
     return CGPoint(
-      x: location.x - GRID_HORIZONTAL_PADDING,
+      x: location.x - layoutSpec.gridHorizontalPadding,
       y: location.y
     )
   }

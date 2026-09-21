@@ -4,7 +4,7 @@
 //
 //  TEMPORARY: Dynamic Island calibration workbench. Renders a tweakable red
 //  pill over the real cutout so per-model frame values can be dialed in
-//  against the simulator, then hardcoded in UIDeviceExtension. Remove once
+//  against the simulator, then hardcoded in ScreenHardware. Remove once
 //  the values for the current device fleet are settled.
 //
 
@@ -13,6 +13,7 @@ import SwiftUI
 
 struct DynamicIslandLab: View {
   @Environment(\.dismiss) private var dismiss
+  @Environment(\.layoutContext) private var layoutContext
 
   @State private var pillX: CGFloat = 0
   @State private var pillY: CGFloat = 11
@@ -25,7 +26,7 @@ struct DynamicIslandLab: View {
   /// resulting onChange would write the override right back.
   @State private var suppressNextOverrideWrite = false
 
-  private var screenWidth: CGFloat { UIScreen.main.bounds.width }
+  private var screenWidth: CGFloat { layoutContext.size.width }
 
   private var pillFrame: CGRect {
     CGRect(x: pillX, y: pillY, width: pillWidth, height: pillHeight)
@@ -68,7 +69,7 @@ struct DynamicIslandLab: View {
           return // onChange fires again with the centered frame
         }
       }
-      UIDevice.dynamicIslandDebugOverride = newFrame
+      LayoutDebugOverrides.shared.dynamicIslandFrame = newFrame
     }
   }
 
@@ -184,7 +185,13 @@ struct DynamicIslandLab: View {
   /// override if one is set, else the built-in per-model frame, else the
   /// classic 126×37 pill as a starting point on island-less devices.
   private func seedFromCurrentFrame() {
-    var frame = UIDevice.dynamicIslandFrame
+    var snapshot = ScreenHardware.Snapshot.current()
+    snapshot.dynamicIslandOverride = LayoutDebugOverrides.shared.dynamicIslandFrame
+    var frame = ScreenHardware.cutout(
+      topSafeAreaInset: layoutContext.safeArea.top,
+      sceneWidth: screenWidth,
+      snapshot: snapshot
+    ).dynamicIslandFrame ?? .zero
     if frame == .zero {
       frame = CGRect(x: (screenWidth - 126) / 2, y: 11, width: 126, height: 36.67)
     }
@@ -195,7 +202,7 @@ struct DynamicIslandLab: View {
   }
 
   private func resetToBuiltIn() {
-    UIDevice.dynamicIslandDebugOverride = nil
+    LayoutDebugOverrides.shared.dynamicIslandFrame = nil
     let frameBeforeSeed = pillFrame
     seedFromCurrentFrame()
     suppressNextOverrideWrite = pillFrame != frameBeforeSeed

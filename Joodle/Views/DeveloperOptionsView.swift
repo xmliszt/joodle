@@ -304,7 +304,7 @@ struct DeveloperOptionsView: View {
       }
 
       // TEMPORARY: Dynamic Island calibration workbench. Remove once the
-      // per-model frames are dialed in and committed to UIDeviceExtension.
+      // per-model frames are dialed in and committed to ScreenHardware.
       Button {
         showDynamicIslandLab = true
       } label: {

@@ -172,33 +172,27 @@ struct DrawingCanvasView: View {
 
   // MARK: - Concentric Corner Radius
 
-  /// Canvas corner radius computed to be concentric with the floating
-  /// `DynamicIslandExpandedView` container border (used on every device).
-  /// Container clip = `screenCornerRadius - containerInset`, with an 8pt
-  /// inner padding inside the container.
+  @Environment(\.layoutContext) private var layoutContext
+  @Environment(\.layoutSpec) private var layoutSpec
+
+  /// Geometry of the floating container this canvas sits in, shared with
+  /// `DynamicIslandExpandedView` so both agree on insets and rounding.
+  private var containerMetrics: CanvasContainerMetrics {
+    layoutSpec.canvasContainer(in: layoutContext)
+  }
+
+  /// Canvas corner radius, concentric with the floating container's border.
   private var canvasCornerRadius: CGFloat {
-    let containerInset: CGFloat = UIDevice.hasDynamicIsland
-      ? UIDevice.dynamicIslandFrame.origin.y
-      : 10
-    let diContainerPadding: CGFloat = 8
-    return max(
-      UIDevice.screenCornerRadius - containerInset - diContainerPadding,
-      0
-    )
+    containerMetrics.contentCornerRadius
   }
 
   /// The left/right gap between the fixed-size canvas square and the floating
   /// container edge. Because the canvas is a fixed `CANVAS_SIZE` square centered
   /// in the container's inner width, the horizontal gap is the leftover
-  /// centering slack — `(containerInnerWidth - CANVAS_SIZE) / 2` — and varies
-  /// per device. We reuse it as the bottom inset so the canvas sits with equal
-  /// left/right/bottom padding inside the container on every device.
+  /// centering slack and varies per device. Reused as the bottom inset so the
+  /// canvas sits with equal left/right/bottom padding inside the container.
   private var canvasSideInset: CGFloat {
-    let containerInset: CGFloat = UIDevice.hasDynamicIsland
-      ? UIDevice.dynamicIslandFrame.origin.y
-      : 10
-    let containerInnerWidth = UIScreen.main.bounds.width - containerInset * 2
-    return max((containerInnerWidth - CANVAS_SIZE) / 2, 0)
+    max((containerMetrics.expandedWidth - CANVAS_SIZE) / 2, 0)
   }
 
   /// Whether editing is allowed based on subscription status

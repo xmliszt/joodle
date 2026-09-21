@@ -19,6 +19,9 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   /// causes the handle to re-layout and jitter under the user's finger.
   @GestureState private var dragOffset: CGFloat = 0
 
+  @Environment(\.layoutContext) private var layoutContext
+  @Environment(\.layoutSpec) private var layoutSpec
+
   let topView: Top
   let bottomView: Bottom
   let hasBottomView: Bool
@@ -52,18 +55,21 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   @State private var MIN_SPLIT_POSITION: CGFloat = 0.0
   /// The lowest position that user can drag
   @State private var MAX_SPLIT_POSITION: CGFloat = 1.0
-  /// Any value beyond this will be considered dismissed
-  private let DISMISS_POSITION: CGFloat = 0.6
-  /// Snap position includes 1.0, which means topView will be occupying the fullscreen
-  @State private var SNAP_POSITIONS: [CGFloat] = [0.15, 0.5, 1.0]
   /// Compensate corner radius so it is just a bit smaller than device actual radius
   private let CORNER_RADIUS_COMPENSATION: CGFloat = 5
 
-  /// The panel corner radius, kept a little smaller than the device's screen
-  /// corner so it reads as concentric. `UIDevice.screenCornerRadius` is floored
-  /// for flat-display phones (iPhone SE) at the source, so this stays positive.
-  private var panelCornerRadius: CGFloat {
-    UIDevice.screenCornerRadius - CORNER_RADIUS_COMPENSATION
+  /// Panel corners stay a little smaller than the device corners they echo, so
+  /// they read as concentric. Both panels take the screen's *bottom* corners:
+  /// the top panel's rounded bottom edge and the bottom panel's rounded top
+  /// edge both sit over the lower half of the device, and on a screen with
+  /// asymmetric corners (iPhone Duo cover) each side follows its own.
+  /// `ScreenHardware` floors flat displays, so these stay positive.
+  private var leadingPanelCornerRadius: CGFloat {
+    max(layoutContext.cornerRadii.bottomLeading - CORNER_RADIUS_COMPENSATION, 0)
+  }
+
+  private var trailingPanelCornerRadius: CGFloat {
+    max(layoutContext.cornerRadii.bottomTrailing - CORNER_RADIUS_COMPENSATION, 0)
   }
 
   var body: some View {
@@ -80,10 +86,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
       // screen bottom. As it reaches full screen (bottomHeight -> 0) the radius
       // collapses to 0 so the device's hardware corner mask does the rounding,
       // instead of self-carving a notch that reveals the accent background.
-      let topBottomCornerRadius = min(
-        panelCornerRadius,
-        bottomHeight
-      )
+      let topBottomLeadingRadius = min(leadingPanelCornerRadius, bottomHeight)
+      let topBottomTrailingRadius = min(trailingPanelCornerRadius, bottomHeight)
 
       ZStack {
         // Background color - animate opacity based on splitPosition for smooth transition
@@ -97,8 +101,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             .frame(width: _geometry.size.width, height: topHeight, alignment: .top)
             .clipShape(
               UnevenRoundedRectangle(
-                bottomLeadingRadius: topBottomCornerRadius,
-                bottomTrailingRadius: topBottomCornerRadius,
+                bottomLeadingRadius: topBottomLeadingRadius,
+                bottomTrailingRadius: topBottomTrailingRadius,
                 style: .continuous)
             )
 
@@ -157,8 +161,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
             .frame(width: _geometry.size.width, height: bottomHeight, alignment: .top)
             .clipShape(
               UnevenRoundedRectangle(
-                topLeadingRadius: panelCornerRadius,
-                topTrailingRadius: panelCornerRadius,
+                topLeadingRadius: leadingPanelCornerRadius,
+                topTrailingRadius: trailingPanelCornerRadius,
                 style: .continuous)
             )
         }
@@ -172,7 +176,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         // If we don't have bottomView, then show full topView
         // Otherwise, default at halfway position
         withAnimation(.springFkingSatifying) {
-          splitPosition = hasBottomView ? 0.5 : 1.0
+          splitPosition = hasBottomView ? layoutSpec.splitDefaultPosition : 1.0
         } completion: {
           hasShownBottomView = hasBottomView
           let newHeight = _geometry.size.height * splitPosition
@@ -187,7 +191,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
       .onChange(of: hasBottomView) { _, newValue in
         guard dragOffset == 0 else { return }
         withAnimation(.springFkingSatifying) {
-          splitPosition = newValue ? 0.5 : 1.0
+          splitPosition = newValue ? layoutSpec.splitDefaultPosition : 1.0
         } completion: {
           hasShownBottomView = newValue
           let newHeight = _geometry.size.height * splitPosition
@@ -204,7 +208,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     splitPosition = position
 
     // Find the closest snap position
-    let result: (minDiff: CGFloat, closestValue: CGFloat?) = SNAP_POSITIONS.reduce(
+    let result: (minDiff: CGFloat, closestValue: CGFloat?) = layoutSpec.splitSnapPositions.reduce(
       (minDiff: .infinity, closestValue: nil)
     ) { acc, value in
       let diff = abs(value - position)
@@ -217,7 +221,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     guard let closestPosition = result.closestValue else { return }
     isSnapping = true
     withAnimation(.springFkingSatifying) {
-      if position >= DISMISS_POSITION {
+      if position >= layoutSpec.splitDismissPosition {
         splitPosition = 1.0
       } else {
         splitPosition = closestPosition

@@ -8,7 +8,6 @@
 import SwiftUI
 
 // MARK: - Constants
-let GRID_HORIZONTAL_PADDING: CGFloat = 40
 let MAX_SCALE: CGFloat = 1.5
 let MAX_SCALE_DISTANCE: CGFloat = 2.5
 
@@ -22,6 +21,7 @@ struct YearGridView: View {
   // MARK: Environment
   @Environment(\.userPreferences) private var userPreferences
   @Environment(\.locale) private var locale
+  @Environment(\.layoutSpec) private var layoutSpec
 
   // MARK: Params
   /// The year to display
@@ -180,8 +180,9 @@ struct YearGridView: View {
     }
     .padding(
       .init(
-        top: 0, leading: GRID_HORIZONTAL_PADDING, bottom: GRID_HORIZONTAL_PADDING,
-        trailing: GRID_HORIZONTAL_PADDING)
+        top: 0, leading: layoutSpec.gridHorizontalPadding,
+        bottom: layoutSpec.gridHorizontalPadding,
+        trailing: layoutSpec.gridHorizontalPadding)
     )
     .frame(maxWidth: .infinity, alignment: .top)
     .overlay(alignment: .top) {
@@ -202,7 +203,7 @@ struct YearGridView: View {
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, GRID_HORIZONTAL_PADDING)
+        .padding(.leading, layoutSpec.gridHorizontalPadding)
         .offset(y: -(dotsSpacing + 10)) // Position above the first row of dots
       }
     }

@@ -477,24 +477,6 @@ struct AutoTraceButton: View {
   }
 }
 
-// MARK: - Display corner radius
-
-extension UIScreen {
-  /// The device's physical display corner radius, for seating corner-hugging
-  /// controls concentric with the rounded screen. Read from the undocumented
-  /// `_displayCornerRadius` key (assembled at runtime to keep the literal out of
-  /// the binary) with a conservative fallback for anything that doesn't answer.
-  static var joodleDisplayCornerRadius: CGFloat {
-    let fallback: CGFloat = 39
-    let key = ["Radius", "Corner", "display", "_"].reversed().joined()
-    guard let screen = UIApplication.shared.connectedScenes
-      .compactMap({ ($0 as? UIWindowScene)?.keyWindow?.screen })
-      .first
-    else { return fallback }
-    return (screen.value(forKey: key) as? CGFloat) ?? fallback
-  }
-}
-
 // MARK: - Sparkle cluster
 
 /// The glyph shown for a fan level: a hand-composed cluster of plain `sparkle`

@@ -69,13 +69,15 @@ private struct AccentAngularGradientLayer: View {
 // MARK: - Animated Gradient Border
 
 struct MoveDrawingGradientBorder: View {
+  @Environment(\.layoutContext) private var layoutContext
   @State private var t: Float = 0
   private let ticker = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
 
   var body: some View {
     GeometryReader { geometry in
       let size = geometry.size
-      let cornerRadius = UIDevice.screenCornerRadius
+      let cornerRadii = layoutContext.cornerRadii
+      let cornerRadius = cornerRadii.maxRadius
       let diagonal = hypot(size.width, size.height)
 
       ZStack {
@@ -98,11 +100,11 @@ struct MoveDrawingGradientBorder: View {
                 )
               )
 
+              // Follows the device's own corners, so a screen with asymmetric
+              // rounding (iPhone Duo cover) gets a ring that hugs each one.
               ring.addPath(
-                Path(
-                  roundedRect: canvasRect.insetBy(dx: 10, dy: 10),
-                  cornerRadius: max(cornerRadius, 0)
-                )
+                UnevenRoundedRectangle(cornerRadii: cornerRadii, style: .circular)
+                  .path(in: canvasRect.insetBy(dx: 10, dy: 10))
               )
 
               context.fill(ring, with: .color(.white), style: FillStyle(eoFill: true))

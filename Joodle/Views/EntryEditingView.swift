@@ -13,6 +13,7 @@ struct EntryEditingView: View {
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
   @Environment(\.locale) private var locale
+  @Environment(\.layoutContext) private var layoutContext
 
   private let date: Date?
   private let selectedEntry: DayEntry?
@@ -81,8 +82,6 @@ struct EntryEditingView: View {
 
   /// Track the view's top Y position in global coordinate space for dynamic drawing sizing
   @State private var topYPosition: CGFloat = 0
-  /// Track the screen height for calculating split ratio
-  @State private var screenHeight: CGFloat = 0
   /// Track the container width for calculating max drawing size
   @State private var containerWidth: CGFloat = 0
 
@@ -99,14 +98,15 @@ struct EntryEditingView: View {
     let carouselGap: CGFloat = 44 // keeps the max card shy of full width
     let maxDrawingSize = max(minDrawingSize, containerWidth - padding - carouselGap)
 
-    guard screenHeight > 0 else { return 160 }
+    let sceneHeight = layoutContext.size.height
+    guard sceneHeight > 0 else { return 160 }
 
     // Use absolute Y position thresholds instead of ratio
     // This accounts for safe area insets and drag handle offset
     // Compact threshold: when top Y is around half screen height (~420pt on iPhone)
     // Expanded threshold: must be >= topYPosition at 0.15 split (safeAreaTop + 0.15*containerHeight + dragHandle ≈ 180-205pt depending on device)
-    let compactYThreshold: CGFloat = screenHeight * 0.48
-    let expandedYThreshold: CGFloat = screenHeight * 0.26
+    let compactYThreshold: CGFloat = sceneHeight * 0.48
+    let expandedYThreshold: CGFloat = sceneHeight * 0.26
 
     if topYPosition >= compactYThreshold {
       return minDrawingSize
@@ -432,7 +432,6 @@ struct EntryEditingView: View {
             .onAppear {
               let frame = geometry.frame(in: .global)
               topYPosition = frame.minY
-              screenHeight = UIScreen.main.bounds.height
               containerWidth = frame.width
             }
             .onChange(of: geometry.frame(in: .global)) { _, newFrame in

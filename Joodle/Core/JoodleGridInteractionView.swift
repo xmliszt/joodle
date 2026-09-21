@@ -69,6 +69,8 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
   /// The geometry proxy for coordinate calculations
   let geometry: GeometryProxy
 
+  @Environment(\.layoutSpec) private var layoutSpec
+
   /// Binding to scrubbing state
   @Binding var isScrubbing: Bool
 
@@ -132,7 +134,8 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
   private var itemsSpacing: CGFloat {
     CalendarGridHelper.calculateSpacing(
       containerWidth: geometry.size.width,
-      viewMode: dataProvider.viewMode
+      viewMode: dataProvider.viewMode,
+      horizontalPadding: layoutSpec.gridHorizontalPadding
     )
   }
 
@@ -216,6 +219,7 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
       at: location,
       containerWidth: geometry.size.width,
       viewMode: dataProvider.viewMode,
+      horizontalPadding: layoutSpec.gridHorizontalPadding,
       year: dataProvider.selectedYear,
       items: dataProvider.itemsInYear,
       horizontalPaddingAdjustment: true
@@ -238,6 +242,7 @@ enum JoodleGestureHandlers {
   /// - Parameters:
   ///   - dataProvider: The data provider
   ///   - geometry: GeometryProxy for hit testing calculations
+  ///   - gridHorizontalPadding: Side padding of the grid (`LayoutSpec.gridHorizontalPadding`)
   ///   - highlightedId: Binding to the currently highlighted item ID
   ///   - isScrubbing: Binding to the scrubbing state
   ///   - customHitTestFunction: Optional O(1) hit test function (for ContentView)
@@ -247,6 +252,7 @@ enum JoodleGestureHandlers {
   static func createScrubbingCallbacks<DataProvider: JoodleDataProvider>(
     dataProvider: DataProvider,
     geometry: GeometryProxy,
+    gridHorizontalPadding: CGFloat,
     highlightedId: Binding<String?>,
     isScrubbing: Binding<Bool>,
     customHitTestFunction: HitTestFunction? = nil,
@@ -263,6 +269,7 @@ enum JoodleGestureHandlers {
         at: location,
         containerWidth: geometry.size.width,
         viewMode: dataProvider.viewMode,
+        horizontalPadding: gridHorizontalPadding,
         year: dataProvider.selectedYear,
         items: dataProvider.itemsInYear,
         horizontalPaddingAdjustment: true
@@ -329,6 +336,7 @@ enum JoodleGestureHandlers {
           at: location,
           containerWidth: geometry.size.width,
           viewMode: dataProvider.viewMode,
+          horizontalPadding: gridHorizontalPadding,
           year: dataProvider.selectedYear,
           items: dataProvider.itemsInYear,
           horizontalPaddingAdjustment: true

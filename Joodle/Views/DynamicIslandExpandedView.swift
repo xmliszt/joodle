@@ -72,10 +72,6 @@ private enum DIConfig {
 
   // MARK: Container chrome
 
-  /// Inner padding between the container edge and its content, in points. Drives
-  /// the content's concentric corner radius (`containerRadius - this`).
-  static let contentInnerPaddingPt: CGFloat = 8
-
   /// Dimming of the backdrop behind the expanded container (0 = none).
   static let backdropDimOpacity: Double = 0.5
 
@@ -97,15 +93,13 @@ private enum DIConfig {
   static let bloomBlurPt: CGFloat = 6
   static let bloomYOffsetPt: CGFloat = 6
   static let bloomOpacity: Double =  0.7
-
-  /// Horizontal inset from the screen edges on non-Dynamic-Island devices, in
-  /// points (DI devices derive it from the cutout frame instead).
-  static let nonDIHorizontalInsetPt: CGFloat = 10
 }
 
 struct DynamicIslandExpandedView<Content: View>: View {
 
   @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.layoutContext) private var layoutContext
+  @Environment(\.layoutSpec) private var layoutSpec
   @Binding var isExpanded: Bool
   let content: Content
   let hidden: Bool
@@ -162,42 +156,25 @@ struct DynamicIslandExpandedView<Content: View>: View {
   // On Dynamic Island devices the floating container hides behind the DI
   // cutout when collapsed. On notch / non-cutout devices there's no pill to
   // hide behind, so the container starts just below the top safe area and
-  // collapses to zero size when hidden.
+  // collapses to zero size when hidden. All of that geometry is resolved by
+  // the layout spec, shared with the canvas inside so both agree on it.
 
-  /// Symmetric inset used as the horizontal padding between the container and
-  /// the device's screen edges. Picked to keep the container corner radius
-  /// concentric with the device's screen corners.
-  private var containerHorizontalInset: CGFloat {
-    if UIDevice.hasDynamicIsland {
-      return UIDevice.dynamicIslandFrame.origin.y
-    } else {
-      return DIConfig.nonDIHorizontalInsetPt
-    }
+  private var metrics: CanvasContainerMetrics {
+    layoutSpec.canvasContainer(in: layoutContext)
   }
 
   /// Y offset where the top edge of the floating container starts.
-  private var containerTopOffset: CGFloat {
-    if UIDevice.hasDynamicIsland {
-      return UIDevice.dynamicIslandFrame.origin.y
-    } else {
-      // Land just below the notch / status bar area.
-      return UIDevice.topSafeAreaInset
-    }
-  }
+  private var containerTopOffset: CGFloat { metrics.topOffset }
 
   /// Height reserved at the top of the container so the content doesn't draw
   /// under the DI cutout. Zero on non-DI devices since the container starts
   /// below the notch.
-  private var topContentInset: CGFloat {
-    UIDevice.hasDynamicIsland ? UIDevice.dynamicIslandSize.height : 0
-  }
+  private var topContentInset: CGFloat { metrics.topContentInset }
 
   /// Size of the collapsed container. On DI devices this matches the DI
   /// capsule so it tucks behind the cutout. On non-DI devices we collapse
   /// to zero — there's no cutout to align with.
-  private var collapsedSize: CGSize {
-    UIDevice.hasDynamicIsland ? UIDevice.dynamicIslandSize : .zero
-  }
+  private var collapsedSize: CGSize { metrics.collapsedSize }
 
   /// Liquid Glass rendered inside a zero-size frame aborts the entire view's
   /// render on iOS 26 — on non-DI devices (e.g. iPhone SE) the collapsed
@@ -208,19 +185,13 @@ struct DynamicIslandExpandedView<Content: View>: View {
     isExpanded || collapsedSize != .zero
   }
 
-  /// Outer container corner radius, concentric with the device screen.
-  private var containerCornerRadius: CGFloat {
-    max(UIDevice.screenCornerRadius - containerHorizontalInset, 0)
-  }
+  /// Outer container corners, each concentric with the device corner it hugs.
+  private var containerCornerRadii: RectangleCornerRadii { metrics.cornerRadii }
 
   /// Content clip corner radius — accounts for the inner padding.
-  private var contentCornerRadius: CGFloat {
-    max(containerCornerRadius - DIConfig.contentInnerPaddingPt, 0)
-  }
+  private var contentCornerRadius: CGFloat { metrics.contentCornerRadius }
 
-  private var expandedContentWidth: CGFloat {
-    UIScreen.main.bounds.width - (containerHorizontalInset * 2)
-  }
+  private var expandedContentWidth: CGFloat { metrics.expandedWidth }
 
   /// Corner radius of the DI cutout itself — a capsule, so the radius is half
   /// the cutout height. The collapsed container matches this exactly so it tucks
@@ -229,14 +200,16 @@ struct DynamicIslandExpandedView<Content: View>: View {
     collapsedSize.height / 2
   }
 
-  private var containerShape: RoundedRectangle {
+  private var containerShape: UnevenRoundedRectangle {
     // While collapsed the radius matches the DI capsule (half the cutout
     // height) so the shape tucks exactly behind the cutout. On expand it
-    // animates up to the screen-concentric radius; on collapse it animates
+    // animates up to the screen-concentric radii; on collapse it animates
     // back down to the capsule radius so the corners never grow larger than
     // the cutout and leak out around it.
-    RoundedRectangle(
-      cornerRadius: isExpanded ? containerCornerRadius : collapsedCornerRadius,
+    UnevenRoundedRectangle(
+      cornerRadii: isExpanded
+        ? containerCornerRadii
+        : RectangleCornerRadii(uniform: collapsedCornerRadius),
       style: .continuous
     )
   }
@@ -334,8 +307,8 @@ struct DynamicIslandExpandedView<Content: View>: View {
                   .clear,
                   in: UnevenRoundedRectangle(
                     cornerRadii: .init(
-                      bottomLeading: containerCornerRadius,
-                      bottomTrailing: containerCornerRadius
+                      bottomLeading: containerCornerRadii.bottomLeading,
+                      bottomTrailing: containerCornerRadii.bottomTrailing
                     ),
                     style: .continuous
                   )
@@ -449,7 +422,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
         .tutorialHighlightAnchor(
           tutorialAnchorID ?? "",
           isEnabled: tutorialAnchorID != nil,
-          cornerRadius: containerCornerRadius
+          cornerRadius: containerCornerRadii.maxRadius
         )
         // Reflective bloom: a soft oval glow placed BEHIND the container and
         // anchored to its bottom edge. The container's opaque black top covers
@@ -509,7 +482,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
     }
     .ignoresSafeArea(.all, edges: .vertical)
     // Define hit zone
-    .contentShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
+    .contentShape(UnevenRoundedRectangle(cornerRadii: layoutContext.cornerRadii, style: .continuous))
     // Only receive hit test when expanded. This must stay enabled even when
     // backdrop-tap dismiss is off: the container still needs to absorb taps in
     // the backdrop region (so they don't fall through to the view behind) and

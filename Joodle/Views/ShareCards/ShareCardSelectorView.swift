@@ -21,6 +21,7 @@ struct ShareCardSelectorView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.modelContext) private var modelContext
+  @Environment(\.layoutContext) private var layoutContext
 
   @State private var selectedStyle: ShareCardStyle = .minimal
   @State private var isSharing = false
@@ -276,7 +277,7 @@ struct ShareCardSelectorView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(.appAccent)
-                .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
+                .clipShape(RoundedRectangle(cornerRadius: layoutContext.displayCornerRadius))
               }
               .glassEffect(.regular.interactive())
               .disabled(isSharing || shareItem != nil || isExportingAnimated)
@@ -289,7 +290,7 @@ struct ShareCardSelectorView: View {
 
             }
           }
-          .padding(.horizontal, UIDevice.screenCornerRadius / 2)
+          .padding(.horizontal, layoutContext.displayCornerRadius / 2)
         } else {
           HStack(spacing: 12) {
             themeToggleButton
@@ -316,7 +317,7 @@ struct ShareCardSelectorView: View {
               .frame(maxWidth: .infinity)
               .frame(height: 56)
               .background(.appAccent)
-              .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
+              .clipShape(RoundedRectangle(cornerRadius: layoutContext.displayCornerRadius))
             }
             .disabled(isSharing || shareItem != nil || isExportingAnimated)
 
@@ -326,7 +327,7 @@ struct ShareCardSelectorView: View {
             }
 
           }
-          .padding(.horizontal, UIDevice.screenCornerRadius / 2)
+          .padding(.horizontal, layoutContext.displayCornerRadius / 2)
         }
       }
       .background(Color.backgroundColor)
@@ -417,7 +418,7 @@ struct ShareCardSelectorView: View {
         .font(.appFont(size: 18, weight: .semibold))
         .foregroundColor(.textColor)
         .frame(width: 56, height: 56)
-        .contentShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
+        .contentShape(RoundedRectangle(cornerRadius: layoutContext.displayCornerRadius))
     }
   }
 
@@ -443,7 +444,7 @@ struct ShareCardSelectorView: View {
       }
       .frame(width: 56, height: 56)
       .background(instagramGradient)
-      .clipShape(RoundedRectangle(cornerRadius: UIDevice.screenCornerRadius))
+      .clipShape(RoundedRectangle(cornerRadius: layoutContext.displayCornerRadius))
     }
     .featureTip(FeatureTipDefinitions.AnchorID.instagramShare)
   }

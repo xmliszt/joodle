@@ -14,6 +14,7 @@ struct InteractiveTutorialView: View {
     // Tutorial state
     @StateObject private var coordinator: TutorialCoordinator
     @StateObject private var mockStore: MockDataStore
+    @Environment(\.layoutSpec) private var layoutSpec
 
     // Animation state
     @State private var hasAnimatedIn = false
@@ -597,7 +598,7 @@ struct InteractiveTutorialView: View {
             viewMode: mockStore.viewMode,
             year: mockStore.selectedYear
         )
-      let x = GRID_HORIZONTAL_PADDING + CGFloat(col) * (dotSize + itemsSpacing) - dotSize * 1.5
+      let x = layoutSpec.gridHorizontalPadding + CGFloat(col) * (dotSize + itemsSpacing) - dotSize * 1.5
       let y = CGFloat(row) * (dotSize + itemsSpacing) - dotSize * 1.5
 
         // Position a small anchor view exactly at today's entry location
@@ -1047,7 +1048,11 @@ struct InteractiveTutorialView: View {
     // MARK: - Helper Methods
 
     private func calculateSpacing(containerWidth: CGFloat, viewMode: ViewMode) -> CGFloat {
-        CalendarGridHelper.calculateSpacing(containerWidth: containerWidth, viewMode: viewMode)
+        CalendarGridHelper.calculateSpacing(
+            containerWidth: containerWidth,
+            viewMode: viewMode,
+            horizontalPadding: layoutSpec.gridHorizontalPadding
+        )
     }
 
     /// Get item ID at a location - matches ContentView's implementation
@@ -1057,6 +1062,7 @@ struct InteractiveTutorialView: View {
             at: location,
             containerWidth: geometry.size.width,
             viewMode: mockStore.viewMode,
+            horizontalPadding: layoutSpec.gridHorizontalPadding,
             year: mockStore.selectedYear,
             items: mockStore.itemsInYear,
             horizontalPaddingAdjustment: true

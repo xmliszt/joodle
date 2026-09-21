@@ -646,6 +646,10 @@ struct JoodleApp: App {
             }
         }
       }
+      // Publishes the scene's geometry (size, safe area, cutout, corner radii)
+      // as `layoutContext` / `layoutSpec` for every branch above — onboarding,
+      // the launch screen and the main content alike.
+      .layoutContextProvider()
       // A screen that commits to one scheme (the paywall) takes the window with
       // it, so the status bar and other system chrome match what it renders.
       .preferredColorScheme(chrome.forcedColorScheme ?? colorScheme)
