@@ -100,6 +100,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.layoutContext) private var layoutContext
   @Environment(\.layoutSpec) private var layoutSpec
+  @Environment(\.canvasDockFrame) private var canvasDockFrame
   @Binding var isExpanded: Bool
   let content: Content
   let hidden: Bool
@@ -160,7 +161,17 @@ struct DynamicIslandExpandedView<Content: View>: View {
   // the layout spec, shared with the canvas inside so both agree on it.
 
   private var metrics: CanvasContainerMetrics {
-    layoutSpec.canvasContainer(in: layoutContext)
+    layoutSpec.canvasContainer(in: layoutContext, dockedTo: canvasDockFrame)
+  }
+
+  /// The status bar hides only where the container tucks up beside it (an
+  /// island or a notch). Elsewhere hiding it would drop the top safe-area
+  /// inset and shift the whole scene under the opening canvas.
+  private var hidesStatusBarWhenExpanded: Bool {
+    switch layoutContext.cutout {
+    case .dynamicIsland, .notch: return true
+    case .none, .cameraHole: return false
+    }
   }
 
   /// Height reserved at the top of the container so the content doesn't draw
@@ -514,7 +525,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
       onDismiss?()
     }
     // Hide status bar when expanded
-    .statusBarHidden(isExpanded)
+    .statusBarHidden(isExpanded && hidesStatusBarWhenExpanded)
     .if(self.hidden) { view in
       view.hidden()
     }

@@ -59,17 +59,14 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   @State private var MIN_SPLIT_POSITION: CGFloat = 0.0
   /// The furthest the grid panel can grow
   @State private var MAX_SPLIT_POSITION: CGFloat = 1.0
-  /// Compensate corner radius so it is just a bit smaller than device actual radius
-  private let CORNER_RADIUS_COMPENSATION: CGFloat = 5
-
   private var axis: Axis { layoutSpec.splitAxis }
 
   /// Panel corners stay a little smaller than the device corners they echo, so
   /// they read as concentric, and on a screen with asymmetric corners (iPhone
   /// Duo cover) each side follows its own. `ScreenHardware` floors flat
   /// displays, so these stay positive.
-  private func panelRadius(_ screenRadius: CGFloat) -> CGFloat {
-    max(screenRadius - CORNER_RADIUS_COMPENSATION, 0)
+  private var panelRadii: RectangleCornerRadii {
+    layoutSpec.splitPanelCornerRadii(in: layoutContext)
   }
 
   var body: some View {
@@ -159,6 +156,15 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
           bottomView
             .frame(width: secondarySize.width, height: secondarySize.height, alignment: .topLeading)
             .clipShape(secondaryClipShape)
+            // Published so the floating canvas can dock inside this panel on
+            // a side-by-side split. Nil while the panel is collapsed away.
+            .background(
+              GeometryReader { proxy in
+                Color.clear.preference(
+                  key: SplitEntryPanelFramePreferenceKey.self,
+                  value: hasBottomView && secondaryExtent > 0 ? proxy.frame(in: .global) : nil)
+              }
+            )
         }
       }
       .coordinateSpace(name: "splitContainer")
@@ -217,34 +223,34 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   /// the radius collapses to 0 so the device's hardware corner mask does the
   /// rounding, instead of self-carving a notch that reveals the accent behind.
   private func primaryClipShape(secondaryExtent: CGFloat) -> UnevenRoundedRectangle {
-    let radii = layoutContext.cornerRadii
+    let radii = panelRadii
     switch axis {
     case .vertical:
       return UnevenRoundedRectangle(
-        bottomLeadingRadius: min(panelRadius(radii.bottomLeading), secondaryExtent),
-        bottomTrailingRadius: min(panelRadius(radii.bottomTrailing), secondaryExtent),
+        bottomLeadingRadius: min(radii.bottomLeading, secondaryExtent),
+        bottomTrailingRadius: min(radii.bottomTrailing, secondaryExtent),
         style: .continuous)
     case .horizontal:
       return UnevenRoundedRectangle(
-        bottomTrailingRadius: min(panelRadius(radii.bottomTrailing), secondaryExtent),
-        topTrailingRadius: min(panelRadius(radii.topTrailing), secondaryExtent),
+        bottomTrailingRadius: min(radii.bottomTrailing, secondaryExtent),
+        topTrailingRadius: min(radii.topTrailing, secondaryExtent),
         style: .continuous)
     }
   }
 
   private var secondaryClipShape: UnevenRoundedRectangle {
-    let radii = layoutContext.cornerRadii
+    let radii = panelRadii
     switch axis {
     case .vertical:
       // Echoes the device's bottom corners: the panel sits over the lower half.
       return UnevenRoundedRectangle(
-        topLeadingRadius: panelRadius(radii.bottomLeading),
-        topTrailingRadius: panelRadius(radii.bottomTrailing),
+        topLeadingRadius: radii.bottomLeading,
+        topTrailingRadius: radii.bottomTrailing,
         style: .continuous)
     case .horizontal:
       return UnevenRoundedRectangle(
-        topLeadingRadius: panelRadius(radii.topLeading),
-        bottomLeadingRadius: panelRadius(radii.bottomLeading),
+        topLeadingRadius: radii.topLeading,
+        bottomLeadingRadius: radii.bottomLeading,
         style: .continuous)
     }
   }
@@ -283,6 +289,14 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         }
       }
     }
+  }
+}
+
+/// Global frame of the entry panel while it is showing; nil otherwise.
+struct SplitEntryPanelFramePreferenceKey: PreferenceKey {
+  static var defaultValue: CGRect? = nil
+  static func reduce(value: inout CGRect?, nextValue: () -> CGRect?) {
+    if let next = nextValue() { value = next }
   }
 }
 

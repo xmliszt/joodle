@@ -55,6 +55,15 @@ struct LayoutSpec: Equatable {
   /// Positions the drag handle settles on; 1.0 is grid fullscreen.
   var splitSnapPositions: [CGFloat] { [splitExpandedPosition, splitDefaultPosition, 1.0] }
 
+  /// How much smaller the split panels' corners are than the screen corners
+  /// they echo, so they read as concentric.
+  var splitPanelCornerCompensation: CGFloat = 5
+
+  /// Corner radii of the split panels, per screen corner.
+  func splitPanelCornerRadii(in context: LayoutContext) -> RectangleCornerRadii {
+    context.cornerRadii.inset(by: splitPanelCornerCompensation)
+  }
+
   /// Side inset of the floating canvas container on screens without an island
   /// (island devices derive it from the cutout frame instead).
   var canvasContainerInsetWithoutIsland: CGFloat = 10
@@ -72,6 +81,12 @@ struct LayoutSpec: Equatable {
   var canvasDisplayMaxSide: CGFloat = 0
   /// Smallest gap kept between the displayed canvas and the container edge.
   var canvasMinSideInset: CGFloat = 16
+  /// On a side-by-side split the container docks inside the entry column,
+  /// this far from the column's edges.
+  var canvasDockInset: CGFloat = 12
+  /// Floor for the docked container's corner radius where the column's own
+  /// corners are too tight to stay concentric (iPads echo an 18pt screen).
+  var canvasDockMinCornerRadius: CGFloat = 16
 
   /// Side of the displayed canvas square inside a container of `containerWidth`.
   func canvasDisplaySide(containerWidth: CGFloat) -> CGFloat {
@@ -112,6 +127,7 @@ struct LayoutSpec: Equatable {
       spec.yearModeColumns = 24
       spec.canvasContainerMaxWidth = 480
       spec.canvasDisplayMaxSide = 448
+      spec.canvasContainerInsetWithoutIsland = 24
     case .wide:
       // Grid leading, entry panel trailing.
       spec.splitAxis = .horizontal
@@ -121,6 +137,9 @@ struct LayoutSpec: Equatable {
       spec.yearModeColumns = 24
       spec.canvasContainerMaxWidth = 480
       spec.canvasDisplayMaxSide = 448
+      // With the status bar hidden behind the open canvas these screens have
+      // no top inset, so the seat needs its own breathing room.
+      spec.canvasContainerInsetWithoutIsland = 24
     }
     return spec
   }
@@ -155,7 +174,14 @@ struct CanvasContainerMetrics: Equatable {
 }
 
 extension LayoutSpec {
-  func canvasContainer(in context: LayoutContext) -> CanvasContainerMetrics {
+  /// Container geometry. `dock` is the entry panel's frame in scene
+  /// coordinates; on a side-by-side split the container lives inside it,
+  /// concentric with the panel's rounded leading corners, instead of
+  /// floating over the scene's center.
+  func canvasContainer(in context: LayoutContext, dockedTo dock: CGRect? = nil) -> CanvasContainerMetrics {
+    if splitAxis == .horizontal, let dock, dock.width > canvasDockInset * 2 {
+      return dockedCanvasContainer(in: context, panel: dock)
+    }
     let island = context.cutout.dynamicIslandFrame
     let concealing = context.cutout.concealingFrame
     let edgeInset = island?.origin.y ?? canvasContainerInsetWithoutIsland
@@ -184,6 +210,33 @@ extension LayoutSpec {
       expandedCenterX: safeCenterX
     )
   }
+
+  private func dockedCanvasContainer(in context: LayoutContext, panel: CGRect) -> CanvasContainerMetrics {
+    let available = panel.width - canvasDockInset * 2
+    let expandedWidth = canvasContainerMaxWidth > 0 ? min(canvasContainerMaxWidth, available) : available
+    // Concentric with the panel's leading corners: the same radius minus the
+    // gap between them, floored where the panel is nearly square.
+    let panelRadius = splitPanelCornerRadii(in: context).topLeading
+    let cornerRadius = max(panelRadius - canvasDockInset, canvasDockMinCornerRadius)
+    let cornerRadii = RectangleCornerRadii(uniform: cornerRadius)
+    return CanvasContainerMetrics(
+      horizontalInset: (panel.width - expandedWidth) / 2,
+      topOffset: panel.minY + canvasDockInset,
+      topContentInset: 0,
+      collapsedFrame: context.cutout.concealingFrame,
+      cornerRadii: cornerRadii,
+      contentCornerRadius: max(cornerRadius - canvasContainerContentPadding, 0),
+      expandedWidth: expandedWidth,
+      expandedCenterX: panel.midX
+    )
+  }
+}
+
+extension EnvironmentValues {
+  /// Frame of the entry panel in scene coordinates, published by the split so
+  /// the floating canvas can dock inside it on a side-by-side layout. Nil
+  /// while the panel is hidden or the split is stacked.
+  @Entry var canvasDockFrame: CGRect? = nil
 }
 
 extension EnvironmentValues {

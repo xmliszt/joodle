@@ -118,12 +118,13 @@ struct LayoutPreset: Identifiable, Equatable {
     modelName: "iPad mini (A17 Pro)", idiom: .pad, reportedCornerRadius: 18,
     verified: false)
 
+  /// Measured on the iOS 27 simulator: 32pt status bar, 20pt home indicator.
   static let iPadPro11 = LayoutPreset(
     id: "ipad-pro-11", name: "iPad Pro 11″",
     size: CGSize(width: 834, height: 1210),
-    safeArea: EdgeInsets(top: 24, leading: 0, bottom: 20, trailing: 0),
+    safeArea: EdgeInsets(top: 32, leading: 0, bottom: 20, trailing: 0),
     modelName: "iPad Pro (11-inch) (M5)", idiom: .pad, reportedCornerRadius: 18,
-    verified: false)
+    verified: true)
 
   static let iPadPro13 = LayoutPreset(
     id: "ipad-pro-13", name: "iPad Pro 13″",

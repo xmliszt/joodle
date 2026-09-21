@@ -177,8 +177,10 @@ struct DrawingCanvasView: View {
 
   /// Geometry of the floating container this canvas sits in, shared with
   /// `DynamicIslandExpandedView` so both agree on insets and rounding.
+  @Environment(\.canvasDockFrame) private var canvasDockFrame
+
   private var containerMetrics: CanvasContainerMetrics {
-    layoutSpec.canvasContainer(in: layoutContext)
+    layoutSpec.canvasContainer(in: layoutContext, dockedTo: canvasDockFrame)
   }
 
   /// Canvas corner radius, concentric with the floating container's border.

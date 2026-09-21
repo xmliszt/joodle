@@ -58,6 +58,9 @@ struct ContentView: View {
   // --- END MOVE DRAWING STATE ---
 
   @State private var yearGridViewSize: CGSize = .zero
+  /// Entry panel frame in scene coordinates, from the split. On a
+  /// side-by-side layout the floating canvas docks inside it.
+  @State private var entryPanelFrame: CGRect?
   @State private var scrollProxy: ScrollViewProxy?
   @State private var showDrawingCanvas: Bool = false
   /// Which doodle slot the drawing canvas should edit / create. Set from the
@@ -514,10 +517,17 @@ struct ContentView: View {
             },
             isInMoveMode: isMovingDrawing
           )
-          // On a side-by-side split the header belongs to the grid column.
+          // On a side-by-side split the header belongs to the grid column, and
+          // follows the column's rounded trailing corner so the panel reads
+          // the same at the top as at the bottom.
           .frame(
             width: layoutSpec.splitAxis == .horizontal && yearGridViewSize.width > 0
               ? yearGridViewSize.width : nil)
+          .clipShape(
+            UnevenRoundedRectangle(
+              topTrailingRadius: layoutSpec.splitAxis == .horizontal
+                ? layoutSpec.splitPanelCornerRadii(in: layoutContext).topTrailing : 0,
+              style: .continuous))
           .frame(maxWidth: .infinity, alignment: .leading)
         }
       }
@@ -595,6 +605,7 @@ struct ContentView: View {
         // play; the canvas reloads the correct slot via its onChange(of: isShowing)
         // → loadExistingDrawing(), which reads the current doodleIndex.
         .id("DynamicIslandExpandedView-\(dataProvider.selectedDateItem?.id ?? "none")")
+        .environment(\.canvasDockFrame, entryPanelFrame)
       }
 
       // Note editing popup — shown when user taps the note area in EntryEditingView
@@ -940,6 +951,9 @@ struct ContentView: View {
     // stay clear of it.
     .onPreferenceChange(DIContainerFramePreferenceKey.self) { frame in
       canvasContainerBottomY = frame.maxY
+    }
+    .onPreferenceChange(SplitEntryPanelFramePreferenceKey.self) { frame in
+      entryPanelFrame = frame
     }
     .postHogScreenView("Home")
     .alert("Subscription Ended", isPresented: $subscriptionManager.subscriptionJustExpired) {

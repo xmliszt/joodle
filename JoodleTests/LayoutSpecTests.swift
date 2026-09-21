@@ -271,6 +271,35 @@ struct LayoutSpecTests {
     #expect(metrics.collapsedSize == .zero)
   }
 
+  @Test func sideBySideContainerDocksInsideTheEntryPanel() {
+    let context = LayoutPreset.duoInnerLandscape.context
+    let spec = LayoutSpec.resolve(context)
+    let panel = CGRect(x: 496, y: 0, width: 455, height: 669)  // trailing column at a 50 % split
+    let metrics = spec.canvasContainer(in: context, dockedTo: panel)
+    #expect(metrics.expandedWidth == 431)  // 455 - 2 × 12, under the 480 cap
+    #expect(metrics.expandedCenterX == panel.midX)
+    #expect(metrics.topOffset == 12)
+    // Panel corners are 55 - 5 = 50; the container sits 12 inside → 38.
+    #expect(metrics.cornerRadii == RectangleCornerRadii(uniform: 38))
+    #expect(metrics.contentCornerRadius == 30)
+  }
+
+  @Test func dockedContainerFloorsItsRadiusOnNearlySquarePanels() {
+    let context = LayoutPreset.iPadPro11.rotated().context
+    let spec = LayoutSpec.resolve(context)
+    let panel = CGRect(x: 615, y: 0, width: 595, height: 834)
+    let metrics = spec.canvasContainer(in: context, dockedTo: panel)
+    #expect(metrics.expandedWidth == 480)  // capped
+    #expect(metrics.cornerRadii == RectangleCornerRadii(uniform: 16))  // 18 - 5 - 12 < floor
+  }
+
+  @Test func stackedSplitIgnoresTheDockFrame() {
+    let context = LayoutPreset.iPhone17.context
+    let spec = LayoutSpec.resolve(context)
+    let panel = CGRect(x: 0, y: 437, width: 402, height: 437)
+    #expect(spec.canvasContainer(in: context, dockedTo: panel) == spec.canvasContainer(in: context))
+  }
+
   @Test func capWiderThanTheSceneIsIgnored() {
     var spec = LayoutSpec.resolve(LayoutPreset.iPhone17.context)
     spec.canvasContainerMaxWidth = 900
