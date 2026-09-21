@@ -130,7 +130,7 @@ struct LayoutSpecTests {
     let spec = LayoutSpec.resolve(LayoutPreset.duoInnerPortrait.context)
     #expect(spec.splitAxis == .vertical)
     #expect(spec.gridMaxWidth == 520)
-    #expect(spec.canvasContainerMaxWidth == 400)
+    #expect(spec.canvasContainerMaxWidth == 480)
     #expect(LayoutSpec.resolve(LayoutPreset.iPadMini.context) == spec)
   }
 
@@ -150,6 +150,37 @@ struct LayoutSpecTests {
     #expect(spec.splitAxis == .horizontal)
     spec.splitAxisValue = 0
     #expect(spec.splitAxis == .vertical)
+  }
+
+  // MARK: - Columns and canvas display side
+
+  @Test func phonesKeepSixteenYearColumnsAndTheStockCanvas() {
+    let spec = LayoutSpec.resolve(LayoutPreset.iPhone17.context)
+    #expect(spec.columns(for: .now) == 7)
+    #expect(spec.columns(for: .year) == 16)
+    #expect(spec.canvasDisplaySide(containerWidth: 374) == CANVAS_SIZE)
+    #expect(spec.canvasDisplaySide(containerWidth: 900) == CANVAS_SIZE)
+  }
+
+  @Test func wideShapesGetMoreYearColumnsAndALargerCanvas() {
+    let context = LayoutPreset.duoInnerLandscape.context
+    let spec = LayoutSpec.resolve(context)
+    #expect(spec.columns(for: .now) == 7)  // a week is a week
+    #expect(spec.columns(for: .year) == 24)
+    let metrics = spec.canvasContainer(in: context)
+    #expect(metrics.expandedWidth == 480)
+    #expect(spec.canvasDisplaySide(containerWidth: metrics.expandedWidth) == 448)
+    // Never below the stroke space, never within the minimum inset of the edge.
+    #expect(spec.canvasDisplaySide(containerWidth: 300) == CANVAS_SIZE)
+    #expect(spec.canvasDisplaySide(containerWidth: 420) == 388)
+  }
+
+  @Test func gridHelperHonorsTheColumnCount() {
+    let position = CalendarGridHelper.gridPosition(forItemIndex: 30, viewMode: .year, columns: 24, year: 2026)
+    #expect(position.row == 1)
+    #expect(position.col == 6)
+    #expect(CalendarGridHelper.totalRows(forItemCount: 365, viewMode: .year, columns: 24, year: 2026) == 16)
+    #expect(CalendarGridHelper.itemIndex(forRow: 1, col: 6, viewMode: .year, columns: 24, year: 2026) == 30)
   }
 
   // MARK: - Grid padding cap
@@ -222,8 +253,8 @@ struct LayoutSpecTests {
     let context = LayoutPreset.duoInnerLandscape.context
     let spec = LayoutSpec.resolve(context)
     let metrics = spec.canvasContainer(in: context)
-    #expect(metrics.expandedWidth == 400)
-    #expect(metrics.horizontalInset == 275.5)  // (951 - 400) / 2
+    #expect(metrics.expandedWidth == 480)
+    #expect(metrics.horizontalInset == 235.5)  // (951 - 480) / 2
     #expect(metrics.cornerRadii == RectangleCornerRadii(uniform: spec.canvasContainerFloatingCornerRadius))
     #expect(metrics.contentCornerRadius == spec.canvasContainerFloatingCornerRadius - 8)
     #expect(metrics.topOffset == context.safeArea.top)

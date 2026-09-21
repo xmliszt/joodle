@@ -106,6 +106,16 @@ struct SharedCanvasView<TrailingHeader: View>: View {
   var placeholderData: Data? = nil
   var buttonsConfig: CanvasButtonsConfig? = nil
   var canvasCornerRadius: CGFloat = 32
+  /// Side of the square the canvas is displayed at. Strokes always live in
+  /// the `CANVAS_SIZE` space; a larger display scales the whole surface up,
+  /// gestures included, so stored data never changes with the screen.
+  var displaySide: CGFloat = CANVAS_SIZE
+
+  private var displayScale: CGFloat { displaySide / CANVAS_SIZE }
+
+  /// The corner radius is given in display points; the surface is drawn in
+  /// canvas points and then scaled, so it takes the radius pre-scale.
+  private var innerCornerRadius: CGFloat { canvasCornerRadius / displayScale }
 
   /// Color for the strokes being drawn. Defaults to the global accent; the
   /// editor passes the date's month color so a doodle drawn under the rainbow
@@ -240,6 +250,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     placeholderData: Data? = nil,
     buttonsConfig: CanvasButtonsConfig? = nil,
     canvasCornerRadius: CGFloat = 32,
+    displaySide: CGFloat = CANVAS_SIZE,
     strokeColor: Color = .appAccent,
     backdropImage: UIImage? = nil,
     backdropZoom: CGFloat = 1.0,
@@ -273,6 +284,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
     self.placeholderData = placeholderData
     self.buttonsConfig = buttonsConfig
     self.canvasCornerRadius = canvasCornerRadius
+    self.displaySide = displaySide
     self.strokeColor = strokeColor
     self.backdropImage = backdropImage
     self.backdropZoom = backdropZoom
@@ -780,7 +792,7 @@ struct SharedCanvasView<TrailingHeader: View>: View {
         // shadow depth so its centerline (peak intensity) lands on the rect
         // edge; the container clip below removes the outer half, leaving a
         // one-directional gradient that fades purely inward.
-        RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous)
+        RoundedRectangle(cornerRadius: innerCornerRadius, style: .continuous)
           .stroke(Color.black.opacity(0.7), lineWidth: 8)
           .blur(radius: 4)
           .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
@@ -791,17 +803,22 @@ struct SharedCanvasView<TrailingHeader: View>: View {
         .compositingGroup()
         .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
         .mask(
-          RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous)
+          RoundedRectangle(cornerRadius: innerCornerRadius, style: .continuous)
             .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
         )
 
         // Border drawn on top of the clipped container so it remains visible
         // above the shutter / preview / inner shadow.
-        RoundedRectangle(cornerRadius: canvasCornerRadius, style: .continuous)
-          .strokeBorder(.borderColor, lineWidth: 1.0)
+        RoundedRectangle(cornerRadius: innerCornerRadius, style: .continuous)
+          .strokeBorder(.borderColor, lineWidth: 1.0 / displayScale)
           .frame(width: CANVAS_SIZE, height: CANVAS_SIZE)
           .allowsHitTesting(false)
       }
+      // Drawn in canvas points, shown at the display side. SwiftUI maps touch
+      // locations back through the scale, so the stroke gesture keeps
+      // receiving canvas-space points.
+      .scaleEffect(displayScale)
+      .frame(width: displaySide, height: displaySide)
     }
     .onAppear {
       decodePlaceholder()

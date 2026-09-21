@@ -17,6 +17,7 @@ enum LayoutToken: String, CaseIterable, Identifiable {
   case headerHeight
   case gridHorizontalPadding
   case gridMaxWidth
+  case yearModeColumns
   case splitAxis
   case splitDefaultPosition
   case splitExpandedPosition
@@ -25,6 +26,7 @@ enum LayoutToken: String, CaseIterable, Identifiable {
   case canvasContainerContentPadding
   case canvasContainerMaxWidth
   case canvasContainerFloatingCornerRadius
+  case canvasDisplayMaxSide
   case edgeControlBottomInset
   case shutterBottomInset
   case moveBarBottomInset
@@ -65,6 +67,7 @@ enum LayoutToken: String, CaseIterable, Identifiable {
     case .headerHeight: \.headerHeight
     case .gridHorizontalPadding: \.gridHorizontalPadding
     case .gridMaxWidth: \.gridMaxWidth
+    case .yearModeColumns: \.yearModeColumns
     case .splitAxis: \.splitAxisValue
     case .splitDefaultPosition: \.splitDefaultPosition
     case .splitExpandedPosition: \.splitExpandedPosition
@@ -73,6 +76,7 @@ enum LayoutToken: String, CaseIterable, Identifiable {
     case .canvasContainerContentPadding: \.canvasContainerContentPadding
     case .canvasContainerMaxWidth: \.canvasContainerMaxWidth
     case .canvasContainerFloatingCornerRadius: \.canvasContainerFloatingCornerRadius
+    case .canvasDisplayMaxSide: \.canvasDisplayMaxSide
     case .edgeControlBottomInset: \.edgeControlBottomInset
     case .shutterBottomInset: \.shutterBottomInset
     case .moveBarBottomInset: \.moveBarBottomInset
@@ -91,10 +95,12 @@ enum LayoutToken: String, CaseIterable, Identifiable {
     case .splitDismissPosition: Control(range: 0.4...0.95, step: 0.01, group: .split)
     case .gridHorizontalPadding: Control(range: 0...240, step: 2, group: .grid)
     case .gridMaxWidth: Control(range: 0...1200, step: 10, group: .grid)
+    case .yearModeColumns: Control(range: 8...40, step: 1, group: .grid)
     case .canvasContainerInsetWithoutIsland: Control(range: 0...60, step: 1, group: .canvas)
     case .canvasContainerContentPadding: Control(range: 0...32, step: 1, group: .canvas)
     case .canvasContainerMaxWidth: Control(range: 0...900, step: 10, group: .canvas)
     case .canvasContainerFloatingCornerRadius: Control(range: 0...80, step: 1, group: .canvas)
+    case .canvasDisplayMaxSide: Control(range: 0...900, step: 8, group: .canvas)
     case .edgeControlBottomInset: Control(range: 0...240, step: 2, group: .overlays)
     case .shutterBottomInset: Control(range: 0...160, step: 2, group: .overlays)
     case .moveBarBottomInset: Control(range: 0...160, step: 2, group: .overlays)
@@ -107,6 +113,7 @@ enum LayoutToken: String, CaseIterable, Identifiable {
     case .headerHeight: "Header height"
     case .gridHorizontalPadding: "Grid side padding"
     case .gridMaxWidth: "Grid max width (0 = none)"
+    case .yearModeColumns: "Year-view columns"
     case .splitAxis: "Split axis"
     case .splitDefaultPosition: "Split default"
     case .splitExpandedPosition: "Split expanded"
@@ -115,6 +122,7 @@ enum LayoutToken: String, CaseIterable, Identifiable {
     case .canvasContainerContentPadding: "Container content padding"
     case .canvasContainerMaxWidth: "Container max width (0 = span)"
     case .canvasContainerFloatingCornerRadius: "Container floating radius"
+    case .canvasDisplayMaxSide: "Canvas max side (0 = 342)"
     case .edgeControlBottomInset: "Edge controls bottom"
     case .shutterBottomInset: "Shutter bottom"
     case .moveBarBottomInset: "Move bar bottom"

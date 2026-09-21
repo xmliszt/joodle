@@ -1173,7 +1173,8 @@ struct ContentView: View {
     CalendarGridHelper.calculateSpacing(
       containerWidth: containerWidth,
       viewMode: viewMode,
-      horizontalPadding: layoutSpec.gridHorizontalPadding(forContainerWidth: containerWidth))
+      horizontalPadding: layoutSpec.gridHorizontalPadding(forContainerWidth: containerWidth),
+      columns: layoutSpec.columns(for: viewMode))
   }
 
   // MARK: User interactions
@@ -1244,9 +1245,10 @@ struct ContentView: View {
     let spacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: dataProvider.viewMode)
     let containerWidth =
       geometry.size.width - (2 * layoutSpec.gridHorizontalPadding(forContainerWidth: geometry.size.width))
-    let totalSpacingWidth = CGFloat(dataProvider.viewMode.dotsPerRow - 1) * spacing
+    let columns = layoutSpec.columns(for: dataProvider.viewMode)
+    let totalSpacingWidth = CGFloat(columns - 1) * spacing
     let totalDotWidth = containerWidth - totalSpacingWidth
-    let itemSpacing = totalDotWidth / CGFloat(dataProvider.viewMode.dotsPerRow)
+    let itemSpacing = totalDotWidth / CGFloat(columns)
 
     let rowHeight = dataProvider.viewMode.dotSize + spacing
     let colWidth = itemSpacing + spacing
@@ -1265,16 +1267,18 @@ struct ContentView: View {
     let numberOfRows = CalendarGridHelper.totalRows(
       forItemCount: dataProvider.itemsInYear.count,
       viewMode: dataProvider.viewMode,
+      columns: columns,
       year: dataProvider.selectedYear
     )
     hitTestingGrid = Array(
-      repeating: Array(repeating: nil, count: dataProvider.viewMode.dotsPerRow), count: numberOfRows)
+      repeating: Array(repeating: nil, count: columns), count: numberOfRows)
 
     for (index, item) in dataProvider.itemsInYear.enumerated() {
       // Use CalendarGridHelper for grid position (accounts for leading empty slots)
       let (row, col) = CalendarGridHelper.gridPosition(
         forItemIndex: index,
         viewMode: dataProvider.viewMode,
+        columns: columns,
         year: dataProvider.selectedYear
       )
       hitTestingGrid[row][col] = item.id
@@ -1291,6 +1295,7 @@ struct ContentView: View {
       containerWidth: geometry.size.width,
       viewMode: dataProvider.viewMode,
       horizontalPadding: layoutSpec.gridHorizontalPadding(forContainerWidth: geometry.size.width),
+      columns: layoutSpec.columns(for: dataProvider.viewMode),
       year: dataProvider.selectedYear,
       items: dataProvider.itemsInYear,
       horizontalPaddingAdjustment: false  // Already adjusted by adjustTouchLocationForGrid

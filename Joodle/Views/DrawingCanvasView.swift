@@ -186,13 +186,18 @@ struct DrawingCanvasView: View {
     containerMetrics.contentCornerRadius
   }
 
-  /// The left/right gap between the fixed-size canvas square and the floating
-  /// container edge. Because the canvas is a fixed `CANVAS_SIZE` square centered
-  /// in the container's inner width, the horizontal gap is the leftover
-  /// centering slack and varies per device. Reused as the bottom inset so the
-  /// canvas sits with equal left/right/bottom padding inside the container.
+  /// Side the canvas is displayed at: `CANVAS_SIZE` on phones, larger where
+  /// the spec allows (strokes stay in the 342pt space and scale for display).
+  private var canvasDisplaySide: CGFloat {
+    layoutSpec.canvasDisplaySide(containerWidth: containerMetrics.expandedWidth)
+  }
+
+  /// The left/right gap between the displayed canvas square and the floating
+  /// container edge: the leftover centering slack, which varies per device.
+  /// Reused as the bottom inset so the canvas sits with equal
+  /// left/right/bottom padding inside the container.
   private var canvasSideInset: CGFloat {
-    max((containerMetrics.expandedWidth - CANVAS_SIZE) / 2, 0)
+    max((containerMetrics.expandedWidth - canvasDisplaySide) / 2, 0)
   }
 
   /// Whether editing is allowed based on subscription status
@@ -320,6 +325,7 @@ struct DrawingCanvasView: View {
           isDrawing: $isDrawing,
           buttonsConfig: canvasButtonsConfig,
           canvasCornerRadius: canvasCornerRadius,
+          displaySide: canvasDisplaySide,
           strokeColor: Color.appDrawingColor(for: date),
           backdropImage: cameraBackdropImage,
           backdropZoom: isCameraFeatureActive ? cameraContext.backdropZoom : 1.0,

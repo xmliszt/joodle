@@ -15,6 +15,9 @@ struct InteractiveTutorialView: View {
     @StateObject private var coordinator: TutorialCoordinator
     @StateObject private var mockStore: MockDataStore
     @Environment(\.layoutSpec) private var layoutSpec
+    /// Width of the grid panel as the split last reported it; sizes the header
+    /// on a side-by-side split.
+    @State private var gridPanelWidth: CGFloat = 0
 
     // Animation state
     @State private var hasAnimatedIn = false
@@ -474,15 +477,17 @@ struct InteractiveTutorialView: View {
 
     @ViewBuilder
     private func tutorialContent(geometry: GeometryProxy) -> some View {
-        let itemsSpacing = calculateSpacing(
-            containerWidth: geometry.size.width,
-            viewMode: mockStore.viewMode
-        )
-
         ZStack(alignment: .top) {
             // Resizable split view with grid and entry editing
             ResizableSplitView(
                 top: {
+                    // The grid's own geometry, as in ContentView: on a
+                    // side-by-side split its column is narrower than the scene.
+                    GeometryReader { gridGeometry in
+                    let itemsSpacing = calculateSpacing(
+                        containerWidth: gridGeometry.size.width,
+                        viewMode: mockStore.viewMode
+                    )
                     // Year grid with ScrollViewReader for auto-scrolling
                     ScrollViewReader { proxy in
                         ScrollView(showsIndicators: false) {
@@ -492,14 +497,14 @@ struct InteractiveTutorialView: View {
                                 // Use shared JoodleGridInteractionView for gesture handling
                                 JoodleGridInteractionView(
                                     dataProvider: mockStore,
-                                    geometry: geometry,
+                                    geometry: gridGeometry,
                                     isScrubbing: $isScrubbing,
                                     highlightedId: highlightedId,
-                                    callbacks: createGridCallbacks(geometry: geometry),
+                                    callbacks: createGridCallbacks(geometry: gridGeometry),
                                     minimumPressDuration: 0.3,
                                     allowsHitTesting: true,
                                     overlayContent: AnyView(
-                                        todayEntryAnchorOverlay(geometry: geometry, itemsSpacing: itemsSpacing)
+                                        todayEntryAnchorOverlay(geometry: gridGeometry, itemsSpacing: itemsSpacing)
                                     ),
                                     isInMoveMode: mockStore.isInMoveMode,
                                     moveSourceDateString: mockStore.moveSourceDateString
@@ -516,6 +521,7 @@ struct InteractiveTutorialView: View {
                         .onAppear {
                             scrollProxy = proxy
                         }
+                    }
                     }
                 },
                 bottom: {
@@ -539,7 +545,8 @@ struct InteractiveTutorialView: View {
                 onBottomDismissed: {
                     mockStore.clearSelection()
                 },
-                onPrimarySizeChange: { _ in
+                onPrimarySizeChange: { size in
+                    gridPanelWidth = size.width
                     // When bottom view appears/resizes, scroll to keep selected entry visible
                     scrollToSelectedEntry()
                 },
@@ -555,6 +562,11 @@ struct InteractiveTutorialView: View {
                 highlightedItemId: highlightedId,
                 entries: mockEntriesToDayEntries()
             )
+            // On a side-by-side split the header belongs to the grid column.
+            .frame(
+                width: layoutSpec.splitAxis == .horizontal && gridPanelWidth > 0
+                    ? gridPanelWidth : nil)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         // Reminder sheet - using real view with mock store
         .sheet(isPresented: $showReminderSheet) {
@@ -596,6 +608,7 @@ struct InteractiveTutorialView: View {
         let (row, col) = CalendarGridHelper.gridPosition(
             forItemIndex: todayIndex,
             viewMode: mockStore.viewMode,
+            columns: layoutSpec.columns(for: mockStore.viewMode),
             year: mockStore.selectedYear
         )
       let x = layoutSpec.gridHorizontalPadding(forContainerWidth: geometry.size.width)
@@ -1052,7 +1065,8 @@ struct InteractiveTutorialView: View {
         CalendarGridHelper.calculateSpacing(
             containerWidth: containerWidth,
             viewMode: viewMode,
-            horizontalPadding: layoutSpec.gridHorizontalPadding(forContainerWidth: containerWidth)
+            horizontalPadding: layoutSpec.gridHorizontalPadding(forContainerWidth: containerWidth),
+            columns: layoutSpec.columns(for: viewMode)
         )
     }
 
@@ -1064,6 +1078,7 @@ struct InteractiveTutorialView: View {
             containerWidth: geometry.size.width,
             viewMode: mockStore.viewMode,
             horizontalPadding: layoutSpec.gridHorizontalPadding(forContainerWidth: geometry.size.width),
+            columns: layoutSpec.columns(for: mockStore.viewMode),
             year: mockStore.selectedYear,
             items: mockStore.itemsInYear,
             horizontalPaddingAdjustment: true

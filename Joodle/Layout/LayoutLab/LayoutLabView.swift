@@ -587,7 +587,8 @@ struct LayoutBlueprintView: View {
       let gridWidth = spec.splitAxis == .horizontal ? size.width * spec.splitDefaultPosition : size.width
       let padding = spec.gridHorizontalPadding(forContainerWidth: gridWidth)
       let spacing = CalendarGridHelper.calculateSpacing(
-        containerWidth: gridWidth, viewMode: .now, horizontalPadding: padding)
+        containerWidth: gridWidth, viewMode: .now, horizontalPadding: padding,
+        columns: spec.columns(for: .now))
       let dotSize = ViewMode.now.dotSize
       let rowY = headerTop + spec.headerHeight + 24
       // Same placement as YearGridView: dots in a row with `spacing` between them.

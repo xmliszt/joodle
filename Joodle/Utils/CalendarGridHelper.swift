@@ -65,17 +65,19 @@ enum CalendarGridHelper {
   /// - Parameters:
   ///   - containerWidth: The total width of the container
   ///   - viewMode: The current view mode (.now or .year)
-  ///   - horizontalPadding: Side padding of the grid inside the container (`LayoutSpec.gridHorizontalPadding`)
+  ///   - horizontalPadding: Side padding of the grid inside the container (`LayoutSpec.gridHorizontalPadding(forContainerWidth:)`)
+  ///   - columns: Dots per row (`LayoutSpec.columns(for:)`)
   /// - Returns: The calculated spacing between dots
   static func calculateSpacing(
     containerWidth: CGFloat,
     viewMode: ViewMode,
-    horizontalPadding: CGFloat
+    horizontalPadding: CGFloat,
+    columns: Int
   ) -> CGFloat {
     let gridWidth = containerWidth - (2 * horizontalPadding)
-    let totalDotsWidth = viewMode.dotSize * CGFloat(viewMode.dotsPerRow)
+    let totalDotsWidth = viewMode.dotSize * CGFloat(columns)
     let availableSpace = gridWidth - totalDotsWidth
-    let spacing = availableSpace / CGFloat(viewMode.dotsPerRow - 1)
+    let spacing = availableSpace / CGFloat(max(columns - 1, 1))
 
     // Apply minimum spacing based on view mode
     let minimumSpacing: CGFloat = viewMode == .now ? 4 : 2
@@ -89,17 +91,19 @@ enum CalendarGridHelper {
   /// - Parameters:
   ///   - itemIndex: The index of the item in the items array (0-based)
   ///   - viewMode: The current view mode
+  ///   - columns: Dots per row
   ///   - year: The year being displayed (for calendar alignment calculation)
   /// - Returns: A tuple of (row, column) in the grid
   static func gridPosition(
     forItemIndex itemIndex: Int,
     viewMode: ViewMode,
+    columns: Int,
     year: Int
   ) -> (row: Int, col: Int) {
     let leadingOffset = viewMode == .now ? leadingEmptySlots(for: year) : 0
     let virtualIndex = itemIndex + leadingOffset
-    let row = virtualIndex / viewMode.dotsPerRow
-    let col = virtualIndex % viewMode.dotsPerRow
+    let row = virtualIndex / columns
+    let col = virtualIndex % columns
     return (row, col)
   }
 
@@ -109,16 +113,18 @@ enum CalendarGridHelper {
   ///   - row: The row in the grid (0-based)
   ///   - col: The column in the grid (0-based)
   ///   - viewMode: The current view mode
+  ///   - columns: Dots per row
   ///   - year: The year being displayed (for calendar alignment calculation)
   /// - Returns: The item index, or nil if the position is in an empty leading slot
   static func itemIndex(
     forRow row: Int,
     col: Int,
     viewMode: ViewMode,
+    columns: Int,
     year: Int
   ) -> Int? {
     let leadingOffset = viewMode == .now ? leadingEmptySlots(for: year) : 0
-    let virtualIndex = row * viewMode.dotsPerRow + col
+    let virtualIndex = row * columns + col
 
     // Convert virtual index to actual item index
     let itemIndex = virtualIndex - leadingOffset
@@ -133,16 +139,18 @@ enum CalendarGridHelper {
   /// - Parameters:
   ///   - itemCount: The number of items in the grid
   ///   - viewMode: The current view mode
+  ///   - columns: Dots per row
   ///   - year: The year being displayed (for calendar alignment calculation)
   /// - Returns: The total number of rows
   static func totalRows(
     forItemCount itemCount: Int,
     viewMode: ViewMode,
+    columns: Int,
     year: Int
   ) -> Int {
     let leadingOffset = viewMode == .now ? leadingEmptySlots(for: year) : 0
     let totalVirtualItems = leadingOffset + itemCount
-    return (totalVirtualItems + viewMode.dotsPerRow - 1) / viewMode.dotsPerRow
+    return (totalVirtualItems + columns - 1) / columns
   }
 
   // MARK: - Hit Testing
@@ -152,6 +160,7 @@ enum CalendarGridHelper {
     let containerWidth: CGFloat
     let viewMode: ViewMode
     let horizontalPadding: CGFloat
+    let columns: Int
     let year: Int
     let itemCount: Int
     /// Location adjusted for grid coordinate space (x adjusted for padding, y adjusted for dot centering)
@@ -166,12 +175,13 @@ enum CalendarGridHelper {
     let spacing = calculateSpacing(
       containerWidth: params.containerWidth,
       viewMode: params.viewMode,
-      horizontalPadding: params.horizontalPadding)
+      horizontalPadding: params.horizontalPadding,
+      columns: params.columns)
 
     let gridWidth = params.containerWidth - (2 * params.horizontalPadding)
-    let totalSpacingWidth = CGFloat(params.viewMode.dotsPerRow - 1) * spacing
+    let totalSpacingWidth = CGFloat(params.columns - 1) * spacing
     let totalDotWidth = gridWidth - totalSpacingWidth
-    let itemSpacing = totalDotWidth / CGFloat(params.viewMode.dotsPerRow)
+    let itemSpacing = totalDotWidth / CGFloat(params.columns)
     let startX = itemSpacing / 2
 
     let rowHeight = params.viewMode.dotSize + spacing
@@ -181,7 +191,7 @@ enum CalendarGridHelper {
     var closestCol = 0
     var minDistance = CGFloat.greatestFiniteMagnitude
 
-    for col in 0..<params.viewMode.dotsPerRow {
+    for col in 0..<params.columns {
       let xPos = startX + CGFloat(col) * (itemSpacing + spacing)
       let distance = abs(params.adjustedLocation.x - xPos)
       if distance < minDistance {
@@ -190,10 +200,11 @@ enum CalendarGridHelper {
       }
     }
 
-    let col = max(0, min(params.viewMode.dotsPerRow - 1, closestCol))
+    let col = max(0, min(params.columns - 1, closestCol))
 
     // Get item index accounting for leading empty slots
-    guard let index = itemIndex(forRow: row, col: col, viewMode: params.viewMode, year: params.year),
+    guard let index = itemIndex(
+      forRow: row, col: col, viewMode: params.viewMode, columns: params.columns, year: params.year),
           index < params.itemCount
     else {
       return nil
@@ -209,6 +220,7 @@ enum CalendarGridHelper {
   ///   - containerWidth: The container width for spacing calculation
   ///   - viewMode: The current view mode
   ///   - horizontalPadding: Side padding of the grid inside the container
+  ///   - columns: Dots per row
   ///   - horizontalPaddingAdjustment: Whether to adjust for horizontal padding (depends on coordinate space)
   /// - Returns: The adjusted location suitable for hit testing
   static func adjustLocationForHitTesting(
@@ -216,10 +228,12 @@ enum CalendarGridHelper {
     containerWidth: CGFloat,
     viewMode: ViewMode,
     horizontalPadding: CGFloat,
+    columns: Int,
     horizontalPaddingAdjustment: Bool = true
   ) -> CGPoint {
     let spacing = calculateSpacing(
-      containerWidth: containerWidth, viewMode: viewMode, horizontalPadding: horizontalPadding)
+      containerWidth: containerWidth, viewMode: viewMode, horizontalPadding: horizontalPadding,
+      columns: columns)
 
     let adjustedX = horizontalPaddingAdjustment ? location.x - horizontalPadding : location.x
     // Account for dot centering: half spacing + half dot size
@@ -237,6 +251,7 @@ enum CalendarGridHelper {
   ///   - containerWidth: The container width
   ///   - viewMode: The current view mode
   ///   - horizontalPadding: Side padding of the grid inside the container
+  ///   - columns: Dots per row
   ///   - year: The year being displayed
   ///   - items: The array of DateItems
   ///   - horizontalPaddingAdjustment: Whether to adjust for horizontal padding
@@ -246,6 +261,7 @@ enum CalendarGridHelper {
     containerWidth: CGFloat,
     viewMode: ViewMode,
     horizontalPadding: CGFloat,
+    columns: Int,
     year: Int,
     items: [DateItem],
     horizontalPaddingAdjustment: Bool = true
@@ -255,6 +271,7 @@ enum CalendarGridHelper {
       containerWidth: containerWidth,
       viewMode: viewMode,
       horizontalPadding: horizontalPadding,
+      columns: columns,
       horizontalPaddingAdjustment: horizontalPaddingAdjustment
     )
 
@@ -262,6 +279,7 @@ enum CalendarGridHelper {
       containerWidth: containerWidth,
       viewMode: viewMode,
       horizontalPadding: horizontalPadding,
+      columns: columns,
       year: year,
       itemCount: items.count,
       adjustedLocation: adjustedLocation

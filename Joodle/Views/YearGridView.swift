@@ -31,6 +31,8 @@ struct YearGridView: View {
   let dotsSpacing: CGFloat
   /// Side padding of the grid inside its container (`LayoutSpec.gridHorizontalPadding(forContainerWidth:)`)
   let horizontalPadding: CGFloat
+  /// Dots per row (`LayoutSpec.columns(for:)`)
+  let columns: Int
   /// The items to display in the grid
   let items: [DateItem]
   /// The entries to display in the grid
@@ -53,7 +55,7 @@ struct YearGridView: View {
   // MARK: Cached Computed Properties
   /// Pre-computed layout metrics to avoid repeated calculations
   private var layoutMetrics: LayoutMetrics {
-    let numberOfRows = (items.count + viewMode.dotsPerRow - 1) / viewMode.dotsPerRow
+    let numberOfRows = (items.count + columns - 1) / columns
     let totalContentHeight = CGFloat(numberOfRows) * (viewMode.dotSize + dotsSpacing)
     return LayoutMetrics(
       numberOfRows: numberOfRows,
@@ -107,8 +109,8 @@ struct YearGridView: View {
     let adjustedHighlightedIndex = highlightedIndex.map { $0 + leadingOffset }
 
     // Split into rows accounting for leading empty slots
-    let rows: [(virtualStart: Int, count: Int)] = stride(from: 0, to: totalVirtualItems, by: viewMode.dotsPerRow).map { rowStart in
-      (rowStart, min(viewMode.dotsPerRow, totalVirtualItems - rowStart))
+    let rows: [(virtualStart: Int, count: Int)] = stride(from: 0, to: totalVirtualItems, by: columns).map { rowStart in
+      (rowStart, min(columns, totalVirtualItems - rowStart))
     }
 
     VStack(spacing: dotsSpacing) {
@@ -136,7 +138,7 @@ struct YearGridView: View {
               let scale = calculateScale(
                 currentIndex: virtualIndex,
                 highlightedIndex: adjustedHighlightedIndex,
-                dotsPerRow: viewMode.dotsPerRow,
+                dotsPerRow: columns,
                 isEmpty: entry == nil
               )
               let hashValue = abs(item.id.hashValue)
@@ -492,6 +494,7 @@ private struct YearGridDotCell: View, Equatable {
         viewMode: .now,
         dotsSpacing: 25,
         horizontalPadding: 40,
+        columns: 7,
         items: sampleItems,
         entries: sampleEntries,
         highlightedItemId: nil,
@@ -504,6 +507,7 @@ private struct YearGridDotCell: View, Equatable {
         viewMode: .year,
         dotsSpacing: 8,
         horizontalPadding: 40,
+        columns: 16,
         items: sampleItems,
         entries: sampleEntries,
         highlightedItemId: nil,

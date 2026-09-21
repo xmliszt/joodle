@@ -15,6 +15,17 @@ struct LayoutSpec: Equatable {
 
   /// Side padding of the year grid inside its container.
   var gridHorizontalPadding: CGFloat = 40
+  /// Dots per row in the minimized (year) view. The 7-day view is always a
+  /// calendar week. Stored as a number so the Layout Lab can drive it.
+  var yearModeColumns: CGFloat = 16
+
+  /// Dots per row for a view mode.
+  func columns(for viewMode: ViewMode) -> Int {
+    switch viewMode {
+    case .now: return ViewMode.now.dotsPerRow
+    case .year: return max(Int(yearModeColumns.rounded()), 1)
+    }
+  }
   /// Cap on the grid's width on wide containers; 0 means none. Leftover width
   /// becomes side margin, so seven weekday dots never spread across an iPad.
   var gridMaxWidth: CGFloat = 0
@@ -55,6 +66,18 @@ struct LayoutSpec: Equatable {
   /// Corner radius of the container when it floats narrower than the scene,
   /// where concentricity with the screen corners no longer applies.
   var canvasContainerFloatingCornerRadius: CGFloat = 44
+  /// Largest side the canvas is *displayed* at; 0 keeps it at `CANVAS_SIZE`.
+  /// Strokes always live in the 342pt space and scale up for display, so a
+  /// bigger canvas never changes stored data.
+  var canvasDisplayMaxSide: CGFloat = 0
+  /// Smallest gap kept between the displayed canvas and the container edge.
+  var canvasMinSideInset: CGFloat = 16
+
+  /// Side of the displayed canvas square inside a container of `containerWidth`.
+  func canvasDisplaySide(containerWidth: CGFloat) -> CGFloat {
+    guard canvasDisplayMaxSide > CANVAS_SIZE else { return CANVAS_SIZE }
+    return min(canvasDisplayMaxSide, max(containerWidth - canvasMinSideInset * 2, CANVAS_SIZE))
+  }
 
   /// Bottom inset of the edge-hugging camera and photo controls.
   var edgeControlBottomInset: CGFloat = 80
@@ -75,16 +98,20 @@ struct LayoutSpec: Equatable {
       break
     case .regular:
       // Stacked like a phone, but the grid stops spreading and the canvas
-      // container floats at phone width instead of spanning the scene.
+      // container floats instead of spanning the scene, with a larger canvas.
       spec.gridMaxWidth = 520
-      spec.canvasContainerMaxWidth = 400
+      spec.yearModeColumns = 24
+      spec.canvasContainerMaxWidth = 480
+      spec.canvasDisplayMaxSide = 448
     case .wide:
       // Grid leading, entry panel trailing.
       spec.splitAxis = .horizontal
       spec.splitExpandedPosition = 0.35
       spec.splitDismissPosition = 0.75
       spec.gridMaxWidth = 520
-      spec.canvasContainerMaxWidth = 400
+      spec.yearModeColumns = 24
+      spec.canvasContainerMaxWidth = 480
+      spec.canvasDisplayMaxSide = 448
     }
     return spec
   }
