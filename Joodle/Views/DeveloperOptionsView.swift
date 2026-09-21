@@ -26,6 +26,7 @@ struct DeveloperOptionsView: View {
 #if DEBUG
   @State private var showDataSeeder = false
   @State private var showBannerPreview = false
+  @State private var showDynamicIslandLab = false
   @State private var simulateCameraDenied = CameraReferenceContext.debugSimulateCameraDenied
 #endif
 
@@ -65,6 +66,11 @@ struct DeveloperOptionsView: View {
     }
     .sheet(isPresented: $showBannerPreview) {
       MembershipBannerPreviewView()
+    }
+    // Full screen (not a sheet) so the calibration pill can reach the cutout
+    // at the very top of the screen.
+    .fullScreenCover(isPresented: $showDynamicIslandLab) {
+      DynamicIslandLab()
     }
 #endif
     .alert(
@@ -295,6 +301,14 @@ struct DeveloperOptionsView: View {
         showDataSeeder = true
       } label: {
         row(icon: "tray.and.arrow.down.fill", color: .brown, title: "Data Seeder")
+      }
+
+      // TEMPORARY: Dynamic Island calibration workbench. Remove once the
+      // per-model frames are dialed in and committed to UIDeviceExtension.
+      Button {
+        showDynamicIslandLab = true
+      } label: {
+        row(icon: "capsule.fill", color: .black, title: "Dynamic Island Lab")
       }
 #endif
 

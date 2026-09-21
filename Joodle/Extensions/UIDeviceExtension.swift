@@ -8,12 +8,69 @@
 import SwiftUI
 import UIKit
 
+// MARK: - Dynamic Island Metrics Table
+//
+// Every per-model Dynamic Island adaptation lives in this one table. To adapt
+// a new device: calibrate it with the Dynamic Island Lab (Settings →
+// Developer → Tools), then add a single entry below — nothing else in the
+// file needs to change. Models not listed use `.baseline`.
+private struct DynamicIslandMetrics {
+
+  /// Size of the island cutout capsule.
+  var pillSize = CGSize(width: 126, height: 36.67)
+
+  /// Distance from the top screen edge to the top of the cutout.
+  var topOffsetPt: CGFloat = 11
+
+  /// iPhone 14 Pro through 16 lineups. Minor per-model variations exist
+  /// (±3pt) but these values work well for alignment across all of them.
+  static let baseline = DynamicIslandMetrics()
+
+  /// Deviations from the baseline, keyed by model name (simulator prefix
+  /// stripped, so hardware and simulator resolve identically).
+  static let overridesByModel: [String: DynamicIslandMetrics] = [
+    // iPhone 17 series — island sits 3pt lower.
+    "iPhone 17": .init(topOffsetPt: 14),
+    "iPhone 17 Pro": .init(topOffsetPt: 14),
+    "iPhone 17 Pro Max": .init(topOffsetPt: 14),
+
+    // iPhone Air — island sits 9pt lower.
+    "iPhone Air": .init(topOffsetPt: 20),
+
+    // iPhone 18 Pro series — narrower 90pt pill, sits 3pt lower.
+    "iPhone 18 Pro": .init(pillSize: CGSize(width: 90, height: 36.67), topOffsetPt: 14),
+    "iPhone 18 Pro Max": .init(pillSize: CGSize(width: 90, height: 36.67), topOffsetPt: 14),
+  ]
+}
+
 // MARK: - Dynamic Island Detection & Dimensions
 extension UIDevice {
+
+#if DEBUG
+  /// Calibration override for the Dynamic Island pill, driven by the
+  /// Dynamic Island Lab in Developer options. While non-nil it wins over the
+  /// metrics table (and makes the device count as having an island), so
+  /// tweaks can be verified live before recording them in the table above.
+  static var dynamicIslandDebugOverride: CGRect?
+#endif
+
+  /// Model name with the simulator prefix stripped, so device checks match
+  /// hardware and simulator alike.
+  private static var normalizedModelName: String {
+    modelName.replacingOccurrences(of: "Simulator ", with: "")
+  }
+
+  /// Metrics for the current device, from the table at the top of this file.
+  private static var islandMetrics: DynamicIslandMetrics {
+    DynamicIslandMetrics.overridesByModel[normalizedModelName] ?? .baseline
+  }
 
   /// Checks if the device has a Dynamic Island using safe area insets
   /// Dynamic Island devices have top safe area >= 51pt (vs ~47pt for notch devices)
   static var hasDynamicIsland: Bool {
+#if DEBUG
+    if dynamicIslandDebugOverride != nil { return true }
+#endif
     guard let window = UIApplication.shared.connectedScenes
       .compactMap({ $0 as? UIWindowScene })
       .first?.windows.first
@@ -23,41 +80,30 @@ extension UIDevice {
     return window.safeAreaInsets.top >= 51
   }
 
-  /// Returns the Dynamic Island capsule size
-  /// Dimensions are consistent across all Dynamic Island devices (~126×37pt)
+  /// Returns the Dynamic Island capsule size for the current device
   static var dynamicIslandSize: CGSize {
+#if DEBUG
+    if let override = dynamicIslandDebugOverride { return override.size }
+#endif
     guard hasDynamicIsland else { return .zero }
-    // These values are consistent across all Dynamic Island devices
-    // Minor variations exist (±3pt) but 126×37 works well for alignment
-    return CGSize(width: 126, height: 36.67)
+    return islandMetrics.pillSize
   }
 
-  /// Returns the Dynamic Island frame (position and size)
-  /// The Y position is consistently ~11pt from the top edge
+  /// Returns the Dynamic Island frame: the pill centered horizontally, at the
+  /// current device's top offset
   static var dynamicIslandFrame: CGRect {
+#if DEBUG
+    if let override = dynamicIslandDebugOverride { return override }
+#endif
     guard hasDynamicIsland else { return .zero }
 
-    let size = dynamicIslandSize
-    let screenWidth = UIScreen.main.bounds.width
-    let x = (screenWidth - size.width) / 2
-    var y = 11.0 // Consistent across all older Dynamic Island devices
-    let width = size.width
-    let height = size.height
-    
-    // iPhone 17 series
-    if UIDevice.modelName == "iPhone 17" || UIDevice.modelName == "Simulator iPhone 17" ||
-       UIDevice.modelName == "iPhone 17 Pro" || UIDevice.modelName == "Simulator iPhone 17 Pro" ||
-       UIDevice.modelName == "iPhone 17 Pro Max" || UIDevice.modelName == "Simulator iPhone 17 Pro Max"
-    {
-      y += 3
-    }
-
-    // iPhone Air - lower position
-    if UIDevice.modelName == "iPhone Air" || UIDevice.modelName == "Simulator iPhone Air" {
-      y += 9
-    }
-
-    return CGRect(x: x, y: y, width: width, height: height)
+    let metrics = islandMetrics
+    return CGRect(
+      x: (UIScreen.main.bounds.width - metrics.pillSize.width) / 2,
+      y: metrics.topOffsetPt,
+      width: metrics.pillSize.width,
+      height: metrics.pillSize.height
+    )
   }
 
   /// Returns the top safe area inset (useful for positioning content below Dynamic Island)
@@ -235,6 +281,10 @@ extension UIDevice {
               case "iPhone18,4":                                    return "iPhone Air"
               case "iPhone18,1":                                    return "iPhone 17 Pro"
               case "iPhone18,2":                                    return "iPhone 17 Pro Max"
+              case "iPhone18,5":                                    return "iPhone 17e"
+              case "iPhone19,2":                                    return "iPhone 18 Pro"
+              case "iPhone19,3", "iPhone19,7":                      return "iPhone 18 Pro Max"
+              case "iPhone19,4":                                    return "iPhone Duo"
               case "iPhone8,4":                                     return "iPhone SE"
               case "iPhone12,8":                                    return "iPhone SE (2nd generation)"
               case "iPhone14,6":                                    return "iPhone SE (3rd generation)"
