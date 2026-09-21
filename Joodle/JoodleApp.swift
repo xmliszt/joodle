@@ -645,6 +645,12 @@ struct JoodleApp: App {
               }
             }
         }
+
+#if DEBUG
+        // Layout Lab "overlay mode": the token drawer floating over the live
+        // app, so the device in hand can be tuned at 1:1.
+        LayoutTuningOverlay()
+#endif
       }
       // Publishes the scene's geometry (size, safe area, cutout, corner radii)
       // as `layoutContext` / `layoutSpec` for every branch above — onboarding,

@@ -18,12 +18,16 @@ struct LayoutSpec: Equatable {
 
   /// Direction the grid / entry split runs in.
   var splitAxis: Axis = .vertical
-  /// Fraction of the split given to the grid when the entry panel first shows.
+  /// Fraction of the split given to the grid when the entry panel first shows;
+  /// also the middle snap point.
   var splitDefaultPosition: CGFloat = 0.5
-  /// Positions the drag handle settles on; 1.0 is grid fullscreen.
-  var splitSnapPositions: [CGFloat] = [0.15, 0.5, 1.0]
+  /// Grid fraction at the tallest entry-panel snap.
+  var splitExpandedPosition: CGFloat = 0.15
   /// Dragging past this fraction dismisses the entry panel.
   var splitDismissPosition: CGFloat = 0.6
+
+  /// Positions the drag handle settles on; 1.0 is grid fullscreen.
+  var splitSnapPositions: [CGFloat] { [splitExpandedPosition, splitDefaultPosition, 1.0] }
 
   /// Side inset of the floating canvas container on screens without an island
   /// (island devices derive it from the cutout frame instead).

@@ -27,6 +27,7 @@ struct DeveloperOptionsView: View {
   @State private var showDataSeeder = false
   @State private var showBannerPreview = false
   @State private var showDynamicIslandLab = false
+  @State private var showLayoutLab = false
   @State private var simulateCameraDenied = CameraReferenceContext.debugSimulateCameraDenied
 #endif
 
@@ -71,6 +72,10 @@ struct DeveloperOptionsView: View {
     // at the very top of the screen.
     .fullScreenCover(isPresented: $showDynamicIslandLab) {
       DynamicIslandLab()
+    }
+    // Full screen so the emulated device frame can use the whole display.
+    .fullScreenCover(isPresented: $showLayoutLab) {
+      LayoutLabView()
     }
 #endif
     .alert(
@@ -301,6 +306,14 @@ struct DeveloperOptionsView: View {
         showDataSeeder = true
       } label: {
         row(icon: "tray.and.arrow.down.fill", color: .brown, title: "Data Seeder")
+      }
+
+      // Layout workbench: emulate other screen shapes on this device, tune the
+      // layout tokens live, copy the result for the resolver.
+      Button {
+        showLayoutLab = true
+      } label: {
+        row(icon: "rectangle.3.group", color: .indigo, title: "Layout Lab")
       }
 
       // TEMPORARY: Dynamic Island calibration workbench. Remove once the

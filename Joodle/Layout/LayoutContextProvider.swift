@@ -41,7 +41,18 @@ private struct LayoutContextProviderModifier: ViewModifier {
         probe = newProbe
       }
       .environment(\.layoutContext, context)
-      .environment(\.layoutSpec, LayoutSpec.resolve(context))
+      .environment(\.layoutSpec, spec(for: context))
+  }
+
+  /// In debug builds the Layout Lab's live overrides sit between the resolver
+  /// and the views, so tuning the device in hand shows up immediately.
+  private func spec(for context: LayoutContext) -> LayoutSpec {
+    let resolved = LayoutSpec.resolve(context)
+#if DEBUG
+    return LayoutTuning.shared.apply(resolved, for: context.layoutClass)
+#else
+    return resolved
+#endif
   }
 
   private var resolvedContext: LayoutContext {
