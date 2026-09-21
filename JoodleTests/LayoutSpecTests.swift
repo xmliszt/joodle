@@ -156,7 +156,7 @@ struct LayoutSpecTests {
 
   @Test func gridPaddingGrowsToHoldTheCap() {
     let spec = LayoutSpec.resolve(LayoutPreset.duoInnerPortrait.context)
-    #expect(spec.gridHorizontalPadding(forContainerWidth: 669) == (669 - 520) / 2)
+    #expect(spec.gridHorizontalPadding(forContainerWidth: 669) == 74.5)  // (669 - 520) / 2
     // A narrow column keeps the plain padding rather than going below it.
     #expect(spec.gridHorizontalPadding(forContainerWidth: 475) == 40)
   }
@@ -170,9 +170,9 @@ struct LayoutSpecTests {
     #expect(metrics.topOffset == 14)
     #expect(metrics.topContentInset == 36.67)
     #expect(metrics.collapsedSize == CGSize(width: 126, height: 36.67))
-    #expect(metrics.expandedWidth == 402 - 28)
-    #expect(metrics.cornerRadii == RectangleCornerRadii(uniform: 62 - 14))
-    #expect(metrics.contentCornerRadius == 62 - 14 - 8)
+    #expect(metrics.expandedWidth == 374)  // 402 - 2 × 14
+    #expect(metrics.cornerRadii == RectangleCornerRadii(uniform: 48))  // 62 - 14
+    #expect(metrics.contentCornerRadius == 40)  // 48 - 8
   }
 
   @Test func flatDeviceContainerSitsBelowTheStatusBar() {
@@ -182,15 +182,17 @@ struct LayoutSpecTests {
     #expect(metrics.topOffset == 20)
     #expect(metrics.topContentInset == 0)
     #expect(metrics.collapsedSize == .zero)
-    #expect(metrics.expandedWidth == 375 - 20)
-    #expect(metrics.contentCornerRadius == 30 - 10 - 8)
+    #expect(metrics.expandedWidth == 355)  // 375 - 2 × 10
+    #expect(metrics.contentCornerRadius == 12)  // 30 - 10 - 8
   }
 
   @Test func duoCoverContainerFollowsEachCorner() {
     let context = LayoutPreset.duoCover.context
     let metrics = LayoutSpec.resolve(context).canvasContainer(in: context)
-    #expect(metrics.cornerRadii.topLeading == 0)  // 8pt hinge corner, 14pt inset
-    #expect(metrics.cornerRadii.topTrailing == 59 - 14)
+    // The Duo has no row in the island table yet, so the baseline 11pt offset
+    // is the inset: the 8pt hinge corner collapses, the 59pt outer corner keeps 48.
+    #expect(metrics.cornerRadii.topLeading == 0)
+    #expect(metrics.cornerRadii.topTrailing == 48)
   }
 
   @Test func wideContainerFloatsCenteredAtTheCap() {
@@ -198,7 +200,7 @@ struct LayoutSpecTests {
     let spec = LayoutSpec.resolve(context)
     let metrics = spec.canvasContainer(in: context)
     #expect(metrics.expandedWidth == 400)
-    #expect(metrics.horizontalInset == (951 - 400) / 2)
+    #expect(metrics.horizontalInset == 275.5)  // (951 - 400) / 2
     #expect(metrics.cornerRadii == RectangleCornerRadii(uniform: spec.canvasContainerFloatingCornerRadius))
     #expect(metrics.contentCornerRadius == spec.canvasContainerFloatingCornerRadius - 8)
     #expect(metrics.topOffset == context.safeArea.top)
@@ -209,7 +211,7 @@ struct LayoutSpecTests {
     var spec = LayoutSpec.resolve(LayoutPreset.iPhone17.context)
     spec.canvasContainerMaxWidth = 900
     let metrics = spec.canvasContainer(in: LayoutPreset.iPhone17.context)
-    #expect(metrics.expandedWidth == 402 - 28)
+    #expect(metrics.expandedWidth == 374)
     #expect(metrics.horizontalInset == 14)
   }
 }

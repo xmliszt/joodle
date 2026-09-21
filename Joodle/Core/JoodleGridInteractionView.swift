@@ -321,12 +321,14 @@ enum JoodleGestureHandlers {
   /// - Parameters:
   ///   - dataProvider: The data provider
   ///   - geometry: GeometryProxy for hit testing calculations
+  ///   - gridHorizontalPadding: Side padding of the grid (`LayoutSpec.gridHorizontalPadding(forContainerWidth:)`)
   ///   - isScrubbing: Current scrubbing state (to ignore taps during scrub)
   ///   - customHitTestFunction: Optional O(1) hit test function (for ContentView)
   ///   - onSelection: Called when an item is selected via tap
   static func createTapCallback<DataProvider: JoodleDataProvider>(
     dataProvider: DataProvider,
     geometry: GeometryProxy,
+    gridHorizontalPadding: CGFloat,
     isScrubbing: Bool,
     customHitTestFunction: HitTestFunction? = nil,
     onSelection: ((DateItem) -> Void)? = nil

@@ -91,7 +91,7 @@ enum ScreenHardware {
       return Snapshot(
         modelName: UIDevice.normalizedModelName,
         idiom: UIDevice.current.userInterfaceIdiom,
-        reportedCornerRadius: reportedCornerRadius(of: scene?.screen),
+        reportedCornerRadius: ScreenHardware.reportedCornerRadius(of: scene?.screen),
         dynamicIslandOverride: islandOverride
       )
     }
