@@ -21,7 +21,6 @@ struct YearGridView: View {
   // MARK: Environment
   @Environment(\.userPreferences) private var userPreferences
   @Environment(\.locale) private var locale
-  @Environment(\.layoutSpec) private var layoutSpec
 
   // MARK: Params
   /// The year to display
@@ -30,6 +29,8 @@ struct YearGridView: View {
   let viewMode: ViewMode
   /// The spacing between dots
   let dotsSpacing: CGFloat
+  /// Side padding of the grid inside its container (`LayoutSpec.gridHorizontalPadding(forContainerWidth:)`)
+  let horizontalPadding: CGFloat
   /// The items to display in the grid
   let items: [DateItem]
   /// The entries to display in the grid
@@ -180,9 +181,9 @@ struct YearGridView: View {
     }
     .padding(
       .init(
-        top: 0, leading: layoutSpec.gridHorizontalPadding,
-        bottom: layoutSpec.gridHorizontalPadding,
-        trailing: layoutSpec.gridHorizontalPadding)
+        top: 0, leading: horizontalPadding,
+        bottom: horizontalPadding,
+        trailing: horizontalPadding)
     )
     .frame(maxWidth: .infinity, alignment: .top)
     .overlay(alignment: .top) {
@@ -203,7 +204,7 @@ struct YearGridView: View {
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, layoutSpec.gridHorizontalPadding)
+        .padding(.leading, horizontalPadding)
         .offset(y: -(dotsSpacing + 10)) // Position above the first row of dots
       }
     }
@@ -490,6 +491,7 @@ private struct YearGridDotCell: View, Equatable {
         year: currentYear,
         viewMode: .now,
         dotsSpacing: 25,
+        horizontalPadding: 40,
         items: sampleItems,
         entries: sampleEntries,
         highlightedItemId: nil,
@@ -501,6 +503,7 @@ private struct YearGridDotCell: View, Equatable {
         year: currentYear,
         viewMode: .year,
         dotsSpacing: 8,
+        horizontalPadding: 40,
         items: sampleItems,
         entries: sampleEntries,
         highlightedItemId: nil,

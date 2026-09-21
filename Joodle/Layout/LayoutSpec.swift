@@ -15,9 +15,24 @@ struct LayoutSpec: Equatable {
 
   /// Side padding of the year grid inside its container.
   var gridHorizontalPadding: CGFloat = 40
+  /// Cap on the grid's width on wide containers; 0 means none. Leftover width
+  /// becomes side margin, so seven weekday dots never spread across an iPad.
+  var gridMaxWidth: CGFloat = 0
+
+  /// The grid's side padding in a container of `width`, honoring the cap.
+  func gridHorizontalPadding(forContainerWidth width: CGFloat) -> CGFloat {
+    guard gridMaxWidth > 0 else { return gridHorizontalPadding }
+    return max(gridHorizontalPadding, (width - gridMaxWidth) / 2)
+  }
 
   /// Direction the grid / entry split runs in.
   var splitAxis: Axis = .vertical
+  /// `splitAxis` as a number (0 stacked, 1 side by side), so the Layout Lab
+  /// can drive it through the same token table as every other value.
+  var splitAxisValue: CGFloat {
+    get { splitAxis == .vertical ? 0 : 1 }
+    set { splitAxis = newValue >= 0.5 ? .horizontal : .vertical }
+  }
   /// Fraction of the split given to the grid when the entry panel first shows;
   /// also the middle snap point.
   var splitDefaultPosition: CGFloat = 0.5
@@ -34,6 +49,12 @@ struct LayoutSpec: Equatable {
   var canvasContainerInsetWithoutIsland: CGFloat = 10
   /// Padding between the container edge and the canvas inside it.
   var canvasContainerContentPadding: CGFloat = 8
+  /// Cap on the floating canvas container's width; 0 means span the scene.
+  /// On wide shapes the container floats centered at this width instead.
+  var canvasContainerMaxWidth: CGFloat = 0
+  /// Corner radius of the container when it floats narrower than the scene,
+  /// where concentricity with the screen corners no longer applies.
+  var canvasContainerFloatingCornerRadius: CGFloat = 44
 
   /// Bottom inset of the edge-hugging camera and photo controls.
   var edgeControlBottomInset: CGFloat = 80
@@ -47,13 +68,25 @@ struct LayoutSpec: Equatable {
   var cornerButtonMinInset: CGFloat = 80
 
   static func resolve(_ context: LayoutContext) -> LayoutSpec {
-    let spec = LayoutSpec()
+    var spec = LayoutSpec()
     switch context.layoutClass {
-    case .compact, .phone, .regular, .wide:
-      // Every class currently resolves to the shipped phone layout. Per-class
-      // tokens land once the Layout Lab has tuned them against each shape.
-      return spec
+    case .compact, .phone:
+      // The shipped phone layout.
+      break
+    case .regular:
+      // Stacked like a phone, but the grid stops spreading and the canvas
+      // container floats at phone width instead of spanning the scene.
+      spec.gridMaxWidth = 520
+      spec.canvasContainerMaxWidth = 400
+    case .wide:
+      // Grid leading, entry panel trailing.
+      spec.splitAxis = .horizontal
+      spec.splitExpandedPosition = 0.35
+      spec.splitDismissPosition = 0.75
+      spec.gridMaxWidth = 520
+      spec.canvasContainerMaxWidth = 400
     }
+    return spec
   }
 }
 
@@ -81,16 +114,23 @@ struct CanvasContainerMetrics: Equatable {
 extension LayoutSpec {
   func canvasContainer(in context: LayoutContext) -> CanvasContainerMetrics {
     let island = context.cutout.dynamicIslandFrame
-    let inset = island?.origin.y ?? canvasContainerInsetWithoutIsland
-    let cornerRadii = context.cornerRadii.inset(by: inset)
+    let edgeInset = island?.origin.y ?? canvasContainerInsetWithoutIsland
+    let spanningWidth = max(context.size.width - edgeInset * 2, 0)
+    // Capped: the container floats centered, narrower than the scene, with its
+    // own rounding since it no longer hugs the screen corners.
+    let isCapped = canvasContainerMaxWidth > 0 && canvasContainerMaxWidth < spanningWidth
+    let expandedWidth = isCapped ? canvasContainerMaxWidth : spanningWidth
+    let cornerRadii = isCapped
+      ? RectangleCornerRadii(uniform: canvasContainerFloatingCornerRadius)
+      : context.cornerRadii.inset(by: edgeInset)
     return CanvasContainerMetrics(
-      horizontalInset: inset,
+      horizontalInset: isCapped ? (context.size.width - expandedWidth) / 2 : edgeInset,
       topOffset: island?.origin.y ?? context.safeArea.top,
       topContentInset: island?.height ?? 0,
       collapsedSize: island?.size ?? .zero,
       cornerRadii: cornerRadii,
       contentCornerRadius: max(cornerRadii.maxRadius - canvasContainerContentPadding, 0),
-      expandedWidth: max(context.size.width - inset * 2, 0)
+      expandedWidth: expandedWidth
     )
   }
 }

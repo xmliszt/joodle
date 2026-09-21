@@ -38,6 +38,11 @@ private struct LayoutContextProviderModifier: ViewModifier {
         // Zero shows up before the first layout and during scene teardown;
         // keep the last real measurement.
         guard newProbe.size.width > 0, newProbe.size.height > 0 else { return }
+        // The scene moved to a screen with a different answer (Duo fold /
+        // unfold): let UIKit ask the orientation policy again.
+        if LayoutClass(size: newProbe.size) != LayoutClass(size: probe.size) {
+          LayoutOrientationPolicy.refresh()
+        }
         probe = newProbe
       }
       .environment(\.layoutContext, context)

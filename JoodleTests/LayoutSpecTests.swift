@@ -109,16 +109,56 @@ struct LayoutSpecTests {
 
   // MARK: - Tokens
 
-  @Test func everyClassResolvesToTheShippedPhoneLayoutForNow() {
-    for preset in LayoutPreset.all {
+  @Test func phoneAndCompactKeepTheShippedLayout() {
+    for preset in [LayoutPreset.iPhone17, .iPhone17ProMax, .iPhoneSE, .duoCover, .splitViewThird] {
       let spec = LayoutSpec.resolve(preset.context)
-      #expect(spec.headerHeight == 100, "\(preset.name)")
-      #expect(spec.gridHorizontalPadding == 40, "\(preset.name)")
+      #expect(spec == LayoutSpec(), "\(preset.name)")
       #expect(spec.splitAxis == .vertical, "\(preset.name)")
       #expect(spec.splitSnapPositions == [0.15, 0.5, 1.0], "\(preset.name)")
-      #expect(spec.splitDefaultPosition == 0.5, "\(preset.name)")
-      #expect(spec.splitDismissPosition == 0.6, "\(preset.name)")
+      #expect(spec.gridMaxWidth == 0, "\(preset.name)")
+      #expect(spec.canvasContainerMaxWidth == 0, "\(preset.name)")
     }
+  }
+
+  @Test func regularStaysStackedButCapsTheGridAndContainer() {
+    let spec = LayoutSpec.resolve(LayoutPreset.duoInnerPortrait.context)
+    #expect(spec.splitAxis == .vertical)
+    #expect(spec.gridMaxWidth == 520)
+    #expect(spec.canvasContainerMaxWidth == 400)
+    #expect(LayoutSpec.resolve(LayoutPreset.iPadMini.context) == spec)
+  }
+
+  @Test func wideSplitsSideBySide() {
+    let spec = LayoutSpec.resolve(LayoutPreset.duoInnerLandscape.context)
+    #expect(spec.splitAxis == .horizontal)
+    #expect(spec.splitSnapPositions == [0.35, 0.5, 1.0])
+    #expect(spec.splitDismissPosition == 0.75)
+    #expect(spec.gridMaxWidth == 520)
+    #expect(LayoutSpec.resolve(LayoutPreset.iPadPro13.rotated().context).splitAxis == .horizontal)
+  }
+
+  @Test func splitAxisValueMirrorsTheAxis() {
+    var spec = LayoutSpec()
+    #expect(spec.splitAxisValue == 0)
+    spec.splitAxisValue = 1
+    #expect(spec.splitAxis == .horizontal)
+    spec.splitAxisValue = 0
+    #expect(spec.splitAxis == .vertical)
+  }
+
+  // MARK: - Grid padding cap
+
+  @Test func gridPaddingIsUncappedOnPhones() {
+    let spec = LayoutSpec.resolve(LayoutPreset.iPhone17.context)
+    #expect(spec.gridHorizontalPadding(forContainerWidth: 402) == 40)
+    #expect(spec.gridHorizontalPadding(forContainerWidth: 951) == 40)
+  }
+
+  @Test func gridPaddingGrowsToHoldTheCap() {
+    let spec = LayoutSpec.resolve(LayoutPreset.duoInnerPortrait.context)
+    #expect(spec.gridHorizontalPadding(forContainerWidth: 669) == (669 - 520) / 2)
+    // A narrow column keeps the plain padding rather than going below it.
+    #expect(spec.gridHorizontalPadding(forContainerWidth: 475) == 40)
   }
 
   // MARK: - Floating canvas container
@@ -151,5 +191,25 @@ struct LayoutSpecTests {
     let metrics = LayoutSpec.resolve(context).canvasContainer(in: context)
     #expect(metrics.cornerRadii.topLeading == 0)  // 8pt hinge corner, 14pt inset
     #expect(metrics.cornerRadii.topTrailing == 59 - 14)
+  }
+
+  @Test func wideContainerFloatsCenteredAtTheCap() {
+    let context = LayoutPreset.duoInnerLandscape.context
+    let spec = LayoutSpec.resolve(context)
+    let metrics = spec.canvasContainer(in: context)
+    #expect(metrics.expandedWidth == 400)
+    #expect(metrics.horizontalInset == (951 - 400) / 2)
+    #expect(metrics.cornerRadii == RectangleCornerRadii(uniform: spec.canvasContainerFloatingCornerRadius))
+    #expect(metrics.contentCornerRadius == spec.canvasContainerFloatingCornerRadius - 8)
+    #expect(metrics.topOffset == context.safeArea.top)
+    #expect(metrics.collapsedSize == .zero)
+  }
+
+  @Test func capWiderThanTheSceneIsIgnored() {
+    var spec = LayoutSpec.resolve(LayoutPreset.iPhone17.context)
+    spec.canvasContainerMaxWidth = 900
+    let metrics = spec.canvasContainer(in: LayoutPreset.iPhone17.context)
+    #expect(metrics.expandedWidth == 402 - 28)
+    #expect(metrics.horizontalInset == 14)
   }
 }

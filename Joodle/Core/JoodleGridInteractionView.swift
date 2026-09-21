@@ -131,11 +131,16 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
 
   // MARK: - Computed Properties
 
+  /// Grid side padding for this container, honoring the spec's width cap.
+  private var gridHorizontalPadding: CGFloat {
+    layoutSpec.gridHorizontalPadding(forContainerWidth: geometry.size.width)
+  }
+
   private var itemsSpacing: CGFloat {
     CalendarGridHelper.calculateSpacing(
       containerWidth: geometry.size.width,
       viewMode: dataProvider.viewMode,
-      horizontalPadding: layoutSpec.gridHorizontalPadding
+      horizontalPadding: gridHorizontalPadding
     )
   }
 
@@ -162,6 +167,7 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
       year: dataProvider.selectedYear,
       viewMode: dataProvider.viewMode,
       dotsSpacing: itemsSpacing,
+      horizontalPadding: gridHorizontalPadding,
       items: dataProvider.itemsInYear,
       entries: allEntries,
       highlightedItemId: isScrubbing ? highlightedId : nil,
@@ -219,7 +225,7 @@ struct JoodleGridInteractionView<DataProvider: JoodleDataProvider>: View {
       at: location,
       containerWidth: geometry.size.width,
       viewMode: dataProvider.viewMode,
-      horizontalPadding: layoutSpec.gridHorizontalPadding,
+      horizontalPadding: gridHorizontalPadding,
       year: dataProvider.selectedYear,
       items: dataProvider.itemsInYear,
       horizontalPaddingAdjustment: true

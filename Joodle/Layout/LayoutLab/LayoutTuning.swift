@@ -16,11 +16,15 @@ import SwiftUI
 enum LayoutToken: String, CaseIterable, Identifiable {
   case headerHeight
   case gridHorizontalPadding
+  case gridMaxWidth
+  case splitAxis
   case splitDefaultPosition
   case splitExpandedPosition
   case splitDismissPosition
   case canvasContainerInsetWithoutIsland
   case canvasContainerContentPadding
+  case canvasContainerMaxWidth
+  case canvasContainerFloatingCornerRadius
   case edgeControlBottomInset
   case shutterBottomInset
   case moveBarBottomInset
@@ -40,9 +44,16 @@ enum LayoutToken: String, CaseIterable, Identifiable {
   }
 
   struct Control {
+    enum Kind {
+      case slider
+      /// Stacked (0) or side by side (1); the drawer shows a segmented picker.
+      case axis
+    }
+
     let range: ClosedRange<Double>
     let step: Double
     let group: Group
+    var kind: Kind = .slider
   }
 
   var id: String { rawValue }
@@ -53,11 +64,15 @@ enum LayoutToken: String, CaseIterable, Identifiable {
     switch self {
     case .headerHeight: \.headerHeight
     case .gridHorizontalPadding: \.gridHorizontalPadding
+    case .gridMaxWidth: \.gridMaxWidth
+    case .splitAxis: \.splitAxisValue
     case .splitDefaultPosition: \.splitDefaultPosition
     case .splitExpandedPosition: \.splitExpandedPosition
     case .splitDismissPosition: \.splitDismissPosition
     case .canvasContainerInsetWithoutIsland: \.canvasContainerInsetWithoutIsland
     case .canvasContainerContentPadding: \.canvasContainerContentPadding
+    case .canvasContainerMaxWidth: \.canvasContainerMaxWidth
+    case .canvasContainerFloatingCornerRadius: \.canvasContainerFloatingCornerRadius
     case .edgeControlBottomInset: \.edgeControlBottomInset
     case .shutterBottomInset: \.shutterBottomInset
     case .moveBarBottomInset: \.moveBarBottomInset
@@ -70,12 +85,16 @@ enum LayoutToken: String, CaseIterable, Identifiable {
   var control: Control {
     switch self {
     case .headerHeight: Control(range: 40...200, step: 2, group: .split)
+    case .splitAxis: Control(range: 0...1, step: 1, group: .split, kind: .axis)
     case .splitDefaultPosition: Control(range: 0.2...0.8, step: 0.01, group: .split)
     case .splitExpandedPosition: Control(range: 0.05...0.45, step: 0.01, group: .split)
     case .splitDismissPosition: Control(range: 0.4...0.95, step: 0.01, group: .split)
     case .gridHorizontalPadding: Control(range: 0...240, step: 2, group: .grid)
+    case .gridMaxWidth: Control(range: 0...1200, step: 10, group: .grid)
     case .canvasContainerInsetWithoutIsland: Control(range: 0...60, step: 1, group: .canvas)
     case .canvasContainerContentPadding: Control(range: 0...32, step: 1, group: .canvas)
+    case .canvasContainerMaxWidth: Control(range: 0...900, step: 10, group: .canvas)
+    case .canvasContainerFloatingCornerRadius: Control(range: 0...80, step: 1, group: .canvas)
     case .edgeControlBottomInset: Control(range: 0...240, step: 2, group: .overlays)
     case .shutterBottomInset: Control(range: 0...160, step: 2, group: .overlays)
     case .moveBarBottomInset: Control(range: 0...160, step: 2, group: .overlays)
@@ -87,11 +106,15 @@ enum LayoutToken: String, CaseIterable, Identifiable {
     switch self {
     case .headerHeight: "Header height"
     case .gridHorizontalPadding: "Grid side padding"
+    case .gridMaxWidth: "Grid max width (0 = none)"
+    case .splitAxis: "Split axis"
     case .splitDefaultPosition: "Split default"
     case .splitExpandedPosition: "Split expanded"
     case .splitDismissPosition: "Split dismiss"
     case .canvasContainerInsetWithoutIsland: "Container inset (no island)"
     case .canvasContainerContentPadding: "Container content padding"
+    case .canvasContainerMaxWidth: "Container max width (0 = span)"
+    case .canvasContainerFloatingCornerRadius: "Container floating radius"
     case .edgeControlBottomInset: "Edge controls bottom"
     case .shutterBottomInset: "Shutter bottom"
     case .moveBarBottomInset: "Move bar bottom"
@@ -102,6 +125,20 @@ enum LayoutToken: String, CaseIterable, Identifiable {
   /// Whole numbers print bare; fractions (split positions) keep two places.
   static func format(_ value: Double) -> String {
     value == value.rounded() ? String(format: "%.0f", value) : String(format: "%.2f", value)
+  }
+
+  /// The Swift source for `value` in an assignment to this token's spec field.
+  func swiftLiteral(_ value: Double) -> String {
+    switch control.kind {
+    case .slider: return Self.format(value)
+    case .axis: return value >= 0.5 ? ".horizontal" : ".vertical"
+    }
+  }
+
+  /// The spec field the copied block assigns. Numeric tokens name themselves;
+  /// the axis token writes the enum field rather than its numeric shadow.
+  var swiftFieldName: String {
+    self == .splitAxis ? "splitAxis" : rawValue
   }
 }
 
@@ -226,11 +263,13 @@ final class LayoutTuning {
     lines.append(
       "// Then run JoodleTests/LayoutSpecTests and re-check every \(cls) preset in the Layout Lab.")
     lines.append("case \(cls):")
-    let width = changed.map { "spec.\($0.0.rawValue) = \(LayoutToken.format($0.1))".count }.max() ?? 0
-    for (token, value, was) in changed {
-      let assignment = "spec.\(token.rawValue) = \(LayoutToken.format(value))"
+    let assignments = changed.map { token, value, was in
+      ("spec.\(token.swiftFieldName) = \(token.swiftLiteral(value))", token.swiftLiteral(was))
+    }
+    let width = assignments.map(\.0.count).max() ?? 0
+    for (assignment, was) in assignments {
       let padding = String(repeating: " ", count: width - assignment.count)
-      lines.append("  \(assignment)\(padding)  // was \(LayoutToken.format(was))")
+      lines.append("  \(assignment)\(padding)  // was \(was)")
     }
     return lines.joined(separator: "\n")
   }

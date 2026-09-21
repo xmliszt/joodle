@@ -539,7 +539,7 @@ struct InteractiveTutorialView: View {
                 onBottomDismissed: {
                     mockStore.clearSelection()
                 },
-                onTopViewHeightChange: { _ in
+                onPrimarySizeChange: { _ in
                     // When bottom view appears/resizes, scroll to keep selected entry visible
                     scrollToSelectedEntry()
                 },
@@ -598,7 +598,8 @@ struct InteractiveTutorialView: View {
             viewMode: mockStore.viewMode,
             year: mockStore.selectedYear
         )
-      let x = layoutSpec.gridHorizontalPadding + CGFloat(col) * (dotSize + itemsSpacing) - dotSize * 1.5
+      let x = layoutSpec.gridHorizontalPadding(forContainerWidth: geometry.size.width)
+        + CGFloat(col) * (dotSize + itemsSpacing) - dotSize * 1.5
       let y = CGFloat(row) * (dotSize + itemsSpacing) - dotSize * 1.5
 
         // Position a small anchor view exactly at today's entry location
@@ -1051,7 +1052,7 @@ struct InteractiveTutorialView: View {
         CalendarGridHelper.calculateSpacing(
             containerWidth: containerWidth,
             viewMode: viewMode,
-            horizontalPadding: layoutSpec.gridHorizontalPadding
+            horizontalPadding: layoutSpec.gridHorizontalPadding(forContainerWidth: containerWidth)
         )
     }
 
@@ -1062,7 +1063,7 @@ struct InteractiveTutorialView: View {
             at: location,
             containerWidth: geometry.size.width,
             viewMode: mockStore.viewMode,
-            horizontalPadding: layoutSpec.gridHorizontalPadding,
+            horizontalPadding: layoutSpec.gridHorizontalPadding(forContainerWidth: geometry.size.width),
             year: mockStore.selectedYear,
             items: mockStore.itemsInYear,
             horizontalPaddingAdjustment: true

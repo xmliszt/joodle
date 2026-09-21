@@ -106,6 +106,22 @@ struct LayoutTuningTests {
     #expect(!block.contains("case .phone:"))
   }
 
+  @Test func axisTokenWritesTheEnumInTheAgentBlock() {
+    let tuning = makeTuning()
+    let phone = LayoutPreset.iPhone17.context
+    let resolvedPhone = LayoutSpec.resolve(phone)
+    tuning.set(.splitAxis, to: 1, for: .phone)
+    #expect(tuning.apply(resolvedPhone, for: .phone).splitAxis == .horizontal)
+
+    let block = tuning.agentBlock(
+      for: .phone, resolved: resolvedPhone,
+      stageName: "This device", stageSize: phone.size,
+      hostName: "iPhone 17", hostSize: phone.size)
+    #expect(block.contains("spec.splitAxis = .horizontal"))
+    #expect(block.contains("// was .vertical"))
+    #expect(!block.contains("splitAxisValue"))
+  }
+
   @Test func tokenTableCoversEveryGroup() {
     for group in LayoutToken.Group.allCases {
       #expect(!group.tokens.isEmpty, "\(group.rawValue)")

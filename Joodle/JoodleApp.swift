@@ -45,7 +45,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
   func application(
     _ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?
   ) -> UIInterfaceOrientationMask {
-    return .portrait
+    LayoutOrientationPolicy.supportedOrientations(for: window)
   }
 
   func application(

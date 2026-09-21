@@ -7,9 +7,11 @@
 
 import SwiftUI
 
+/// Two panels with a draggable handle between them. The split runs along
+/// `LayoutSpec.splitAxis`: stacked (grid above the entry panel) on phones,
+/// side by side (grid leading, entry panel trailing) on wide shapes. The
+/// `top` / `bottom` labels name the panels' roles, not their placement.
 struct ResizableSplitView<Top: View, Bottom: View>: View {
-  @State private var isLandscape: Bool = false
-  @State private var viewSize: CGSize?
   @State private var splitPosition: CGFloat = 1.0
   @State private var isSnapping: Bool = false
   @State private var hasShownBottomView: Bool = false
@@ -26,7 +28,9 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   let bottomView: Bottom
   let hasBottomView: Bool
   let onBottomDismissed: (() -> Void)?
-  let onTopViewHeightChange: ((CGFloat) -> Void)?
+  /// Called with the grid panel's size whenever a split animation settles or
+  /// the container resizes.
+  let onPrimarySizeChange: ((CGSize) -> Void)?
   let tutorialMode: Bool
   let allowHandleDrag: Bool
 
@@ -35,7 +39,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     @ViewBuilder bottom: () -> Bottom,
     hasBottomView: Bool,
     onBottomDismissed: (() -> Void)? = nil,
-    onTopViewHeightChange: ((CGFloat) -> Void)? = nil,
+    onPrimarySizeChange: ((CGSize) -> Void)? = nil,
     tutorialMode: Bool = false,
     allowHandleDrag: Bool? = nil
   ) {
@@ -43,79 +47,73 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
     self.bottomView = bottom()
     self.hasBottomView = hasBottomView
     self.onBottomDismissed = onBottomDismissed
-    self.onTopViewHeightChange = onTopViewHeightChange
+    self.onPrimarySizeChange = onPrimarySizeChange
     self.tutorialMode = tutorialMode
     // If allowHandleDrag is not specified, default to !tutorialMode (disabled in tutorial mode)
     self.allowHandleDrag = allowHandleDrag ?? !tutorialMode
   }
 
-  /// The height of the drag detection zone for the drag handle
-  private let DRAG_HANDLE_HEIGHT: CGFloat = 20
-  /// The highest position that user can drag
+  /// Thickness of the drag detection zone across the split axis.
+  private let handleThickness: CGFloat = 20
+  /// The furthest the grid panel can shrink
   @State private var MIN_SPLIT_POSITION: CGFloat = 0.0
-  /// The lowest position that user can drag
+  /// The furthest the grid panel can grow
   @State private var MAX_SPLIT_POSITION: CGFloat = 1.0
   /// Compensate corner radius so it is just a bit smaller than device actual radius
   private let CORNER_RADIUS_COMPENSATION: CGFloat = 5
 
-  /// Panel corners stay a little smaller than the device corners they echo, so
-  /// they read as concentric. Both panels take the screen's *bottom* corners:
-  /// the top panel's rounded bottom edge and the bottom panel's rounded top
-  /// edge both sit over the lower half of the device, and on a screen with
-  /// asymmetric corners (iPhone Duo cover) each side follows its own.
-  /// `ScreenHardware` floors flat displays, so these stay positive.
-  private var leadingPanelCornerRadius: CGFloat {
-    max(layoutContext.cornerRadii.bottomLeading - CORNER_RADIUS_COMPENSATION, 0)
-  }
+  private var axis: Axis { layoutSpec.splitAxis }
 
-  private var trailingPanelCornerRadius: CGFloat {
-    max(layoutContext.cornerRadii.bottomTrailing - CORNER_RADIUS_COMPENSATION, 0)
+  /// Panel corners stay a little smaller than the device corners they echo, so
+  /// they read as concentric, and on a screen with asymmetric corners (iPhone
+  /// Duo cover) each side follows its own. `ScreenHardware` floors flat
+  /// displays, so these stay positive.
+  private func panelRadius(_ screenRadius: CGFloat) -> CGFloat {
+    max(screenRadius - CORNER_RADIUS_COMPENSATION, 0)
   }
 
   var body: some View {
     GeometryReader { _geometry in
+      let total = axis == .vertical ? _geometry.size.height : _geometry.size.width
       // Combine the committed split position with the live drag offset
       let effectiveSplit = clamp(
-        value: splitPosition + (dragOffset / _geometry.size.height),
+        value: splitPosition + (dragOffset / total),
         min: MIN_SPLIT_POSITION,
         max: MAX_SPLIT_POSITION
       )
-      let topHeight = _geometry.size.height * effectiveSplit
-      let bottomHeight = _geometry.size.height * (1 - effectiveSplit)
-      // Round the top view's bottom corners only while it floats above the
-      // screen bottom. As it reaches full screen (bottomHeight -> 0) the radius
-      // collapses to 0 so the device's hardware corner mask does the rounding,
-      // instead of self-carving a notch that reveals the accent background.
-      let topBottomLeadingRadius = min(leadingPanelCornerRadius, bottomHeight)
-      let topBottomTrailingRadius = min(trailingPanelCornerRadius, bottomHeight)
+      let primaryExtent = total * effectiveSplit
+      let secondaryExtent = total * (1 - effectiveSplit)
+      let primarySize = panelSize(extent: primaryExtent, in: _geometry.size)
+      let secondarySize = panelSize(extent: secondaryExtent, in: _geometry.size)
+      let layout = axis == .vertical
+        ? AnyLayout(VStackLayout(spacing: 0))
+        : AnyLayout(HStackLayout(spacing: 0))
 
       ZStack {
-        // Background color - animate opacity based on splitPosition for smooth transition
-        // Map splitPosition 1.0->0.5 to opacity 0.0->1.0
+        // Accent shows through the handle gap between the two panels.
         Color.appAccent
           .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-        VStack(spacing: 0) {
-          // Top View - YearGridView
+        layout {
+          // Grid panel
           topView
-            .frame(width: _geometry.size.width, height: topHeight, alignment: .top)
-            .clipShape(
-              UnevenRoundedRectangle(
-                bottomLeadingRadius: topBottomLeadingRadius,
-                bottomTrailingRadius: topBottomTrailingRadius,
-                style: .continuous)
-            )
+            .frame(width: primarySize.width, height: primarySize.height, alignment: .topLeading)
+            .clipShape(primaryClipShape(secondaryExtent: secondaryExtent))
 
           // Resize Handle
           Rectangle()
             .fill(.clear)
           // Still make the rectangle interactive while keeping background clear
             .contentShape(Rectangle())
-            .frame(height: DRAG_HANDLE_HEIGHT)
+            .frame(
+              width: axis == .horizontal ? handleThickness : nil,
+              height: axis == .vertical ? handleThickness : nil)
             .overlay(
               RoundedRectangle(cornerRadius: 2)
                 .fill(.appSurface.opacity(0.7))
-                .frame(width: 60, height: 4)
+                .frame(
+                  width: axis == .vertical ? 60 : 4,
+                  height: axis == .vertical ? 4 : 60)
                 .tutorialHighlightAnchor(.centerHandle, cornerRadius: 2)
             )
           // Double-tap to navigate to today's date entry
@@ -142,35 +140,34 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
               ? nil
               : DragGesture(minimumDistance: 0, coordinateSpace: .named("splitContainer"))
                 .updating($dragOffset) { value, state, transaction in
-                  state = value.translation.height
+                  state = axis == .vertical ? value.translation.height : value.translation.width
                   transaction.animation = nil
                 }
                 .onEnded { value in
-                  let movement = value.translation.height / _geometry.size.height
+                  let translation = axis == .vertical ? value.translation.height : value.translation.width
+                  let movement = translation / total
                   let finalPos = clamp(
                     value: splitPosition + movement,
                     min: MIN_SPLIT_POSITION,
                     max: MAX_SPLIT_POSITION
                   )
-                  snapToPosition(finalPos, totalHeight: _geometry.size.height)
+                  snapToPosition(finalPos, containerSize: _geometry.size)
                 }
             )
 
-          // Bottom container - clips bottomView from top
+          // Entry panel - clipped along its edge facing the grid
           bottomView
-            .frame(width: _geometry.size.width, height: bottomHeight, alignment: .top)
-            .clipShape(
-              UnevenRoundedRectangle(
-                topLeadingRadius: leadingPanelCornerRadius,
-                topTrailingRadius: trailingPanelCornerRadius,
-                style: .continuous)
-            )
+            .frame(width: secondarySize.width, height: secondarySize.height, alignment: .topLeading)
+            .clipShape(secondaryClipShape)
         }
       }
       .coordinateSpace(name: "splitContainer")
       .transaction { transaction in
         transaction.animation = dragOffset != 0 ? nil : transaction.animation
       }
+      // A change of split axis (fold, rotation) slides both panels to their new
+      // places instead of rebuilding them.
+      .animation(.springFkingSatifying, value: axis)
       .onAppear {
         // When appeared, update splitPosition:
         // If we don't have bottomView, then show full topView
@@ -179,14 +176,16 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
           splitPosition = hasBottomView ? layoutSpec.splitDefaultPosition : 1.0
         } completion: {
           hasShownBottomView = hasBottomView
-          let newHeight = _geometry.size.height * splitPosition
-          self.onTopViewHeightChange?(newHeight)
+          reportPrimarySize(in: _geometry.size)
         }
       }
       .onChange(of: _geometry.size) { _, newValue in
         guard dragOffset == 0 else { return }
-        let newHeight = newValue.height * splitPosition
-        self.onTopViewHeightChange?(newHeight)
+        reportPrimarySize(in: newValue)
+      }
+      .onChange(of: axis) { _, _ in
+        guard dragOffset == 0 else { return }
+        reportPrimarySize(in: _geometry.size)
       }
       .onChange(of: hasBottomView) { _, newValue in
         guard dragOffset == 0 else { return }
@@ -194,15 +193,64 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
           splitPosition = newValue ? layoutSpec.splitDefaultPosition : 1.0
         } completion: {
           hasShownBottomView = newValue
-          let newHeight = _geometry.size.height * splitPosition
-          self.onTopViewHeightChange?(newHeight)
+          reportPrimarySize(in: _geometry.size)
         }
       }
     }
   }
 
+  // MARK: - Geometry
+
+  private func panelSize(extent: CGFloat, in container: CGSize) -> CGSize {
+    axis == .vertical
+      ? CGSize(width: container.width, height: extent)
+      : CGSize(width: extent, height: container.height)
+  }
+
+  private func reportPrimarySize(in container: CGSize) {
+    let total = axis == .vertical ? container.height : container.width
+    onPrimarySizeChange?(panelSize(extent: total * splitPosition, in: container))
+  }
+
+  /// Round the grid panel's edge facing the entry panel only while the entry
+  /// panel is showing. As the grid reaches full screen (secondaryExtent -> 0)
+  /// the radius collapses to 0 so the device's hardware corner mask does the
+  /// rounding, instead of self-carving a notch that reveals the accent behind.
+  private func primaryClipShape(secondaryExtent: CGFloat) -> UnevenRoundedRectangle {
+    let radii = layoutContext.cornerRadii
+    switch axis {
+    case .vertical:
+      return UnevenRoundedRectangle(
+        bottomLeadingRadius: min(panelRadius(radii.bottomLeading), secondaryExtent),
+        bottomTrailingRadius: min(panelRadius(radii.bottomTrailing), secondaryExtent),
+        style: .continuous)
+    case .horizontal:
+      return UnevenRoundedRectangle(
+        bottomTrailingRadius: min(panelRadius(radii.bottomTrailing), secondaryExtent),
+        topTrailingRadius: min(panelRadius(radii.topTrailing), secondaryExtent),
+        style: .continuous)
+    }
+  }
+
+  private var secondaryClipShape: UnevenRoundedRectangle {
+    let radii = layoutContext.cornerRadii
+    switch axis {
+    case .vertical:
+      // Echoes the device's bottom corners: the panel sits over the lower half.
+      return UnevenRoundedRectangle(
+        topLeadingRadius: panelRadius(radii.bottomLeading),
+        topTrailingRadius: panelRadius(radii.bottomTrailing),
+        style: .continuous)
+    case .horizontal:
+      return UnevenRoundedRectangle(
+        topLeadingRadius: panelRadius(radii.topLeading),
+        bottomLeadingRadius: panelRadius(radii.bottomLeading),
+        style: .continuous)
+    }
+  }
+
   /// Commits the dragged position and snaps to the nearest snap point with animation
-  private func snapToPosition(_ position: CGFloat, totalHeight: CGFloat) {
+  private func snapToPosition(_ position: CGFloat, containerSize: CGSize) {
     // Immediately commit the dragged position so there's no visual jump
     // when @GestureState resets dragOffset to 0
     splitPosition = position
@@ -227,8 +275,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
         splitPosition = closestPosition
       }
     } completion: {
-      let newHeight = totalHeight * splitPosition
-      self.onTopViewHeightChange?(newHeight)
+      reportPrimarySize(in: containerSize)
       DispatchQueue.main.async {
         isSnapping = false
         if splitPosition == 1.0 {
@@ -239,10 +286,22 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   }
 }
 
-#Preview {
+#Preview("Stacked") {
   ResizableSplitView(
     top: { Color.white },
     bottom: { Color.white },
     hasBottomView: true
   ).ignoresSafeArea(.container)
 }
+
+#if DEBUG
+#Preview("Side by side · Duo inner") {
+  ResizableSplitView(
+    top: { Color.white },
+    bottom: { Color.white },
+    hasBottomView: true
+  )
+  .ignoresSafeArea(.container)
+  .layoutPreset(.duoInnerLandscape)
+}
+#endif

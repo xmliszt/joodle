@@ -229,7 +229,7 @@ struct ContentView: View {
       .onChange(of: geometry.size) { _, newSize in
         hitTestingGrid = []
         gridMetrics = nil
-        yearGridViewSize.width = newSize.width
+        yearGridViewSize = newSize
       }
       // Initial scroll to today's dot for both modes
       .onAppear {
@@ -426,20 +426,25 @@ struct ContentView: View {
         ZStack(alignment: .top) {
           ResizableSplitView(
             top: {
-              ZStack {
-                // Backdrop background color to cover the top handle area
-                Color(UIColor.systemBackground)
-                  .frame(maxWidth: .infinity, maxHeight: .infinity)
+              // The grid's own geometry: on a side-by-side split its column is
+              // narrower than the scene, and spacing and hit testing must
+              // follow the column, not the screen.
+              GeometryReader { gridGeometry in
+                ZStack {
+                  // Backdrop background color to cover the top handle area
+                  Color(UIColor.systemBackground)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                // Time-passing water backdrop (hide when bottom view is visible or disabled in settings)
-                // Joodle Pro feature — free users never see it, even if the preference
-                // was switched on while it was free.
-                if userPreferences.enableTimeBackdrop && subscriptionManager.hasPremiumAccess {
-                  LiquidMetaballBackdropView()
+                  // Time-passing water backdrop (hide when bottom view is visible or disabled in settings)
+                  // Joodle Pro feature — free users never see it, even if the preference
+                  // was switched on while it was free.
+                  if userPreferences.enableTimeBackdrop && subscriptionManager.hasPremiumAccess {
+                    LiquidMetaballBackdropView()
+                  }
+
+                  // Full-screen scrollable year grid with time-passing backdrop
+                  yearGridScrollView(geometry: gridGeometry)
                 }
-
-                // Full-screen scrollable year grid with time-passing backdrop
-                yearGridScrollView(geometry: geometry)
               }
             },
             bottom: {
@@ -481,9 +486,9 @@ struct ContentView: View {
                 dataProvider.clearSelection()
               }
             },
-            onTopViewHeightChange: { newHeight in
-              yearGridViewSize.height = newHeight
-              // Scroll after height change is complete, only do so if there is item selected.
+            onPrimarySizeChange: { _ in
+              // The grid's GeometryReader tracks its size; here we only
+              // re-center the selection once the split has settled.
               guard let selectedDateItem = dataProvider.selectedDateItem, let scrollProxy else { return }
               scrollToRelevantDate(
                 itemId: selectedDateItem.id, scrollProxy: scrollProxy, anchor: .center)
@@ -509,6 +514,11 @@ struct ContentView: View {
             },
             isInMoveMode: isMovingDrawing
           )
+          // On a side-by-side split the header belongs to the grid column.
+          .frame(
+            width: layoutSpec.splitAxis == .horizontal && yearGridViewSize.width > 0
+              ? yearGridViewSize.width : nil)
+          .frame(maxWidth: .infinity, alignment: .leading)
         }
       }
       .ignoresSafeArea(.all, edges: .bottom)
@@ -1163,7 +1173,7 @@ struct ContentView: View {
     CalendarGridHelper.calculateSpacing(
       containerWidth: containerWidth,
       viewMode: viewMode,
-      horizontalPadding: layoutSpec.gridHorizontalPadding)
+      horizontalPadding: layoutSpec.gridHorizontalPadding(forContainerWidth: containerWidth))
   }
 
   // MARK: User interactions
@@ -1232,7 +1242,8 @@ struct ContentView: View {
   /// Build hit testing grid for fast lookups
   private func buildHitTestingGrid(for geometry: GeometryProxy) {
     let spacing = calculateSpacing(containerWidth: geometry.size.width, viewMode: dataProvider.viewMode)
-    let containerWidth = geometry.size.width - (2 * layoutSpec.gridHorizontalPadding)
+    let containerWidth =
+      geometry.size.width - (2 * layoutSpec.gridHorizontalPadding(forContainerWidth: geometry.size.width))
     let totalSpacingWidth = CGFloat(dataProvider.viewMode.dotsPerRow - 1) * spacing
     let totalDotWidth = containerWidth - totalSpacingWidth
     let itemSpacing = totalDotWidth / CGFloat(dataProvider.viewMode.dotsPerRow)
@@ -1279,7 +1290,7 @@ struct ContentView: View {
       at: adjustedLocation,
       containerWidth: geometry.size.width,
       viewMode: dataProvider.viewMode,
-      horizontalPadding: layoutSpec.gridHorizontalPadding,
+      horizontalPadding: layoutSpec.gridHorizontalPadding(forContainerWidth: geometry.size.width),
       year: dataProvider.selectedYear,
       items: dataProvider.itemsInYear,
       horizontalPaddingAdjustment: false  // Already adjusted by adjustTouchLocationForGrid
@@ -1592,7 +1603,7 @@ struct ContentView: View {
   private func adjustTouchLocationForGrid(_ location: CGPoint) -> CGPoint {
     // Adjust for the header height and horizontal padding
     return CGPoint(
-      x: location.x - layoutSpec.gridHorizontalPadding,
+      x: location.x - layoutSpec.gridHorizontalPadding(forContainerWidth: yearGridViewSize.width),
       y: location.y
     )
   }

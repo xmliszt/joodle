@@ -385,6 +385,7 @@ struct LayoutTokenDrawer: View {
     .help(Text(verbatim: "Tap to load a candidate, hold to save the current tokens into it"))
   }
 
+  @ViewBuilder
   private func tokenRow(_ token: LayoutToken) -> some View {
     let control = token.control
     let overridden = tuning.isOverridden(token, for: layoutClass)
@@ -392,17 +393,30 @@ struct LayoutTokenDrawer: View {
       get: { tuning.value(of: token, for: layoutClass, resolved: resolved) },
       set: { tuning.set(token, to: $0, for: layoutClass) }
     )
-    return HStack(spacing: 8) {
+    HStack(spacing: 8) {
       Text(verbatim: token.label)
         .font(.caption)
         .lineLimit(1)
         .minimumScaleFactor(0.8)
         .frame(width: 118, alignment: .leading)
-      Slider(value: binding, in: control.range, step: control.step)
+      switch control.kind {
+      case .slider:
+        Slider(value: binding, in: control.range, step: control.step)
+      case .axis:
+        Picker(selection: binding) {
+          Text(verbatim: "Stacked").tag(0.0)
+          Text(verbatim: "Side by side").tag(1.0)
+        } label: {
+          Text(verbatim: token.label)
+        }
+        .pickerStyle(.segmented)
+      }
       Button {
         tuning.clear(token, for: layoutClass)
       } label: {
-        Text(verbatim: LayoutToken.format(binding.wrappedValue))
+        Text(verbatim: control.kind == .axis
+             ? (overridden ? "reset" : "")
+             : LayoutToken.format(binding.wrappedValue))
           .font(.caption.monospaced().weight(overridden ? .semibold : .regular))
           .foregroundStyle(overridden ? Color.appAccent : .secondary)
           .frame(width: 44, alignment: .trailing)
@@ -481,27 +495,45 @@ struct LayoutBlueprintView: View {
         canvas.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 1, dash: dash))
       }
 
+      func vLine(_ x: CGFloat, dash: [CGFloat] = [], color: Color) {
+        var path = Path()
+        path.move(to: CGPoint(x: x, y: 0))
+        path.addLine(to: CGPoint(x: x, y: size.height))
+        canvas.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: 1, dash: dash))
+      }
+
       // Header band: the space the grid scrolls under, below the safe area.
       let headerTop = context.safeArea.top
       let headerRect = CGRect(x: 0, y: headerTop, width: size.width, height: spec.headerHeight)
       canvas.fill(Path(headerRect), with: .color(accent.opacity(0.18)))
       label("header \(LayoutToken.format(spec.headerHeight))", at: CGPoint(x: 8, y: headerTop + 4))
 
-      // Split snaps.
+      // Split snaps, along the split axis.
       for (position, name) in [
         (spec.splitExpandedPosition, "expanded"),
         (spec.splitDefaultPosition, "default"),
         (spec.splitDismissPosition, "dismiss"),
       ] {
-        let y = size.height * position
-        hLine(y, dash: name == "default" ? [] : [4, 4], color: accent.opacity(name == "default" ? 0.9 : 0.6))
-        label("\(name) \(LayoutToken.format(position))", at: CGPoint(x: size.width - 8, y: y - 3), anchor: .bottomTrailing)
+        let dash: [CGFloat] = name == "default" ? [] : [4, 4]
+        let color = accent.opacity(name == "default" ? 0.9 : 0.6)
+        let text = "\(name) \(LayoutToken.format(position))"
+        switch spec.splitAxis {
+        case .vertical:
+          let y = size.height * position
+          hLine(y, dash: dash, color: color)
+          label(text, at: CGPoint(x: size.width - 8, y: y - 3), anchor: .bottomTrailing)
+        case .horizontal:
+          let x = size.width * position
+          vLine(x, dash: dash, color: color)
+          label(text, at: CGPoint(x: x + 4, y: size.height - 8), anchor: .bottomLeading)
+        }
       }
 
-      // Grid columns for the 7-day view.
-      let padding = spec.gridHorizontalPadding
+      // Grid columns for the 7-day view, in the grid's own column.
+      let gridWidth = spec.splitAxis == .horizontal ? size.width * spec.splitDefaultPosition : size.width
+      let padding = spec.gridHorizontalPadding(forContainerWidth: gridWidth)
       let spacing = CalendarGridHelper.calculateSpacing(
-        containerWidth: size.width, viewMode: .now, horizontalPadding: padding)
+        containerWidth: gridWidth, viewMode: .now, horizontalPadding: padding)
       let dotSize = ViewMode.now.dotSize
       let rowY = headerTop + spec.headerHeight + 24
       // Same placement as YearGridView: dots in a row with `spacing` between them.
@@ -513,8 +545,8 @@ struct LayoutBlueprintView: View {
       var edges = Path()
       edges.move(to: CGPoint(x: padding, y: rowY - 16))
       edges.addLine(to: CGPoint(x: padding, y: rowY + 16))
-      edges.move(to: CGPoint(x: size.width - padding, y: rowY - 16))
-      edges.addLine(to: CGPoint(x: size.width - padding, y: rowY + 16))
+      edges.move(to: CGPoint(x: gridWidth - padding, y: rowY - 16))
+      edges.addLine(to: CGPoint(x: gridWidth - padding, y: rowY + 16))
       canvas.stroke(edges, with: .color(accent), lineWidth: 1)
       label("pad \(LayoutToken.format(padding)) · gap \(LayoutToken.format(spacing.rounded()))",
             at: CGPoint(x: padding, y: rowY + 20))
