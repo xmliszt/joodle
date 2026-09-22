@@ -72,6 +72,12 @@ struct LayoutSpec: Equatable {
   /// 112pt down the Duo cover's sensor bar.
   var trailingRailTopInset: CGFloat = 165
 
+  /// Horizontal center of the rail in scene coordinates: the column the
+  /// sensor bar's own items sit on, rather than the middle of the inset.
+  func trailingRailCenterX(in context: LayoutContext) -> CGFloat {
+    context.size.width - context.safeArea.trailing + ScreenHardware.Duo.sensorBarItemsCenterInset
+  }
+
   /// Side inset of the floating canvas container on screens without an island
   /// (island devices derive it from the cutout frame instead).
   var canvasContainerInsetWithoutIsland: CGFloat = 10
@@ -89,6 +95,12 @@ struct LayoutSpec: Equatable {
   var canvasDisplayMaxSide: CGFloat = 0
   /// Smallest gap kept between the displayed canvas and the container edge.
   var canvasMinSideInset: CGFloat = 16
+  /// Smallest side the canvas is displayed at where it has to shrink to fit
+  /// a narrow column; only reachable when `canvasDisplayMaxSide` is set.
+  var canvasDisplayMinSide: CGFloat = 200
+  /// Height of the container's chrome around the canvas (button row, top and
+  /// bottom insets), used to keep a docked container inside its column.
+  var canvasContainerChromeHeight: CGFloat = 100
   /// On a side-by-side split the container docks inside the entry column,
   /// this far from the column's edges.
   var canvasDockInset: CGFloat = 12
@@ -98,9 +110,11 @@ struct LayoutSpec: Equatable {
   var canvasDockMinCornerRadius: CGFloat = 16
 
   /// Side of the displayed canvas square inside a container of `containerWidth`.
+  /// Phones (no max side) keep the stroke space at 1:1; shapes that allow
+  /// scaling fill the container to its side inset, up or down.
   func canvasDisplaySide(containerWidth: CGFloat) -> CGFloat {
     guard canvasDisplayMaxSide > CANVAS_SIZE else { return CANVAS_SIZE }
-    return min(canvasDisplayMaxSide, max(containerWidth - canvasMinSideInset * 2, CANVAS_SIZE))
+    return min(canvasDisplayMaxSide, max(containerWidth - canvasMinSideInset * 2, canvasDisplayMinSide))
   }
 
   /// Bottom inset of the edge-hugging camera and photo controls.
@@ -148,7 +162,9 @@ struct LayoutSpec: Equatable {
       spec.gridMaxWidth = 520
       spec.yearModeColumns = 24
       spec.canvasContainerMaxWidth = 480
-      spec.canvasDisplayMaxSide = 448
+      // Docked in the entry column, the canvas fills the container whatever
+      // the column's width, so the cap is only a sanity bound.
+      spec.canvasDisplayMaxSide = 720
       // With the status bar hidden behind the open canvas these screens have
       // no top inset, so the seat needs its own breathing room.
       spec.canvasContainerInsetWithoutIsland = 24
@@ -224,8 +240,12 @@ extension LayoutSpec {
   }
 
   private func dockedCanvasContainer(in context: LayoutContext, panel: CGRect) -> CanvasContainerMetrics {
+    // Fill the column so the container's corners stay concentric with the
+    // separator's, however wide the column is; the only bound is the height
+    // the column can show (the canvas is square, plus the chrome around it).
     let available = panel.width - canvasDockInset * 2
-    let expandedWidth = canvasContainerMaxWidth > 0 ? min(canvasContainerMaxWidth, available) : available
+    let heightBudget = panel.height - context.safeArea.bottom - canvasDockInset * 2 - canvasContainerChromeHeight
+    let expandedWidth = max(min(available, heightBudget), 0)
     // Concentric with the panel's leading corners: the same radius minus the
     // gap between them, floored where the panel is nearly square.
     let panelRadius = splitPanelCornerRadii(in: context).topLeading

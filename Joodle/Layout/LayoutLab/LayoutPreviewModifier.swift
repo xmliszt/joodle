@@ -14,6 +14,11 @@ struct DeviceFrame<Content: View>: View {
   let context: LayoutContext
   let spec: LayoutSpec
   var showSafeAreas = false
+  /// Whether the frame re-creates the safe areas around `content`. Off when
+  /// the content hosts a NavigationStack: insets applied outside the stack
+  /// don't reach the views inside it, so the caller applies
+  /// `emulatedSafeArea` to the stack's root instead.
+  var insetsContent = true
   @ViewBuilder let content: () -> Content
 
   var body: some View {
@@ -21,18 +26,7 @@ struct DeviceFrame<Content: View>: View {
       content()
         .environment(\.layoutContext, context)
         .environment(\.layoutSpec, spec)
-        .safeAreaInset(edge: .top, spacing: 0) {
-          Color.clear.frame(height: context.safeArea.top)
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-          Color.clear.frame(height: context.safeArea.bottom)
-        }
-        .safeAreaInset(edge: .leading, spacing: 0) {
-          Color.clear.frame(width: context.safeArea.leading)
-        }
-        .safeAreaInset(edge: .trailing, spacing: 0) {
-          Color.clear.frame(width: context.safeArea.trailing)
-        }
+        .emulatedSafeArea(insetsContent ? context.safeArea : EdgeInsets())
 
       if showSafeAreas {
         safeAreaBands
@@ -65,6 +59,17 @@ struct DeviceFrame<Content: View>: View {
 }
 
 extension View {
+  /// Re-creates a screen's safe areas around this view the way the window
+  /// does: the view is proposed the safe region, and children that ignore
+  /// safe areas extend under the insets.
+  func emulatedSafeArea(_ insets: EdgeInsets) -> some View {
+    self
+      .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: insets.top) }
+      .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: insets.bottom) }
+      .safeAreaInset(edge: .leading, spacing: 0) { Color.clear.frame(width: insets.leading) }
+      .safeAreaInset(edge: .trailing, spacing: 0) { Color.clear.frame(width: insets.trailing) }
+  }
+
   /// Previews this view as it lays out on `preset`. Pair with a preview
   /// device large enough to show the frame, or let the canvas scroll.
   func layoutPreset(_ preset: LayoutPreset) -> some View {

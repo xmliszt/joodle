@@ -164,7 +164,8 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
               GeometryReader { proxy in
                 Color.clear.preference(
                   key: SplitEntryPanelFramePreferenceKey.self,
-                  value: hasBottomView && secondaryExtent > 0 ? proxy.frame(in: .global) : nil)
+                  value: hasBottomView && secondaryExtent > 0
+                    ? proxy.frame(in: .named(LayoutSceneSpace.name)) : nil)
               }
             )
         }

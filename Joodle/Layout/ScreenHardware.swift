@@ -130,6 +130,9 @@ enum ScreenHardware {
     static let modelName = "iPhone Duo"
     static let coverCameraHole = CGRect(x: 396.3, y: 29.3, width: 43, height: 43)
     static let coverSafeArea = EdgeInsets(top: 0, leading: 0, bottom: 34, trailing: 84)
+    /// The sensor bar's items (camera, clock, Wi-Fi) share one column, this
+    /// far in from the bar's inner edge on both displays.
+    static let sensorBarItemsCenterInset: CGFloat = 36
 
     /// Anything with a short side under 600pt is the cover; the inner display
     /// is 951×669pt.

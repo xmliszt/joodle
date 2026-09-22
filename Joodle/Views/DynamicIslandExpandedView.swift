@@ -160,8 +160,17 @@ struct DynamicIslandExpandedView<Content: View>: View {
   // collapses to zero size when hidden. All of that geometry is resolved by
   // the layout spec, shared with the canvas inside so both agree on it.
 
+  /// This view's origin in the scene space the dock frame is measured in.
+  /// The view ignores safe areas, so it can sit above and left of the home
+  /// screen's root; the difference is subtracted before docking.
+  @State private var sceneOrigin: CGPoint = .zero
+
+  private var localDockFrame: CGRect? {
+    canvasDockFrame?.offsetBy(dx: -sceneOrigin.x, dy: -sceneOrigin.y)
+  }
+
   private var metrics: CanvasContainerMetrics {
-    layoutSpec.canvasContainer(in: layoutContext, dockedTo: canvasDockFrame)
+    layoutSpec.canvasContainer(in: layoutContext, dockedTo: localDockFrame)
   }
 
   /// A camera hole is a 43pt circle: black-on-black hiding, which works
@@ -517,6 +526,11 @@ struct DynamicIslandExpandedView<Content: View>: View {
     // The whole scene, side insets included, so a cutout in a side sensor bar
     // (Duo cover) is reachable in scene coordinates.
     .ignoresSafeArea()
+    .onGeometryChange(for: CGPoint.self) { proxy in
+      proxy.frame(in: .named(LayoutSceneSpace.name)).origin
+    } action: { origin in
+      sceneOrigin = origin
+    }
     // Define hit zone
     .contentShape(UnevenRoundedRectangle(cornerRadii: layoutContext.cornerRadii, style: .continuous))
     // Only receive hit test when expanded. This must stay enabled even when

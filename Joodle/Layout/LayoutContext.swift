@@ -116,3 +116,11 @@ struct LayoutContext: Equatable {
 extension EnvironmentValues {
   @Entry var layoutContext: LayoutContext = .placeholder
 }
+
+/// Coordinate space the home screen defines on its root, so frames handed
+/// between its children (the split's entry panel, the floating canvas) are
+/// measured in the scene's own points. Unlike `.global`, it stays correct when
+/// the whole screen is scaled inside the Layout Lab's stage.
+enum LayoutSceneSpace {
+  static let name = "joodle.layoutScene"
+}

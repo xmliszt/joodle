@@ -546,6 +546,10 @@ struct ContentView: View {
               axis: .vertical
             )
             .frame(width: layoutContext.safeArea.trailing)
+            // Centered on the camera hole, like the system's status items.
+            .offset(
+              x: layoutSpec.trailingRailCenterX(in: layoutContext)
+                - (layoutContext.size.width - layoutContext.safeArea.trailing / 2))
             .padding(.top, layoutSpec.trailingRailTopInset)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             .ignoresSafeArea()
@@ -963,6 +967,10 @@ struct ContentView: View {
         .transition(.move(edge: .bottom).combined(with: .opacity))
       }
     }
+    // Frames published by children (the entry panel, for docking the canvas)
+    // are measured in this space rather than `.global`, so they survive the
+    // Layout Lab scaling the whole screen.
+    .coordinateSpace(name: LayoutSceneSpace.name)
     // A fresh reference photo returns the auto-trace button to the handedness
     // side — a prior across-the-screen relocation lasts only that session.
     .onChange(of: cameraContext.backdropImage) { _, _ in

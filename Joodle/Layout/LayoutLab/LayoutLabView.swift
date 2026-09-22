@@ -69,10 +69,18 @@ struct LayoutLabView: View {
       1,
       max(available.width - 16, 1) / context.size.width,
       max(available.height - 8, 1) / context.size.height)
-    return DeviceFrame(context: context, spec: stageSpec, showSafeAreas: showSafeAreas) {
+    return DeviceFrame(
+      context: context, spec: stageSpec, showSafeAreas: showSafeAreas, insetsContent: false
+    ) {
       NavigationStack {
         ContentView(selectedDateFromWidget: .constant(nil))
-          .frame(width: context.size.width, height: context.size.height)
+          // Pinned to the safe region as JoodleApp pins it to the window's,
+          // with the preset's safe areas around it: a side sensor bar shrinks
+          // the screen, while edge-to-edge views still reach under the insets.
+          .frame(
+            width: context.size.width - context.safeArea.leading - context.safeArea.trailing,
+            height: context.size.height - context.safeArea.top - context.safeArea.bottom)
+          .emulatedSafeArea(context.safeArea)
       }
     }
     .overlay {

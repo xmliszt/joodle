@@ -120,9 +120,19 @@ struct LayoutSpecTests {
     #expect(radii == RectangleCornerRadii(uniform: 3))
   }
 
-  @Test func onlyTheDuoCoverMovesTheHeaderButtonsToARail() {
+  @Test func theRailCentersOnTheCameraHole() {
+    let cover = LayoutPreset.duoCover.context
+    let spec = LayoutSpec.resolve(cover)
+    // 466 - 84 + 36: the column the camera, clock and Wi-Fi share.
+    #expect(spec.trailingRailCenterX(in: cover) == 418)
+    #expect(abs(spec.trailingRailCenterX(in: cover) - ScreenHardware.Duo.coverCameraHole.midX) < 1)
+  }
+
+  @Test func onlyTheDuoSensorBarMovesTheHeaderButtonsToARail() {
+    // Both Duo displays carry the trailing sensor bar; nothing else does.
     #expect(LayoutSpec.resolve(LayoutPreset.duoCover.context).headerButtonsInTrailingRail)
-    for preset in [LayoutPreset.iPhone17, .iPhoneSE, .duoInnerLandscape, .iPadPro11] {
+    #expect(LayoutSpec.resolve(LayoutPreset.duoInnerLandscape.context).headerButtonsInTrailingRail)
+    for preset in [LayoutPreset.iPhone17, .iPhoneSE, .iPadPro11, .iPadMini] {
       #expect(!LayoutSpec.resolve(preset.context).headerButtonsInTrailingRail, "\(preset.name)")
     }
   }
@@ -194,9 +204,11 @@ struct LayoutSpecTests {
     let metrics = spec.canvasContainer(in: context)
     #expect(metrics.expandedWidth == 480)
     #expect(spec.canvasDisplaySide(containerWidth: metrics.expandedWidth) == 448)
-    // Never below the stroke space, never within the minimum inset of the edge.
-    #expect(spec.canvasDisplaySide(containerWidth: 300) == CANVAS_SIZE)
+    // Fills the container to its side inset, shrinking below the stroke space
+    // in a narrow column, never below the floor.
+    #expect(spec.canvasDisplaySide(containerWidth: 300) == 268)
     #expect(spec.canvasDisplaySide(containerWidth: 420) == 388)
+    #expect(spec.canvasDisplaySide(containerWidth: 100) == spec.canvasDisplayMinSide)
   }
 
   @Test func gridHelperHonorsTheColumnCount() {
@@ -288,19 +300,22 @@ struct LayoutSpecTests {
     let spec = LayoutSpec.resolve(context)
     let metrics = spec.canvasContainer(in: context)
     #expect(metrics.expandedWidth == 480)
-    #expect(metrics.horizontalInset == 235.5)  // (951 - 480) / 2
+    #expect(metrics.horizontalInset == 193.5)  // (951 - 84 sensor bar - 480) / 2
+    #expect(metrics.expandedCenterX == 433.5)  // centered in the safe width, not the scene
     #expect(metrics.cornerRadii == RectangleCornerRadii(uniform: spec.canvasContainerFloatingCornerRadius))
     #expect(metrics.contentCornerRadius == spec.canvasContainerFloatingCornerRadius - 8)
-    #expect(metrics.topOffset == context.safeArea.top)
+    // No top safe area on the inner display, so the container keeps the
+    // resolver's edge inset rather than sitting flush with the top.
+    #expect(metrics.topOffset == 24)
     #expect(metrics.collapsedSize == .zero)
   }
 
   @Test func sideBySideContainerDocksInsideTheEntryPanel() {
     let context = LayoutPreset.duoInnerLandscape.context
     let spec = LayoutSpec.resolve(context)
-    let panel = CGRect(x: 496, y: 0, width: 455, height: 669)  // trailing column at a 50 % split
+    let panel = CGRect(x: 434, y: 0, width: 433, height: 669)  // trailing column at a 50 % split
     let metrics = spec.canvasContainer(in: context, dockedTo: panel)
-    #expect(metrics.expandedWidth == 431)  // 455 - 2 × 12, under the 480 cap
+    #expect(metrics.expandedWidth == 409)  // 433 - 2 × 12: fills the column
     #expect(metrics.expandedCenterX == panel.midX)
     #expect(metrics.topOffset == 12)
     // Panel corners are 55 - 5 = 50; the container sits 12 inside → 38.
@@ -313,8 +328,17 @@ struct LayoutSpecTests {
     let spec = LayoutSpec.resolve(context)
     let panel = CGRect(x: 615, y: 0, width: 595, height: 834)
     let metrics = spec.canvasContainer(in: context, dockedTo: panel)
-    #expect(metrics.expandedWidth == 480)  // capped
+    #expect(metrics.expandedWidth == 571)  // fills the column: 595 - 2 × 12
     #expect(metrics.cornerRadii == RectangleCornerRadii(uniform: 16))  // 18 - 5 - 12 < floor
+  }
+
+  @Test func dockedContainerNeverOutgrowsItsColumnHeight() {
+    let context = LayoutPreset.duoInnerLandscape.context
+    let spec = LayoutSpec.resolve(context)
+    // A wide column on a short display: the square canvas plus chrome must fit.
+    let panel = CGRect(x: 300, y: 0, width: 651, height: 669)
+    let metrics = spec.canvasContainer(in: context, dockedTo: panel)
+    #expect(metrics.expandedWidth == 511)  // 669 - 34 - 24 - 100
   }
 
   @Test func stackedSplitIgnoresTheDockFrame() {

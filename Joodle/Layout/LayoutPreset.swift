@@ -96,13 +96,14 @@ struct LayoutPreset: Identifiable, Equatable {
     modelName: ScreenHardware.Duo.modelName, idiom: .phone, reportedCornerRadius: 59,
     verified: true)
 
-  /// Inner display in its native landscape posture.
+  /// Inner display in its native landscape posture, measured on the
+  /// simulator: the sensor bar stays on the trailing edge, no top inset.
   static let duoInnerLandscape = LayoutPreset(
     id: "duo-inner-landscape", name: "iPhone Duo · inner, landscape",
     size: CGSize(width: 951, height: 669),
-    safeArea: EdgeInsets(top: 24, leading: 0, bottom: 20, trailing: 0),
-    modelName: "iPhone Duo", idiom: .phone, reportedCornerRadius: 55,
-    verified: false)
+    safeArea: ScreenHardware.Duo.coverSafeArea,
+    modelName: ScreenHardware.Duo.modelName, idiom: .phone, reportedCornerRadius: 55,
+    verified: true)
 
   static let duoInnerPortrait = LayoutPreset(
     id: "duo-inner-portrait", name: "iPhone Duo · inner, portrait",
