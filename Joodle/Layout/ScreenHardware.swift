@@ -251,6 +251,17 @@ extension RectangleCornerRadii {
     max(topLeading, bottomLeading, bottomTrailing, topTrailing)
   }
 
+  /// Every corner at least `minimum`, for surfaces whose concentric radius
+  /// would collapse to a sharp corner on a nearly square screen edge.
+  func floored(at minimum: CGFloat) -> RectangleCornerRadii {
+    RectangleCornerRadii(
+      topLeading: max(topLeading, minimum),
+      bottomLeading: max(bottomLeading, minimum),
+      bottomTrailing: max(bottomTrailing, minimum),
+      topTrailing: max(topTrailing, minimum)
+    )
+  }
+
   /// Radii of a shape inset from the screen edge by `inset`, so it stays
   /// concentric with the corners it hugs. Never negative.
   func inset(by inset: CGFloat) -> RectangleCornerRadii {

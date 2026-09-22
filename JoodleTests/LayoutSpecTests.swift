@@ -106,6 +106,27 @@ struct LayoutSpecTests {
     #expect(LayoutPreset.duoInnerPortrait.context.cornerRadii == RectangleCornerRadii(uniform: 55))
   }
 
+  @Test func safeRegionCornersMirrorAcrossASensorBar() {
+    let cover = LayoutPreset.duoCover.context
+    #expect(cover.safeRegionCornerRadii == RectangleCornerRadii(uniform: 8))
+    // No side insets: nothing changes.
+    let phone = LayoutPreset.iPhone17.context
+    #expect(phone.safeRegionCornerRadii == phone.cornerRadii)
+  }
+
+  @Test func duoCoverPanelsAreSquarishOnBothSides() {
+    let context = LayoutPreset.duoCover.context
+    let radii = LayoutSpec.resolve(context).splitPanelCornerRadii(in: context)
+    #expect(radii == RectangleCornerRadii(uniform: 3))
+  }
+
+  @Test func onlyTheDuoCoverMovesTheHeaderButtonsToARail() {
+    #expect(LayoutSpec.resolve(LayoutPreset.duoCover.context).headerButtonsInTrailingRail)
+    for preset in [LayoutPreset.iPhone17, .iPhoneSE, .duoInnerLandscape, .iPadPro11] {
+      #expect(!LayoutSpec.resolve(preset.context).headerButtonsInTrailingRail, "\(preset.name)")
+    }
+  }
+
   @Test func insetRadiiNeverGoNegative() {
     let radii = RectangleCornerRadii(topLeading: 8, bottomLeading: 8, bottomTrailing: 59, topTrailing: 59)
       .inset(by: 14)
@@ -118,7 +139,10 @@ struct LayoutSpecTests {
   @Test func phoneAndCompactKeepTheShippedLayout() {
     for preset in [LayoutPreset.iPhone17, .iPhone17ProMax, .iPhoneSE, .duoCover, .splitViewThird] {
       let spec = LayoutSpec.resolve(preset.context)
-      #expect(spec == LayoutSpec(), "\(preset.name)")
+      // The Duo cover alone moves the header buttons into its sensor bar.
+      var expected = LayoutSpec()
+      expected.headerButtonsInTrailingRail = preset == .duoCover
+      #expect(spec == expected, "\(preset.name)")
       #expect(spec.splitAxis == .vertical, "\(preset.name)")
       #expect(spec.splitSnapPositions == [0.15, 0.5, 1.0], "\(preset.name)")
       #expect(spec.gridMaxWidth == 0, "\(preset.name)")
@@ -236,11 +260,11 @@ struct LayoutSpecTests {
   @Test func duoCoverContainerHidesInTheCameraHoleAndExpandsInTheSafeRegion() {
     let context = LayoutPreset.duoCover.context
     let metrics = LayoutSpec.resolve(context).canvasContainer(in: context)
-    // No island: the plain 10pt inset. The 8pt hinge corner collapses, the
-    // 59pt outer corner keeps 49.
+    // No island: the plain 10pt inset. Both sides echo the 8pt hinge corner
+    // (the trailing edge stops at the sensor bar, not the screen corner) and
+    // the container's floor keeps it from going square.
     #expect(metrics.horizontalInset == 10)
-    #expect(metrics.cornerRadii.topLeading == 0)
-    #expect(metrics.cornerRadii.topTrailing == 49)
+    #expect(metrics.cornerRadii == RectangleCornerRadii(uniform: 16))
     #expect(metrics.collapsedFrame == ScreenHardware.Duo.coverCameraHole)
     #expect(metrics.collapsedSize == CGSize(width: 43, height: 43))
     #expect(metrics.topContentInset == 0)

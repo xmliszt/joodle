@@ -65,6 +65,23 @@ struct LayoutContext: Equatable {
   /// radius rather than hugging a specific corner.
   var displayCornerRadius: CGFloat { cornerRadii.maxRadius }
 
+  /// Corner radii for content that fills the horizontally safe region. A
+  /// corner that sits on a safe-area boundary rather than the screen edge
+  /// (the Duo cover's sensor bar) has no hardware corner to echo, so it
+  /// borrows the opposite side's radius and the region reads symmetric.
+  var safeRegionCornerRadii: RectangleCornerRadii {
+    var radii = cornerRadii
+    if safeArea.trailing > 0 {
+      radii.topTrailing = cornerRadii.topLeading
+      radii.bottomTrailing = cornerRadii.bottomLeading
+    }
+    if safeArea.leading > 0 {
+      radii.topLeading = cornerRadii.topTrailing
+      radii.bottomLeading = cornerRadii.bottomTrailing
+    }
+    return radii
+  }
+
   static func resolve(
     probe: LayoutProbe,
     hardware: ScreenHardware.Snapshot,

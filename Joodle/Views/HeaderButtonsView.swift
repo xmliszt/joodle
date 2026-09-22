@@ -18,8 +18,16 @@ struct HeaderButtonsView: View {
   var isInMoveMode: Bool = false
   /// When true, adds tutorial highlight anchors to interactive elements
   var tutorialMode: Bool = false
+  /// Horizontal in the header; vertical when the buttons live in a side rail.
+  var axis: Axis = .horizontal
 
   @Namespace private var namespace
+
+  private var stack: AnyLayout {
+    axis == .horizontal
+      ? AnyLayout(HStackLayout(spacing: spacing))
+      : AnyLayout(VStackLayout(spacing: spacing))
+  }
 
   @State private var showingShareSheet = false
 
@@ -28,7 +36,7 @@ struct HeaderButtonsView: View {
   var body: some View {
     if #available(iOS 26.0, *) {
       GlassEffectContainer(spacing: spacing) {
-        HStack(spacing: spacing) {
+        stack {
           // Settings Button (Left) - only visible when in year mode
           if viewMode == .year && !isInMoveMode {
             Button(action: onSettingsAction) {
@@ -64,7 +72,7 @@ struct HeaderButtonsView: View {
         ShareCardSelectorView(year: currentYear)
       }
     } else {
-      HStack(spacing: spacing) {
+      stack {
         // Settings Button (Left) - only visible when in year mode
         if viewMode == .year && !isInMoveMode {
           Button(action: onSettingsAction) {

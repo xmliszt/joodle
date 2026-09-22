@@ -164,6 +164,14 @@ struct DynamicIslandExpandedView<Content: View>: View {
     layoutSpec.canvasContainer(in: layoutContext, dockedTo: canvasDockFrame)
   }
 
+  /// A camera hole is a 43pt circle: black-on-black hiding, which works
+  /// behind the island's capsule, shows every pixel of mismatch there. The
+  /// container fades out as it shrinks into the hole instead.
+  private var fadesIntoCutout: Bool {
+    if case .cameraHole = layoutContext.cutout { return true }
+    return false
+  }
+
   /// The status bar hides only where the container tucks up beside it (an
   /// island or a notch). Elsewhere hiding it would drop the top safe-area
   /// inset and shift the whole scene under the opening canvas.
@@ -478,6 +486,7 @@ struct DynamicIslandExpandedView<Content: View>: View {
           radius: DIConfig.darkShadowRadiusPt,
           y: DIConfig.darkShadowYOffsetPt
         )
+        .opacity(isExpanded || !fadesIntoCutout ? 1 : 0)
         // Chrome (clip shape, rim-light overlay, background, bloom, shadow)
         // shares the height's spring on *both* directions. This matters most for
         // the clipped corner radius: it animates between the screen-concentric

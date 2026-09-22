@@ -59,10 +59,18 @@ struct LayoutSpec: Equatable {
   /// they echo, so they read as concentric.
   var splitPanelCornerCompensation: CGFloat = 5
 
-  /// Corner radii of the split panels, per screen corner.
+  /// Corner radii of the split panels, per corner of the safe region.
   func splitPanelCornerRadii(in context: LayoutContext) -> RectangleCornerRadii {
-    context.cornerRadii.inset(by: splitPanelCornerCompensation)
+    context.safeRegionCornerRadii.inset(by: splitPanelCornerCompensation)
   }
+
+  /// Whether the header's buttons leave the header for a vertical rail in the
+  /// trailing safe-area inset: the Duo cover's sensor bar has room below the
+  /// status items, and the grid gets the header's full width.
+  var headerButtonsInTrailingRail = false
+  /// Where the rail starts: clear of the status items' pill, which ends about
+  /// 112pt down the Duo cover's sensor bar.
+  var trailingRailTopInset: CGFloat = 165
 
   /// Side inset of the floating canvas container on screens without an island
   /// (island devices derive it from the cutout frame instead).
@@ -84,8 +92,9 @@ struct LayoutSpec: Equatable {
   /// On a side-by-side split the container docks inside the entry column,
   /// this far from the column's edges.
   var canvasDockInset: CGFloat = 12
-  /// Floor for the docked container's corner radius where the column's own
-  /// corners are too tight to stay concentric (iPads echo an 18pt screen).
+  /// Floor for the container's corner radius where the corners it echoes are
+  /// too tight to stay concentric (iPads echo an 18pt screen, the Duo cover's
+  /// hinge side 8pt).
   var canvasDockMinCornerRadius: CGFloat = 16
 
   /// Side of the displayed canvas square inside a container of `containerWidth`.
@@ -116,6 +125,9 @@ struct LayoutSpec: Equatable {
 
   static func resolve(_ context: LayoutContext) -> LayoutSpec {
     var spec = LayoutSpec()
+    // A trailing sensor bar wide enough to hold a button column takes the
+    // header's buttons, whatever the class.
+    spec.headerButtonsInTrailingRail = context.safeArea.trailing >= 60
     switch context.layoutClass {
     case .compact, .phone:
       // The shipped phone layout.
@@ -196,7 +208,7 @@ extension LayoutSpec {
     let expandedWidth = isCapped ? canvasContainerMaxWidth : spanningWidth
     let cornerRadii = isCapped
       ? RectangleCornerRadii(uniform: canvasContainerFloatingCornerRadius)
-      : context.cornerRadii.inset(by: edgeInset)
+      : context.safeRegionCornerRadii.inset(by: edgeInset).floored(at: canvasDockMinCornerRadius)
     return CanvasContainerMetrics(
       horizontalInset: isCapped ? (safeWidth - expandedWidth) / 2 : edgeInset,
       // Below the island, else just under the top safe area; never flush with

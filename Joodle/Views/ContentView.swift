@@ -515,7 +515,8 @@ struct ContentView: View {
               UIApplication.shared.hideKeyboard()
               navigateToSettings = true
             },
-            isInMoveMode: isMovingDrawing
+            isInMoveMode: isMovingDrawing,
+            showsButtons: !layoutSpec.headerButtonsInTrailingRail
           )
           // On a side-by-side split the header belongs to the grid column, and
           // follows the column's rounded trailing corner so the panel reads
@@ -529,6 +530,26 @@ struct ContentView: View {
                 ? layoutSpec.splitPanelCornerRadii(in: layoutContext).topTrailing : 0,
               style: .continuous))
           .frame(maxWidth: .infinity, alignment: .leading)
+
+          // Duo cover: the sensor bar's empty space below the status items
+          // takes the header buttons as a vertical rail.
+          if layoutSpec.headerButtonsInTrailingRail {
+            HeaderButtonsView(
+              viewMode: dataProvider.viewMode,
+              currentYear: dataProvider.selectedYear,
+              onToggleViewMode: { toggleViewMode(to: dataProvider.viewMode == .now ? .year : .now) },
+              onSettingsAction: {
+                UIApplication.shared.hideKeyboard()
+                navigateToSettings = true
+              },
+              isInMoveMode: isMovingDrawing,
+              axis: .vertical
+            )
+            .frame(width: layoutContext.safeArea.trailing)
+            .padding(.top, layoutSpec.trailingRailTopInset)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+            .ignoresSafeArea()
+          }
         }
       }
       .ignoresSafeArea(.all, edges: .bottom)
@@ -882,8 +903,8 @@ struct ContentView: View {
           userPreferences.cameraZoomSliderHandedness == .right ? .bottomTrailing : .bottomLeading
         let resolvedCorner = autoTraceCornerOverride ?? handednessCorner
         let huggedCornerRadius = resolvedCorner == .bottomTrailing
-          ? layoutContext.cornerRadii.bottomTrailing
-          : layoutContext.cornerRadii.bottomLeading
+          ? layoutContext.safeRegionCornerRadii.bottomTrailing
+          : layoutContext.safeRegionCornerRadii.bottomLeading
         let inset = max(huggedCornerRadius, layoutSpec.cornerButtonMinInset)
         AutoTraceButton(
           corner: resolvedCorner,

@@ -20,6 +20,8 @@ struct HeaderView: View {
   var isInMoveMode: Bool = false
   /// When true, adds tutorial highlight anchors to interactive elements
   var tutorialMode: Bool = false
+  /// False when the buttons live in a trailing rail instead of the header.
+  var showsButtons: Bool = true
 
   private let drawingSize: CGFloat = 52.0
 
@@ -88,14 +90,16 @@ struct HeaderView: View {
         Spacer()
 
         // buttons
-        HeaderButtonsView(
-          viewMode: viewMode,
-          currentYear: selectedYear,
-          onToggleViewMode: onToggleViewMode,
-          onSettingsAction: onSettingsAction,
-          isInMoveMode: isInMoveMode,
-          tutorialMode: tutorialMode
-        )
+        if showsButtons {
+          HeaderButtonsView(
+            viewMode: viewMode,
+            currentYear: selectedYear,
+            onToggleViewMode: onToggleViewMode,
+            onSettingsAction: onSettingsAction,
+            isInMoveMode: isInMoveMode,
+            tutorialMode: tutorialMode
+          )
+        }
       }
       .padding(.horizontal, 20)
       .padding(.top, 20)

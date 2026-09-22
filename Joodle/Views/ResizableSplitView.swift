@@ -71,7 +71,9 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
 
   var body: some View {
     GeometryReader { _geometry in
-      let total = axis == .vertical ? _geometry.size.height : _geometry.size.width
+      // The two panels share what the handle leaves; distributing the full
+      // extent pushed the second panel past the edge by the handle's thickness.
+      let total = (axis == .vertical ? _geometry.size.height : _geometry.size.width) - handleThickness
       // Combine the committed split position with the live drag offset
       let effectiveSplit = clamp(
         value: splitPosition + (dragOffset / total),
@@ -214,7 +216,7 @@ struct ResizableSplitView<Top: View, Bottom: View>: View {
   }
 
   private func reportPrimarySize(in container: CGSize) {
-    let total = axis == .vertical ? container.height : container.width
+    let total = (axis == .vertical ? container.height : container.width) - handleThickness
     onPrimarySizeChange?(panelSize(extent: total * splitPosition, in: container))
   }
 
